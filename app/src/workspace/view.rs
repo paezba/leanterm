@@ -21051,7 +21051,7 @@ impl Workspace {
                         Shrinkable::new(
                             1.,
                             Text::new_inline(
-                                "Search sessions, agents, files...",
+                                "Search sessions, files...",
                                 appearance.ui_font_family(),
                                 14.,
                             )
@@ -24011,7 +24011,9 @@ impl Workspace {
                 entry_focus: GlobalSearchEntryFocus::Results,
             });
         }
-        if *WarpDriveSettings::as_ref(ctx).enable_warp_drive {
+        if *WarpDriveSettings::as_ref(ctx).enable_warp_drive
+            && !FeatureFlag::LeanTerminal.is_enabled()
+        {
             views.push(ToolPanelView::WarpDrive);
         }
         views

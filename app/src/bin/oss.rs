@@ -38,6 +38,8 @@ const LEAN_TERMINAL_DISABLED_FLAGS: &[FeatureFlag] = &[
     FeatureFlag::UsageBasedPricing,
     FeatureFlag::WarpPacks,
     FeatureFlag::AgentManagementView,
+    FeatureFlag::AgentViewConversationListView,
+    FeatureFlag::HOANotifications,
     FeatureFlag::GithubPrPromptChip,
     FeatureFlag::AgentToolbarEditor,
     FeatureFlag::FigmaDetection,
