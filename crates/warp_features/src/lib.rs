@@ -799,6 +799,9 @@ pub enum FeatureFlag {
     /// login-gated features are disabled until they sign in.
     SkipFirebaseAnonymousUser,
 
+    /// Hides AI, cloud, and account UI so the app presents as a standalone terminal.
+    LeanTerminal,
+
     /// Enables tab configs — user-definable TOML templates for launching custom tab layouts.
     TabConfigs,
 

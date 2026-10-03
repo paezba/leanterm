@@ -21575,6 +21575,7 @@ impl Workspace {
         // Legacy AI assistant button (non-agent-mode only)
         if is_online
             && !FeatureFlag::AgentMode.is_enabled()
+            && !FeatureFlag::LeanTerminal.is_enabled()
             && !is_web_anonymous_user
             && !self.current_workspace_state.is_ai_assistant_panel_open
         {
@@ -21603,7 +21604,10 @@ impl Workspace {
             );
         } else {
             let resource_center_closed = !self.current_workspace_state.is_resource_center_open;
-            if resource_center_closed && ContextFlag::WarpEssentials.is_enabled() {
+            if resource_center_closed
+                && ContextFlag::WarpEssentials.is_enabled()
+                && !FeatureFlag::LeanTerminal.is_enabled()
+            {
                 target.add_child(
                     Container::new(self.render_resource_center_button(appearance, ctx))
                         .with_margin_left(TAB_BAR_PADDING_LEFT)

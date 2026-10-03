@@ -31,6 +31,9 @@ pub struct ChannelState {
     /// The set of additional features to enable (on top of default-enabled ones).
     additional_features: HashSet<FeatureFlag>,
 
+    /// The set of features to disable, taking precedence over default-enabled and additional ones.
+    disabled_features: HashSet<FeatureFlag>,
+
     config: ChannelConfig,
 }
 
@@ -41,6 +44,7 @@ impl ChannelState {
         Self {
             channel,
             additional_features: Default::default(),
+            disabled_features: Default::default(),
             config: ChannelConfig {
                 app_id,
                 logfile_name: "".into(),
@@ -68,12 +72,18 @@ impl ChannelState {
         Self {
             channel,
             additional_features: Default::default(),
+            disabled_features: Default::default(),
             config,
         }
     }
 
     pub fn with_additional_features(mut self, overrides: &[FeatureFlag]) -> Self {
         self.additional_features.extend(overrides);
+        self
+    }
+
+    pub fn with_disabled_features(mut self, features: &[FeatureFlag]) -> Self {
+        self.disabled_features.extend(features);
         self
     }
 
@@ -167,6 +177,15 @@ impl ChannelState {
         CHANNEL_STATE
             .lock()
             .additional_features
+            .iter()
+            .cloned()
+            .collect()
+    }
+
+    pub fn disabled_features() -> HashSet<FeatureFlag> {
+        CHANNEL_STATE
+            .lock()
+            .disabled_features
             .iter()
             .cloned()
             .collect()

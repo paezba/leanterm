@@ -8,7 +8,7 @@ use cocoa::base::{id, nil};
 use lazy_static::lazy_static;
 use objc2::rc::{Retained, autoreleasepool};
 use objc2::runtime::Sel;
-use objc2::{MainThreadMarker, sel};
+use objc2::{MainThreadMarker, Message, sel};
 use objc2_app_kit::{
     NSApplication, NSControlStateValue, NSDownArrowFunctionKey, NSEndFunctionKey,
     NSEventModifierFlags, NSF1FunctionKey, NSF2FunctionKey, NSF3FunctionKey, NSF4FunctionKey,
@@ -17,7 +17,7 @@ use objc2_app_kit::{
     NSF15FunctionKey, NSF16FunctionKey, NSF17FunctionKey, NSF18FunctionKey, NSF19FunctionKey,
     NSF20FunctionKey, NSHomeFunctionKey, NSInsertFunctionKey, NSLeftArrowFunctionKey, NSMenu,
     NSMenuItem, NSPageDownFunctionKey, NSPageUpFunctionKey, NSRightArrowFunctionKey,
-    NSUpArrowFunctionKey,
+    NSRunningApplication, NSUpArrowFunctionKey,
 };
 use objc2_foundation::{NSInteger, NSString, ns_string};
 use warpui_core::actions::StandardAction;
@@ -164,7 +164,7 @@ unsafe extern "C" {
 
 struct StandardMenuItemProperties {
     /// The menu item title.
-    title: &'static NSString,
+    title: Retained<NSString>,
     /// The selector to invoke.
     action: Sel,
     /// The key equivalent string, or empty for none.
@@ -186,6 +186,14 @@ impl KeyEquivalent {
     }
 }
 
+/// The running app's localized name, falling back to "Warp".
+fn app_name() -> String {
+    NSRunningApplication::currentApplication()
+        .localizedName()
+        .map(|name| name.to_string())
+        .unwrap_or_else(|| "Warp".to_owned())
+}
+
 // Get properties from a standard action.
 fn resolve_standard_action(action: StandardAction) -> StandardMenuItemProperties {
     let cmd = NSEventModifierFlags::Command;
@@ -194,7 +202,7 @@ fn resolve_standard_action(action: StandardAction) -> StandardMenuItemProperties
     let none = NSEventModifierFlags::empty();
 
     fn make(
-        title: &'static NSString,
+        title: Retained<NSString>,
         action: Sel,
         modifiers: NSEventModifierFlags,
         shortcut: &'static NSString,
@@ -209,50 +217,65 @@ fn resolve_standard_action(action: StandardAction) -> StandardMenuItemProperties
 
     match action {
         StandardAction::Close => make(
-            ns_string!("Close Window"),
+            ns_string!("Close Window").retain(),
             sel!(performClose:),
             none,
             ns_string!(""),
         ),
         StandardAction::Quit => make(
-            ns_string!("Quit Warp"),
+            NSString::from_str(&format!("Quit {}", app_name())),
             sel!(terminate:),
             cmd,
             ns_string!("q"),
         ),
-        StandardAction::Hide => make(ns_string!("Hide Warp"), sel!(hide:), cmd, ns_string!("h")),
+        StandardAction::Hide => make(
+            NSString::from_str(&format!("Hide {}", app_name())),
+            sel!(hide:),
+            cmd,
+            ns_string!("h"),
+        ),
         StandardAction::HideOtherApps => make(
-            ns_string!("Hide Others"),
+            ns_string!("Hide Others").retain(),
             sel!(hideOtherApplications:),
             cmd | option,
             ns_string!("h"),
         ),
         StandardAction::ShowAllApps => make(
-            ns_string!("Show All"),
+            ns_string!("Show All").retain(),
             sel!(unhideAllApplications:),
             none,
             ns_string!(""),
         ),
         StandardAction::Minimize => make(
-            ns_string!("Minimize"),
+            ns_string!("Minimize").retain(),
             sel!(performMiniaturize:),
             cmd,
             ns_string!("m"),
         ),
-        StandardAction::Zoom => make(ns_string!("Zoom"), sel!(performZoom:), none, ns_string!("")),
+        StandardAction::Zoom => make(
+            ns_string!("Zoom").retain(),
+            sel!(performZoom:),
+            none,
+            ns_string!(""),
+        ),
         StandardAction::BringAllToFront => make(
-            ns_string!("Bring All to Front"),
+            ns_string!("Bring All to Front").retain(),
             sel!(arrangeInFront:),
             none,
             ns_string!(""),
         ),
         StandardAction::ToggleFullScreen => make(
-            ns_string!("ToggleFullScreen"),
+            ns_string!("ToggleFullScreen").retain(),
             sel!(toggleFullScreen:),
             cmd | ctrl,
             ns_string!("f"),
         ),
-        StandardAction::Paste => make(ns_string!("Paste"), sel!(paste:), none, ns_string!("")),
+        StandardAction::Paste => make(
+            ns_string!("Paste").retain(),
+            sel!(paste:),
+            none,
+            ns_string!(""),
+        ),
     }
 }
 
@@ -356,7 +379,7 @@ unsafe fn make_menu_item(menu_item: MenuItem) -> id {
                 let properties = resolve_standard_action(standard_action);
                 let nsmenu_item = NSMenuItem::initWithTitle_action_keyEquivalent(
                     mtm.alloc(),
-                    properties.title,
+                    &properties.title,
                     Some(properties.action),
                     properties.shortcut,
                 );

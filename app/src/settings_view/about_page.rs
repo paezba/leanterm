@@ -13,6 +13,7 @@ use super::settings_page::{
 };
 use crate::appearance::Appearance;
 use crate::channel::ChannelState;
+use crate::features::FeatureFlag;
 use crate::themes::theme::ColorScheme;
 use crate::workspace::WorkspaceAction;
 
@@ -116,6 +117,17 @@ impl SettingsWidget for AboutPageWidget {
                     .finish(),
                 )
                 .with_child(version_row.finish())
+                .with_children(FeatureFlag::LeanTerminal.is_enabled().then(|| {
+                    ui_builder
+                        .span(
+                            "WarpOss: a lean build of the Warp open-source terminal, without AI, \
+                             cloud, or account features.",
+                        )
+                        .with_soft_wrap()
+                        .build()
+                        .with_margin_top(16.)
+                        .finish()
+                }))
                 .with_child(
                     ui_builder
                         .span("Copyright 2026 Warp")

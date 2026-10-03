@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use itertools::Itertools;
+use warp_core::features::FeatureFlag;
 use warp_core::ui::theme::color::internal_colors;
 use warp_errors::report_error;
 use warpui::elements::{
@@ -32,7 +33,7 @@ use crate::keyboard::{UserDefinedKeybinding, write_custom_keybinding};
 use crate::search_bar::SearchBar;
 use crate::settings::CloudPreferencesSettings;
 use crate::util::bindings::{
-    CommandBinding, filter_bindings_including_keystroke, reset_keybinding_to_default,
+    BindingGroup, CommandBinding, filter_bindings_including_keystroke, reset_keybinding_to_default,
     set_custom_keybinding,
 };
 use crate::{TelemetryEvent, send_telemetry_from_ctx, themes};
@@ -752,7 +753,11 @@ impl SettingsPageMeta for KeybindingsView {
         // `from_editable_lens` materializes any dynamic description resolver
         // before caching, so the dedup below (which compares descriptions)
         // sees concrete strings.
-        let lenses: Vec<_> = ctx.editable_bindings().collect();
+        let is_lean_terminal = FeatureFlag::LeanTerminal.is_enabled();
+        let lenses: Vec<_> = ctx
+            .editable_bindings()
+            .filter(|lens| !is_lean_terminal || lens.group != Some(BindingGroup::WarpAi.as_str()))
+            .collect();
         self.bindings = Some(
             lenses
                 .into_iter()

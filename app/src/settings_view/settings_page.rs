@@ -7,6 +7,7 @@ use markdown_parser::{FormattedText, FormattedTextFragment, FormattedTextLine};
 use pathfinder_color::ColorU;
 use pathfinder_geometry::vector::vec2f;
 use settings::Setting;
+use warp_core::features::FeatureFlag;
 use warp_core::settings::SyncToCloud;
 use warp_core::ui::color::blend::Blend;
 use warp_core::ui::theme::color::internal_colors;
@@ -1569,6 +1570,7 @@ impl<V: warpui::View> PageType<V> {
         widgets: Vec<Box<dyn SettingsWidget<View = V>>>,
         title: Option<PageTitle<V>>,
     ) -> Self {
+        let widgets = without_lean_terminal_hidden_widgets(widgets);
         Self::Uncategorized {
             filter: widgets.iter().enumerate().map(|(i, _)| i).collect(),
             widgets,
@@ -2047,6 +2049,43 @@ pub(super) enum FilteredPageType<'a, V: warpui::View> {
 /// A category header: title text with an optional subtitle and trailing accessory. Absent when
 /// the category draws no header row at all (e.g. Warpify's single-widget category, whose widget
 /// draws its own heading).
+/// Type names of AI, cloud, and account widgets removed from settings in lean terminal builds.
+const LEAN_TERMINAL_HIDDEN_WIDGETS: &[&str] = &[
+    // Features
+    "AtContextMenuInTerminalModeWidget",
+    "ConfirmCloseSharedSessionWidget",
+    "DefaultSessionModeWidget",
+    "OutlineCodebaseSymbolsForAtContextMenuWidget",
+    "ShowTerminalInputMessageLineWidget",
+    "ShowTerminalZeroStateBlockWidget",
+    "SlashCommandsInTerminalModeWidget",
+    // Privacy
+    "AppAnalyticsWidget",
+    "CloudConversationStorageWidget",
+    "CrashReportsWidget",
+    "DataManagementWidget",
+    "PrivacyPolicyWidget",
+    // Appearance
+    "AIFontWidget",
+    "ToolsPanelConversationHistoryWidget",
+    "ToolsPanelWarpDriveWidget",
+    "UseLatestUserPromptAsConversationTitleInTabNamesWidget",
+    // Editor and Code Review
+    "AutoOpenCodeReviewPaneCodeWidget",
+];
+
+fn without_lean_terminal_hidden_widgets<V: warpui::View>(
+    mut widgets: Vec<Box<dyn SettingsWidget<View = V>>>,
+) -> Vec<Box<dyn SettingsWidget<View = V>>> {
+    if FeatureFlag::LeanTerminal.is_enabled() {
+        widgets.retain(|widget| {
+            let type_name = widget.widget_id().rsplit("::").next().unwrap_or_default();
+            !LEAN_TERMINAL_HIDDEN_WIDGETS.contains(&type_name)
+        });
+    }
+    widgets
+}
+
 pub(super) struct CategoryHeader<V: warpui::View> {
     title: &'static str,
     subtitle: Option<&'static str>,
@@ -2090,7 +2129,7 @@ impl<V: warpui::View> Category<V> {
     ) -> Self {
         Self {
             header: (!title.is_empty()).then(|| CategoryHeader::new(title)),
-            widgets,
+            widgets: without_lean_terminal_hidden_widgets(widgets),
         }
     }
 
@@ -2103,7 +2142,7 @@ impl<V: warpui::View> Category<V> {
     ) -> Self {
         Self {
             header: Some(header),
-            widgets,
+            widgets: without_lean_terminal_hidden_widgets(widgets),
         }
     }
 }

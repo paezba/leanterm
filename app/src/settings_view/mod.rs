@@ -338,6 +338,39 @@ pub enum SettingsSection {
     WarpCloudAgentAPIKeys,
 }
 
+impl SettingsSection {
+    /// Whether this section is removed from settings in lean terminal builds.
+    fn is_hidden_in_lean_terminal(self) -> bool {
+        if !FeatureFlag::LeanTerminal.is_enabled() {
+            return false;
+        }
+        match self {
+            Self::Account
+            | Self::BillingAndUsage
+            | Self::Referrals
+            | Self::SharedBlocks
+            | Self::Teams
+            | Self::WarpDrive
+            | Self::WarpAgent
+            | Self::AgentProfiles
+            | Self::AgentMCPServers
+            | Self::Knowledge
+            | Self::ThirdPartyCLIAgents
+            | Self::CodeIndexing
+            | Self::CloudEnvironments
+            | Self::WarpCloudAgentAPIKeys => true,
+            Self::About
+            | Self::Appearance
+            | Self::Features
+            | Self::Keybindings
+            | Self::Privacy
+            | Self::Scripting
+            | Self::Warpify
+            | Self::EditorAndCodeReview => false,
+        }
+    }
+}
+
 use std::fmt::{self, Display};
 
 use crate::util::bindings::custom_tag_to_keystroke;
@@ -1456,11 +1489,41 @@ impl SettingsView {
             );
         }
 
+        if FeatureFlag::LeanTerminal.is_enabled() {
+            settings_pages.retain(|page| !page.section.is_hidden_in_lean_terminal());
+            nav_items = nav_items
+                .into_iter()
+                .filter_map(|item| match item {
+                    SettingsNavItem::Page(section) => {
+                        (!section.is_hidden_in_lean_terminal()).then_some(item)
+                    }
+                    SettingsNavItem::Umbrella(umbrella) => {
+                        let subpages = umbrella
+                            .subpages
+                            .into_iter()
+                            .filter(|section| !section.is_hidden_in_lean_terminal())
+                            .collect_vec();
+                        (!subpages.is_empty()).then(|| {
+                            SettingsNavItem::Umbrella(SettingsUmbrella::new(
+                                umbrella.label,
+                                subpages,
+                            ))
+                        })
+                    }
+                })
+                .collect();
+        }
+
         let initial_page = match page {
             Some(SettingsSection::Scripting) if !FeatureFlag::WarpControlCli.is_enabled() => {
                 SettingsSection::Account
             }
             other => other.unwrap_or_default(),
+        };
+        let initial_page = if initial_page.is_hidden_in_lean_terminal() {
+            SettingsSection::Appearance
+        } else {
+            initial_page
         };
 
         // Auto-expand the umbrella if the initial page is one of its subpages.

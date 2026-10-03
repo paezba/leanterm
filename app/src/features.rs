@@ -531,5 +531,9 @@ fn enabled_features() -> HashSet<FeatureFlag> {
         FeatureFlag::StoredScreenshots,
     ]);
 
+    for flag in ChannelState::disabled_features() {
+        flags.remove(&flag);
+    }
+
     flags
 }
