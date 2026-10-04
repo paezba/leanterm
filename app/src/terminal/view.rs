@@ -6,9 +6,6 @@ mod bookmarks;
 mod context_menu;
 pub mod init;
 pub mod inline_banner;
-#[cfg(test)]
-#[path = "view/queued_prompts_tests.rs"]
-mod queued_prompts_tests;
 use crate::server::telemetry::AnonymousUserSignupEntrypoint;
 use crate::settings::DebugSettingsChangedEvent;
 use super::{ GridType, should_right_click_paste};
@@ -29,7 +26,6 @@ use crate::global_resource_handles::GlobalResourceHandlesProvider;
 mod link_detection;
 mod open_in_warp;
 mod pane_impl;
-mod passive_suggestions;
 pub mod rich_content;
 mod shared_session;
 mod shell_terminated_banner;
@@ -78,11 +74,9 @@ pub use init::{
 };
 use init::{INPUT_BOX_VISIBLE_KEY, TOGGLE_BLOCK_FILTER_KEYBINDING};
 use inline_banner::{
-    AliasExpansionBanner, AliasExpansionBannerAction, AwsBedrockLoginBannerAction,
-    AwsBedrockLoginBannerState, AwsCliNotInstalledBannerAction, AwsCliNotInstalledBannerState,
+    AliasExpansionBanner, AliasExpansionBannerAction,
     ByoLlmAuthBannerSessionState, OpenInWarpBannerState, VimModeBannerAction,
-    render_alias_expansion_banner, render_aws_bedrock_login_banner,
-    render_aws_cli_not_installed_banner, render_inline_notifications_discovery_banner,
+    render_alias_expansion_banner, render_inline_notifications_discovery_banner,
     render_inline_notifications_error_banner, render_inline_shared_session_ended_banner,
     render_inline_shared_session_started_banner, render_open_in_warp_banner,
     render_shell_process_terminated_banner, render_vim_mode_banner,
@@ -341,7 +335,6 @@ use crate::terminal::view::block_onboarding::onboarding_prompt_block::Onboarding
 use crate::terminal::view::inline_banner::{
     AliasExpansionBannerState, NotificationsDiscoveryBannerState, NotificationsErrorBannerState, VimModeBannerState,
 };
-use crate::terminal::view::passive_suggestions::PromptSuggestionResolution;
 pub use crate::terminal::view::rich_content::{ RichContent, RichContentInsertionPosition,
     RichContentMetadata,
 };

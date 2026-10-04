@@ -92,25 +92,6 @@ const LABEL_VERTICAL_PADDING: f32 = 5.;
 const MENU_VERTICAL_PADDING: f32 = 9.;
 const MENU_WIDTH: f32 = 360.;
 
-// Environments menu sizing from Figma mock.
-const ENV_MENU_WIDTH: f32 = 321.;
-const ENV_MENU_MAX_HEIGHT: f32 = 200.;
-const ENV_MENU_VERTICAL_PADDING: f32 = 4.;
-const ENV_MENU_ITEM_HORIZONTAL_PADDING: f32 = 16.;
-const ENV_MENU_ITEM_VERTICAL_PADDING: f32 = 4.;
-const ENV_MENU_ICON_SIZE: f32 = 16.;
-const ENV_MENU_ICON_SLOT_SIZE: f32 = 16.;
-const ENV_MENU_ITEM_FONT_SIZE: f32 = 14.;
-const ENV_MENU_SEARCH_VERTICAL_PADDING: f32 = 4.;
-// Bottom padding under the search field. The model selector's bottom padding
-// is effectively `SEARCH_VERTICAL_PADDING (4) + MENU_CONTENT_VERTICAL_PADDING
-// (4) = 8` because its `Menu` wraps the pinned footer in another 4px of
-// content padding. We don't have that wrapper, so we bake the same 8px
-// directly into the footer container.
-const ENV_MENU_SEARCH_BOTTOM_PADDING: f32 = 8.;
-const ENV_MENU_SEARCH_FOOTER_TOP_MARGIN: f32 = 4.;
-
-
 pub fn init(app: &mut AppContext) {
     use warpui::keymap::macros::*;
 
@@ -372,7 +353,6 @@ impl DisplayChipMenu {
         }
         self.selected_index = 0;
         self.is_footer_selected = false;
-        self.env_sidecar_scroll_state.scroll_to(Pixels::zero());
     }
 
     /// Update the menu items and reset the selected index
@@ -483,7 +463,6 @@ impl DisplayChipMenu {
     fn select(&mut self, index: usize, ctx: &mut ViewContext<Self>) {
         if self.selected_index != index {
             self.selected_index = index;
-            self.env_sidecar_scroll_state.scroll_to(Pixels::zero());
         }
         ctx.notify();
     }
@@ -517,12 +496,10 @@ impl DisplayChipMenu {
             } else {
                 self.is_footer_selected = false;
                 self.selected_index = self.filtered_items.len() - 1;
-                self.env_sidecar_scroll_state.scroll_to(Pixels::zero());
             }
         } else {
             self.is_footer_selected = false;
             self.selected_index -= 1;
-            self.env_sidecar_scroll_state.scroll_to(Pixels::zero());
         }
         self.list_state.scroll_to(self.selected_index);
         ctx.notify();
@@ -538,15 +515,12 @@ impl DisplayChipMenu {
         if self.is_footer_selected() {
             self.is_footer_selected = false;
             self.selected_index = 0;
-            self.env_sidecar_scroll_state.scroll_to(Pixels::zero());
         } else if self.selected_index >= self.filtered_items.len() {
             self.selected_index = 0;
-            self.env_sidecar_scroll_state.scroll_to(Pixels::zero());
             if has_footer && !self.is_footer_selected() {
                 self.is_footer_selected = true;
             }
         } else {
-            self.env_sidecar_scroll_state.scroll_to(Pixels::zero());
         }
         self.list_state.scroll_to(self.selected_index);
         ctx.notify();
@@ -691,23 +665,6 @@ impl DisplayChipMenu {
         .finish()
     }
 
-    fn render_env_search_footer(
-        &self,
-        search_input: &ViewHandle<EditorView>,
-        app: &AppContext,
-    ) -> Box<dyn Element> {
-        let theme = Appearance::as_ref(app).theme();
-        let divider_color = internal_colors::fg_overlay_2(theme);
-
-        Container::new(ChildView::new(search_input).finish())
-            .with_margin_top(ENV_MENU_SEARCH_FOOTER_TOP_MARGIN)
-            .with_horizontal_padding(ENV_MENU_ITEM_HORIZONTAL_PADDING)
-            .with_padding_top(ENV_MENU_SEARCH_VERTICAL_PADDING)
-            .with_padding_bottom(ENV_MENU_SEARCH_BOTTOM_PADDING)
-            .with_border(Border::top(1.).with_border_fill(divider_color))
-            .finish()
-    }
-
     fn render_items(&self, ctx: &AppContext) -> Box<dyn Element> {
         let appearance = Appearance::as_ref(ctx);
         let theme = appearance.theme();
@@ -765,11 +722,7 @@ impl DisplayChipMenu {
 
                         let is_selected = index == selected_index && !is_footer_hovered;
 
-                        let font_size = if matches!(chip_menu_type, ChipMenuType::Environments) {
-                            ENV_MENU_ITEM_FONT_SIZE
-                        } else {
-                            appearance.ui_font_size()
-                        };
+                        let font_size = appearance.ui_font_size();
                         let icon_size = font_size * 0.8; // Icon slightly smaller than text
 
                         let (main_text, selected_background) = match chip_menu_type {
@@ -795,36 +748,7 @@ impl DisplayChipMenu {
                             Flex::row().with_cross_axis_alignment(CrossAxisAlignment::Center);
 
                         let icon_gap = 8.;
-                        if matches!(chip_menu_type, ChipMenuType::Environments) {
-                            if let Some(icon) = item.icon(app) {
-                                let icon_slot_size = ENV_MENU_ICON_SLOT_SIZE;
-                                let glyph_size = ENV_MENU_ICON_SIZE;
-
-                                let icon_glyph = ConstrainedBox::new(
-                                    icon.to_warpui_icon(Fill::Solid(main_text)).finish(),
-                                )
-                                .with_width(glyph_size)
-                                .with_height(glyph_size)
-                                .finish();
-
-                                let icon_slot = ConstrainedBox::new(
-                                    Flex::row()
-                                        .with_main_axis_alignment(MainAxisAlignment::Center)
-                                        .with_cross_axis_alignment(CrossAxisAlignment::Center)
-                                        .with_child(icon_glyph)
-                                        .finish(),
-                                )
-                                .with_width(icon_slot_size)
-                                .with_height(icon_slot_size)
-                                .finish();
-
-                                left_side.add_child(
-                                    Container::new(icon_slot)
-                                        .with_margin_right(icon_gap)
-                                        .finish(),
-                                );
-                            }
-                        } else if let Some(icon) = item.icon(app) {
+ else if let Some(icon) = item.icon(app) {
                             left_side.add_child(
                                 Container::new(
                                     ConstrainedBox::new(
@@ -887,9 +811,7 @@ impl DisplayChipMenu {
                             .with_horizontal_padding(item_horizontal_padding)
                             .with_vertical_padding(item_vertical_padding);
 
-                        if !matches!(chip_menu_type, ChipMenuType::Environments)
-                            && (is_selected || index < filtered_items_length - 1)
-                        {
+                        if is_selected || index < filtered_items_length - 1 {
                             container = container.with_border(Border::bottom(1.0));
                         }
 

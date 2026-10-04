@@ -79,7 +79,6 @@ pub enum LeftPanelAction {
     ProjectExplorer,
     GlobalSearch { entry_focus: GlobalSearchEntryFocus },
     WarpDrive,
-    ConversationListView,
     SignIn,
 }
 
@@ -152,18 +151,10 @@ mod active_view_state {
         new_view: ToolPanelView,
         ctx: &mut ViewContext<super::LeftPanelView>,
     ) {
-        let previous = left_panel.active_view.0;
         left_panel.active_view.0 = new_view;
         left_panel.update_button_active_states();
         ctx.notify();
 
-        let was_conversation_list_open = previous == ToolPanelView::ConversationListView;
-        let is_conversation_list_open = new_view == ToolPanelView::ConversationListView;
-        if was_conversation_list_open && !is_conversation_list_open {
-            left_panel.on_conversation_list_view_visibility_changed(false, ctx);
-        } else if !was_conversation_list_open && is_conversation_list_open {
-            left_panel.on_conversation_list_view_visibility_changed(true, ctx);
-        }
 
         left_panel.update_active_file_tree_subscription_state(ctx);
     }
@@ -192,7 +183,6 @@ pub struct LeftPanelView {
     mouse_state_handles: MouseStateHandles,
     close_button_mouse_state: MouseStateHandle,
     warp_drive_view: ViewHandle<DrivePanel>,
-    conversation_list_view: ViewHandle<ConversationListView>,
     active_view: active_view_state::ActiveViewState,
     toolbelt_buttons: Vec<ToolbeltButtonConfig>,
     active_pane_group: Option<WeakViewHandle<PaneGroup>>,
@@ -319,28 +309,11 @@ impl LeftPanelView {
             }
         };
         let warp_drive_view = ctx.add_typed_action_view(DrivePanel::new);
-        let conversation_list_view = ctx.add_typed_action_view(ConversationListView::new);
 
         ctx.subscribe_to_view(&warp_drive_view, |_me, _, event, ctx| {
             ctx.emit(LeftPanelEvent::WarpDrive(event.clone()));
         });
 
-        ctx.subscribe_to_view(&conversation_list_view, |_me, _, event, ctx| match event {
-            ConversationListViewEvent::NewConversationInNewTab => {
-                ctx.emit(LeftPanelEvent::NewConversationInNewTab);
-            }
-            ConversationListViewEvent::ShowDeleteConfirmationDialog {
-                conversation_id,
-                conversation_title,
-                terminal_view_id,
-            } => {
-                ctx.emit(LeftPanelEvent::ShowDeleteConfirmationDialog {
-                    conversation_id: *conversation_id,
-                    conversation_title: conversation_title.clone(),
-                    terminal_view_id: *terminal_view_id,
-                });
-            }
-        });
 
         let active_view = views.first().copied().unwrap_or(ToolPanelView::WarpDrive);
         let toolbelt_buttons = views
@@ -434,7 +407,6 @@ impl LeftPanelView {
             mouse_state_handles: Default::default(),
             close_button_mouse_state: Default::default(),
             warp_drive_view,
-            conversation_list_view,
             active_view: active_view_state::new(active_view),
             toolbelt_buttons,
             active_pane_group: None,
@@ -902,11 +874,6 @@ impl LeftPanelView {
                     path: path.clone(),
                 }));
             }
-            FileTreeEvent::AttachAsContext { path } => {
-                ctx.emit(LeftPanelEvent::FileTree(
-                    pane_group::Event::AttachPathAsContext { path: path.clone() },
-                ));
-            }
             FileTreeEvent::OpenFile {
                 path,
                 target,
@@ -983,9 +950,6 @@ impl LeftPanelView {
                     matches!(self.active_view.get(), ToolPanelView::GlobalSearch { .. })
                 }
                 LeftPanelAction::WarpDrive => self.active_view.get() == ToolPanelView::WarpDrive,
-                LeftPanelAction::ConversationListView => {
-                    self.active_view.get() == ToolPanelView::ConversationListView
-                }
                 LeftPanelAction::SignIn => false,
             };
         }
@@ -1124,12 +1088,6 @@ impl LeftPanelView {
                     }
                 }
             }
-            LeftPanelAction::ConversationListView => {
-                active_view_state::set(self, ToolPanelView::ConversationListView, ctx);
-                if self.active_view_availability(ctx) == ToolPanelAvailability::Available {
-                    send_telemetry_from_ctx!(TelemetryEvent::ConversationListViewOpened, ctx);
-                }
-            }
             LeftPanelAction::SignIn => {
                 ctx.emit(LeftPanelEvent::SignInRequested);
             }
@@ -1183,28 +1141,6 @@ impl LeftPanelView {
         }
     }
 
-    /// When the conversation list view's visibility changes,
-    /// we need to update the conversation and tasks model to reflect the new state
-    /// (this information is used to decide whether or not we should poll for new tasks).
-    fn on_conversation_list_view_visibility_changed(
-        &self,
-        is_now_open: bool,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        let is_available = self.active_view.get() == ToolPanelView::ConversationListView
-            && self.active_view_availability(ctx) == ToolPanelAvailability::Available;
-        let window_id = ctx.window_id();
-        let view_id = self.conversation_list_view.id();
-        let team_context_resolver =
-            UserWorkspaces::team_context_resolver(self.conversation_list_view.downgrade());
-        AgentConversationsModel::handle(ctx).update(ctx, move |model, ctx| {
-            if is_now_open && is_available {
-                model.register_view_open(window_id, view_id, team_context_resolver, ctx);
-            } else {
-                model.register_view_closed(window_id, view_id, ctx);
-            }
-        });
-    }
 }
 
 impl TypedActionView for LeftPanelView {
