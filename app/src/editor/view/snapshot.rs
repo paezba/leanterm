@@ -30,8 +30,6 @@ use super::{
     ToBufferOffset, ToCharOffset, ToDisplayPoint, ToPoint,
 };
 use crate::editor::soft_wrap::FrameLayouts;
-#[cfg(feature = "voice_input")]
-use crate::editor::view::voice::VoiceInputState;
 use crate::terminal::grid_size_util::grid_compute_baseline_position_fn;
 
 /// Ratio to calculate font size of cursor avatar.
@@ -89,8 +87,6 @@ pub struct ViewSnapshot {
 
     pub baseline_position_computation_method: BaselinePositionComputationMethod,
 
-    #[cfg(feature = "voice_input")]
-    pub voice_input_state: VoiceInputState,
 
     pub editor_height_shrink_delay: Arc<Mutex<EditorHeightShrinkDelay>>,
 }

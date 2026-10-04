@@ -7117,10 +7117,6 @@ impl TerminalView {
             ctx,
         );
 
-        #[cfg(feature = "voice_input")]
-        voice_input::VoiceInput::handle(ctx).update(ctx, |voice_input, _| {
-            voice_input.should_suppress_new_feature_popup = true;
-        });
     }
 
     #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
@@ -7141,12 +7137,6 @@ impl TerminalView {
         );
 
         if self.block_onboarding_active {
-            #[cfg(feature = "voice_input")]
-            {
-                voice_input::VoiceInput::handle(ctx).update(ctx, |voice_input, _| {
-                    voice_input.should_suppress_new_feature_popup = true;
-                });
-            }
         }
     }
 
@@ -7186,10 +7176,6 @@ impl TerminalView {
         self.onboarding_prompt_block = None;
         self.settings_import_onboarding_block = None;
 
-        #[cfg(feature = "voice_input")]
-        voice_input::VoiceInput::handle(ctx).update(ctx, |voice_input, _| {
-            voice_input.should_suppress_new_feature_popup = false;
-        });
         let _ = ctx;
     }
 
@@ -14602,8 +14588,6 @@ impl TypedActionView for TerminalView {
                 "Use file picker to select a git repository".to_owned(),
                 WarpA11yRole::PopoverRole,
             )),
-            #[cfg(feature = "voice_input")]
-            ToggleCLIAgentVoiceInput(_) => Empty,
             // Below are actions that are most likely irrelevant to users or are very noisy and the
             // debug version shouldn't be announced.
             Scroll { .. }

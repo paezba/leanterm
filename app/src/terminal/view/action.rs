@@ -460,8 +460,6 @@ impl fmt::Debug for TerminalAction {
             }
             MiddleClickOnInput => write!(f, "MiddleClickOnInput"),
             DragAndDropFiles(_) => write!(f, "DragAndDropFiles"),
-            #[cfg(feature = "voice_input")]
-            ToggleCLIAgentVoiceInput(source) => write!(f, "ToggleCLIAgentVoiceInput({source:?})"),
             HyperlinkClick(hyperlink_url) => write!(f, "HyperlinkClick({hyperlink_url:?})"),
             AttemptLoginGatedFeature => write!(f, "AttemptLoginGatedFeature"),
             StartFileDropTarget => write!(f, "StartFileDropTarget"),
