@@ -748,7 +748,7 @@ impl DisplayChipMenu {
                             Flex::row().with_cross_axis_alignment(CrossAxisAlignment::Center);
 
                         let icon_gap = 8.;
- else if let Some(icon) = item.icon(app) {
+                        if let Some(icon) = item.icon(app) {
                             left_side.add_child(
                                 Container::new(
                                     ConstrainedBox::new(

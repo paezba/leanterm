@@ -2288,9 +2288,7 @@ impl BlockListElement {
         ctx: &mut PaintContext,
     ) {
         let block_height = block.height(transcript_scope).as_f64() as f32 * cell_size.y();
-        if block.is_restored()
-            && (!FeatureFlag::AgentView.is_enabled() || !transcript_scope.is_conversation())
-        {
+        if block.is_restored() {
             ctx.scene
                 .draw_rect_with_hit_recording(RectF::new(
                     grid_origin,
@@ -2307,7 +2305,7 @@ impl BlockListElement {
                 ))
                 .with_background(warp_theme.failed_block_color().with_opacity(10));
 
-            if !is_selected_by_anyone && !did_render_ai_stripe {
+            if !is_selected_by_anyone {
                 draw_flag_pole(
                     grid_origin,
                     block_height,
@@ -3686,11 +3684,7 @@ impl Element for BlockListElement {
                                         border_info.has_bottom_border,
                                         true,
                                     )
-                                    .with_border_fill(if can_be_ai_context {
-                                        self.warp_theme.block_selection_as_context_border_color()
-                                    } else {
-                                        self.warp_theme.accent()
-                                    }),
+                                    .with_border_fill(self.warp_theme.accent()),
                             );
                     }
 

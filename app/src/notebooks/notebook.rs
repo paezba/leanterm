@@ -258,7 +258,6 @@ pub enum NotebookEvent {
         invitee_email: Option<String>,
         source: SharingDialogSource,
     },
-    AttachPlanAsContext(AIDocumentId),
 }
 
 impl From<PaneEvent> for NotebookEvent {
@@ -291,7 +290,6 @@ pub enum NotebookAction {
     CopyLink(String),
     OpenLinkOnDesktop(Url),
     Export,
-    AttachPlanAsContext(AIDocumentId),
 }
 
 impl From<ContextMenuAction> for NotebookAction {
@@ -1405,15 +1403,6 @@ impl NotebookView {
             }
         }
 
-        if let Some(ai_document_id) = self.active_notebook_data.as_ref(ctx).ai_document_id(ctx) {
-            menu_items.push(
-                MenuItemFields::new("Attach to active session")
-                    .with_on_select_action(NotebookAction::AttachPlanAsContext(ai_document_id))
-                    .with_icon(icons::Icon::Paperclip)
-                    .into_item(),
-            );
-        }
-
         // Add "Copy Link" to menu
         if let Some(link) = self.notebook_link(ctx) {
             menu_items.push(
@@ -2339,9 +2328,6 @@ impl TypedActionView for NotebookView {
                 // No-op when not on wasm
             }
             NotebookAction::Export => self.export(ctx),
-            NotebookAction::AttachPlanAsContext(id) => {
-                ctx.emit(NotebookEvent::AttachPlanAsContext(*id))
-            }
         };
     }
 }

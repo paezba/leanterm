@@ -464,17 +464,6 @@ impl LeftPanelView {
         } else {
             self.update_button_active_states();
         }
-        // The selected tab can remain the same while its account/AI
-        // availability changes. Reconcile the real conversation view's open
-        // registration so a locked placeholder never polls, and enabling AI
-        // while the panel is open starts polling without another click.
-        let is_left_panel_open = self
-            .active_pane_group
-            .as_ref()
-            .and_then(|pane_group| pane_group.upgrade(ctx))
-            .is_some_and(|pane_group| pane_group.as_ref(ctx).left_panel_open);
-        self.on_conversation_list_view_visibility_changed(is_left_panel_open, ctx);
-
         ctx.notify();
     }
 
@@ -1095,10 +1084,6 @@ impl LeftPanelView {
     }
 
     pub fn on_left_panel_visibility_changed(&self, is_now_open: bool, ctx: &mut ViewContext<Self>) {
-        if ToolPanelView::ConversationListView == self.active_view.get() {
-            self.on_conversation_list_view_visibility_changed(is_now_open, ctx);
-        }
-
         self.update_active_file_tree_subscription_state(ctx);
     }
 

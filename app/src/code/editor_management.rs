@@ -165,17 +165,6 @@ impl CodeSource {
         }
     }
 
-    /// Returns true if this is a bundled skill that should be read-only.
-    pub fn is_bundled_skill(&self) -> bool {
-        matches!(
-            self,
-            Self::Skill {
-                reference: SkillReference::BundledSkillId(_),
-                ..
-            }
-        )
-    }
-
     pub fn omit_line_col(&self) -> CodeSource {
         if let CodeSource::Link { path, .. } = self {
             CodeSource::Link {
@@ -206,26 +195,14 @@ impl CodeSource {
     }
 
     /// Returns `true` if this source should be restored across app restarts.
-    ///
-    /// `AIAction` is ephemeral (tied to a live conversation) and should not
-    /// be restored.
     pub fn is_restorable(&self) -> bool {
         !matches!(
             self,
-            Self::AIAction { .. }
-                | Self::FileTree {
-                    location: LocalOrRemotePath::Remote(_),
-                }
-                | Self::CommandPalette {
-                    location: LocalOrRemotePath::Remote(_),
-                }
-                | Self::ProjectRules {
-                    location: LocalOrRemotePath::Remote(_),
-                }
-                | Self::Skill {
-                    location: LocalOrRemotePath::Remote(_),
-                    ..
-                }
+            Self::FileTree {
+                location: LocalOrRemotePath::Remote(_),
+            } | Self::CommandPalette {
+                location: LocalOrRemotePath::Remote(_),
+            }
         )
     }
 }

@@ -326,8 +326,8 @@ impl PersistedWorkspace {
             let workspace = self.workspaces.get_mut(path).unwrap();
             workspace.metadata.modified_ts = Some(Utc::now());
             let metadata = workspace.metadata.clone();
-            self.save_to_db(vec![ModelEvent::UpsertCodebaseIndexMetadata {
-                index_metadata: Box::new(metadata),
+            self.save_to_db(vec![ModelEvent::UpsertWorkspaceMetadata {
+                metadata: Box::new(metadata),
             }]);
         }
 
@@ -344,8 +344,8 @@ impl PersistedWorkspace {
                     queried_ts: None,
                 };
 
-                self.save_to_db(vec![ModelEvent::UpsertCodebaseIndexMetadata {
-                    index_metadata: Box::new(metadata.clone()),
+                self.save_to_db(vec![ModelEvent::UpsertWorkspaceMetadata {
+                    metadata: Box::new(metadata.clone()),
                 }]);
 
                 self.workspaces.insert(
@@ -607,8 +607,8 @@ impl PersistedWorkspace {
         log::info!("Saving workspace metadata for {path:?} to SQLite");
 
         if let Some(single_metadata) = self.workspace_for_path(path) {
-            self.save_to_db(vec![ModelEvent::UpsertCodebaseIndexMetadata {
-                index_metadata: Box::new(single_metadata),
+            self.save_to_db(vec![ModelEvent::UpsertWorkspaceMetadata {
+                metadata: Box::new(single_metadata),
             }]);
         }
     }
