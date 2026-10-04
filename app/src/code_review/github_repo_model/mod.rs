@@ -95,6 +95,4 @@ impl GitHubRepoModel {
 }
 
 #[cfg(all(test, feature = "local_fs"))]
-impl GitHubRepoModel {
-
-}
+impl GitHubRepoModel {}

@@ -22,7 +22,7 @@ use warpui::units::{IntoLines, IntoPixels, Lines};
 use warpui::{EntityId, record_trace_event};
 
 use super::ansi::{Handler, InputBufferValue};
-use super::block::{BlockId, BlockSize, BlockState,};
+use super::block::{BlockId, BlockSize, BlockState};
 use super::early_output::EarlyOutput;
 use super::grid::RespectDisplayedOutput;
 use super::grid::grid_handler::{FragmentBoundary, GridHandler, Link, PossiblePath};
@@ -44,8 +44,7 @@ use crate::terminal::model::ansi::{
     CursorShape, CursorStyle, LineClearMode, Mode, PrecmdValue, PreexecValue, Processor,
     PromptMetadata, StandardCharset, TabulationClearMode,
 };
-use crate::terminal::model::block::{ Block, SerializedBlock, TranscriptScope,
-};
+use crate::terminal::model::block::{Block, SerializedBlock, TranscriptScope};
 use crate::terminal::model::blockgrid::BlockGrid;
 use crate::terminal::model::bootstrap::BootstrapStage;
 use crate::terminal::model::grid::Dimensions;
@@ -90,13 +89,9 @@ impl RichContentItem {
     }
 
     #[cfg(test)]
-    pub fn new_for_test(
-        content_type: Option<RichContentType>,
-        view_id: EntityId,
-    ) -> Self {
+    pub fn new_for_test(content_type: Option<RichContentType>, view_id: EntityId) -> Self {
         Self::new(content_type, view_id, false)
     }
-
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -308,7 +303,6 @@ pub struct BlockList {
     cached_prompt_data: Option<CachedPromptData>,
 
     obfuscate_secrets: ObfuscateSecrets,
-
 
     /// Persisted info about the scroll position before a filter is applied. This
     /// data is used return users to their original scroll position after a
@@ -928,9 +922,7 @@ impl BlockList {
     }
 
     #[cfg(feature = "local_fs")]
-    pub(in crate::terminal) fn append_session_restoration_separator_to_block_list(
-        &mut self,
-    ) {
+    pub(in crate::terminal) fn append_session_restoration_separator_to_block_list(&mut self) {
         self.insert_non_block_item_before_block(
             self.active_block_index(),
             BlockHeightItem::RestoredBlockSeparator {
@@ -2280,7 +2272,6 @@ impl BlockList {
             log::debug!("Initializing new block using cached prompt grids");
             block.set_prompt_grids_from_cached_data(prompt_grid, rprompt_grid);
         }
-
 
         self.block_heights.push(BlockHeightItem::Block(
             block.height(&self.transcript_scope).into(),

@@ -5,9 +5,9 @@ use std::sync::MutexGuard;
 use pathfinder_geometry::vector::Vector2F;
 use serde::{Deserialize, Serialize};
 use sum_tree::{Cursor, SeekBias};
+use warpui::AppContext;
 use warpui::elements::ClippedScrollStateHandle;
 use warpui::units::{IntoLines, IntoPixels, Lines, Pixels};
-use warpui::AppContext;
 
 use super::block_list_element::{
     GridType, SnackbarHeader, SnackbarHeaderState, SnackbarPoint, VisibleItem,
@@ -1204,8 +1204,8 @@ impl<'a> ViewportState<'a> {
                     .map(|gap| gap.height().to_pixels(self.size_info.cell_height_px()));
                 let total_block_height_without_gap_px =
                     total_block_height_px - gap_height_px.unwrap_or_default();
-                let visible_block_height_px = total_block_height_without_gap_px
-                    - current_scroll_top_px;
+                let visible_block_height_px =
+                    total_block_height_without_gap_px - current_scroll_top_px;
                 let input_height_px = Pixels::new(self.input_size.y());
                 let max_blocklist_element_height =
                     self.size_info.pane_height_px() - input_height_px;

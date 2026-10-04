@@ -38,7 +38,8 @@ use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::sync_queue::SyncQueue;
 use crate::server::telemetry::{PaletteSource, TelemetryEvent};
 use crate::session_management::{RunningSessionSummary, SessionNavigationData};
-use crate::settings::{ CRASH_REPORTING_ENABLED_DEFAULTS_KEY, CloudPreferencesSettings, PrivacySettings,
+use crate::settings::{
+    CRASH_REPORTING_ENABLED_DEFAULTS_KEY, CloudPreferencesSettings, PrivacySettings,
     TELEMETRY_ENABLED_DEFAULTS_KEY,
 };
 use crate::terminal::general_settings::GeneralSettings;
@@ -286,7 +287,6 @@ pub fn log_out(app: &mut AppContext) {
     });
     remove_cloud_persisted_settings(app);
 
-
     NotebookManager::handle(app).update(app, |manager, _| manager.reset());
     EnvVarCollectionManager::handle(app).update(app, |manager, _| manager.reset());
     WorkflowManager::handle(app).update(app, |manager, _| manager.reset());
@@ -356,7 +356,6 @@ fn remove_cloud_persisted_settings(app: &mut AppContext) {
             )
         );
     }
-
 
     // Reset the Privacy Settings in the login screen to default values.
     PrivacySettings::handle(app).update(app, |privacy_settings, _| {

@@ -1,7 +1,5 @@
 use super::*;
 
-
-
 #[test]
 fn team_member_conversion_preserves_is_disabled() {
     let enabled_member = GqlTeamMember {
@@ -108,7 +106,6 @@ mod team_settings_conversion {
     use warp_graphql::workspace as gqlws;
 
     use crate::workspaces::gql_convert::team_settings_from_gql;
-    
 
     fn admin_info(
         value: gqlws::AdminEnablementSetting,
@@ -227,7 +224,6 @@ mod team_settings_conversion {
         }
     }
 
-
     #[test]
     fn drops_an_uncompilable_remote_session_pattern_without_failing_the_rest() {
         // Compilation now happens at convert time (mirroring the workspace-level path), so an
@@ -247,7 +243,6 @@ mod team_settings_conversion {
             vec!["foo.*"]
         );
     }
-
 }
 
 mod team_visibility_conversion {
@@ -270,6 +265,4 @@ mod team_visibility_conversion {
             TeamVisibility::Hidden
         );
     }
-
-
 }

@@ -9,9 +9,7 @@ use input_classifier::InputClassifier;
 use input_classifier::{OnnxClassifier, OnnxModel};
 use warpui::{Entity, SingletonEntity};
 
-impl InputClassifierModel {
-
-}
+impl InputClassifierModel {}
 
 impl Entity for InputClassifierModel {
     type Event = ();

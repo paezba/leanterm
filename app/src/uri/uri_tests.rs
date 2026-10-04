@@ -373,14 +373,6 @@ fn resolve_browser_url_returns_none_when_neither_url_is_known() {
     assert_eq!(resolved, None);
 }
 
-
-
-
-
-
-
-
-
 #[test]
 fn test_action_open_file_editor_parse_expands_home_dir() {
     let url = Url::parse(&format!(
@@ -465,19 +457,7 @@ fn test_action_open_file_editor_parse_rejects_invalid_line_or_column() {
     assert!(Action::parse(&invalid_column).is_err());
 }
 
-
-
-
-
-
-
-
-
-
-
-
 // -- handle_incoming_uri validation errors -----------------------------------
-
 
 #[test]
 fn test_parse_tab_path_expands_tilde() {
@@ -486,13 +466,11 @@ fn test_parse_tab_path_expands_tilde() {
     assert_eq!(parse_tab_path(&url), Some(home.join("Projects")));
 }
 
-
 #[test]
 fn test_parse_tab_path_absolute_path_unchanged() {
     let url = Url::parse("warp://action/new_tab?path=/tmp/foo").unwrap();
     assert_eq!(parse_tab_path(&url), Some(PathBuf::from("/tmp/foo")));
 }
-
 
 #[test]
 fn test_parse_tab_path_missing_returns_none() {
@@ -500,13 +478,9 @@ fn test_parse_tab_path_missing_returns_none() {
     assert_eq!(parse_tab_path(&url), None);
 }
 
-
 // -- warp://settings deeplink parsing ----------------------------------------
 
-
-
 // -- post-checkout desktop hand-off ------------------------------------------
-
 
 // Regression coverage for issue #9005: shell scripts opened via `file://` should run,
 // not open in the editor. Exercised through the pure routing helper to avoid standing
@@ -643,13 +617,11 @@ fn test_open_file_directory_routes_to_session() {
     );
 }
 
-
 #[test]
 fn test_session_uri_host_parsing() {
     let result = UriHost::from_str("session");
     assert!(matches!(result, Ok(UriHost::Session)));
 }
-
 
 #[test]
 fn test_session_uri_empty_path_does_not_panic() {
@@ -668,8 +640,6 @@ fn test_session_uri_invalid_hex_does_not_panic() {
     let host = validate_custom_uri(&url).unwrap();
     assert!(matches!(host, UriHost::Session));
 }
-
-
 
 #[test]
 fn test_decode_uuid_hex_rejects_invalid_chars() {

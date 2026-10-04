@@ -1,13 +1,13 @@
-pub mod buffer_model;
 pub mod autosuggestions;
+pub mod buffer_model;
 mod classic;
 mod common;
 pub mod decorations;
 mod suggestions_mode_menu;
 pub mod suggestions_mode_model;
 
-use crate::terminal::model::session::active_session::ActiveSession;
 use crate::send_telemetry_from_ctx;
+use crate::terminal::model::session::active_session::ActiveSession;
 use std::any::Any;
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -52,8 +52,9 @@ use warpui::r#async::SpawnedFutureHandle;
 use warpui::clipboard::ClipboardContent;
 use warpui::color::ColorU;
 use warpui::elements::{
-    AnchorPair, ChildAnchor, Clipped, ConstrainedBox, Container, DispatchEventResult, DropTargetData, Element, EventHandler, MouseStateHandle, OffsetType, ParentAnchor, ResizableStateHandle,
-    SavePosition, SelectionHandle, YAxisAnchor, resizable_state_handle,
+    AnchorPair, ChildAnchor, Clipped, ConstrainedBox, Container, DispatchEventResult,
+    DropTargetData, Element, EventHandler, MouseStateHandle, OffsetType, ParentAnchor,
+    ResizableStateHandle, SavePosition, SelectionHandle, YAxisAnchor, resizable_state_handle,
 };
 pub use warpui::elements::{ParentElement as _, Stack};
 pub use warpui::geometry::vector::{Vector2F, vec2f};
@@ -64,16 +65,14 @@ use warpui::text_layout::TextStyle;
 use warpui::units::IntoPixels;
 use warpui::{
     AppContext, Entity, EntityId, FocusContext, ModelAsRef, ModelHandle, SingletonEntity,
-    TypedActionView, View, ViewContext, ViewHandle, WeakViewHandle, end_trace,
-    start_trace,
+    TypedActionView, View, ViewContext, ViewHandle, WeakViewHandle, end_trace, start_trace,
 };
 
 use self::decorations::InputBackgroundJobOptions;
 use super::alias::is_expandable_alias;
 use super::event::{BlockCompletedEvent, BlockType, UserBlockCompleted};
 use super::ligature_settings::LigatureSettings;
-use super::model::block::{ BlockId, BlockMetadata, BlocklistEnvVarMetadata,
-};
+use super::model::block::{BlockId, BlockMetadata, BlocklistEnvVarMetadata};
 use super::model::completions::ShellCompletion;
 use super::model::session::{Session, SessionId, Sessions};
 use super::prompt_render_helper::{
@@ -93,10 +92,7 @@ use super::view::{
     ExecuteCommandEvent, PADDING_LEFT as TERMINAL_VIEW_PADDING_LEFT, SyncInputType, TerminalAction,
 };
 use super::warpify::SubshellSource;
-use super::{
-    History, HistoryEntry, SizeInfo, TerminalModel, prompt,
-    should_right_click_paste,
-};
+use super::{History, HistoryEntry, SizeInfo, TerminalModel, prompt, should_right_click_paste};
 #[allow(unused_imports)]
 use crate::ASSETS;
 use crate::appearance::{Appearance, AppearanceEvent};
@@ -110,13 +106,14 @@ use crate::completer::SessionContext;
 use crate::context_chips::display::{PromptDisplay, PromptDisplayEvent};
 use crate::context_chips::display_chip::PromptChipShellCommand;
 use crate::context_chips::prompt_type::PromptType;
-use crate::editor::{ AutosuggestionLocation, AutosuggestionType,
-    BaselinePositionComputationMethod, CommandXRayAnchor, CrdtOperation,
-    DisplayPoint, EditOrigin, EditorAction, EditorDecoratorElements, EditorOptions, EditorSnapshot,
-    EditorView, Event as EditorEvent, InteractionState, PathTransformerFn, PlainTextEditorViewAction,
-    Point as BufferPoint, PropagateAndNoOpEscapeKey, PropagateAndNoOpNavigationKeys,
-    PropagateHorizontalNavigationKeys, ReplicaId, TextColors, TextRun, default_cursor_colors,
-    position_id_for_cached_point, position_id_for_cursor, position_id_for_first_cursor,
+use crate::editor::{
+    AutosuggestionLocation, AutosuggestionType, BaselinePositionComputationMethod,
+    CommandXRayAnchor, CrdtOperation, DisplayPoint, EditOrigin, EditorAction,
+    EditorDecoratorElements, EditorOptions, EditorSnapshot, EditorView, Event as EditorEvent,
+    InteractionState, PathTransformerFn, PlainTextEditorViewAction, Point as BufferPoint,
+    PropagateAndNoOpEscapeKey, PropagateAndNoOpNavigationKeys, PropagateHorizontalNavigationKeys,
+    ReplicaId, TextColors, TextRun, default_cursor_colors, position_id_for_cached_point,
+    position_id_for_cursor, position_id_for_first_cursor,
 };
 use crate::env_vars::EnvVarCollectionExt;
 use crate::features::FeatureFlag;
@@ -134,18 +131,17 @@ use crate::resource_center::{
 use crate::search::QueryFilter;
 use crate::server::ids::SyncId;
 use crate::server::server_api::ServerApi;
-use crate::server::telemetry::{ AnonymousUserSignupEntrypoint, CommandXRayTrigger,
-    EnvVarTelemetryMetadata, PaletteSource, TelemetryEvent, WorkflowTelemetryMetadata,
+use crate::server::telemetry::{
+    AnonymousUserSignupEntrypoint, CommandXRayTrigger, EnvVarTelemetryMetadata, PaletteSource,
+    TelemetryEvent, WorkflowTelemetryMetadata,
 };
 use crate::session_management::SessionNavigationPromptElements;
-use crate::settings::{ AliasExpansionSettings, AppEditorSettings,
-    AppEditorSettingsChangedEvent, InputModeSettings, InputSettings, InputSettingsChangedEvent,
-    MAX_TIMES_TO_SHOW_AUTOSUGGESTION_HINT,
+use crate::settings::{
+    AliasExpansionSettings, AppEditorSettings, AppEditorSettingsChangedEvent, InputModeSettings,
+    InputSettings, InputSettingsChangedEvent, MAX_TIMES_TO_SHOW_AUTOSUGGESTION_HINT,
 };
 use crate::settings_view::{SettingsSection, flags};
-use crate::suggestions::ignored_suggestions_model::{
-    IgnoredSuggestionsModel, SuggestionType,
-};
+use crate::suggestions::ignored_suggestions_model::{IgnoredSuggestionsModel, SuggestionType};
 use crate::terminal::input::buffer_model::InputBufferModel;
 use crate::terminal::input::suggestions_mode_model::InputSuggestionsModeModel;
 use crate::terminal::model::session::shell_quote_arg;
@@ -172,9 +168,7 @@ use crate::workflows::local_workflows::LocalWorkflows;
 use crate::workflows::workflow_enum::EnumVariants;
 use crate::workflows::{self, WorkflowSelectionSource, WorkflowSource, WorkflowType};
 use crate::workspace::sync_inputs::SyncedInputState;
-use crate::workspace::{
-    CommandSearchOptions, InitContent, ToastStack, WorkspaceAction,
-};
+use crate::workspace::{CommandSearchOptions, InitContent, ToastStack, WorkspaceAction};
 
 /// Drop target data for dropping content on the [`Input`].
 #[derive(Debug, Clone)]
@@ -456,7 +450,6 @@ struct ViewerCommandExecutionRequest {
 /// Where a command execution request originates from.
 #[derive(Clone)]
 pub enum CommandExecutionSource {
-
     /// A command execution request in a shared session (by a viewer or sharer).
     ///
     /// For a sharer, this will be processed similar to [`CommandExecutionSource::User`]
@@ -486,7 +479,6 @@ pub enum CommandExecutionSource {
 }
 
 impl CommandExecutionSource {
-
     pub fn should_preserve_input(&self) -> bool {
         matches!(
             self,
@@ -632,15 +624,6 @@ pub enum InputAction {
     ResetWorkflowState,
 
     ToggleClassicCompletionsMode,
-
-
-
-
-
-
-
-
-
 
     /// Persist the completions menu width when the user resizes it.
     UpdateCompletionsMenuWidth(f32),
@@ -872,7 +855,6 @@ pub trait Autosuggester {
 /// should be positionined above or below the input.
 pub trait MenuPositioningProvider {
     fn menu_position(&self, app: &AppContext) -> MenuPositioning;
-
 }
 
 /// Stores state referenced by the Input view and PromptRenderHelper.
@@ -1088,7 +1070,6 @@ pub struct Input {
     has_pending_command: bool,
     last_word_insertion: LastWordInsertion,
 
-
     /// To ensure we only have one run of completions-as-you-type at any given time,
     /// we keep an abort handle of the current run. If we have reason to start a new run
     /// (e.g. new input), we simply abort the existing run. The same applies to the
@@ -1135,39 +1116,14 @@ pub struct Input {
     /// Today, we only expect to use this for shared session viewers.
     deferred_remote_operations: DeferredRemoteOperations,
 
-
     /// The last block that the user ran. This is used for generating autosuggestions.
     #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
     last_user_block_completed: Option<UserBlockCompleted>,
 
     hoverable_handle: MouseStateHandle,
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     /// Weak handle to this input view for drop target data
     weak_view_handle: WeakViewHandle<Input>,
-
 
     /// When a command is executed from a prompt chip (e.g. `cd` from the directory dropdown),
     /// we snapshot the current input contents here so we can restore them after the command
@@ -1424,7 +1380,6 @@ pub fn init(app: &mut AppContext) {
             ),
         ]);
     }
-
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -1536,7 +1491,6 @@ impl Input {
             input_render_state_model_handle.clone(),
         );
 
-
         let editor = {
             // Clones used in render_decorator_elements closure below.
             let prompt_render_helper_clone = prompt_render_helper.clone();
@@ -1616,14 +1570,12 @@ impl Input {
         };
 
         let _buffer_model = ctx.add_model(|ctx| InputBufferModel::new(&editor, ctx));
-        let suggestions_mode_model =
-            ctx.add_model(|_| InputSuggestionsModeModel::new());
+        let suggestions_mode_model = ctx.add_model(|_| InputSuggestionsModeModel::new());
 
         let _terminal_content_element_position_id =
             format!("terminal_content_element_{terminal_view_id}");
         let _input_save_position_id = format!("status_free_input_{}", ctx.view_id());
         let _window_id = ctx.window_id();
-
 
         current_prompt.update(ctx, |prompt_type, ctx| {
             if let PromptType::Dynamic { prompt } = prompt_type {
@@ -1713,7 +1665,6 @@ impl Input {
             &InputSettings::handle(ctx),
             Self::handle_input_settings_event,
         );
-
 
         ctx.subscribe_to_model(&suggestions_mode_model, |me, _, _, ctx| {
             me.set_zero_state_hint_text(ctx);
@@ -1847,10 +1798,10 @@ impl Input {
                     CommandExecutionSource::User,
                     true,
                     ctx,
-                )
-                    && !current_input.is_empty() {
-                        self.input_contents_before_prompt_chip_command = Some(current_input);
-                    }
+                ) && !current_input.is_empty()
+                {
+                    self.input_contents_before_prompt_chip_command = Some(current_input);
+                }
             }
         }
     }
@@ -3710,8 +3661,8 @@ impl Input {
 
     fn editor_escape(&mut self, ctx: &mut ViewContext<Self>) {
         let vim_mode = self.editor.as_ref(ctx).vim_mode(ctx);
-        let should_escape_vim_before_dismissing =
-            vim_mode == Some(VimMode::Insert) && self.suggestions_mode_model.as_ref(ctx).is_history_up();
+        let should_escape_vim_before_dismissing = vim_mode == Some(VimMode::Insert)
+            && self.suggestions_mode_model.as_ref(ctx).is_history_up();
 
         if should_escape_vim_before_dismissing {
             self.editor.update(ctx, |editor, editor_ctx| {
@@ -3801,8 +3752,8 @@ impl Input {
     fn maybe_generate_autosuggestion(&mut self, ctx: &mut ViewContext<Self>) {
         let editor = self.editor.as_ref(ctx);
 
-        let should_generate_autosuggestion = !editor.active_autosuggestion()
-            && self.enable_autosuggestions_setting;
+        let should_generate_autosuggestion =
+            !editor.active_autosuggestion() && self.enable_autosuggestions_setting;
 
         if should_generate_autosuggestion {
             let buffer_text = editor.buffer_text(ctx);
@@ -4444,21 +4395,19 @@ impl Input {
             EditorEvent::HideXRay => {
                 self.hide_x_ray(ctx);
             }
-            EditorEvent::TryToShowXRay(token_at) => {
-                match token_at {
-                    CommandXRayAnchor::Cursor => {
-                        let pos = self.start_byte_index_of_first_selection(ctx);
-                        self.start_xray_at_offset(pos, CommandXRayTrigger::Keystroke, ctx);
-                    }
-                    CommandXRayAnchor::Hover(mouse_position) => {
-                        if let Some(offset) = self.start_byte_index_at_point(mouse_position, ctx)
-                            && !self.suggestions_mode_model.as_ref(ctx).is_visible()
-                        {
-                            self.start_xray_at_offset(offset, CommandXRayTrigger::Hover, ctx);
-                        }
+            EditorEvent::TryToShowXRay(token_at) => match token_at {
+                CommandXRayAnchor::Cursor => {
+                    let pos = self.start_byte_index_of_first_selection(ctx);
+                    self.start_xray_at_offset(pos, CommandXRayTrigger::Keystroke, ctx);
+                }
+                CommandXRayAnchor::Hover(mouse_position) => {
+                    if let Some(offset) = self.start_byte_index_at_point(mouse_position, ctx)
+                        && !self.suggestions_mode_model.as_ref(ctx).is_visible()
+                    {
+                        self.start_xray_at_offset(offset, CommandXRayTrigger::Hover, ctx);
                     }
                 }
-            }
+            },
             EditorEvent::InsertLastWordPrevCommand => self.insert_last_word_previous_command(ctx),
             // For this particular view, the terminal Input, we ignore search direction because in
             // this context, search means search through History which isn't actually sensitive to
@@ -4722,7 +4671,10 @@ impl Input {
     }
 
     /// Returns the shell command history entries in order from oldest to most recent.
-    fn command_history<'a>(&'a self, ctx: &'a ViewContext<Self>) -> Vec<HistoryInputSuggestion<'a>> {
+    fn command_history<'a>(
+        &'a self,
+        ctx: &'a ViewContext<Self>,
+    ) -> Vec<HistoryInputSuggestion<'a>> {
         History::as_ref(ctx).up_arrow_suggestions(self.active_block_session_id(), ctx)
     }
 
@@ -5997,7 +5949,6 @@ impl Input {
     /// is an active and long running command; in such a state, the enter keypress should be
     /// handled by the ongoing process corresponding to the active/long running command.
     pub(crate) fn input_enter(&mut self, ctx: &mut ViewContext<Self>) {
-
         if self.should_insert_newline_on_enter(ctx) {
             self.editor.update(ctx, |editor, ctx| {
                 editor.user_initiated_insert("\n", PlainTextEditorViewAction::NewLine, ctx)
@@ -6777,7 +6728,6 @@ impl Input {
     pub(crate) fn is_voltron_open(&self) -> bool {
         self.is_voltron_open
     }
-
 }
 
 impl Entity for Input {

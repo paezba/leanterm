@@ -682,7 +682,6 @@ where
     pub fn set_menu_header_to_static(&mut self, header: &'static str) {
         self.static_menu_header = Some(header);
     }
-
 }
 
 impl<A> Entity for FilterableDropdown<A>

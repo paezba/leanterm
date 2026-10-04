@@ -7,9 +7,8 @@ use warp_errors::report_error;
 use warpui::color::ColorU;
 use warpui::elements::{
     self, Align, Border, Clipped, ClippedScrollStateHandle, ClippedScrollable, ConstrainedBox,
-    Container, CornerRadius, CrossAxisAlignment, DropShadow, Flex, Highlight,
-    MainAxisAlignment, MainAxisSize, MouseStateHandle, ParentElement, Radius, Rect, Shrinkable,
-    Stack, Text,
+    Container, CornerRadius, CrossAxisAlignment, DropShadow, Flex, Highlight, MainAxisAlignment,
+    MainAxisSize, MouseStateHandle, ParentElement, Radius, Rect, Shrinkable, Stack, Text,
 };
 use warpui::fonts::{Properties, Weight};
 use warpui::geometry::vector::Vector2F;
@@ -23,12 +22,12 @@ use warpui::{
     ViewHandle,
 };
 
+use super::CloudWorkflow;
 use super::command_parser::{
     WorkflowArgumentIndex, WorkflowDisplayData, compute_workflow_display_data,
 };
 use super::workflow::Argument;
 use super::workflow_view::env_var_selector::{EnvVarSelector, EnvVarSelectorEvent};
-use super::CloudWorkflow;
 use crate::appearance::Appearance;
 use crate::cloud_object::CloudObjectMetadataExt;
 use crate::cloud_object::model::actions::{ObjectActionType, ObjectActions};
@@ -886,27 +885,25 @@ impl WorkflowsMoreInfoView {
         appearance: &Appearance,
     ) -> Box<dyn Element> {
         appearance
-        .ui_builder()
-        .wrappable_text(
-            self.workflow.as_workflow().name().to_owned(),
-            matches!(wrap_text, WrapText::Yes),
-        )
-        .with_style(UiComponentStyles {
-            font_family_id: Some(appearance.ui_font_family()),
-            font_color: Some(
-                appearance
-                    .theme()
-                    .main_text_color(appearance.theme().background())
-                    .into(),
-            ),
-            font_size: Some(
-                appearance.monospace_font_size() * TITLE_FONT_SIZE_SCALE_FACTOR,
-            ),
-            font_weight: Some(Weight::Bold),
-            ..Default::default()
-        })
-        .build()
-        .finish()
+            .ui_builder()
+            .wrappable_text(
+                self.workflow.as_workflow().name().to_owned(),
+                matches!(wrap_text, WrapText::Yes),
+            )
+            .with_style(UiComponentStyles {
+                font_family_id: Some(appearance.ui_font_family()),
+                font_color: Some(
+                    appearance
+                        .theme()
+                        .main_text_color(appearance.theme().background())
+                        .into(),
+                ),
+                font_size: Some(appearance.monospace_font_size() * TITLE_FONT_SIZE_SCALE_FACTOR),
+                font_weight: Some(Weight::Bold),
+                ..Default::default()
+            })
+            .build()
+            .finish()
     }
 
     fn render_workflow_source(

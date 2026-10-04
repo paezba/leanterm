@@ -192,7 +192,6 @@ impl NodeVersionPopupView {
             .finish(),
         );
 
-
         ConstrainedBox::new(col.finish())
             .with_max_width(MENU_WIDTH)
             .with_max_height(MENU_MAX_HEIGHT)

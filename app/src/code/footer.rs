@@ -31,15 +31,11 @@ use warpui::{
     ViewHandle, WeakModelHandle,
 };
 
+use crate::code::lsp_telemetry::{LspControlActionType, LspEnablementSource, LspTelemetryEvent};
 #[cfg(feature = "local_fs")]
 use crate::persisted_workspace::PersistedWorkspaceEvent;
-use crate::persisted_workspace::{
-    LSPEnablementResultForFile, LspRepoStatus, PersistedWorkspace,
-};
-use crate::code::lsp_telemetry::{LspControlActionType, LspEnablementSource, LspTelemetryEvent};
-use crate::view_components::action_button::{
-    ActionButton, ButtonSize, NakedTheme,
-};
+use crate::persisted_workspace::{LSPEnablementResultForFile, LspRepoStatus, PersistedWorkspace};
+use crate::view_components::action_button::{ActionButton, ButtonSize, NakedTheme};
 
 const FOOTER_HEIGHT: f32 = 24.;
 /// Margin around the LSP icon container
@@ -253,7 +249,6 @@ impl LspRepoStatuses {
 }
 
 impl CodeFooterView {
-
     fn create_lsp_status_button(
         disabled: bool,
         ctx: &mut ViewContext<Self>,
@@ -1646,7 +1641,6 @@ impl View for CodeFooterView {
                     .finish(),
             );
         }
-    
 
         let mut container = Container::new(
             ConstrainedBox::new(

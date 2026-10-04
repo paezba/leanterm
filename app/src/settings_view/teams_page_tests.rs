@@ -324,18 +324,7 @@ fn workspace_discovery_page_routes_each_option_through_the_expected_client_bound
     });
 }
 
-
 const MEMBER_EMAIL: &str = "member@example.com";
-
-
-
-
-
-
-
-
-
-
 
 #[test]
 fn unresolved_workspace_keeps_create_team_ui() {
@@ -344,14 +333,6 @@ fn unresolved_workspace_keeps_create_team_ui() {
         vec![TeamsPageSection::CreateTeam]
     );
 }
-
-
-
-
-
-
-
-
 
 #[cfg(target_family = "wasm")]
 #[test]
@@ -363,13 +344,6 @@ fn wasm_does_not_expose_open_workspace_teams() {
 
     assert!(states.is_empty());
 }
-
-
-
-
-
-
-
 
 #[test]
 fn disabled_row_renders_dimmed_and_tooltipped() {

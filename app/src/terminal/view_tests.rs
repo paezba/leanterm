@@ -9,52 +9,10 @@ use crate::pane_group::focus_state::PaneGroupFocusState;
 use crate::pane_group::{BackingView, TerminalPaneId};
 use crate::settings::AppEditorSettings;
 use crate::terminal::model::ansi::{BootstrappedValue, InitShellValue};
-use crate::terminal::{ MockTerminalManager, TerminalManager, TerminalModel,
-};
-use crate::test_util::terminal::{ initialize_app_for_terminal_view,
-};
-use crate::test_util::{ assert_eventually};
+use crate::terminal::{MockTerminalManager, TerminalManager, TerminalModel};
+use crate::test_util::assert_eventually;
+use crate::test_util::terminal::initialize_app_for_terminal_view;
 use crate::workspace::view::tests::{initialize_app as initialize_workspace_app, mock_workspace};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 struct TestTerminalManager {
     model: Arc<FairMutex<TerminalModel>>,
@@ -75,19 +33,6 @@ impl TerminalManager for TestTerminalManager {
     }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 #[test]
 fn command_first_word_and_suffix_preserves_leading_whitespace() {
     assert_eq!(
@@ -104,73 +49,14 @@ fn command_first_word_and_suffix_handles_alias_without_args() {
     );
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-impl TerminalView {
-
-
-}
+impl TerminalView {}
 
 // Regression test for WAR-3433 on find bar selection crash.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // #[test]
 // fn test_navigate_blocks_inverted_blocklist() {
 //     run_navigation_test(InputMode::PinnedToTop);
 // }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #[test]
 fn test_banner_for_incompatible_plugins() {
@@ -240,7 +126,6 @@ fn test_slow_bootstrap_banner_auto_dismisses() {
     })
 }
 
-
 // Regression test for GH#3548 / GH#6093: the "Seems like your completions are not
 // working" banner must offer a permanent "Don't show me again" dismissal that is
 // persisted, while the "x" close button keeps its existing per-session behavior.
@@ -305,54 +190,11 @@ fn test_bash_vim_banner_already_shown() {
     })
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Regression test for https://github.com/warpdotdev/warp/issues/9059.
 // Codex's listener doesn't emit Blocked-state events (it only forwards opaque
 // OSC 9 notifications as Stop), so auto-toggling rich input would trap arrow
 // keys when Codex shows interactive option menus. Auto-toggle must not fire
 // for agents whose handlers report `supports_rich_status() == false`.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #[test]
 fn visible_bootstrap_block_leaves_focus_on_tab_rename_editor() {
@@ -383,4 +225,3 @@ fn visible_bootstrap_block_leaves_focus_on_tab_rename_editor() {
         }));
     });
 }
-

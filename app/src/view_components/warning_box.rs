@@ -5,12 +5,9 @@ use warpui::elements::MouseStateHandle;
 
 use crate::ui_components::icons::Icon;
 
-impl WarningBoxButtonConfig {
-}
+impl WarningBoxButtonConfig {}
 
-impl WarningBoxConfig {
-
-}
+impl WarningBoxConfig {}
 
 pub struct WarningBoxButtonConfig {
     pub label: String,

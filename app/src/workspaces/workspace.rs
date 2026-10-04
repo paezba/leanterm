@@ -52,11 +52,7 @@ pub struct Workspace {
 }
 
 impl Workspace {
-    pub fn from_local_cache(
-        uid: WorkspaceUid,
-        name: String,
-        teams: Option<Vec<Team>>,
-    ) -> Self {
+    pub fn from_local_cache(uid: WorkspaceUid, name: String, teams: Option<Vec<Team>>) -> Self {
         // Derive the workspace billing metadata from the first team's cached billing
         // metadata, if available. This ensures the workspace-level billing info is
         // consistent with team-level data loaded from the cache.
@@ -542,8 +538,7 @@ pub struct BillingMetadata {
     pub ai_overages: Option<AiOverages>,
 }
 
-impl FtueAccountClass {
-}
+impl FtueAccountClass {}
 #[derive(Clone, Debug, Default)]
 pub struct BonusGrantsPurchased {
     pub total_credits_purchased: i32,

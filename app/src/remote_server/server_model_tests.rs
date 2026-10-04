@@ -6,8 +6,8 @@ use warpui::{App, ModelHandle};
 
 use super::super::diff_state_tracker::RemoteDiffStateManager;
 use super::super::proto::{
-    Authenticate, BundledSkillMetadata, Initialize, RemoteSkillProto, ServerMessage, WriteFileResponse, WriteFileSuccess,
-    remote_skill_proto, server_message, write_file_response,
+    Authenticate, BundledSkillMetadata, Initialize, RemoteSkillProto, ServerMessage,
+    WriteFileResponse, WriteFileSuccess, remote_skill_proto, server_message, write_file_response,
 };
 use super::super::protocol::RequestId;
 use super::super::server_buffer_tracker::ServerBufferTracker;
@@ -69,10 +69,6 @@ fn test_bundled_skill_proto(id: &str) -> RemoteSkillProto {
         })),
     }
 }
-
-
-
-
 
 #[test]
 fn authenticate_with_auth_token_replaces_auth_token() {

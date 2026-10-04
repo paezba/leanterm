@@ -36,11 +36,11 @@ use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent, Updat
 use crate::cloud_object::model::view::{CloudViewModel, Editor, EditorState};
 use crate::cloud_object::{
     CloudLinkSharing, CloudModelType, CloudObject, CloudObjectEventEntrypoint, CloudObjectLocation,
-    CloudObjectSyncStatus, GenericCloudObject,
-    GenericServerObject, GenericStringObjectFormat, JsonObjectType, NumInFlightRequests,
-    ObjectDeleteResult, ObjectIdType, ObjectMetadataUpdateResult, ObjectPermissionsUpdateData,
-    ObjectType, Owner, Revision, RevisionAndLastEditor, ServerCloudObject,
-    ServerEnvVarCollection, ServerMetadata, ServerPermissions, ServerPreference, ServerWorkflowEnum, Space,
+    CloudObjectSyncStatus, GenericCloudObject, GenericServerObject, GenericStringObjectFormat,
+    JsonObjectType, NumInFlightRequests, ObjectDeleteResult, ObjectIdType,
+    ObjectMetadataUpdateResult, ObjectPermissionsUpdateData, ObjectType, Owner, Revision,
+    RevisionAndLastEditor, ServerCloudObject, ServerEnvVarCollection, ServerMetadata,
+    ServerPermissions, ServerPreference, ServerWorkflowEnum, Space,
 };
 use crate::drive::CloudObjectTypeAndId;
 use crate::drive::drive_helpers::{
@@ -120,12 +120,8 @@ pub struct ObjectOperationResult {
 
 #[derive(Debug)]
 pub enum UpdateManagerEvent {
-    ObjectOperationComplete {
-        result: ObjectOperationResult,
-    },
-    CloudPreferencesUpdated {
-        updated: Vec<Preference>,
-    },
+    ObjectOperationComplete { result: ObjectOperationResult },
+    CloudPreferencesUpdated { updated: Vec<Preference> },
 }
 
 /// An enum for choosing the behavior of the fetch_single_cloud_object function.
@@ -947,8 +943,6 @@ impl UpdateManager {
                 ctx.emit(CloudModelEvent::InitialLoadCompleted);
             });
         }
-
-
 
         if !updated_preferences.is_empty() {
             ctx.emit(UpdateManagerEvent::CloudPreferencesUpdated {

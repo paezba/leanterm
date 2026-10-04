@@ -1667,8 +1667,6 @@ fn test_restored_block_was_local() {
     assert_eq!(block.restored_block_was_local(), None);
 }
 
-
-
 #[test]
 fn test_calculate_optimal_row_counts_narrow_terminal() {
     // Terminal width < 150 should optimize based on target total cells

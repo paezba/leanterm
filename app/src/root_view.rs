@@ -78,9 +78,7 @@ use crate::util::bindings::{self, is_binding_pty_compliant};
 use crate::util::traffic_lights::{TrafficLightData, TrafficLightMouseStates, traffic_light_data};
 use crate::view_components::DismissibleToast;
 use crate::window_settings::WindowSettings;
-use crate::workspace::{
-    PaneViewLocator, Workspace, WorkspaceAction, WorkspaceRegistry,
-};
+use crate::workspace::{PaneViewLocator, Workspace, WorkspaceAction, WorkspaceRegistry};
 use crate::workspaces::team_tester::TeamTesterStatus;
 use crate::workspaces::user_workspaces::UserWorkspaces;
 use crate::{
@@ -289,7 +287,6 @@ pub fn init(app: &mut AppContext) {
         );
     }
 
-
     app.add_global_action(
         "root_view:open_drive_object_new_window",
         open_warp_drive_object,
@@ -325,9 +322,6 @@ pub fn init(app: &mut AppContext) {
         "root_view:open_settings_in_existing_window",
         RootView::open_settings_in_existing_window,
     );
-
-
-
 
     app.add_action("root_view:add_file_pane", RootView::add_file_pane);
     app.add_global_action(
@@ -1358,7 +1352,12 @@ impl NewWorkspaceSource {
             Self::TransferredTab {
                 source_window_id, ..
             } => Some(*source_window_id),
-            Self::FromTemplate { .. } | Self::Session { .. } | Self::SharedSessionAsViewer { .. } | Self::NotebookFromFilePath { .. } | Self::NotebookById { .. } | Self::WorkflowById { .. } => None,
+            Self::FromTemplate { .. }
+            | Self::Session { .. }
+            | Self::SharedSessionAsViewer { .. }
+            | Self::NotebookFromFilePath { .. }
+            | Self::NotebookById { .. }
+            | Self::WorkflowById { .. } => None,
             Self::TeamSwitched { team_uid } => return Some(*team_uid),
             Self::Restored {
                 window_snapshot, ..
@@ -1377,10 +1376,7 @@ impl NewWorkspaceSource {
     /// conversation) that a new window should reach directly, rather than being deferred
     /// behind product onboarding.
     pub(crate) fn is_content_deep_link(&self) -> bool {
-        matches!(
-            self,
-            NewWorkspaceSource::SharedSessionAsViewer { .. }
-        )
+        matches!(self, NewWorkspaceSource::SharedSessionAsViewer { .. })
     }
 }
 

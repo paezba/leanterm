@@ -31,10 +31,10 @@ use super::history::history_data_source_for_session;
 use super::workflows::{WorkflowsDataSource, cloud_workflows_data_source};
 use super::zero_state::{CommandSearchZeroStateEvent, CommandSearchZeroStateView};
 use crate::appearance::Appearance;
+use crate::auth::AuthStateProvider;
 use crate::auth::auth_manager::AuthManager;
 use crate::auth::auth_state::AuthState;
 use crate::auth::auth_view_modal::AuthViewVariant;
-use crate::auth::AuthStateProvider;
 use crate::completer::SessionContext;
 use crate::drive::settings::WarpDriveSettings;
 use crate::search::QueryFilter;
@@ -434,9 +434,7 @@ impl CommandSearchView {
             let was_immediately_executed = match &result_action {
                 ExecuteHistory(_) => true,
 
-                AcceptHistory(_)
-                | AcceptWorkflow(_)
-                | AcceptEnvVarCollection(_) => false,
+                AcceptHistory(_) | AcceptWorkflow(_) | AcceptEnvVarCollection(_) => false,
             };
 
             let (a11y_content, a11y_help_content) = if was_immediately_executed {

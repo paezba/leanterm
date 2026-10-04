@@ -15,8 +15,8 @@ use unindent::Unindent;
 #[cfg(feature = "voice_input")]
 use voice_input::VoiceInputToggledFrom;
 use warp_completer::completer::{
-    Match, MatchStrategy, MatchedSuggestion, Priority, Suggestion,
-    SuggestionResults, SuggestionType,
+    Match, MatchStrategy, MatchedSuggestion, Priority, Suggestion, SuggestionResults,
+    SuggestionType,
 };
 use warp_completer::meta::Span;
 use warpui::platform::WindowStyle;
@@ -25,7 +25,6 @@ use watcher::HomeDirectoryWatcher;
 use workflows::workflow::{Argument, ArgumentType, Workflow};
 
 use super::*;
-use crate::persisted_workspace::PersistedWorkspace;
 use crate::auth::AuthStateProvider;
 use crate::auth::auth_manager::AuthManager;
 use crate::changelog_model::ChangelogModel;
@@ -34,6 +33,7 @@ use crate::context_chips::prompt::Prompt;
 use crate::editor::{DisplayPoint, EditorAction, TextStyleOperation};
 use crate::input_suggestions::Item;
 use crate::network::NetworkStatus;
+use crate::persisted_workspace::PersistedWorkspace;
 use crate::pricing::PricingInfoModel;
 use crate::search::files::model::FileSearchModel;
 use crate::server::cloud_objects::listener::Listener;
@@ -42,10 +42,7 @@ use crate::server::server_api::ServerApiProvider;
 use crate::server::sync_queue::SyncQueue;
 use crate::server::telemetry::context_provider::AppTelemetryContextProvider;
 use crate::settings::import::model::ImportedConfigModel;
-use crate::settings::{
-    AliasExpansionSettings, AppEditorSettings,
-    PrivacySettings,
-};
+use crate::settings::{AliasExpansionSettings, AppEditorSettings, PrivacySettings};
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
 #[cfg(windows)]
 use crate::system::SystemInfo;
@@ -53,9 +50,7 @@ use crate::system::SystemStats;
 use crate::terminal::TerminalView;
 use crate::terminal::alt_screen_reporting::AltScreenReporting;
 use crate::terminal::block_list_viewport::ScrollPosition;
-use crate::terminal::event::{
-    BlockMetadataReceivedEvent, BootstrappedEvent,
-};
+use crate::terminal::event::{BlockMetadataReceivedEvent, BootstrappedEvent};
 use crate::terminal::general_settings::UserDefaultShellUnsupportedBannerState;
 use crate::terminal::keys::TerminalKeybindings;
 use crate::terminal::local_shell::LocalShellState;
@@ -76,9 +71,9 @@ use crate::warp_managed_paths_watcher::WarpManagedPathsWatcher;
 use crate::workspace::{ActiveSession, OneTimeModalModel, ToastStack, WorkspaceRegistry};
 use crate::workspaces::team_tester::TeamTesterStatus;
 use crate::workspaces::update_manager::TeamUpdateManager;
-use crate::workspaces::user_workspaces::{ UserWorkspaces};
-use crate::{ GlobalResourceHandles, GlobalResourceHandlesProvider,
-    ReferralThemeStatus, experiments,
+use crate::workspaces::user_workspaces::UserWorkspaces;
+use crate::{
+    GlobalResourceHandles, GlobalResourceHandlesProvider, ReferralThemeStatus, experiments,
 };
 
 fn pending_ctrl_r_handoff() -> PendingShellWidgetHandoff {
@@ -625,11 +620,6 @@ fn test_input_tab() {
     });
 }
 
-
-
-
-
-
 #[test]
 fn test_history_up_for_shared_session_executor() {
     App::test((), |mut app| async move {
@@ -708,56 +698,6 @@ fn test_history_up_for_shared_session_executor() {
     });
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 fn build_suggestion_results<S: Into<Span>>(
     suggestions: Vec<MatchedSuggestion>,
     replacement_span: S,
@@ -769,7 +709,6 @@ fn build_suggestion_results<S: Into<Span>>(
         match_strategy: matcher,
     })
 }
-
 
 #[derive(Debug)]
 struct CancellationTrackingExecutor(Arc<AtomicUsize>);
@@ -799,8 +738,6 @@ impl CommandExecutor for CancellationTrackingExecutor {
         false
     }
 }
-
-
 
 fn respond_to_native_shell_completions(
     app: &mut App,
@@ -939,8 +876,6 @@ fn combined_completions_preserve_nonempty_native_results() {
     });
 }
 
-
-
 #[test]
 fn native_shell_replacement_span_is_clamped_into_the_buffer_before_the_cursor() {
     let buffer_text = "cd app/D";
@@ -1027,20 +962,6 @@ fn test_tab_completion_with_multibyte_chars() {
     });
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #[test]
 fn test_open_slash_command_requires_path() {
     App::test((), |mut app| async move {
@@ -1091,15 +1012,6 @@ fn test_open_slash_command_opens_files_palette_when_entered_from_slash_menu() {
         });
     });
 }
-
-
-
-
-
-
-
-
-
 
 #[test]
 fn test_tab_completion_single_prefix_suggestion_with_fuzzy_suggestions() {
@@ -2538,9 +2450,6 @@ fn test_last_word_insertions() {
     });
 }
 
-
-
-
 #[test]
 fn test_alias_expansion_when_invalid_expansion() {
     App::test((), |mut app| async move {
@@ -2701,16 +2610,6 @@ fn test_alias_expansion_with_abbreviations() {
     });
 }
 
-
-
-
-
-
-
-
-
-
-
 #[test]
 #[cfg(feature = "voice_input")]
 fn test_voice_input_toggle_preserves_lock_state() {
@@ -2809,10 +2708,6 @@ fn test_voice_input_toggle_preserves_lock_state() {
     });
 }
 
-
-
-
-
 macro_rules! input_mode_prefix_tests {
     ($($name:ident: ($udi_enabled:literal, $input_mode:expr_2021),)*) => {
         $(
@@ -2822,20 +2717,6 @@ macro_rules! input_mode_prefix_tests {
         )*
     };
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #[test]
 #[cfg(feature = "voice_input")]
@@ -2919,7 +2800,6 @@ fn test_input_config_transitions() {
     });
 }
 
-
 #[test]
 fn test_remove_ignored_suggestion_on_command_execution() {
     App::test((), |mut app| async move {
@@ -2967,10 +2847,6 @@ fn test_remove_ignored_suggestion_on_command_execution() {
         );
     });
 }
-
-
-
-
 
 #[test]
 fn test_page_up_and_down_scroll_terminal_from_prompt() {
@@ -3207,14 +3083,6 @@ fn test_custom_terminal_page_scroll_binding_applies_when_prompt_is_focused() {
 
 // Helper: open the CLI-agent rich input for the terminal view under test.
 
-
-
-
-
-
-
-
-
 /// `unfreeze_agent_input` must NOT clear the buffer. The buffer is cleared via CRDT
 /// delete ops emitted by `system_clear_buffer` when `SentRequest` fires, which flow to
 /// both the server (for new viewers) and existing viewers (via `InputUpdated`).
@@ -3289,10 +3157,6 @@ fn unfreeze_agent_input_does_not_clear_buffer() {
     });
 }
 
-
-
-
-
 /// With the '#' AI Command Search trigger disabled (APP-5557), typing '#' at the start of the
 /// buffer must leave it (and any text typed after it) as literal input, and must not open AI
 /// Command Search — this is what lets the text be finished and submitted as a shell comment
@@ -3342,15 +3206,8 @@ fn hash_trigger_disabled_keeps_hash_literal_and_does_not_open_ai_command_search(
     });
 }
 
-
-
 #[cfg(test)]
 mod completion_sources_resolution_tests {
-    
-
-
-
-
 
     // A multi-line buffer disables native completions even on a Tab trigger with both toggles on.
 }

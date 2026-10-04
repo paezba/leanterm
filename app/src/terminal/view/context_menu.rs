@@ -1,13 +1,11 @@
 use warpui::UpdateView;
 
-use super::{ CONTEXT_MENU_WIDTH,
-    ContextMenuState, MenuItem, TerminalAction,
-    TerminalView, Tip, TipHint, ViewContext,
-    mark_feature_used_and_write_to_user_defaults,
+use super::{
+    CONTEXT_MENU_WIDTH, ContextMenuState, MenuItem, TerminalAction, TerminalView, Tip, TipHint,
+    ViewContext, mark_feature_used_and_write_to_user_defaults,
 };
 
 impl TerminalView {
-
     pub(super) fn show_context_menu(
         &mut self,
         menu_state: ContextMenuState,

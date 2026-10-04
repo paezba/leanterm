@@ -4,4 +4,3 @@
 pub enum RichContentType {
     WarpifySuccessBlock,
 }
-

@@ -62,7 +62,6 @@ pub struct EventLoop {
 
     /// A buffer to maintain events we receive from the server that are unordered.
     buffer: HashMap<usize, OrderedTerminalEventType>,
-
 }
 
 impl EventLoop {

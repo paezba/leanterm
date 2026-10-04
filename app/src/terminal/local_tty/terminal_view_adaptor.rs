@@ -1,4 +1,4 @@
-use crate::terminal::view::{ Event as TerminalViewEvent};
+use crate::terminal::view::Event as TerminalViewEvent;
 use std::any::Any;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -6,12 +6,11 @@ use std::sync::Arc;
 use std::sync::mpsc::SyncSender;
 
 use parking_lot::FairMutex;
-use session_sharing_protocol::common::{
-    ActivePrompt, AgentPromptFailureReason,
-    CommandExecutionFailureReason, WriteToPtyFailureReason,
-};
 #[cfg(not(any(test, feature = "integration_tests")))]
 use session_sharing_protocol::common::UniversalDeveloperInputContext;
+use session_sharing_protocol::common::{
+    ActivePrompt, AgentPromptFailureReason, CommandExecutionFailureReason, WriteToPtyFailureReason,
+};
 use session_sharing_protocol::sharer::{
     AddGuestsResponse, FailedToInitializeSessionReason, Lifetime, LinkAccessLevelUpdateResponse,
     QuotaType, RemoveGuestResponse, SessionEndedReason, SessionSourceType,
@@ -36,9 +35,7 @@ use crate::terminal::shared_session::manager::Manager;
 use crate::terminal::shared_session::permissions_manager::SessionPermissionsManager;
 use crate::terminal::shared_session::presence_manager::PresenceManager;
 use crate::terminal::shared_session::settings::SharedSessionSettings;
-use crate::terminal::shared_session::shared_handlers::{
-    RemoteUpdateGuard,
-};
+use crate::terminal::shared_session::shared_handlers::RemoteUpdateGuard;
 use crate::terminal::shared_session::sharer::network::{
     Network, NetworkEvent, failed_to_add_guests_user_error,
     failed_to_initialize_session_user_error, session_terminated_reason_string,
@@ -244,7 +241,6 @@ fn wire_up_terminal_view_session_sharing(
 }
 
 impl TerminalManager<TerminalView> {
-
     #[allow(clippy::too_many_arguments)]
     fn start_sharing_session(
         terminal_view: ViewHandle<TerminalView>,
@@ -414,10 +410,7 @@ impl TerminalManager<TerminalView> {
                     });
                 }
             }
-            NetworkEvent::FailedToCreateSharedSession {
-                reason,
-                cause,
-            } => {
+            NetworkEvent::FailedToCreateSharedSession { reason, cause } => {
                 log::warn!("Failed to create shared session: reason={reason:?}, cause={cause:?}");
 
                 model
@@ -501,8 +494,9 @@ impl TerminalManager<TerminalView> {
             }
             NetworkEvent::ControlActionRequested { .. } => {}
             NetworkEvent::ParticipantListUpdated(participant_list) => {
-                let was_viewer_driven_sizing_eligible = terminal_view
-                    .update(ctx, |view, ctx| view.is_viewer_driven_sizing_eligible(true, ctx));
+                let was_viewer_driven_sizing_eligible = terminal_view.update(ctx, |view, ctx| {
+                    view.is_viewer_driven_sizing_eligible(true, ctx)
+                });
 
                 if let Some(presence_manager) =
                     terminal_view.as_ref(ctx).shared_session_presence_manager()
@@ -522,8 +516,12 @@ impl TerminalManager<TerminalView> {
                     // since it was a default. Prefer to keep the viewer-set size for transcript
                     // persistence.
                     if !is_ambient_agent {
-                        let sharer_uid =
-                            participant_list.sharer.info.profile_data.firebase_uid.as_str();
+                        let sharer_uid = participant_list
+                            .sharer
+                            .info
+                            .profile_data
+                            .firebase_uid
+                            .as_str();
                         let still_eligible =
                             PresenceManager::single_distinct_present_viewer_uid_from_viewers(
                                 participant_list.viewers.iter(),
@@ -803,14 +801,13 @@ impl TerminalManager<TerminalView> {
                     });
                 }
             }
-            NetworkEvent::ViewerTerminalSizeReported {
-                window_size,
-            } => {
+            NetworkEvent::ViewerTerminalSizeReported { window_size } => {
                 if !*SharedSessionSettings::as_ref(ctx).viewer_driven_sizing_enabled {
                     return;
                 }
-                let eligible = terminal_view
-                    .update(ctx, |view, ctx| view.is_viewer_driven_sizing_eligible(true, ctx));
+                let eligible = terminal_view.update(ctx, |view, ctx| {
+                    view.is_viewer_driven_sizing_eligible(true, ctx)
+                });
                 if eligible {
                     terminal_view.update(ctx, |view, ctx| {
                         view.resize_from_viewer_report(*window_size, ctx);

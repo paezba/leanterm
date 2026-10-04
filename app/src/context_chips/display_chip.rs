@@ -17,8 +17,8 @@ use warpui::keymap::Keystroke;
 use warpui::platform::Cursor;
 use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
 use warpui::{
-    AppContext, Element, Entity, Gradient, ModelHandle, SingletonEntity, TypedActionView,
-    View, ViewContext, ViewHandle,
+    AppContext, Element, Entity, Gradient, ModelHandle, SingletonEntity, TypedActionView, View,
+    ViewContext, ViewHandle,
 };
 
 use super::directory_fetcher::{
@@ -637,7 +637,13 @@ impl DisplayChipKind {
             DisplayChipKind::NodeVersion { popup_open, .. } => *popup_open,
             DisplayChipKind::GitBranch { menu_open, .. }
             | DisplayChipKind::GitBranchStatus { menu_open, .. } => *menu_open,
-            DisplayChipKind::GithubPullRequest | DisplayChipKind::GitDiffStats { .. } | DisplayChipKind::Text | DisplayChipKind::Ssh | DisplayChipKind::Subshell | DisplayChipKind::VirtualEnvironment | DisplayChipKind::CondaEnvironment => false,
+            DisplayChipKind::GithubPullRequest
+            | DisplayChipKind::GitDiffStats { .. }
+            | DisplayChipKind::Text
+            | DisplayChipKind::Ssh
+            | DisplayChipKind::Subshell
+            | DisplayChipKind::VirtualEnvironment
+            | DisplayChipKind::CondaEnvironment => false,
         }
     }
 }
@@ -856,7 +862,6 @@ impl DisplayChip {
         is_in_agent_view: bool,
         ctx: &mut ViewContext<Self>,
     ) -> Self {
-
         let display_chip_kind = match chip_result.kind {
             ContextChipKind::ShellGitBranch => DisplayChipKind::GitBranch {
                 menu_open: false,
@@ -1030,10 +1035,6 @@ impl DisplayChip {
             _ => DisplayChipKind::Text,
         };
 
-
-
-
-
         // Cache the code review keybinding and subscribe to changes.
         let code_review_keybinding =
             keybinding_name_to_display_string(TOGGLE_RIGHT_PANEL_BINDING_NAME, ctx);
@@ -1145,7 +1146,14 @@ impl DisplayChip {
                     return true;
                 }
             }
-            DisplayChipKind::GitDiffStats { .. } | DisplayChipKind::Text | DisplayChipKind::Ssh | DisplayChipKind::Subshell | DisplayChipKind::VirtualEnvironment | DisplayChipKind::CondaEnvironment | DisplayChipKind::NodeVersion { .. } | DisplayChipKind::GithubPullRequest => {}
+            DisplayChipKind::GitDiffStats { .. }
+            | DisplayChipKind::Text
+            | DisplayChipKind::Ssh
+            | DisplayChipKind::Subshell
+            | DisplayChipKind::VirtualEnvironment
+            | DisplayChipKind::CondaEnvironment
+            | DisplayChipKind::NodeVersion { .. }
+            | DisplayChipKind::GithubPullRequest => {}
         }
         false
     }
@@ -1258,8 +1266,7 @@ impl DisplayChip {
             appearance.theme().ansi_fg_green()
         };
 
-        let is_interactive =
-            !self.is_shared_session_viewer;
+        let is_interactive = !self.is_shared_session_viewer;
         let is_in_agent_view = self.is_in_agent_view;
         let chip_text = self.text.clone();
         let hover = Hoverable::new(self.mouse_state.clone(), move |state| {
@@ -1384,8 +1391,7 @@ impl DisplayChip {
             appearance.monospace_font_family()
         };
         let font_size = udi_font_size(appearance);
-        let is_interactive =
-            !self.is_shared_session_viewer;
+        let is_interactive = !self.is_shared_session_viewer;
         let fallback_branch = self.text.clone();
         let tracking_status = tracking_status
             .clone()
@@ -1960,9 +1966,7 @@ pub enum PromptChipShellCommand {
 pub enum PromptDisplayChipEvent {
     OpenFile(String),
     OpenTextFileInCodeEditor(String),
-    ToggleMenu {
-        open: bool,
-    },
+    ToggleMenu { open: bool },
     OpenCodeReview,
     OpenCommandPaletteFiles,
     TryExecuteCommand(PromptChipShellCommand),
@@ -1993,7 +1997,13 @@ impl TypedActionView for DisplayChip {
                     });
                     ctx.notify();
                 }
-                DisplayChipKind::Ssh | DisplayChipKind::Subshell | DisplayChipKind::VirtualEnvironment | DisplayChipKind::CondaEnvironment | DisplayChipKind::Text | DisplayChipKind::GithubPullRequest | DisplayChipKind::GitDiffStats { .. } => {}
+                DisplayChipKind::Ssh
+                | DisplayChipKind::Subshell
+                | DisplayChipKind::VirtualEnvironment
+                | DisplayChipKind::CondaEnvironment
+                | DisplayChipKind::Text
+                | DisplayChipKind::GithubPullRequest
+                | DisplayChipKind::GitDiffStats { .. } => {}
                 DisplayChipKind::NodeVersion { popup_open, .. } => {
                     *popup_open = false;
                     ctx.notify();

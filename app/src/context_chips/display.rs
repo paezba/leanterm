@@ -7,8 +7,8 @@ use warpui::elements::{
     MainAxisSize, ParentElement, Wrap,
 };
 use warpui::{
-    AppContext, Entity, FocusContext, ModelHandle, SingletonEntity, TypedActionView,
-    View, ViewContext, ViewHandle,
+    AppContext, Entity, FocusContext, ModelHandle, SingletonEntity, TypedActionView, View,
+    ViewContext, ViewHandle,
 };
 
 use super::display_chip::{DisplayChip, DisplayChipConfig, PromptDisplayChipEvent};
@@ -57,7 +57,6 @@ pub struct PromptDisplay {
 
     /// Whether this terminal is viewing a shared session.
     is_shared_session_viewer: bool,
-
 }
 
 const PROMPT_CHIP_DISPLAY_ID: &str = "PromptChipDisplay";
@@ -70,9 +69,7 @@ pub enum PromptDisplayAction {
 pub enum PromptDisplayEvent {
     OpenFile(String),
     OpenTextFileInCodeEditor(String),
-    ToggleMenu {
-        open: bool,
-    },
+    ToggleMenu { open: bool },
     OpenCodeReview,
     OpenCommandPaletteFiles,
     TryExecuteCommand(PromptChipShellCommand),
@@ -90,9 +87,6 @@ impl PromptDisplay {
         ctx: &mut ViewContext<Self>,
     ) -> Self {
         ctx.observe(&prompt, |me, _, ctx| me.handle_prompt_change(ctx));
-
-
-
 
         Self {
             prompt,
@@ -261,7 +255,12 @@ impl PromptDisplay {
             prompt
                 .chips(ctx)
                 .iter()
-                .find(|chip_result| matches!(chip_result.kind, crate::context_chips::ContextChipKind::ShellGitBranch))
+                .find(|chip_result| {
+                    matches!(
+                        chip_result.kind,
+                        crate::context_chips::ContextChipKind::ShellGitBranch
+                    )
+                })
                 .and_then(|chip_result| chip_result.value.as_ref().map(|v| v.to_string()))
         })
     }

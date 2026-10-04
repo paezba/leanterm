@@ -91,6 +91,3 @@ fn header_toolbar_chip_selection_default_contains_code_review() {
     let config = HeaderToolbarChipSelection::Default;
     assert!(config.contains_item(&HeaderToolbarItemKind::CodeReview));
 }
-
-
-

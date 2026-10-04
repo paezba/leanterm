@@ -195,10 +195,8 @@ pub struct Block {
     /// model because they may be shown for debugging purposes.
     pub(super) is_for_in_band_command: bool,
 
-
     /// Blocklist Env var metadata associated with this block, if any.
     env_var_metadata: Option<BlocklistEnvVarMetadata>,
-
 
     /// This represents when a banner appears in this Block above the prompt.
     pub(super) block_banner: Option<WithinBlockBanner>,
@@ -250,11 +248,8 @@ pub struct Block {
     /// track the count of discarded newlines here in order to correct the row number.
     leading_linefeeds_ignored: usize,
 
-
     /// Only set on restored blocks. Indicates whether the block was local or from a remote session.
     restored_block_was_local: Option<bool>,
-
-
 
     visible_bootstrap_block_event_sent: bool,
 }

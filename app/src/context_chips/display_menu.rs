@@ -10,11 +10,11 @@ use warp_core::ui::theme::Fill;
 use warp_editor::editor::NavigationKey;
 use warpui::color::ColorU;
 use warpui::elements::{
-    Border, ConstrainedBox,
-    Container, CornerRadius, CrossAxisAlignment, Dismiss, DispatchEventResult, DropShadow, Empty,
-    EventHandler, Flex, Highlight, Hoverable, MainAxisAlignment, MainAxisSize, MouseInBehavior,
-    MouseStateHandle, ParentElement, Radius, SavePosition, ScrollStateHandle, Scrollable,
-    ScrollableElement, ScrollbarWidth, Stack, Text, UniformList, UniformListState,
+    Border, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Dismiss,
+    DispatchEventResult, DropShadow, Empty, EventHandler, Flex, Highlight, Hoverable,
+    MainAxisAlignment, MainAxisSize, MouseInBehavior, MouseStateHandle, ParentElement, Radius,
+    SavePosition, ScrollStateHandle, Scrollable, ScrollableElement, ScrollbarWidth, Stack, Text,
+    UniformList, UniformListState,
 };
 use warpui::fonts::{Properties, Weight};
 use warpui::keymap::FixedBinding;
@@ -506,7 +506,7 @@ impl DisplayChipMenu {
             if has_footer && !self.is_footer_selected() {
                 self.is_footer_selected = true;
             }
-        } 
+        }
         self.list_state.scroll_to(self.selected_index);
         ctx.notify();
     }

@@ -3,7 +3,9 @@
 #[cfg(feature = "local_fs")]
 use std::path::Path;
 
-use warpui::elements::{Border, Container, CornerRadius, Flex, MouseStateHandle, ParentElement, Radius};
+use warpui::elements::{
+    Border, Container, CornerRadius, Flex, MouseStateHandle, ParentElement, Radius,
+};
 use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
 use warpui::{AppContext, Element, EventContext};
 

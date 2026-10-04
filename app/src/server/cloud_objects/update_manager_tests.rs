@@ -4437,15 +4437,6 @@ fn test_leave_shared_object() {
     });
 }
 
-
-
-
-
-
-
-
-
-
 #[test]
 fn test_object_action_histories_with_initial_load() {
     App::test(ASSETS, |mut app| async move {
@@ -4960,7 +4951,6 @@ fn test_move_object_personal_to_team_failure() {
     });
 }
 
-
 /// Test successfully moving a workflow with workflow enums from a user's personal space to a team drive.
 /// This test checks that when we move from personal to team space, we create a new enum in the new space
 /// and change the reference stored within the workflow to point to that enum.
@@ -5342,7 +5332,6 @@ fn test_move_object_root_to_folder_success() {
         );
     });
 }
-
 
 /// Test moving an object from a folder to the root of its space. This checks metadata before,
 /// during, and after a move where the object's parent folder changes from `Some` to `None`.

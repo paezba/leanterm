@@ -1,7 +1,7 @@
 use warpui::AppContext;
 
-use crate::context_chips::display_chip::GitLineChanges;
 use crate::context_chips::ContextChipKind;
+use crate::context_chips::display_chip::GitLineChanges;
 use crate::terminal::TerminalView;
 
 impl TerminalView {
@@ -88,11 +88,10 @@ impl TerminalView {
             .git_status_metadata(ctx)
             .map(|metadata| GitLineChanges::from_diff_stats(&metadata.stats_against_head));
 
-        from_model
-            .filter(|line_changes| {
-                line_changes.files_changed > 0
-                    || line_changes.lines_added > 0
-                    || line_changes.lines_removed > 0
-            })
+        from_model.filter(|line_changes| {
+            line_changes.files_changed > 0
+                || line_changes.lines_added > 0
+                || line_changes.lines_removed > 0
+        })
     }
 }

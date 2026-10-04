@@ -71,9 +71,7 @@ use crate::ui_components::icons::ICON_DIMENSIONS;
 use crate::util::bindings::CustomAction;
 #[cfg(feature = "local_fs")]
 use crate::util::link_detection::{DetectedLinkType, detect_file_paths, get_word_range_at_offset};
-use crate::util::tooltips::{
-    TooltipLink, render_tooltip, should_show_open_in_warp_link,
-};
+use crate::util::tooltips::{TooltipLink, render_tooltip, should_show_open_in_warp_link};
 use crate::view_components::DismissibleToast;
 use crate::workspace::WorkspaceAction;
 

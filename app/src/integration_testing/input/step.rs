@@ -5,11 +5,8 @@ use warpui::windowing::WindowManager;
 
 use crate::integration_testing::step::new_step_with_default_assertions;
 use crate::integration_testing::terminal::assert_context_menu_is_open;
-use crate::integration_testing::view_getters::{
-    single_input_view_for_tab, single_terminal_view,
-};
+use crate::integration_testing::view_getters::{single_input_view_for_tab, single_terminal_view};
 use crate::terminal::view::TerminalAction;
-
 
 /// Asserts that the Rich Input buffer text for `tab_index` is empty.
 pub fn rich_input_buffer_text_is_empty(tab_index: usize) -> warpui::integration::AssertionCallback {
@@ -76,5 +73,3 @@ pub fn open_input_context_menu() -> TestStep {
         })
         .add_assertion(assert_context_menu_is_open(true))
 }
-
-

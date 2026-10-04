@@ -242,7 +242,6 @@ pub fn render_settings_error_alert(
         .with_run_spacing(ALERT_BUTTON_SPACING)
         .with_child(open_file_button);
 
-
     // ── Assemble ─────────────────────────────────────────────────────────
     // Left-align the buttons with the start of the text (past the icon + gap).
     let buttons_indented = Container::new(buttons_row.finish())

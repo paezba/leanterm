@@ -1,4 +1,3 @@
-
 use ai::diff_validation::DiffType;
 use warp_editor::render::element::VerticalExpansionBehavior;
 use warpui::elements::ScrollbarWidth;
@@ -27,7 +26,6 @@ pub enum DisplayMode {
 }
 
 impl DisplayMode {
-
     pub(crate) fn scroll_wheel_behavior(&self) -> ScrollWheelBehavior {
         match self {
             DisplayMode::InlineBanner {
@@ -68,7 +66,6 @@ impl DisplayMode {
     pub(crate) fn show_nav_bar(&self) -> bool {
         !matches!(self, DisplayMode::InlineBanner { .. })
     }
-
 }
 
 /// A shared trait for views that display an inline diff.
@@ -91,5 +88,4 @@ where
             editor.set_nav_bar_behavior(NavBarBehavior::NotClosable, ctx);
         });
     }
-
 }

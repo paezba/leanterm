@@ -1,4 +1,3 @@
-
 use pathfinder_geometry::rect::RectF;
 use warpui::platform::WindowBounds;
 

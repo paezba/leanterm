@@ -328,7 +328,6 @@ pub struct UserBlockCompleted {
     /// Forced secrets to be obfuscated as well.
     pub output_truncated_with_obfuscated_secrets: Lazy<String, BlockList>,
 
-
     /// Time that we started the command grid (i.e. immediately after the user
     /// hit enter).
     pub started_at: Option<Instant>,

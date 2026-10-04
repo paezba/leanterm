@@ -1,5 +1,3 @@
-
-
 use super::{BlockListFindRun, BlockListMatch};
 
 impl BlockListFindRun {
@@ -7,10 +5,3 @@ impl BlockListFindRun {
         &self.matches[..]
     }
 }
-
-
-
-
-
-
-

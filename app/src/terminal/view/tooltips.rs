@@ -269,8 +269,7 @@ fn render_tooltip(
         }
     });
 
-    let tooltip_content =
-        crate::util::tooltips::render_tooltip(shared_links, appearance);
+    let tooltip_content = crate::util::tooltips::render_tooltip(shared_links, appearance);
 
     Dismiss::new(tooltip_content)
         .on_dismiss(|ctx, _app| {

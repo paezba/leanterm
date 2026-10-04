@@ -1,6 +1,4 @@
-use warp_graphql::billing::{
-    OveragesPricing, PlanPricing, PricingInfo, StripeSubscriptionPlan,
-};
+use warp_graphql::billing::{OveragesPricing, PlanPricing, PricingInfo, StripeSubscriptionPlan};
 use warpui::{Entity, ModelContext, SingletonEntity};
 
 /// A global model for maintaining pricing information from the server.
@@ -59,7 +57,6 @@ impl PricingInfoModel {
         self.plan_pricing(plan)
             .map(|pricing| pricing.monthly_plan_price_per_month_usd_cents as f64 / 100.0)
     }
-
 }
 
 impl Default for PricingInfoModel {

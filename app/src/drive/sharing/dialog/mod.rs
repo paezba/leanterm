@@ -748,7 +748,6 @@ impl SharingDialog {
             return;
         }
 
-
         match self.target_cloud_object(ctx) {
             Some(object) => {
                 let object_id = object.sync_id();
@@ -872,12 +871,10 @@ impl SharingDialog {
                             SharingAccessLevel::Edit,
                         ))
                         .with_disabled(
-                            inherited_access
-                                && current_access_level >= SharingAccessLevel::Edit,
+                            inherited_access && current_access_level >= SharingAccessLevel::Edit,
                         )
                         .into_item(),
                 );
-
 
                 // Add Remove option for non-team guests, or for team guests in non-session contexts
                 // (team removal is supported for WarpDrive objects, but not sessions)
@@ -895,10 +892,7 @@ impl SharingDialog {
                 menu.set_selected_by_index(
                     match current_access_level {
                         SharingAccessLevel::View => 0,
-                        SharingAccessLevel::Edit => {
-                            1
-
-                        }
+                        SharingAccessLevel::Edit => 1,
                         // Not yet supported, so default to view.
                         SharingAccessLevel::Full => 0,
                     },
@@ -1102,7 +1096,6 @@ impl SharingDialog {
 
     /// Reset the invite access level menu based on the current target.
     fn reset_invite_access_level_menu(&mut self, ctx: &mut ViewContext<Self>) {
-
         self.invite_form.access_level_menu.update(ctx, |menu, ctx| {
             let mut items = vec![
                 MenuItemFields::new(SharingAccessLevel::View.label())
@@ -1120,16 +1113,12 @@ impl SharingDialog {
                     .into_item(),
             );
 
-
             menu.set_items(items, ctx);
             // Always select View (index 0) for AI conversations
             menu.set_selected_by_index(
                 match self.invite_form.selected_access_level {
                     SharingAccessLevel::View => 0,
-                    SharingAccessLevel::Edit => {
-                        1
-
-                    }
+                    SharingAccessLevel::Edit => 1,
                     SharingAccessLevel::Full => 0,
                 },
                 ctx,
@@ -1792,17 +1781,13 @@ impl SharingDialog {
                 .into_item(),
         );
 
-
         self.link_sharing_menu.update(ctx, |menu, ctx| {
             menu.set_items(items, ctx);
             menu.set_selected_by_index(
                 match current_access_level {
                     None => 0,
                     Some(SharingAccessLevel::View) => 3,
-                    Some(SharingAccessLevel::Edit) => {
-                        4
-
-                    }
+                    Some(SharingAccessLevel::Edit) => 4,
                     Some(SharingAccessLevel::Full) => 3,
                 },
                 ctx,
@@ -2655,12 +2640,13 @@ impl TypedActionView for SharingDialog {
                         update_manager.set_object_link_permissions(*id, *access_level, ctx);
                     });
                 } else if let Some(ShareableObject::Session { handle, .. }) = self.target.as_ref()
-                    && let Some(view) = handle.upgrade(ctx) {
-                        let role = access_level.map(|access_level| access_level.into());
-                        view.update(ctx, |view, ctx| {
-                            view.update_session_link_permissions(role, ctx)
-                        });
-                    }
+                    && let Some(view) = handle.upgrade(ctx)
+                {
+                    let role = access_level.map(|access_level| access_level.into());
+                    view.update(ctx, |view, ctx| {
+                        view.update_session_link_permissions(role, ctx)
+                    });
+                }
                 ctx.notify();
             }
             SharingDialogAction::SetTeamPermissions(access_level) => {

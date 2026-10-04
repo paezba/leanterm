@@ -16,4 +16,3 @@ pub fn assert_secret_tooltip_open(open: bool) -> AssertionCallback {
         })
     })
 }
-

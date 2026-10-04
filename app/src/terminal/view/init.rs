@@ -1,9 +1,7 @@
-use crate::server::telemetry::{ ToggleBlockFilterSource};
+use crate::server::telemetry::ToggleBlockFilterSource;
 use warp_core::context_flag::ContextFlag;
 use warpui::AppContext;
-use warpui::keymap::{
-    EditableBinding, FixedBinding, PerPlatformKeystroke,
-};
+use warpui::keymap::{EditableBinding, FixedBinding, PerPlatformKeystroke};
 use warpui::platform::OperatingSystem;
 use warpui::units::IntoLines;
 
@@ -622,11 +620,9 @@ pub fn init(app: &mut AppContext) {
         ),
     ]);
 
-    app.register_editable_bindings([
-    ]);
+    app.register_editable_bindings([]);
 
-    app.register_editable_bindings([
-    ]);
+    app.register_editable_bindings([]);
 
     if FeatureFlag::CommandCorrectionKey.is_enabled() {
         app.register_editable_bindings([EditableBinding::new(
@@ -637,8 +633,7 @@ pub fn init(app: &mut AppContext) {
         .with_context_predicate(id!("Terminal"))]);
     }
 
-    app.register_editable_bindings([
-    ]);
+    app.register_editable_bindings([]);
 
     app.register_editable_bindings([EditableBinding::new(
         "workspace:open_settings_import_page",
@@ -690,10 +685,7 @@ pub fn init(app: &mut AppContext) {
     )
     .with_context_predicate(id!("Terminal"))]);
 
-    app.register_editable_bindings([
-    ]);
-
-
+    app.register_editable_bindings([]);
 
     app.register_editable_bindings([EditableBinding::new(
         "terminal:toggle_session_recording",
@@ -703,12 +695,8 @@ pub fn init(app: &mut AppContext) {
     .with_enabled(|| cfg!(feature = "local_fs") && ChannelState::enable_debug_features())
     .with_context_predicate(id!("Terminal"))]);
 
-
-
     #[cfg(not(target_arch = "wasm32"))]
-
-    app.register_editable_bindings([
-    ]);
+    app.register_editable_bindings([]);
 
     // Register bindings for starting a new cloud agent conversation.
     {

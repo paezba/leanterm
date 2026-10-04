@@ -1,4 +1,4 @@
-use crate::terminal::{ ShareBlockType};
+use crate::terminal::ShareBlockType;
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
@@ -1454,9 +1454,7 @@ impl TelemetryEvent {
                 Some(json!({ "source": source, "trigger": trigger }))
             }
             TelemetryEvent::NotificationFailedToSend { error } => Some(json!({ "error": error })),
-            TelemetryEvent::NotificationSent {
-                trigger,
-            } => Some(json!({
+            TelemetryEvent::NotificationSent { trigger } => Some(json!({
                 "trigger": trigger,
             })),
             TelemetryEvent::NotificationsRequestPermissionsOutcome { outcome } => {
@@ -1866,7 +1864,101 @@ impl TelemetryEvent {
             TelemetryEvent::TabCloseButtonPositionUpdated { position } => Some(json!({
                 "position": position,
             })),
-            TelemetryEvent::BackgroundBlockStarted | TelemetryEvent::SessionCreation | TelemetryEvent::Login | TelemetryEvent::ContextMenuInsertSelectedText | TelemetryEvent::JumpToPreviousCommand | TelemetryEvent::CopyInviteLink | TelemetryEvent::OpenThemeChooser | TelemetryEvent::OpenThemeCreatorModal | TelemetryEvent::CreateCustomTheme | TelemetryEvent::DeleteCustomTheme | TelemetryEvent::SplitPane | TelemetryEvent::UnableToAutoUpdateToNewVersion | TelemetryEvent::SkipOnboardingSurvey | TelemetryEvent::LoggedOutStartup | TelemetryEvent::OpenWorkflowSearch | TelemetryEvent::OpenQuakeModeWindow | TelemetryEvent::OpenWelcomeTips | TelemetryEvent::DismissWelcomeTips | TelemetryEvent::ShowNotificationsDiscoveryBanner | TelemetryEvent::ShowNotificationsErrorBanner | TelemetryEvent::NotificationClicked | TelemetryEvent::SignUpButtonClicked | TelemetryEvent::OpenNewSessionFromFilePath | TelemetryEvent::OpenTeamFromURI | TelemetryEvent::SelectNavigationPaletteItem | TelemetryEvent::DragAndDropTab | TelemetryEvent::DragAndDropTabGroup | TelemetryEvent::TriedToExecuteBeforePrecmd | TelemetryEvent::JumpToBookmark | TelemetryEvent::JumpToBottomofBlockButtonClicked | TelemetryEvent::ShowInFileExplorer | TelemetryEvent::OpenLaunchConfigSaveModal | TelemetryEvent::OpenLaunchConfigFile | TelemetryEvent::TeamCreated | TelemetryEvent::TeamJoined | TelemetryEvent::TeamLeft | TelemetryEvent::TeamLinkCopied | TelemetryEvent::RemovedUserFromTeam | TelemetryEvent::DeletedWorkflow | TelemetryEvent::DeletedNotebook | TelemetryEvent::ToggleApprovalsModal | TelemetryEvent::ChangedInviteViewOption(_) | TelemetryEvent::SendEmailInvites | TelemetryEvent::ResourceCenterOpened | TelemetryEvent::ResourceCenterTipsCompleted | TelemetryEvent::ResourceCenterTipsSkipped | TelemetryEvent::KeybindingsPageOpened | TelemetryEvent::OpenedAltScreenFind | TelemetryEvent::QuitModalDisabled | TelemetryEvent::UserInitiatedLogOut | TelemetryEvent::LogOutModalShown | TelemetryEvent::OpenInputContextMenu | TelemetryEvent::InputCutSelectedText | TelemetryEvent::InputCopySelectedText | TelemetryEvent::InputSelectAll | TelemetryEvent::InputPaste | TelemetryEvent::InputCommandSearch | TelemetryEvent::SetNewWindowsAtCustomSize | TelemetryEvent::DisableInputSync | TelemetryEvent::ShowSubshellBanner | TelemetryEvent::AddDenylistedSubshellCommand | TelemetryEvent::RemoveDenylistedSubshellCommand | TelemetryEvent::AddAddedSubshellCommand | TelemetryEvent::RemoveAddedSubshellCommand | TelemetryEvent::ReceivedSubshellRcFileDcs | TelemetryEvent::ShowAliasExpansionBanner | TelemetryEvent::EnableAliasExpansionFromBanner | TelemetryEvent::DismissAliasExpansionBanner | TelemetryEvent::ShowVimKeybindingsBanner | TelemetryEvent::EnableVimKeybindingsFromBanner | TelemetryEvent::DismissVimKeybindingsBanner | TelemetryEvent::InitiateReauth | TelemetryEvent::NeedsReauth | TelemetryEvent::AnonymousUserExpirationLockout | TelemetryEvent::AnonymousUserLinkedFromBrowser | TelemetryEvent::AnonymousUserHitCloudObjectLimit | TelemetryEvent::CustomSecretRegexAdded | TelemetryEvent::CopySecret | TelemetryEvent::CommandFileRun | TelemetryEvent::SharerGrantModalDontShowAgain | TelemetryEvent::LogOut | TelemetryEvent::UpdateBlockFilterQuery | TelemetryEvent::BlockFilterToolbeltButtonClicked | TelemetryEvent::PaneDragInitiated | TelemetryEvent::SharedObjectLimitHitBannerViewPlansButtonClicked | TelemetryEvent::SharedSessionModalUpgradePressed | TelemetryEvent::SettingsImportResetButtonClicked | TelemetryEvent::ITermMultipleHotkeys | TelemetryEvent::DriveSharingOnboardingBlockShown | TelemetryEvent::SettingsImportInitiated | TelemetryEvent::UserMenuUpgradeClicked | TelemetryEvent::FileTreeItemCreated | TelemetryEvent::GlobalSearchOpened | TelemetryEvent::GlobalSearchQueryStarted | TelemetryEvent::GetStartedSkipToTerminal => None,
+            TelemetryEvent::BackgroundBlockStarted
+            | TelemetryEvent::SessionCreation
+            | TelemetryEvent::Login
+            | TelemetryEvent::ContextMenuInsertSelectedText
+            | TelemetryEvent::JumpToPreviousCommand
+            | TelemetryEvent::CopyInviteLink
+            | TelemetryEvent::OpenThemeChooser
+            | TelemetryEvent::OpenThemeCreatorModal
+            | TelemetryEvent::CreateCustomTheme
+            | TelemetryEvent::DeleteCustomTheme
+            | TelemetryEvent::SplitPane
+            | TelemetryEvent::UnableToAutoUpdateToNewVersion
+            | TelemetryEvent::SkipOnboardingSurvey
+            | TelemetryEvent::LoggedOutStartup
+            | TelemetryEvent::OpenWorkflowSearch
+            | TelemetryEvent::OpenQuakeModeWindow
+            | TelemetryEvent::OpenWelcomeTips
+            | TelemetryEvent::DismissWelcomeTips
+            | TelemetryEvent::ShowNotificationsDiscoveryBanner
+            | TelemetryEvent::ShowNotificationsErrorBanner
+            | TelemetryEvent::NotificationClicked
+            | TelemetryEvent::SignUpButtonClicked
+            | TelemetryEvent::OpenNewSessionFromFilePath
+            | TelemetryEvent::OpenTeamFromURI
+            | TelemetryEvent::SelectNavigationPaletteItem
+            | TelemetryEvent::DragAndDropTab
+            | TelemetryEvent::DragAndDropTabGroup
+            | TelemetryEvent::TriedToExecuteBeforePrecmd
+            | TelemetryEvent::JumpToBookmark
+            | TelemetryEvent::JumpToBottomofBlockButtonClicked
+            | TelemetryEvent::ShowInFileExplorer
+            | TelemetryEvent::OpenLaunchConfigSaveModal
+            | TelemetryEvent::OpenLaunchConfigFile
+            | TelemetryEvent::TeamCreated
+            | TelemetryEvent::TeamJoined
+            | TelemetryEvent::TeamLeft
+            | TelemetryEvent::TeamLinkCopied
+            | TelemetryEvent::RemovedUserFromTeam
+            | TelemetryEvent::DeletedWorkflow
+            | TelemetryEvent::DeletedNotebook
+            | TelemetryEvent::ToggleApprovalsModal
+            | TelemetryEvent::ChangedInviteViewOption(_)
+            | TelemetryEvent::SendEmailInvites
+            | TelemetryEvent::ResourceCenterOpened
+            | TelemetryEvent::ResourceCenterTipsCompleted
+            | TelemetryEvent::ResourceCenterTipsSkipped
+            | TelemetryEvent::KeybindingsPageOpened
+            | TelemetryEvent::OpenedAltScreenFind
+            | TelemetryEvent::QuitModalDisabled
+            | TelemetryEvent::UserInitiatedLogOut
+            | TelemetryEvent::LogOutModalShown
+            | TelemetryEvent::OpenInputContextMenu
+            | TelemetryEvent::InputCutSelectedText
+            | TelemetryEvent::InputCopySelectedText
+            | TelemetryEvent::InputSelectAll
+            | TelemetryEvent::InputPaste
+            | TelemetryEvent::InputCommandSearch
+            | TelemetryEvent::SetNewWindowsAtCustomSize
+            | TelemetryEvent::DisableInputSync
+            | TelemetryEvent::ShowSubshellBanner
+            | TelemetryEvent::AddDenylistedSubshellCommand
+            | TelemetryEvent::RemoveDenylistedSubshellCommand
+            | TelemetryEvent::AddAddedSubshellCommand
+            | TelemetryEvent::RemoveAddedSubshellCommand
+            | TelemetryEvent::ReceivedSubshellRcFileDcs
+            | TelemetryEvent::ShowAliasExpansionBanner
+            | TelemetryEvent::EnableAliasExpansionFromBanner
+            | TelemetryEvent::DismissAliasExpansionBanner
+            | TelemetryEvent::ShowVimKeybindingsBanner
+            | TelemetryEvent::EnableVimKeybindingsFromBanner
+            | TelemetryEvent::DismissVimKeybindingsBanner
+            | TelemetryEvent::InitiateReauth
+            | TelemetryEvent::NeedsReauth
+            | TelemetryEvent::AnonymousUserExpirationLockout
+            | TelemetryEvent::AnonymousUserLinkedFromBrowser
+            | TelemetryEvent::AnonymousUserHitCloudObjectLimit
+            | TelemetryEvent::CustomSecretRegexAdded
+            | TelemetryEvent::CopySecret
+            | TelemetryEvent::CommandFileRun
+            | TelemetryEvent::SharerGrantModalDontShowAgain
+            | TelemetryEvent::LogOut
+            | TelemetryEvent::UpdateBlockFilterQuery
+            | TelemetryEvent::BlockFilterToolbeltButtonClicked
+            | TelemetryEvent::PaneDragInitiated
+            | TelemetryEvent::SharedObjectLimitHitBannerViewPlansButtonClicked
+            | TelemetryEvent::SharedSessionModalUpgradePressed
+            | TelemetryEvent::SettingsImportResetButtonClicked
+            | TelemetryEvent::ITermMultipleHotkeys
+            | TelemetryEvent::DriveSharingOnboardingBlockShown
+            | TelemetryEvent::SettingsImportInitiated
+            | TelemetryEvent::UserMenuUpgradeClicked
+            | TelemetryEvent::FileTreeItemCreated
+            | TelemetryEvent::GlobalSearchOpened
+            | TelemetryEvent::GlobalSearchQueryStarted
+            | TelemetryEvent::GetStartedSkipToTerminal => None,
             TelemetryEvent::GlobalSearchQueryCompleted {
                 duration_ms,
                 remote_host_count,
@@ -2058,7 +2150,265 @@ impl TelemetryEvent {
     pub fn contains_ugc(&self) -> bool {
         match self {
             TelemetryEvent::BootstrappingSlowContents { .. } => true,
-            TelemetryEvent::BlockCompleted { .. } | TelemetryEvent::BlockCompletedOnDogfoodOnly { .. } | TelemetryEvent::BackgroundBlockStarted | TelemetryEvent::SessionCreation | TelemetryEvent::Login | TelemetryEvent::ConfirmSuggestion { .. } | TelemetryEvent::ContextMenuCopy(_, _) | TelemetryEvent::ContextMenuOpenShareModal(_) | TelemetryEvent::ContextMenuFindWithinBlocks(_) | TelemetryEvent::ContextMenuCopyPrompt { .. } | TelemetryEvent::ContextMenuToggleGitPromptDirtyIndicator { .. } | TelemetryEvent::ContextMenuInsertSelectedText | TelemetryEvent::OpenPromptEditor { .. } | TelemetryEvent::PromptEdited { .. } | TelemetryEvent::ReinputCommands(_) | TelemetryEvent::JumpToPreviousCommand | TelemetryEvent::CopyBlockSharingLink(_) | TelemetryEvent::GenerateBlockSharingLink { .. } | TelemetryEvent::BlockSelection(_) | TelemetryEvent::BootstrappingSlow(_) | TelemetryEvent::SessionAbandonedBeforeBootstrap { .. } | TelemetryEvent::BootstrappingSucceeded(_) | TelemetryEvent::CopyInviteLink | TelemetryEvent::OpenThemeChooser | TelemetryEvent::ThemeSelection { .. } | TelemetryEvent::AppIconSelection { .. } | TelemetryEvent::CursorDisplayType { .. } | TelemetryEvent::OpenThemeCreatorModal | TelemetryEvent::CreateCustomTheme | TelemetryEvent::DeleteCustomTheme | TelemetryEvent::SplitPane | TelemetryEvent::UnableToAutoUpdateToNewVersion | TelemetryEvent::AutoupdateRelaunchAttempt { .. } | TelemetryEvent::SkipOnboardingSurvey | TelemetryEvent::ToggleRestoreSession(_) | TelemetryEvent::DatabaseStartUpError(_) | TelemetryEvent::DatabaseReadError(_) | TelemetryEvent::DatabaseWriteError(_) | TelemetryEvent::AppStartup(_) | TelemetryEvent::LoggedOutStartup | TelemetryEvent::DownloadSource(_) | TelemetryEvent::SSHBootstrapAttempt(_) | TelemetryEvent::SSHControlMasterError { .. } | TelemetryEvent::KeybindingChanged { .. } | TelemetryEvent::KeybindingResetToDefault { .. } | TelemetryEvent::KeybindingRemoved { .. } | TelemetryEvent::FeaturesPageAction { .. } | TelemetryEvent::WorkflowExecuted(_) | TelemetryEvent::WorkflowSelected(_) | TelemetryEvent::OpenWorkflowSearch | TelemetryEvent::OpenQuakeModeWindow | TelemetryEvent::OpenWelcomeTips | TelemetryEvent::CompleteWelcomeTipFeature { .. } | TelemetryEvent::DismissWelcomeTips | TelemetryEvent::ShowNotificationsDiscoveryBanner | TelemetryEvent::NotificationsDiscoveryBannerAction(_) | TelemetryEvent::ShowNotificationsErrorBanner | TelemetryEvent::NotificationsErrorBannerAction(_) | TelemetryEvent::NotificationPermissionsRequested { .. } | TelemetryEvent::NotificationsRequestPermissionsOutcome { .. } | TelemetryEvent::NotificationSent { .. } | TelemetryEvent::NotificationFailedToSend { .. } | TelemetryEvent::NotificationClicked | TelemetryEvent::ToggleFindOption { .. } | TelemetryEvent::SignUpButtonClicked | TelemetryEvent::LoginButtonClicked { .. } | TelemetryEvent::LoginLaterButtonClicked { .. } | TelemetryEvent::LoginLaterConfirmationButtonClicked { .. } | TelemetryEvent::OpenNewSessionFromFilePath | TelemetryEvent::OpenTeamFromURI | TelemetryEvent::SelectNavigationPaletteItem | TelemetryEvent::SelectCommandPaletteOption(_) | TelemetryEvent::PaletteSearchOpened { .. } | TelemetryEvent::PaletteSearchResultAccepted { .. } | TelemetryEvent::PaletteSearchExited { .. } | TelemetryEvent::AuthCommonQuestionClicked { .. } | TelemetryEvent::AuthToggleFAQ { .. } | TelemetryEvent::OpenAuthPrivacySettings { .. } | TelemetryEvent::TabRenamed(_) | TelemetryEvent::MoveActiveTab { .. } | TelemetryEvent::MoveTab { .. } | TelemetryEvent::DragAndDropTab | TelemetryEvent::DragAndDropTabGroup | TelemetryEvent::TabOperations { .. } | TelemetryEvent::TriedToExecuteBeforePrecmd | TelemetryEvent::ThinStrokesSettingChanged { .. } | TelemetryEvent::BookmarkBlockToggled { .. } | TelemetryEvent::JumpToBookmark | TelemetryEvent::JumpToBottomofBlockButtonClicked | TelemetryEvent::ToggleJumpToBottomofBlockButton { .. } | TelemetryEvent::ToggleShowBlockDividers { .. } | TelemetryEvent::OpenChangelogLink { .. } | TelemetryEvent::ShowInFileExplorer | TelemetryEvent::OpenLaunchConfigSaveModal | TelemetryEvent::SaveLaunchConfig { .. } | TelemetryEvent::OpenLaunchConfigFile | TelemetryEvent::OpenLaunchConfig { .. } | TelemetryEvent::TeamCreated | TelemetryEvent::TeamJoined | TelemetryEvent::TeamLeft | TelemetryEvent::ToggleSettingsSync { .. } | TelemetryEvent::TeamLinkCopied | TelemetryEvent::RemovedUserFromTeam | TelemetryEvent::DeletedWorkflow | TelemetryEvent::DeletedNotebook | TelemetryEvent::ToggleApprovalsModal | TelemetryEvent::ChangedInviteViewOption(_) | TelemetryEvent::SendEmailInvites | TelemetryEvent::SetLineHeight { .. } | TelemetryEvent::ResourceCenterOpened | TelemetryEvent::ResourceCenterTipsCompleted | TelemetryEvent::ResourceCenterTipsSkipped | TelemetryEvent::KeybindingsPageOpened | TelemetryEvent::GlobalSearchOpened | TelemetryEvent::GlobalSearchQueryStarted | TelemetryEvent::GlobalSearchQueryCompleted { .. } | TelemetryEvent::CommandSearchOpened { .. } | TelemetryEvent::CommandSearchExited { .. } | TelemetryEvent::CommandSearchResultAccepted { .. } | TelemetryEvent::OpenNotebook(_) | TelemetryEvent::EditNotebook { .. } | TelemetryEvent::NotebookAction(_) | TelemetryEvent::OpenedAltScreenFind | TelemetryEvent::UserInitiatedClose { .. } | TelemetryEvent::QuitModalShown { .. } | TelemetryEvent::QuitModalCancel { .. } | TelemetryEvent::QuitModalDisabled | TelemetryEvent::UserInitiatedLogOut | TelemetryEvent::LogOutModalShown | TelemetryEvent::LogOutModalCancel { .. } | TelemetryEvent::SetOpacity { .. } | TelemetryEvent::SetBlurRadius { .. } | TelemetryEvent::ToggleDimInactivePanes { .. } | TelemetryEvent::InputModeChanged { .. } | TelemetryEvent::PtySpawned { .. } | TelemetryEvent::InitialWorkingDirectoryConfigurationChanged { .. } | TelemetryEvent::ToggleFocusPaneOnHover { .. } | TelemetryEvent::OpenInputContextMenu | TelemetryEvent::InputCutSelectedText | TelemetryEvent::InputCopySelectedText | TelemetryEvent::InputSelectAll | TelemetryEvent::InputPaste | TelemetryEvent::InputCommandSearch | TelemetryEvent::SaveAsWorkflowModal { .. } | TelemetryEvent::ExperimentTriggered { .. } | TelemetryEvent::ToggleSyncAllPanesInAllTabs { .. } | TelemetryEvent::ToggleSyncAllPanesInTab { .. } | TelemetryEvent::ToggleSameLinePrompt { .. } | TelemetryEvent::ToggleNewWindowsAtCustomSize { .. } | TelemetryEvent::SetNewWindowsAtCustomSize | TelemetryEvent::DisableInputSync | TelemetryEvent::ToggleTabIndicators { .. } | TelemetryEvent::TogglePreserveActiveTabColor { .. } | TelemetryEvent::ShowSubshellBanner | TelemetryEvent::DeclineSubshellBootstrap { .. } | TelemetryEvent::TriggerSubshellBootstrap { .. } | TelemetryEvent::AddDenylistedSubshellCommand | TelemetryEvent::RemoveDenylistedSubshellCommand | TelemetryEvent::AddAddedSubshellCommand | TelemetryEvent::RemoveAddedSubshellCommand | TelemetryEvent::ReceivedSubshellRcFileDcs | TelemetryEvent::WarpifyFooterShown { .. } | TelemetryEvent::WarpifyFooterAcceptedWarpify { .. } | TelemetryEvent::ShowAliasExpansionBanner | TelemetryEvent::EnableAliasExpansionFromBanner | TelemetryEvent::DismissAliasExpansionBanner | TelemetryEvent::ShowVimKeybindingsBanner | TelemetryEvent::EnableVimKeybindingsFromBanner | TelemetryEvent::DismissVimKeybindingsBanner | TelemetryEvent::InitiateReauth | TelemetryEvent::InitiateAnonymousUserSignup { .. } | TelemetryEvent::AnonymousUserExpirationLockout | TelemetryEvent::AnonymousUserLinkedFromBrowser | TelemetryEvent::AnonymousUserAttemptLoginGatedFeature { .. } | TelemetryEvent::AnonymousUserHitCloudObjectLimit | TelemetryEvent::NeedsReauth | TelemetryEvent::WarpDriveOpened { .. } | TelemetryEvent::ToggleSecretRedaction { .. } | TelemetryEvent::CustomSecretRegexAdded | TelemetryEvent::ToggleObfuscateSecret { .. } | TelemetryEvent::CopySecret | TelemetryEvent::UpdateSortingChoice { .. } | TelemetryEvent::UndoClose { .. } | TelemetryEvent::PtyThroughput { .. } | TelemetryEvent::DuplicateObject(_) | TelemetryEvent::ExportObject(_) | TelemetryEvent::DriveSharingOnboardingBlockShown | TelemetryEvent::CommandFileRun | TelemetryEvent::PageUpDownInEditorPressed { .. } | TelemetryEvent::StartedSharingCurrentSession { .. } | TelemetryEvent::StoppedSharingCurrentSession { .. } | TelemetryEvent::JoinedSharedSession { .. } | TelemetryEvent::SharedSessionModalUpgradePressed | TelemetryEvent::SharerCancelledGrantRole { .. } | TelemetryEvent::SharerGrantModalDontShowAgain | TelemetryEvent::JumpToSharedSessionParticipant { .. } | TelemetryEvent::CopiedSharedSessionLink { .. } | TelemetryEvent::WebSessionOpenedOnDesktop { .. } | TelemetryEvent::WebCloudObjectOpenedOnDesktop { .. } | TelemetryEvent::UnsupportedShell { .. } | TelemetryEvent::LogOut | TelemetryEvent::InviteTeammates { .. } | TelemetryEvent::CopyObjectToClipboard(_) | TelemetryEvent::OpenAndWarpifyDockerSubshell { .. } | TelemetryEvent::UpdateBlockFilterQuery | TelemetryEvent::UpdateBlockFilterQueryContextLines { .. } | TelemetryEvent::ToggleBlockFilterQuery { .. } | TelemetryEvent::ToggleBlockFilterCaseSensitivity { .. } | TelemetryEvent::ToggleBlockFilterRegex { .. } | TelemetryEvent::ToggleBlockFilterInvert { .. } | TelemetryEvent::BlockFilterToolbeltButtonClicked | TelemetryEvent::ToggleSnackbarInActivePane { .. } | TelemetryEvent::PaneDragInitiated | TelemetryEvent::PaneDropped { .. } | TelemetryEvent::ObjectLinkCopied { .. } | TelemetryEvent::FileTreeToggled { .. } | TelemetryEvent::TierLimitHit(_) | TelemetryEvent::SharedObjectLimitHitBannerViewPlansButtonClicked | TelemetryEvent::ResourceUsageStats { .. } | TelemetryEvent::MemoryUsageStats { .. } | TelemetryEvent::MemoryUsageHigh { .. } | TelemetryEvent::TransientMemorySpike { .. } | TelemetryEvent::EnvVarCollectionInvoked(_) | TelemetryEvent::EnvVarWorkflowParameterization(_) | TelemetryEvent::CompletedSettingsImport { .. } | TelemetryEvent::SettingsImportConfigFocused(_) | TelemetryEvent::SettingsImportResetButtonClicked | TelemetryEvent::ITermMultipleHotkeys | TelemetryEvent::ToggleWorkspaceDecorationVisibility { .. } | TelemetryEvent::UpdateAltScreenPaddingMode { .. } | TelemetryEvent::AddTabWithShell { .. } | TelemetryEvent::OpenedSharingDialog(_) | TelemetryEvent::ToggleLigatureRendering { .. } | TelemetryEvent::WorkflowAliasAdded { .. } | TelemetryEvent::WorkflowAliasRemoved { .. } | TelemetryEvent::WorkflowAliasEnvVarsAttached { .. } | TelemetryEvent::WorkflowAliasArgumentEdited { .. } | TelemetryEvent::ToggleSshWarpification { .. } | TelemetryEvent::SetSshExtensionInstallMode { .. } | TelemetryEvent::SshRemoteServerChoiceDoNotAskAgainToggled { .. } | TelemetryEvent::SettingsImportInitiated | TelemetryEvent::ShellTerminatedPrematurely { .. } | TelemetryEvent::UserMenuUpgradeClicked | TelemetryEvent::TabCloseButtonPositionUpdated { .. } | TelemetryEvent::GetStartedSkipToTerminal | TelemetryEvent::FileTreeItemCreated | TelemetryEvent::RecentMenuItemSelected { .. } | TelemetryEvent::OpenRepoFolderSubmitted { .. } | TelemetryEvent::RemoteServerBinaryCheck { .. } | TelemetryEvent::RemoteServerInstallation { .. } | TelemetryEvent::RemoteServerInitialization { .. } | TelemetryEvent::RemoteServerDaemonStartup { .. } | TelemetryEvent::RemoteServerDisconnection { .. } | TelemetryEvent::RemoteServerClientRequestError { .. } | TelemetryEvent::RemoteServerMessageDecodingError { .. } | TelemetryEvent::RemoteServerSetupDuration { .. } | TelemetryEvent::RemoteServerHostUnsupported { .. } | TelemetryEvent::RemoteServerReconnection { .. } | TelemetryEvent::RemoteServerReconnectExhausted { .. } => false,
+            TelemetryEvent::BlockCompleted { .. }
+            | TelemetryEvent::BlockCompletedOnDogfoodOnly { .. }
+            | TelemetryEvent::BackgroundBlockStarted
+            | TelemetryEvent::SessionCreation
+            | TelemetryEvent::Login
+            | TelemetryEvent::ConfirmSuggestion { .. }
+            | TelemetryEvent::ContextMenuCopy(_, _)
+            | TelemetryEvent::ContextMenuOpenShareModal(_)
+            | TelemetryEvent::ContextMenuFindWithinBlocks(_)
+            | TelemetryEvent::ContextMenuCopyPrompt { .. }
+            | TelemetryEvent::ContextMenuToggleGitPromptDirtyIndicator { .. }
+            | TelemetryEvent::ContextMenuInsertSelectedText
+            | TelemetryEvent::OpenPromptEditor { .. }
+            | TelemetryEvent::PromptEdited { .. }
+            | TelemetryEvent::ReinputCommands(_)
+            | TelemetryEvent::JumpToPreviousCommand
+            | TelemetryEvent::CopyBlockSharingLink(_)
+            | TelemetryEvent::GenerateBlockSharingLink { .. }
+            | TelemetryEvent::BlockSelection(_)
+            | TelemetryEvent::BootstrappingSlow(_)
+            | TelemetryEvent::SessionAbandonedBeforeBootstrap { .. }
+            | TelemetryEvent::BootstrappingSucceeded(_)
+            | TelemetryEvent::CopyInviteLink
+            | TelemetryEvent::OpenThemeChooser
+            | TelemetryEvent::ThemeSelection { .. }
+            | TelemetryEvent::AppIconSelection { .. }
+            | TelemetryEvent::CursorDisplayType { .. }
+            | TelemetryEvent::OpenThemeCreatorModal
+            | TelemetryEvent::CreateCustomTheme
+            | TelemetryEvent::DeleteCustomTheme
+            | TelemetryEvent::SplitPane
+            | TelemetryEvent::UnableToAutoUpdateToNewVersion
+            | TelemetryEvent::AutoupdateRelaunchAttempt { .. }
+            | TelemetryEvent::SkipOnboardingSurvey
+            | TelemetryEvent::ToggleRestoreSession(_)
+            | TelemetryEvent::DatabaseStartUpError(_)
+            | TelemetryEvent::DatabaseReadError(_)
+            | TelemetryEvent::DatabaseWriteError(_)
+            | TelemetryEvent::AppStartup(_)
+            | TelemetryEvent::LoggedOutStartup
+            | TelemetryEvent::DownloadSource(_)
+            | TelemetryEvent::SSHBootstrapAttempt(_)
+            | TelemetryEvent::SSHControlMasterError { .. }
+            | TelemetryEvent::KeybindingChanged { .. }
+            | TelemetryEvent::KeybindingResetToDefault { .. }
+            | TelemetryEvent::KeybindingRemoved { .. }
+            | TelemetryEvent::FeaturesPageAction { .. }
+            | TelemetryEvent::WorkflowExecuted(_)
+            | TelemetryEvent::WorkflowSelected(_)
+            | TelemetryEvent::OpenWorkflowSearch
+            | TelemetryEvent::OpenQuakeModeWindow
+            | TelemetryEvent::OpenWelcomeTips
+            | TelemetryEvent::CompleteWelcomeTipFeature { .. }
+            | TelemetryEvent::DismissWelcomeTips
+            | TelemetryEvent::ShowNotificationsDiscoveryBanner
+            | TelemetryEvent::NotificationsDiscoveryBannerAction(_)
+            | TelemetryEvent::ShowNotificationsErrorBanner
+            | TelemetryEvent::NotificationsErrorBannerAction(_)
+            | TelemetryEvent::NotificationPermissionsRequested { .. }
+            | TelemetryEvent::NotificationsRequestPermissionsOutcome { .. }
+            | TelemetryEvent::NotificationSent { .. }
+            | TelemetryEvent::NotificationFailedToSend { .. }
+            | TelemetryEvent::NotificationClicked
+            | TelemetryEvent::ToggleFindOption { .. }
+            | TelemetryEvent::SignUpButtonClicked
+            | TelemetryEvent::LoginButtonClicked { .. }
+            | TelemetryEvent::LoginLaterButtonClicked { .. }
+            | TelemetryEvent::LoginLaterConfirmationButtonClicked { .. }
+            | TelemetryEvent::OpenNewSessionFromFilePath
+            | TelemetryEvent::OpenTeamFromURI
+            | TelemetryEvent::SelectNavigationPaletteItem
+            | TelemetryEvent::SelectCommandPaletteOption(_)
+            | TelemetryEvent::PaletteSearchOpened { .. }
+            | TelemetryEvent::PaletteSearchResultAccepted { .. }
+            | TelemetryEvent::PaletteSearchExited { .. }
+            | TelemetryEvent::AuthCommonQuestionClicked { .. }
+            | TelemetryEvent::AuthToggleFAQ { .. }
+            | TelemetryEvent::OpenAuthPrivacySettings { .. }
+            | TelemetryEvent::TabRenamed(_)
+            | TelemetryEvent::MoveActiveTab { .. }
+            | TelemetryEvent::MoveTab { .. }
+            | TelemetryEvent::DragAndDropTab
+            | TelemetryEvent::DragAndDropTabGroup
+            | TelemetryEvent::TabOperations { .. }
+            | TelemetryEvent::TriedToExecuteBeforePrecmd
+            | TelemetryEvent::ThinStrokesSettingChanged { .. }
+            | TelemetryEvent::BookmarkBlockToggled { .. }
+            | TelemetryEvent::JumpToBookmark
+            | TelemetryEvent::JumpToBottomofBlockButtonClicked
+            | TelemetryEvent::ToggleJumpToBottomofBlockButton { .. }
+            | TelemetryEvent::ToggleShowBlockDividers { .. }
+            | TelemetryEvent::OpenChangelogLink { .. }
+            | TelemetryEvent::ShowInFileExplorer
+            | TelemetryEvent::OpenLaunchConfigSaveModal
+            | TelemetryEvent::SaveLaunchConfig { .. }
+            | TelemetryEvent::OpenLaunchConfigFile
+            | TelemetryEvent::OpenLaunchConfig { .. }
+            | TelemetryEvent::TeamCreated
+            | TelemetryEvent::TeamJoined
+            | TelemetryEvent::TeamLeft
+            | TelemetryEvent::ToggleSettingsSync { .. }
+            | TelemetryEvent::TeamLinkCopied
+            | TelemetryEvent::RemovedUserFromTeam
+            | TelemetryEvent::DeletedWorkflow
+            | TelemetryEvent::DeletedNotebook
+            | TelemetryEvent::ToggleApprovalsModal
+            | TelemetryEvent::ChangedInviteViewOption(_)
+            | TelemetryEvent::SendEmailInvites
+            | TelemetryEvent::SetLineHeight { .. }
+            | TelemetryEvent::ResourceCenterOpened
+            | TelemetryEvent::ResourceCenterTipsCompleted
+            | TelemetryEvent::ResourceCenterTipsSkipped
+            | TelemetryEvent::KeybindingsPageOpened
+            | TelemetryEvent::GlobalSearchOpened
+            | TelemetryEvent::GlobalSearchQueryStarted
+            | TelemetryEvent::GlobalSearchQueryCompleted { .. }
+            | TelemetryEvent::CommandSearchOpened { .. }
+            | TelemetryEvent::CommandSearchExited { .. }
+            | TelemetryEvent::CommandSearchResultAccepted { .. }
+            | TelemetryEvent::OpenNotebook(_)
+            | TelemetryEvent::EditNotebook { .. }
+            | TelemetryEvent::NotebookAction(_)
+            | TelemetryEvent::OpenedAltScreenFind
+            | TelemetryEvent::UserInitiatedClose { .. }
+            | TelemetryEvent::QuitModalShown { .. }
+            | TelemetryEvent::QuitModalCancel { .. }
+            | TelemetryEvent::QuitModalDisabled
+            | TelemetryEvent::UserInitiatedLogOut
+            | TelemetryEvent::LogOutModalShown
+            | TelemetryEvent::LogOutModalCancel { .. }
+            | TelemetryEvent::SetOpacity { .. }
+            | TelemetryEvent::SetBlurRadius { .. }
+            | TelemetryEvent::ToggleDimInactivePanes { .. }
+            | TelemetryEvent::InputModeChanged { .. }
+            | TelemetryEvent::PtySpawned { .. }
+            | TelemetryEvent::InitialWorkingDirectoryConfigurationChanged { .. }
+            | TelemetryEvent::ToggleFocusPaneOnHover { .. }
+            | TelemetryEvent::OpenInputContextMenu
+            | TelemetryEvent::InputCutSelectedText
+            | TelemetryEvent::InputCopySelectedText
+            | TelemetryEvent::InputSelectAll
+            | TelemetryEvent::InputPaste
+            | TelemetryEvent::InputCommandSearch
+            | TelemetryEvent::SaveAsWorkflowModal { .. }
+            | TelemetryEvent::ExperimentTriggered { .. }
+            | TelemetryEvent::ToggleSyncAllPanesInAllTabs { .. }
+            | TelemetryEvent::ToggleSyncAllPanesInTab { .. }
+            | TelemetryEvent::ToggleSameLinePrompt { .. }
+            | TelemetryEvent::ToggleNewWindowsAtCustomSize { .. }
+            | TelemetryEvent::SetNewWindowsAtCustomSize
+            | TelemetryEvent::DisableInputSync
+            | TelemetryEvent::ToggleTabIndicators { .. }
+            | TelemetryEvent::TogglePreserveActiveTabColor { .. }
+            | TelemetryEvent::ShowSubshellBanner
+            | TelemetryEvent::DeclineSubshellBootstrap { .. }
+            | TelemetryEvent::TriggerSubshellBootstrap { .. }
+            | TelemetryEvent::AddDenylistedSubshellCommand
+            | TelemetryEvent::RemoveDenylistedSubshellCommand
+            | TelemetryEvent::AddAddedSubshellCommand
+            | TelemetryEvent::RemoveAddedSubshellCommand
+            | TelemetryEvent::ReceivedSubshellRcFileDcs
+            | TelemetryEvent::WarpifyFooterShown { .. }
+            | TelemetryEvent::WarpifyFooterAcceptedWarpify { .. }
+            | TelemetryEvent::ShowAliasExpansionBanner
+            | TelemetryEvent::EnableAliasExpansionFromBanner
+            | TelemetryEvent::DismissAliasExpansionBanner
+            | TelemetryEvent::ShowVimKeybindingsBanner
+            | TelemetryEvent::EnableVimKeybindingsFromBanner
+            | TelemetryEvent::DismissVimKeybindingsBanner
+            | TelemetryEvent::InitiateReauth
+            | TelemetryEvent::InitiateAnonymousUserSignup { .. }
+            | TelemetryEvent::AnonymousUserExpirationLockout
+            | TelemetryEvent::AnonymousUserLinkedFromBrowser
+            | TelemetryEvent::AnonymousUserAttemptLoginGatedFeature { .. }
+            | TelemetryEvent::AnonymousUserHitCloudObjectLimit
+            | TelemetryEvent::NeedsReauth
+            | TelemetryEvent::WarpDriveOpened { .. }
+            | TelemetryEvent::ToggleSecretRedaction { .. }
+            | TelemetryEvent::CustomSecretRegexAdded
+            | TelemetryEvent::ToggleObfuscateSecret { .. }
+            | TelemetryEvent::CopySecret
+            | TelemetryEvent::UpdateSortingChoice { .. }
+            | TelemetryEvent::UndoClose { .. }
+            | TelemetryEvent::PtyThroughput { .. }
+            | TelemetryEvent::DuplicateObject(_)
+            | TelemetryEvent::ExportObject(_)
+            | TelemetryEvent::DriveSharingOnboardingBlockShown
+            | TelemetryEvent::CommandFileRun
+            | TelemetryEvent::PageUpDownInEditorPressed { .. }
+            | TelemetryEvent::StartedSharingCurrentSession { .. }
+            | TelemetryEvent::StoppedSharingCurrentSession { .. }
+            | TelemetryEvent::JoinedSharedSession { .. }
+            | TelemetryEvent::SharedSessionModalUpgradePressed
+            | TelemetryEvent::SharerCancelledGrantRole { .. }
+            | TelemetryEvent::SharerGrantModalDontShowAgain
+            | TelemetryEvent::JumpToSharedSessionParticipant { .. }
+            | TelemetryEvent::CopiedSharedSessionLink { .. }
+            | TelemetryEvent::WebSessionOpenedOnDesktop { .. }
+            | TelemetryEvent::WebCloudObjectOpenedOnDesktop { .. }
+            | TelemetryEvent::UnsupportedShell { .. }
+            | TelemetryEvent::LogOut
+            | TelemetryEvent::InviteTeammates { .. }
+            | TelemetryEvent::CopyObjectToClipboard(_)
+            | TelemetryEvent::OpenAndWarpifyDockerSubshell { .. }
+            | TelemetryEvent::UpdateBlockFilterQuery
+            | TelemetryEvent::UpdateBlockFilterQueryContextLines { .. }
+            | TelemetryEvent::ToggleBlockFilterQuery { .. }
+            | TelemetryEvent::ToggleBlockFilterCaseSensitivity { .. }
+            | TelemetryEvent::ToggleBlockFilterRegex { .. }
+            | TelemetryEvent::ToggleBlockFilterInvert { .. }
+            | TelemetryEvent::BlockFilterToolbeltButtonClicked
+            | TelemetryEvent::ToggleSnackbarInActivePane { .. }
+            | TelemetryEvent::PaneDragInitiated
+            | TelemetryEvent::PaneDropped { .. }
+            | TelemetryEvent::ObjectLinkCopied { .. }
+            | TelemetryEvent::FileTreeToggled { .. }
+            | TelemetryEvent::TierLimitHit(_)
+            | TelemetryEvent::SharedObjectLimitHitBannerViewPlansButtonClicked
+            | TelemetryEvent::ResourceUsageStats { .. }
+            | TelemetryEvent::MemoryUsageStats { .. }
+            | TelemetryEvent::MemoryUsageHigh { .. }
+            | TelemetryEvent::TransientMemorySpike { .. }
+            | TelemetryEvent::EnvVarCollectionInvoked(_)
+            | TelemetryEvent::EnvVarWorkflowParameterization(_)
+            | TelemetryEvent::CompletedSettingsImport { .. }
+            | TelemetryEvent::SettingsImportConfigFocused(_)
+            | TelemetryEvent::SettingsImportResetButtonClicked
+            | TelemetryEvent::ITermMultipleHotkeys
+            | TelemetryEvent::ToggleWorkspaceDecorationVisibility { .. }
+            | TelemetryEvent::UpdateAltScreenPaddingMode { .. }
+            | TelemetryEvent::AddTabWithShell { .. }
+            | TelemetryEvent::OpenedSharingDialog(_)
+            | TelemetryEvent::ToggleLigatureRendering { .. }
+            | TelemetryEvent::WorkflowAliasAdded { .. }
+            | TelemetryEvent::WorkflowAliasRemoved { .. }
+            | TelemetryEvent::WorkflowAliasEnvVarsAttached { .. }
+            | TelemetryEvent::WorkflowAliasArgumentEdited { .. }
+            | TelemetryEvent::ToggleSshWarpification { .. }
+            | TelemetryEvent::SetSshExtensionInstallMode { .. }
+            | TelemetryEvent::SshRemoteServerChoiceDoNotAskAgainToggled { .. }
+            | TelemetryEvent::SettingsImportInitiated
+            | TelemetryEvent::ShellTerminatedPrematurely { .. }
+            | TelemetryEvent::UserMenuUpgradeClicked
+            | TelemetryEvent::TabCloseButtonPositionUpdated { .. }
+            | TelemetryEvent::GetStartedSkipToTerminal
+            | TelemetryEvent::FileTreeItemCreated
+            | TelemetryEvent::RecentMenuItemSelected { .. }
+            | TelemetryEvent::OpenRepoFolderSubmitted { .. }
+            | TelemetryEvent::RemoteServerBinaryCheck { .. }
+            | TelemetryEvent::RemoteServerInstallation { .. }
+            | TelemetryEvent::RemoteServerInitialization { .. }
+            | TelemetryEvent::RemoteServerDaemonStartup { .. }
+            | TelemetryEvent::RemoteServerDisconnection { .. }
+            | TelemetryEvent::RemoteServerClientRequestError { .. }
+            | TelemetryEvent::RemoteServerMessageDecodingError { .. }
+            | TelemetryEvent::RemoteServerSetupDuration { .. }
+            | TelemetryEvent::RemoteServerHostUnsupported { .. }
+            | TelemetryEvent::RemoteServerReconnection { .. }
+            | TelemetryEvent::RemoteServerReconnectExhausted { .. } => false,
             #[cfg(feature = "local_fs")]
             TelemetryEvent::CodePaneOpened { .. }
             | TelemetryEvent::CodePanelsFileOpened { .. }
@@ -2290,7 +2640,9 @@ impl TelemetryEventDesc for TelemetryEventDiscriminants {
             Self::ToggleSshWarpification => EnablementState::Always,
             Self::SetSshExtensionInstallMode => EnablementState::Always,
             Self::SshRemoteServerChoiceDoNotAskAgainToggled => EnablementState::Always,
-            Self::WarpifyFooterShown | Self::WarpifyFooterAcceptedWarpify => EnablementState::Always,
+            Self::WarpifyFooterShown | Self::WarpifyFooterAcceptedWarpify => {
+                EnablementState::Always
+            }
             Self::AddAddedSubshellCommand => EnablementState::Always,
             Self::RemoveAddedSubshellCommand => EnablementState::Always,
             Self::ReceivedSubshellRcFileDcs => EnablementState::Always,
@@ -2381,7 +2733,17 @@ impl TelemetryEventDesc for TelemetryEventDiscriminants {
             Self::TabCloseButtonPositionUpdated { .. } => EnablementState::Always,
             Self::RecentMenuItemSelected => EnablementState::Always,
             Self::OpenRepoFolderSubmitted => EnablementState::Always,
-            Self::RemoteServerBinaryCheck | Self::RemoteServerInstallation | Self::RemoteServerInitialization | Self::RemoteServerDaemonStartup | Self::RemoteServerDisconnection | Self::RemoteServerClientRequestError | Self::RemoteServerMessageDecodingError | Self::RemoteServerSetupDuration | Self::RemoteServerHostUnsupported | Self::RemoteServerReconnection | Self::RemoteServerReconnectExhausted => {
+            Self::RemoteServerBinaryCheck
+            | Self::RemoteServerInstallation
+            | Self::RemoteServerInitialization
+            | Self::RemoteServerDaemonStartup
+            | Self::RemoteServerDisconnection
+            | Self::RemoteServerClientRequestError
+            | Self::RemoteServerMessageDecodingError
+            | Self::RemoteServerSetupDuration
+            | Self::RemoteServerHostUnsupported
+            | Self::RemoteServerReconnection
+            | Self::RemoteServerReconnectExhausted => {
                 EnablementState::Flag(FeatureFlag::SshRemoteServer)
             }
         }

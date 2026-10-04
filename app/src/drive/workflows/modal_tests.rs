@@ -511,5 +511,3 @@ fn test_pasting_command_same_number_of_arguments() {
         });
     });
 }
-
-

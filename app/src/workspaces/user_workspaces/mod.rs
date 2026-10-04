@@ -26,17 +26,14 @@ use crate::server::server_api::team::TeamClient;
 use crate::server::server_api::workspace::{PurchaseAddonCreditsOutcome, WorkspaceClient};
 #[cfg(test)]
 use crate::server::server_api::{team::MockTeamClient, workspace::MockWorkspaceClient};
-use crate::settings::{ CodeSettings, CodeSettingsChangedEvent, PrivacySettings,
-};
+use crate::settings::{CodeSettings, CodeSettingsChangedEvent, PrivacySettings};
 use crate::workspaces::workspace::{
     AiOverages, PurchaseAddOnCreditsPolicy, UsageBasedPricingSettings,
 };
 pub(crate) mod team_workspace_settings;
 #[cfg(test)]
 pub(crate) use team_workspace_settings::TeamlessScopeForTest;
-pub use team_workspace_settings::{
-    ResolvedTeamScope, TeamContext, TeamScope,
-};
+pub use team_workspace_settings::{ResolvedTeamScope, TeamContext, TeamScope};
 
 const STRIPE_SUBSCRIPTION_INTERVAL_PAGE_PREFIX: &str = "/upgrade";
 
@@ -212,7 +209,6 @@ impl UserWorkspaces {
                 _ => {}
             },
         );
-
 
         Self {
             current_workspace_uid: current_workspace_uid.into(),
@@ -813,7 +809,6 @@ impl UserWorkspaces {
                         model.update_pricing_info(pricing_info, ctx);
                     });
                 }
-
 
                 let workspaces = response.metadata.workspaces;
                 let joinable_teams = response.metadata.joinable_teams;
@@ -1627,7 +1622,6 @@ impl UserWorkspaces {
 
 #[cfg(test)]
 impl UserWorkspaces {
-
     /// Updates the current workspace by applying a mutation function.
     pub fn update_current_workspace<F>(&mut self, f: F, ctx: &mut ModelContext<Self>)
     where
@@ -1646,7 +1640,6 @@ impl UserWorkspaces {
             panic!("No workspace found. Did you call setup_test_workspace()?");
         }
     }
-
 }
 
 impl Entity for UserWorkspaces {

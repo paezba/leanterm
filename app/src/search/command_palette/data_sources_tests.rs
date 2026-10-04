@@ -26,7 +26,7 @@ use crate::server::server_api::ServerApiProvider;
 use crate::server::server_api::team::MockTeamClient;
 use crate::server::server_api::workspace::MockWorkspaceClient;
 use crate::server::sync_queue::SyncQueue;
-use crate::settings::{ PrivacySettings};
+use crate::settings::PrivacySettings;
 use crate::system::SystemStats;
 use crate::test_util::assert_eventually;
 use crate::workflows::workflow::Workflow;

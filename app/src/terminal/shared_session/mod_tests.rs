@@ -110,11 +110,6 @@ fn shared_session_viewer_recovers_from_raw_precmd_with_completion_metadata_witho
     );
 }
 
-
-
-
-
-
 #[test]
 fn test_scrollback_deserialization() {
     let raw = serde_json::json!({

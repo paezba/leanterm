@@ -38,6 +38,7 @@ use crate::search::result_renderer::QueryResultRenderer;
 use crate::search::search_bar::{
     SearchBar, SearchBarEvent, SearchBarState, SearchResultOrdering, SelectionUpdate,
 };
+use crate::send_telemetry_from_ctx;
 use crate::server::ids::SyncId;
 use crate::server::telemetry::{LaunchConfigUiLocation, TelemetryEvent};
 use crate::session_management::SessionSource;
@@ -45,7 +46,6 @@ use crate::settings::CtrlTabBehavior;
 use crate::terminal::keys_settings::KeysSettings;
 use crate::themes::theme::WarpTheme;
 use crate::workspace::WorkspaceAction;
-use crate::send_telemetry_from_ctx;
 
 lazy_static! {
     /// Set of hardcoded action names that we want to show in the command palette zero state.

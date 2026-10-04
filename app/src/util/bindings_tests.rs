@@ -73,7 +73,6 @@ fn test_keybinding_name_to_display_string() {
     });
 }
 
-
 #[test]
 fn test_toggle_maximize_pane_binding_is_editable() {
     App::test((), |mut app| async move {

@@ -300,8 +300,6 @@ fn test_dont_include_self_in_viewers() {
     });
 }
 
-
-
 #[test]
 fn query_attribution_profile_retains_absent_viewers_without_using_the_sharer() {
     let sharer_id = ParticipantId::new();

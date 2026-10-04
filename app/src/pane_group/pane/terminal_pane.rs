@@ -12,7 +12,7 @@ use super::{
     DetachType, PaneConfiguration, PaneContent, PaneId, PaneStackEvent, PaneView, ShareableLink,
     ShareableLinkError, TerminalPaneId,
 };
-use crate::app_state::{ LeafContents, TerminalPaneSnapshot};
+use crate::app_state::{LeafContents, TerminalPaneSnapshot};
 use crate::code::buffer_location::LocalOrRemotePath;
 #[cfg(feature = "local_fs")]
 use crate::pane_group::CodeSource;
@@ -26,8 +26,8 @@ use crate::terminal::shared_session::{SharedSessionStatus, join_link};
 use crate::terminal::view::Event;
 use crate::terminal::{TerminalManager, TerminalView};
 use crate::view_components::ToastFlavor;
-use crate::workspace::sync_inputs::SyncedInputState;
 use crate::workspace::PaneViewLocator;
+use crate::workspace::sync_inputs::SyncedInputState;
 
 pub type TerminalPaneView = PaneView<TerminalView>;
 

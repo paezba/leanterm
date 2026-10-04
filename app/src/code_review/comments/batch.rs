@@ -1,10 +1,7 @@
-
 use warp_editor::render::model::LineCount;
 use warpui::{Entity, ModelContext};
 
-use super::{
-    AttachedReviewComment, AttachedReviewCommentTarget, CommentId,
-};
+use super::{AttachedReviewComment, AttachedReviewCommentTarget, CommentId};
 use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code::editor::EditorReviewComment;
 
@@ -17,8 +14,6 @@ pub enum ReviewCommentBatchEvent {
 pub struct ReviewCommentBatch {
     /// Comments that are attached to local editors and visible to the user.
     pub comments: Vec<AttachedReviewComment>,
-
-
 }
 
 impl Entity for ReviewCommentBatch {
@@ -27,9 +22,7 @@ impl Entity for ReviewCommentBatch {
 
 impl ReviewCommentBatch {
     pub fn from_comments(comments: Vec<AttachedReviewComment>) -> Self {
-        Self {
-            comments,
-        }
+        Self { comments }
     }
 
     pub(crate) fn get_review_comment_by_id(&self, id: CommentId) -> Option<&AttachedReviewComment> {

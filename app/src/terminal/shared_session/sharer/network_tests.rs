@@ -4,13 +4,12 @@ use std::pin::Pin;
 use futures_util::future::BoxFuture;
 use futures_util::{FutureExt as _, SinkExt as _, StreamExt as _, sink, stream};
 use session_sharing_protocol::common::{
-    FeatureSupport,
-    OrderedTerminalEvent, OrderedTerminalEventType, Selection, SelectionUpdate, UserID,
+    FeatureSupport, OrderedTerminalEvent, OrderedTerminalEventType, Selection, SelectionUpdate,
+    UserID,
 };
 use session_sharing_protocol::sharer::{
     DownstreamMessage, FailedToInitializeSessionReason, QuotaType, ReconnectPayload,
-    ReconnectToken,
-    UpstreamMessage,
+    ReconnectToken, UpstreamMessage,
 };
 #[cfg(not(target_family = "wasm"))]
 use warpui::r#async::executor::Foreground;
@@ -19,7 +18,8 @@ use websocket::{Message, Sink, Stream, WebsocketMessage as _};
 
 use super::{
     AMBIENT_CREATE_SESSION_MAX_ATTEMPTS, ConfirmedReconnection, MAX_PRE_RECONNECT_BYTES,
-    MAX_PRE_RECONNECT_MESSAGES, Network, StartupFailure, confirm_reconnection, startup_max_attempts,
+    MAX_PRE_RECONNECT_MESSAGES, Network, StartupFailure, confirm_reconnection,
+    startup_max_attempts,
 };
 use crate::terminal::shared_session::SharedSessionSource;
 use crate::test_util::assert_eventually;
@@ -85,17 +85,6 @@ fn mock_reconnect_with_sink(sink: impl Sink, stream: impl Stream) -> ReconnectAt
 fn confirmed_reconnect() -> ReconnectAttempt {
     mock_reconnect(stream::iter([Ok(reconnected_message())]).chain(stream::pending()))
 }
-
-
-
-
-
-
-
-
-
-
-
 
 #[test]
 fn test_reconnect_buffers_pre_ack_messages_and_preserves_remaining_stream() {
@@ -175,9 +164,6 @@ fn test_reconnect_pre_ack_buffer_accepts_byte_count_at_limit() {
     });
 }
 
-
-
-
 #[cfg(not(target_family = "wasm"))]
 async fn finish_foreground_tasks(app: &App) {
     let foreground = app.foreground_executor();
@@ -188,11 +174,6 @@ async fn finish_foreground_tasks(app: &App) {
     // Closing the unrelated test sources lets executor emptiness prove callback completion.
     assert_eventually!(400 => executor.is_empty(), "Old websocket callbacks should finish");
 }
-
-
-
-
-
 
 #[test]
 fn test_startup_max_attempts_only_retries_ambient_agent_sources() {
@@ -235,8 +216,6 @@ fn test_startup_failure_retryability() {
     );
 }
 
-
-
 fn is_upstream_message_command_executed(
     message: &UpstreamMessage,
     expected_event_no: usize,
@@ -261,13 +240,6 @@ fn is_upstream_message_selection_update(
     )
 }
 
-
-
-
-
-
-
-
 /// Waits until the mock terminal model reports its active block as bootstrapped.
 ///
 /// `start_ordered_terminal_events_listener` silently drops ordered events until this is
@@ -286,10 +258,3 @@ async fn wait_for_bootstrapped(network: &ModelHandle<Network>, app: &App) {
         "Mock terminal model should report the active block as bootstrapped"
     );
 }
-
-
-
-
-
-
-

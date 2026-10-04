@@ -1,4 +1,3 @@
-
 use warp_completer::completer::{
     EngineFileType, Match, MatchStrategy, MatchedSuggestion, Priority, Suggestion,
     SuggestionResults, SuggestionType, TopLevelCommandCaseSensitivity,
@@ -310,4 +309,3 @@ fn test_unchanged_preselect_option() {
         });
     });
 }
-

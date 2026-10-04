@@ -9,12 +9,6 @@ fn test_default_tab_configs_dir_uses_underscores() {
     assert!(default_tab_configs_dir().ends_with("default_tab_configs"));
 }
 
-
-
-
-
-
-
 #[cfg(feature = "local_fs")]
 #[test]
 fn test_sanitize_toml_base_name_replaces_spaces_and_dots() {
@@ -32,7 +26,6 @@ fn write_tab_config_toml(dir: &Path, file_name: &str, config_name: &str) {
     let mut f = std::fs::File::create(path).unwrap();
     write!(f, "name = \"{}\"", config_name).unwrap();
 }
-
 
 #[cfg(feature = "local_fs")]
 #[test]

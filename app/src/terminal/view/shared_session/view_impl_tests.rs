@@ -1,12 +1,11 @@
-
 use pathfinder_geometry::vector::vec2f;
 use warpui::App;
 
 use super::*;
-use crate::context_chips::prompt_type::PromptType;
-use crate::terminal::view::shared_session::test_utils::terminal_view_for_viewer;
-use crate::terminal::view::{ TerminalAction,};
 use crate::FeatureFlag;
+use crate::context_chips::prompt_type::PromptType;
+use crate::terminal::view::TerminalAction;
+use crate::terminal::view::shared_session::test_utils::terminal_view_for_viewer;
 
 #[test]
 fn test_prompt_context_menu_items_shared_session_viewer_no_edit_prompt() {
@@ -49,12 +48,6 @@ fn test_prompt_context_menu_items_shared_session_viewer_no_edit_prompt() {
         });
     })
 }
-
-
-
-
-
-
 
 #[test]
 fn test_resize_shared_session_viewer_independent_of_sharer() {
@@ -120,20 +113,5 @@ fn test_resize_shared_session_viewer_independent_of_sharer() {
     })
 }
 
-
-
-
-
-
-
 // APP-5027 regression: "Copy link" / "Copy session sharing link" must not silently do
 // nothing when the Manager has no session id (e.g. during ViewPending / SharePending).
-
-
-
-
-
-
-
-
-

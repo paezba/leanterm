@@ -1,6 +1,6 @@
 pub mod telemetry;
 
-use crate::terminal::{ TerminalView};
+use crate::terminal::TerminalView;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -3412,8 +3412,7 @@ fn render_pane_row(props: PaneProps<'_>, app: &AppContext) -> Box<dyn Element> {
             app,
         )
     } else {
-        let has_indicator =
-            props.typed.badge(app).is_some();
+        let has_indicator = props.typed.badge(app).is_some();
         let mut title_row = Flex::row()
             .with_main_axis_size(MainAxisSize::Max)
             .with_main_axis_alignment(MainAxisAlignment::SpaceBetween)
@@ -3547,7 +3546,14 @@ impl TypedPane<'_> {
                 .as_ref(app)
                 .contains_unsaved_changes(app)
                 .then(|| "Unsaved".to_string()),
-            TypedPane::Terminal(_) | TypedPane::CodeDiff | TypedPane::File | TypedPane::Notebook { .. } | TypedPane::Workflow { .. } | TypedPane::Settings | TypedPane::EnvVarCollection | TypedPane::Other => None,
+            TypedPane::Terminal(_)
+            | TypedPane::CodeDiff
+            | TypedPane::File
+            | TypedPane::Notebook { .. }
+            | TypedPane::Workflow { .. }
+            | TypedPane::Settings
+            | TypedPane::EnvVarCollection
+            | TypedPane::Other => None,
         }
     }
 
@@ -3689,7 +3695,13 @@ fn build_vertical_tabs_summary_data(
                     &pane_subtitle,
                 );
             }
-            TypedPane::CodeDiff | TypedPane::File | TypedPane::Notebook { .. } | TypedPane::Workflow { .. } | TypedPane::Settings | TypedPane::EnvVarCollection | TypedPane::Other => {
+            TypedPane::CodeDiff
+            | TypedPane::File
+            | TypedPane::Notebook { .. }
+            | TypedPane::Workflow { .. }
+            | TypedPane::Settings
+            | TypedPane::EnvVarCollection
+            | TypedPane::Other => {
                 push_normalized_unique_summary_label(
                     &mut primary_labels,
                     &mut primary_seen,
@@ -3818,7 +3830,14 @@ impl<'a> PaneProps<'a> {
                 self.display_title_override.as_deref(),
                 app,
             ),
-            TypedPane::Code(_) | TypedPane::CodeDiff | TypedPane::File | TypedPane::Notebook { .. } | TypedPane::Workflow { .. } | TypedPane::Settings | TypedPane::EnvVarCollection | TypedPane::Other => {
+            TypedPane::Code(_)
+            | TypedPane::CodeDiff
+            | TypedPane::File
+            | TypedPane::Notebook { .. }
+            | TypedPane::Workflow { .. }
+            | TypedPane::Settings
+            | TypedPane::EnvVarCollection
+            | TypedPane::Other => {
                 non_terminal_search_text_fragments(self.generated_or_tab_title(), &self.subtitle)
             }
         };
@@ -4117,9 +4136,7 @@ impl PaneGroup {
                     .expect("IPaneType::Code must correspond to a CodePane"),
             ),
             IPaneType::File => TypedPane::File,
-            IPaneType::Notebook => {
-                TypedPane::Notebook { is_plan: false }
-            }
+            IPaneType::Notebook => TypedPane::Notebook { is_plan: false },
             IPaneType::Workflow => {
                 let is_ai_prompt = self
                     .downcast_pane_by_id::<WorkflowPane>(pane_id)
@@ -4530,8 +4547,12 @@ fn render_summary_tab_item(
                     .take(MAX_VISIBLE_PRIMARY_LABELS)
                     .collect();
                 for (idx, label) in visible_labels.iter().enumerate() {
-                    let line =
-                        render_text_line(&label.text, main_text_color, ClipConfig::end(), appearance);
+                    let line = render_text_line(
+                        &label.text,
+                        main_text_color,
+                        ClipConfig::end(),
+                        appearance,
+                    );
                     title_region.add_child(if idx == 0 {
                         line
                     } else {
@@ -4754,7 +4775,14 @@ pub(super) fn render_summary_pane_kind_icon_circle(
             }),
             internal_colors::fg_overlay_2(theme).into(),
         ),
-        SummaryPaneKind::Terminal | SummaryPaneKind::CodeDiff | SummaryPaneKind::File | SummaryPaneKind::Notebook { .. } | SummaryPaneKind::Workflow { .. } | SummaryPaneKind::Settings | SummaryPaneKind::EnvVarCollection | SummaryPaneKind::Other => {
+        SummaryPaneKind::Terminal
+        | SummaryPaneKind::CodeDiff
+        | SummaryPaneKind::File
+        | SummaryPaneKind::Notebook { .. }
+        | SummaryPaneKind::Workflow { .. }
+        | SummaryPaneKind::Settings
+        | SummaryPaneKind::EnvVarCollection
+        | SummaryPaneKind::Other => {
             let (icon, icon_color) = summary_pane_kind_icon(kind, appearance);
             (
                 icon.to_warpui_icon(icon_color).finish(),
@@ -4814,9 +4842,7 @@ fn summary_pane_kind_icon(
                 drive_color(DriveObjectType::Workflow)
             },
         ),
-        SummaryPaneKind::Settings => {
-            (WarpIcon::Gear, main_text)
-        }
+        SummaryPaneKind::Settings => (WarpIcon::Gear, main_text),
         SummaryPaneKind::EnvVarCollection => (
             WarpIcon::EnvVarCollection,
             drive_color(DriveObjectType::EnvVarCollection),
@@ -6605,7 +6631,12 @@ fn typed_pane_warp_drive_object_type(typed: &TypedPane<'_>) -> Option<DriveObjec
             is_ai_prompt: false,
         } => Some(DriveObjectType::Workflow),
         TypedPane::EnvVarCollection => Some(DriveObjectType::EnvVarCollection),
-        TypedPane::Terminal(_) | TypedPane::Code(_) | TypedPane::CodeDiff | TypedPane::File | TypedPane::Settings | TypedPane::Other => None,
+        TypedPane::Terminal(_)
+        | TypedPane::Code(_)
+        | TypedPane::CodeDiff
+        | TypedPane::File
+        | TypedPane::Settings
+        | TypedPane::Other => None,
     }
 }
 
@@ -6622,8 +6653,12 @@ fn render_detail_section(
             app,
         ),
         TypedPane::Code(_) => render_code_detail_section(props, appearance, app),
-        TypedPane::Notebook { .. } | TypedPane::Workflow { .. } | TypedPane::EnvVarCollection => render_warp_drive_object_detail_section(props, appearance, app),
-        TypedPane::CodeDiff | TypedPane::File | TypedPane::Settings | TypedPane::Other => Empty::new().finish(),
+        TypedPane::Notebook { .. } | TypedPane::Workflow { .. } | TypedPane::EnvVarCollection => {
+            render_warp_drive_object_detail_section(props, appearance, app)
+        }
+        TypedPane::CodeDiff | TypedPane::File | TypedPane::Settings | TypedPane::Other => {
+            Empty::new().finish()
+        }
     }
 }
 pub(super) struct DetailSidecarOverlay {

@@ -42,7 +42,8 @@ use super::settings_page::{
     AdditionalInfo, CONTENT_FONT_SIZE, Category, HEADER_PADDING, LocalOnlyIconState, MatchData,
     PageType, SettingsPageMeta, SettingsPageViewHandle, SettingsWidget,
     TOGGLE_BUTTON_RIGHT_PADDING, ToggleState, add_setting, build_reset_button,
-    build_toggle_element, render_body_item, render_body_item_label, render_dropdown_item, render_local_only_icon,
+    build_toggle_element, render_body_item, render_body_item_label, render_dropdown_item,
+    render_local_only_icon,
 };
 use super::{
     DisplayCount, SettingsAction, SettingsSection, ToggleSettingActionPair, features, flags,
@@ -61,18 +62,19 @@ use crate::search::command_search::settings::{
     CommandSearchSettings, ShowGlobalWorkflowsInUniversalSearch,
 };
 use crate::server::telemetry::TelemetryEvent;
-use crate::settings::{ AliasExpansionEnabled, AliasExpansionSettings, AppEditorSettings, AutocompleteSymbols, AutosuggestionKeybindingHint,
-    ChangelogSettings, CloudPreferencesSettings, CodeSettings, CommandCorrections,
-    CompletionsOpenWhileTyping, CopyOnSelect, CtrlTabBehavior, DEFAULT_QUAKE_MODE_SIZE_PERCENTAGES, ErrorUnderliningEnabled, ExtraMetaKeys,
-    GPUSettings, GlobalHotkeyMode, InputSettings, InputSettingsChangedEvent,
-    LinuxSelectionClipboard, MiddleClickPasteEnabled, MouseScrollMultiplier,
-    NativeShellCompletionsEnabled, PreferLowPowerGPU,
-    PreferredGraphicsBackend, QUAKE_WINDOW_AUTOHIDE_SUPPORTED, QuakeModeSettings,
-    RightClickBehavior, RightClickBehaviorSetting, ScrollSettings, ScrollSettingsChangedEvent,
-    SelectionSettings, SelectionSettingsChangedEvent, ShowAutosuggestionIgnoreButton,
-    ShowChangelogAfterUpdate, ShowTerminalInputMessageBar, SshSettings, SyntaxHighlighting,
-    TabBehavior, UserNativeRedirectPreference, VimModeEnabled, VimStatusBar,
-    VimUnnamedSystemClipboard, WarpCompletionsEnabled,
+use crate::settings::{
+    AliasExpansionEnabled, AliasExpansionSettings, AppEditorSettings, AutocompleteSymbols,
+    AutosuggestionKeybindingHint, ChangelogSettings, CloudPreferencesSettings, CodeSettings,
+    CommandCorrections, CompletionsOpenWhileTyping, CopyOnSelect, CtrlTabBehavior,
+    DEFAULT_QUAKE_MODE_SIZE_PERCENTAGES, ErrorUnderliningEnabled, ExtraMetaKeys, GPUSettings,
+    GlobalHotkeyMode, InputSettings, InputSettingsChangedEvent, LinuxSelectionClipboard,
+    MiddleClickPasteEnabled, MouseScrollMultiplier, NativeShellCompletionsEnabled,
+    PreferLowPowerGPU, PreferredGraphicsBackend, QUAKE_WINDOW_AUTOHIDE_SUPPORTED,
+    QuakeModeSettings, RightClickBehavior, RightClickBehaviorSetting, ScrollSettings,
+    ScrollSettingsChangedEvent, SelectionSettings, SelectionSettingsChangedEvent,
+    ShowAutosuggestionIgnoreButton, ShowChangelogAfterUpdate, ShowTerminalInputMessageBar,
+    SshSettings, SyntaxHighlighting, TabBehavior, UserNativeRedirectPreference, VimModeEnabled,
+    VimStatusBar, VimUnnamedSystemClipboard, WarpCompletionsEnabled,
 };
 use crate::terminal::alt_screen_reporting::{
     AltScreenReporting, FocusReportingEnabled, MouseReportingEnabled, ScrollReportingEnabled,
@@ -94,7 +96,8 @@ use crate::terminal::session_settings::{
     SessionSettingsChangedEvent, ShouldConfirmCloseSession,
 };
 use crate::terminal::settings::{
-    AsyncFindEnabled, MaximumGridSize, Osc52ClipboardAccess, Osc52ClipboardAccessSetting, TerminalSettings, TerminalSettingsChangedEvent, UseAudibleBell,
+    AsyncFindEnabled, MaximumGridSize, Osc52ClipboardAccess, Osc52ClipboardAccessSetting,
+    TerminalSettings, TerminalSettingsChangedEvent, UseAudibleBell,
 };
 use crate::terminal::{BlockListSettings, PreserveInputFocusOnBlockSelection, SnackbarEnabled};
 use crate::undo_close::UndoCloseSettings;
@@ -2716,9 +2719,6 @@ impl FeaturesPageView {
             editor_widgets.push(Box::new(AutosuggestionIgnoreButtonWidget::default()));
         }
 
-
-
-
         if FeatureFlag::AgentView.is_enabled() {
             editor_widgets.push(Box::new(ShowTerminalInputMessageLineWidget::default()));
         }
@@ -2762,7 +2762,6 @@ impl FeaturesPageView {
         {
             terminal_widgets.push(Box::new(AudibleBellWidget::default()));
         }
-
 
         terminal_widgets.push(Box::new(SmartSelectWidget::default()));
         terminal_widgets.push(Box::new(CopyOnSelectWidget::default()));
@@ -4931,7 +4930,6 @@ impl SettingsWidget for DesktopNotificationsWidget {
 
             column.add_child(render_group(toggles, appearance));
         }
-
 
         column.finish()
     }

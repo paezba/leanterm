@@ -1349,11 +1349,7 @@ impl LocalDiffStateModel {
     /// Creates a PR for `branch` on the local working tree and emits
     /// `GitOpCompleted`. Local PR info is sourced from `GitRepoStatusModel`, so
     /// no metadata is written here.
-    pub fn create_pr(
-        &self,
-        branch: String,
-        ctx: &mut ModelContext<Self>,
-    ) {
+    pub fn create_pr(&self, branch: String, ctx: &mut ModelContext<Self>) {
         let Some(repo_path) = self.active_repository_path(ctx) else {
             ctx.emit(DiffStateModelEvent::GitOpCompleted(GitOpResult::PrCreated(
                 Err("no active repository".to_string()),

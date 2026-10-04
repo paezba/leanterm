@@ -4,9 +4,7 @@ use model::blocks::BlockList;
 pub use model::terminal_model::TerminalModel;
 use ordered_float::Float;
 mod package_installers;
-pub use history::{
-    History, HistoryEntry, HistoryEvent, LinkedWorkflowData, ShellHost,
-};
+pub use history::{History, HistoryEntry, HistoryEvent, LinkedWorkflowData, ShellHost};
 pub use view::{Event, TerminalView};
 pub use warp_terminal::shell::{self, ShellLaunchData};
 pub use warp_terminal::{CellSizeAndWindowPadding, ClipboardType, SizeInfo};
@@ -78,7 +76,6 @@ mod writeable_pty;
 pub use writeable_pty::{PtyIntent, PtyIntentEvent, TerminalSurface};
 #[cfg(windows)]
 pub mod wsl;
-
 
 pub use block_list_settings::*;
 pub use mock_terminal_manager::MockTerminalManager;

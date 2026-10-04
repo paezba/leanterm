@@ -7,12 +7,12 @@ pub mod referral;
 pub mod team;
 pub mod workspace;
 
-#[cfg(feature = "tui")]
-use tui_onboarding::TuiOnboardingClient;
 use std::ops::Deref;
 use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
+#[cfg(feature = "tui")]
+use tui_onboarding::TuiOnboardingClient;
 
 use ::http::header::CONTENT_LENGTH;
 use anyhow::{Context, Result, anyhow};
@@ -315,7 +315,6 @@ impl ErrorExt for AIApiError {
     }
 }
 register_error!(AIApiError);
-
 
 /// An API wrapper struct with methods to requests to warp-server.
 ///
@@ -808,12 +807,7 @@ impl ServerApiProvider {
     ) -> Self {
         let (event_sender, event_receiver) = async_channel::bounded(10);
 
-        let server_api = ServerApi::new(
-            auth_state.clone(),
-            event_sender,
-            iap_state,
-            ctx,
-        );
+        let server_api = ServerApi::new(auth_state.clone(), event_sender, iap_state, ctx);
 
         ctx.spawn_stream_local(
             event_receiver,
@@ -914,7 +908,6 @@ impl ServerApiProvider {
     pub fn get_http_client(&self) -> Arc<http_client::Client> {
         self.server_api.owned_http_client()
     }
-
 }
 
 impl Entity for ServerApiProvider {

@@ -84,6 +84,7 @@ pub use typeahead::*;
 use version_compare::Cmp;
 pub use video_recording::*;
 use warp::appearance::Appearance;
+use warp::cmd_or_ctrl_shift;
 use warp::features::FeatureFlag;
 use warp::integration_testing::assertions::{
     assert_binding_display_string, go_offline, go_online, join_a_workspace,
@@ -105,9 +106,7 @@ use warp::integration_testing::navigation_palette::{
     RecentSession, check_recency, navigate_to_other_session_step, open_navigation_palette_step,
 };
 use warp::integration_testing::pane_group::assert_focused_pane_index;
-use warp::integration_testing::settings::{
-    assert_theme_chooser_contains, toggle_setting,
-};
+use warp::integration_testing::settings::{assert_theme_chooser_contains, toggle_setting};
 use warp::integration_testing::step::{
     assert_no_pending_model_events, new_step_with_default_assertions,
     new_step_with_default_assertions_for_pane,
@@ -173,10 +172,7 @@ use warp::terminal::view::{
 use warp::terminal::{TerminalView, shell};
 use warp::util::bindings::CustomAction;
 use warp::workflows::categories::CategoriesView;
-use warp::workspace::{
-    NEW_SESSION_MENU_BUTTON_POSITION_ID, NEW_TAB_BUTTON_POSITION_ID, Workspace,
-};
-use warp::{ cmd_or_ctrl_shift};
+use warp::workspace::{NEW_SESSION_MENU_BUTTON_POSITION_ID, NEW_TAB_BUTTON_POSITION_ID, Workspace};
 use warpui_core::event::KeyState;
 use warpui_core::integration::{AssertionOutcome, StepData, TestStep};
 use warpui_core::keymap::{Keystroke, PerPlatformKeystroke, Trigger};
@@ -6718,7 +6714,6 @@ pub fn test_pane_group_state_clear_blocks() -> Builder {
                 .add_assertion(assert_pane_group_has_state(0, TerminalViewState::Normal)),
         )
 }
-
 
 // cheating a little bit in this test; it's hard to tell if the create folder dialog is open from
 // the workspace view, but we DO force warp drive open to show the dialog, so we can look for that

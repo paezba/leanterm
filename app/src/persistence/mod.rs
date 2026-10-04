@@ -35,7 +35,6 @@ use warp_errors::report_error;
 use warp_graphql::scalars::time::ServerTimestamp;
 use warpui::{AppContext, Entity, SingletonEntity};
 
-use crate::persisted_workspace::EnablementState;
 use crate::app_state::AppState;
 use crate::auth::auth_manager::PersistedCurrentUserInformation;
 use crate::cloud_object::model::actions::ObjectAction;
@@ -45,11 +44,12 @@ use crate::cloud_object::{
 };
 use crate::drive::folders::CloudFolder;
 use crate::notebooks::CloudNotebook;
+use crate::persisted_workspace::EnablementState;
 use crate::server::experiments::ServerExperiment;
 use crate::server::ids::SyncId;
 use crate::suggestions::ignored_suggestions_model::SuggestionType;
 use crate::terminal::history::PersistedCommand;
-use crate::terminal::model::block::{ SerializedBlock};
+use crate::terminal::model::block::SerializedBlock;
 use crate::terminal::model::session::SessionId;
 use crate::workflows::CloudWorkflow;
 use crate::workspaces::user_profiles::UserProfileWithUID;

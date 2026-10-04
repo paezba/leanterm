@@ -8,7 +8,6 @@ use std::collections::HashMap;
 use pathfinder_color::ColorU;
 use warpui::elements::MouseStateHandle;
 
-
 // ---------------------------------------------------------------------------
 // Callback type aliases
 // ---------------------------------------------------------------------------
@@ -25,16 +24,13 @@ use warpui::elements::MouseStateHandle;
 // JsonTreeState
 // ---------------------------------------------------------------------------
 
-impl JsonTreeState {
-
-}
+impl JsonTreeState {}
 
 // ---------------------------------------------------------------------------
 // JsonTreeColors
 // ---------------------------------------------------------------------------
 
-impl JsonTreeColors {
-}
+impl JsonTreeColors {}
 
 // ---------------------------------------------------------------------------
 // Annotation helpers

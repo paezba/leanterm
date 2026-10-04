@@ -1,10 +1,6 @@
-use settings_page::{
-    MatchData, SettingsWidget, search_terms_match,
-};
+use settings_page::{MatchData, SettingsWidget, search_terms_match};
 use warpui::elements::Empty;
-use warpui::{
-    AppContext, Element, Entity, View,
-};
+use warpui::{AppContext, Element, Entity, View};
 
 use super::*;
 use crate::appearance::Appearance;
@@ -88,7 +84,6 @@ fn match_data_countable_zero_is_not_truthy() {
 
 // ── Display labels ─────────────────────────────────────────────────
 
-
 // ── slug / from_slug ───────────────────────────────────────────────
 
 /// Every `SettingsSection` variant.
@@ -100,12 +95,7 @@ fn match_data_countable_zero_is_not_truthy() {
 /// slug it was seeded from, because the slug is a stored contract that the
 /// rename must not follow.
 
-
-
 // ── current_stop_index ──────────────────────────────────────────────────────
-
-
-
 
 // ── next_stop_index wrapping ────────────────────────────────────────────────
 
@@ -132,7 +122,6 @@ fn next_stop_index_handles_single_stop() {
 // rebuilds itself on navigation any more (each subpage owns its own view), but
 // these tests still pin the underlying PageType::Uncategorized filter lifecycle
 // and the real search_terms_match predicate that the invariant rests on.
-
 
 /// Minimal View so PageType<V> can be instantiated in a unit test without the
 /// full SettingsView/ViewContext a real settings page requires.
@@ -170,7 +159,6 @@ impl SettingsWidget for StubWidget {
     }
 }
 
-
 #[test]
 fn search_terms_match_direct_unit_checks() {
     // All-words, case-insensitive, non-contiguous.
@@ -189,29 +177,16 @@ fn search_terms_match_direct_unit_checks() {
     // Every word must appear.
 }
 
-
-
 #[test]
 fn reapply_handles_multi_word_and_case() {
     // A multi-word, case-insensitive query survives the rebuild + reapply cycle.
 }
 
-
 struct NeverRendersWidget {
     terms: &'static str,
 }
 
-
-
-
-
 /// An Uncategorized page with one widget plus a title trailing element.
-
-
-
-
-
-
 
 /// Renders a `categorized_page_with_trailing` page, whose category has no subtitle (a
 /// `render_sub_header` header, not `render_sub_header_with_description`).

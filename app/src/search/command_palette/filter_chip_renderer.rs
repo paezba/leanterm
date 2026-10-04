@@ -96,7 +96,17 @@ impl FilterChipRenderer for QueryFilter {
 
     fn icon_color(&self, appearance: &Appearance) -> ColorU {
         match self {
-            QueryFilter::History | QueryFilter::Actions | QueryFilter::Sessions | QueryFilter::Tabs | QueryFilter::Drive | QueryFilter::LaunchConfigurations | QueryFilter::Files | QueryFilter::Commands | QueryFilter::Blocks | QueryFilter::Code | QueryFilter::Repos => appearance
+            QueryFilter::History
+            | QueryFilter::Actions
+            | QueryFilter::Sessions
+            | QueryFilter::Tabs
+            | QueryFilter::Drive
+            | QueryFilter::LaunchConfigurations
+            | QueryFilter::Files
+            | QueryFilter::Commands
+            | QueryFilter::Blocks
+            | QueryFilter::Code
+            | QueryFilter::Repos => appearance
                 .theme()
                 .main_text_color(appearance.theme().surface_2())
                 .into_solid(),

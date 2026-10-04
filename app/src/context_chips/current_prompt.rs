@@ -1,4 +1,4 @@
-use crate::settings::{ InputSettings, WarpPromptSeparator};
+use crate::settings::{InputSettings, WarpPromptSeparator};
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash as _, Hasher as _};
 use std::sync::{Arc, Weak};
@@ -13,8 +13,8 @@ use warp_core::user_preferences::GetUserPreferences;
 use warp_errors::report_error;
 use warpui::r#async::{SpawnedFutureHandle, Timer};
 use warpui::{
-    AppContext, Entity, ModelAsRef, ModelContext, ModelHandle, SingletonEntity,
-    ViewHandle, WeakModelHandle,
+    AppContext, Entity, ModelAsRef, ModelContext, ModelHandle, SingletonEntity, ViewHandle,
+    WeakModelHandle,
 };
 
 use super::context_chip::{
@@ -35,9 +35,7 @@ use crate::terminal::model::block::{Block, BlockMetadata};
 use crate::terminal::model::session::{ExecuteCommandOptions, Session, Sessions, SessionsEvent};
 use crate::terminal::model::terminal_model::TerminalModel;
 use crate::terminal::model_events::{ModelEvent, ModelEventDispatcher};
-use crate::terminal::session_settings::{
-    SessionSettings, SessionSettingsChangedEvent,
-};
+use crate::terminal::session_settings::{SessionSettings, SessionSettingsChangedEvent};
 use crate::terminal::view::{ContextMenuAction, PromptPart, PromptPosition, TerminalAction};
 
 #[cfg(test)]

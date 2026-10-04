@@ -128,7 +128,6 @@ impl GithubPrPromptChipDefaultValidation {
     }
 }
 
-
 define_settings_group!(SessionSettings, settings: [
     working_directory_config: WorkingDirectoryConfig,
     startup_shell_override: StartupShellOverride {

@@ -29,9 +29,7 @@ use crate::appearance::Appearance;
 use crate::auth::auth_manager::AuthManager;
 use crate::auth::auth_view_modal::AuthRedirectPayload;
 use crate::auth::login_failure_notification::LoginFailureReason;
-use crate::editor::{
-    EditorView, InteractionState,
-};
+use crate::editor::{EditorView, InteractionState};
 use crate::util::bindings::CustomAction;
 
 const MODAL_WIDTH: f32 = 460.;
@@ -95,7 +93,6 @@ pub struct PasteAuthTokenModalView {
 }
 
 impl PasteAuthTokenModalView {
-
     /// Disables the editor while the auth request is in flight. Re-enabled
     /// automatically on `AuthManagerEvent::AuthFailed` or on local parse
     /// failure in `submit`.

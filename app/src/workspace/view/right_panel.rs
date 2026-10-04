@@ -29,8 +29,8 @@ use crate::code_review::code_review_header::HEADER_BUTTON_PADDING;
 #[cfg(feature = "local_fs")]
 use crate::code_review::code_review_view::CodeReviewAction;
 use crate::code_review::code_review_view::{
-    CONTENT_LEFT_MARGIN, CONTENT_RIGHT_MARGIN, CodeReviewView,
-    CodeReviewViewEvent, ReviewActionTargetProvider, render_file_navigation_button,
+    CONTENT_LEFT_MARGIN, CONTENT_RIGHT_MARGIN, CodeReviewView, CodeReviewViewEvent,
+    ReviewActionTargetProvider, render_file_navigation_button,
 };
 use crate::code_review::diff_state::DiffStateModel;
 use crate::drive::panel::{MAX_SIDEBAR_WIDTH_RATIO, MIN_SIDEBAR_WIDTH};
@@ -376,8 +376,6 @@ impl RightPanelView {
             me.handle_working_directories_event(event, ctx)
         });
 
-
-
         let maximize_button = ctx.add_typed_action_view(|_| {
             ActionButton::new("", PaneHeaderTheme)
                 .with_icon(Icon::Maximize)
@@ -533,8 +531,7 @@ impl RightPanelView {
         // availability when terminal state changes (e.g. command
         // starts/finishes).
         ctx.subscribe_to_view(&pane_group, |_me, _, event, _ctx| {
-            if matches!(event, PaneGroupEvent::TerminalViewStateChanged) {
-            }
+            if matches!(event, PaneGroupEvent::TerminalViewStateChanged) {}
         });
 
         self.active_pane_group = Some(pane_group);

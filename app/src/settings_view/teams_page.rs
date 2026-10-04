@@ -2872,8 +2872,7 @@ impl TeamsWidget {
         let has_admin_permissions =
             TeamsPageView::has_admin_permissions(team_metadata, workspace, &current_user_email);
         let is_owner = team_metadata.has_owner_permissions(&current_user_email);
-        let delete_disabled_reason =
-            team_metadata.get_delete_disabled_reason(&current_user_email);
+        let delete_disabled_reason = team_metadata.get_delete_disabled_reason(&current_user_email);
 
         let mut main_content = Flex::column();
         let chip_editor_style = UiComponentStyles::default()

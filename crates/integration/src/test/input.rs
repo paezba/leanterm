@@ -4,8 +4,7 @@ use warp::features::FeatureFlag;
 use warp::integration_testing::clipboard::write_to_clipboard;
 use warp::integration_testing::input::{
     AutosuggestionState, assert_autosuggestion_state, input_contains_string, input_is_empty,
-    latest_buffer_operations_are_empty, 
-    tab_completions_menu_is_open, 
+    latest_buffer_operations_are_empty, tab_completions_menu_is_open,
 };
 use warp::integration_testing::step::new_step_with_default_assertions;
 use warp::integration_testing::terminal::util::{
@@ -150,7 +149,6 @@ pub fn test_inline_model_selector_restores_prompt_on_model_selection() -> Builde
                 ),
         )
 }
-
 
 pub fn test_latest_buffer_operations() -> Builder {
     new_builder()

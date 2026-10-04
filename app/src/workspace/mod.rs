@@ -20,7 +20,7 @@ mod toast_stack;
 pub mod util;
 pub mod view;
 
-use crate::server::telemetry::{ PaletteSource};
+use crate::server::telemetry::PaletteSource;
 pub use action::{
     AutoCloudHandoffTrigger, CommandSearchOptions, InitContent, RestoreConversationLayout,
     TabContextMenuAnchor, VerticalTabsPaneContextMenuTarget, WorkspaceAction,
@@ -56,12 +56,12 @@ pub use registry::WorkspaceRegistry;
 pub use toast_stack::{ToastStack, ToastStackEvent};
 
 use crate::workspace::view::{
-    LEFT_PANEL_GLOBAL_SEARCH_BINDING_NAME,
-    LEFT_PANEL_PROJECT_EXPLORER_BINDING_NAME, LEFT_PANEL_WARP_DRIVE_BINDING_NAME, NEW_FILE_BINDING_NAME,
-    NEW_TAB_BINDING_NAME, NEW_TERMINAL_TAB_BINDING_NAME, NEW_WINDOW_BINDING_NAME,
-    OPEN_GLOBAL_SEARCH_BINDING_NAME, TOGGLE_PROJECT_EXPLORER_BINDING_NAME,
-    TOGGLE_RIGHT_PANEL_BINDING_NAME, TOGGLE_TAB_CONFIGS_MENU_BINDING_NAME,
-    TOGGLE_VERTICAL_TABS_PANEL_BINDING_NAME, TOGGLE_WARP_DRIVE_BINDING_NAME,
+    LEFT_PANEL_GLOBAL_SEARCH_BINDING_NAME, LEFT_PANEL_PROJECT_EXPLORER_BINDING_NAME,
+    LEFT_PANEL_WARP_DRIVE_BINDING_NAME, NEW_FILE_BINDING_NAME, NEW_TAB_BINDING_NAME,
+    NEW_TERMINAL_TAB_BINDING_NAME, NEW_WINDOW_BINDING_NAME, OPEN_GLOBAL_SEARCH_BINDING_NAME,
+    TOGGLE_PROJECT_EXPLORER_BINDING_NAME, TOGGLE_RIGHT_PANEL_BINDING_NAME,
+    TOGGLE_TAB_CONFIGS_MENU_BINDING_NAME, TOGGLE_VERTICAL_TABS_PANEL_BINDING_NAME,
+    TOGGLE_WARP_DRIVE_BINDING_NAME,
 };
 
 pub fn init(app: &mut AppContext) {
@@ -1057,8 +1057,7 @@ pub fn init(app: &mut AppContext) {
     // Oz and Warp Control CLI install/uninstall actions (macOS only)
     #[cfg(target_os = "macos")]
     {
-        app.register_editable_bindings([
-        ]);
+        app.register_editable_bindings([]);
         if FeatureFlag::WarpControlCli.is_enabled() {
             app.register_editable_bindings([
                 EditableBinding::new(
@@ -1204,12 +1203,8 @@ pub fn init(app: &mut AppContext) {
         .with_group(bindings::BindingGroup::Folders.as_str()),
     ]);
 
-
-
-
     add_open_setting_pages_as_editable_binding(app);
     add_overflow_menu_items_as_editable_binding(app);
-
 }
 
 fn add_open_setting_pages_as_editable_binding(app: &mut AppContext) {

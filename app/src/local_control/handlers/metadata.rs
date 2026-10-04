@@ -2,7 +2,7 @@
 #[cfg(test)]
 #[path = "metadata_tests.rs"]
 mod tests;
-use crate::settings::{ CodeSettings};
+use crate::settings::CodeSettings;
 use ::local_control::protocol::{
     ActionNameParams, ActiveTargetChain, PaneTarget, SessionTarget, SurfaceListResult,
     SurfaceSummary, TabTarget, TargetSelector, WindowTarget,

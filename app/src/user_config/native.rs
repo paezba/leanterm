@@ -8,13 +8,12 @@ use repo_metadata::RepositoryUpdate;
 use warpui::{ModelContext, ModelHandle, SingletonEntity};
 
 use super::util::{
-    for_each_dir_entry, has_name, is_config_file,
-    parse_multi_launch_config_dir_entry, parse_multi_workflow_dir_entry,
-    parse_single_theme_dir_entry, parse_tab_config_dir_entry,
+    for_each_dir_entry, has_name, is_config_file, parse_multi_launch_config_dir_entry,
+    parse_multi_workflow_dir_entry, parse_single_theme_dir_entry, parse_tab_config_dir_entry,
 };
 use super::{
-    LAUNCH_CONFIG_COMMENT, WarpConfigUpdateEvent, launch_configs_dir,
-    tab_configs_dir, themes_dir, workflows_dir,
+    LAUNCH_CONFIG_COMMENT, WarpConfigUpdateEvent, launch_configs_dir, tab_configs_dir, themes_dir,
+    workflows_dir,
 };
 use crate::features::FeatureFlag;
 use crate::launch_configs::launch_config::LaunchConfig;
@@ -127,7 +126,6 @@ impl super::WarpConfig {
                 },
             );
         }
-
 
         if FeatureFlag::SettingsFile.is_enabled()
             && update_touches_path(update, &crate::settings::user_preferences_toml_file_path())

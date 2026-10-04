@@ -40,8 +40,8 @@ use super::aliases::WorkflowAliases;
 use super::command_parser::WorkflowCommandDisplayData;
 use super::{CloudWorkflowModel, WorkflowSource, WorkflowType, WorkflowViewMode};
 use crate::appearance::Appearance;
-use crate::auth::auth_state::AuthState;
 use crate::auth::AuthStateProvider;
+use crate::auth::auth_state::AuthState;
 use crate::cloud_object::breadcrumbs::ContainingObject;
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::model::view::CloudViewModel;
@@ -80,7 +80,6 @@ use crate::server::telemetry::{
     CloudObjectTelemetryMetadata, SharingDialogSource, TelemetryCloudObjectType, TelemetryEvent,
 };
 use crate::terminal::safe_mode_settings::get_secret_obfuscation_mode;
-use secret_redaction::find_secrets_in_text;
 use crate::ui_components::breadcrumb::{BreadcrumbState, render_breadcrumbs};
 use crate::ui_components::buttons::{accent_icon_button, icon_button};
 use crate::ui_components::dialog::{Dialog, dialog_styles};
@@ -93,6 +92,7 @@ use crate::workflows::CloudWorkflow;
 use crate::workflows::workflow::{Argument, Workflow};
 use crate::workspace::ToastStack;
 use crate::{FeatureFlag, send_telemetry_from_ctx};
+use secret_redaction::find_secrets_in_text;
 
 mod alias_argument_selector;
 mod alias_bar;
@@ -385,7 +385,6 @@ impl WorkflowView {
         ctx.subscribe_to_view(&content_editor, |me, _, event, ctx| {
             me.handle_content_editor_event(event, ctx);
         });
-
 
         let enum_creation_dialog = ctx.add_typed_action_view(EnumCreationDialog::new);
         ctx.subscribe_to_view(&enum_creation_dialog, |me, _, event, ctx| {

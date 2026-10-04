@@ -4310,11 +4310,6 @@ fn test_buffer_points_to_cache() {
     });
 }
 
-
-
-
-
-
 #[test]
 fn test_system_delete_multibyte_characters_basic() {
     App::test((), |mut app| async move {
@@ -4428,7 +4423,6 @@ fn test_system_delete_various_unicode_categories() {
         });
     })
 }
-
 
 #[path = "vim_handler_tests.rs"]
 mod vim_handler_tests;

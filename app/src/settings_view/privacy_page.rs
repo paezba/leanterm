@@ -1,4 +1,4 @@
-use crate::settings::{ CustomSecretRegex, PrivacySettings, RegexDisplayInfo};
+use crate::settings::{CustomSecretRegex, PrivacySettings, RegexDisplayInfo};
 use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -1978,7 +1978,6 @@ pub fn init_actions_from_parent_view<T: Action + Clone>(
         context,
         flags::SAFE_MODE_FLAG,
     ));
-
 
     ToggleSettingActionPair::add_toggle_setting_action_pairs_as_bindings(toggle_binding_pairs, app);
 }

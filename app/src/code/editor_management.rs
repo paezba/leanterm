@@ -122,7 +122,10 @@ impl CodeSource {
             Self::New {
                 default_directory, ..
             } => default_directory.as_ref(),
-            Self::Link { .. } | Self::FileTree { .. } | Self::CommandPalette { .. } | Self::Finder { .. } => None,
+            Self::Link { .. }
+            | Self::FileTree { .. }
+            | Self::CommandPalette { .. }
+            | Self::Finder { .. } => None,
         }
     }
 

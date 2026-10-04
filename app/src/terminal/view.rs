@@ -5,10 +5,10 @@ mod bookmarks;
 mod context_menu;
 pub mod init;
 pub mod inline_banner;
+use super::{GridType, should_right_click_paste};
+use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::telemetry::AnonymousUserSignupEntrypoint;
 use crate::settings::DebugSettingsChangedEvent;
-use super::{ GridType, should_right_click_paste};
-use crate::server::cloud_objects::update_manager::UpdateManager;
 #[cfg(feature = "local_fs")]
 use crate::settings::import::model::ImportedConfigModel;
 use crate::terminal::waterfall_gap_element::WaterfallGapElement;
@@ -65,8 +65,7 @@ pub use init::{
 };
 use init::{INPUT_BOX_VISIBLE_KEY, TOGGLE_BLOCK_FILTER_KEYBINDING};
 use inline_banner::{
-    AliasExpansionBanner, AliasExpansionBannerAction,
-    OpenInWarpBannerState, VimModeBannerAction,
+    AliasExpansionBanner, AliasExpansionBannerAction, OpenInWarpBannerState, VimModeBannerAction,
     render_alias_expansion_banner, render_inline_notifications_discovery_banner,
     render_inline_notifications_error_banner, render_inline_shared_session_ended_banner,
     render_inline_shared_session_started_banner, render_open_in_warp_banner,
@@ -86,8 +85,7 @@ use repo_metadata::repositories::RepoDetectionSource;
 use serde::Serialize;
 use serde_json::json;
 use session_sharing_protocol::common::{
-    ParticipantId, Role, RoleRequestId, RoleRequestResponse,
-    WindowSize as SessionSharingWindowSize,
+    ParticipantId, Role, RoleRequestId, RoleRequestResponse, WindowSize as SessionSharingWindowSize,
 };
 use session_sharing_protocol::sharer::{
     RoleUpdateReason, SessionEndedReason, SessionRetentionReason,
@@ -121,13 +119,12 @@ use warpui::elements::new_scrollable::{
 };
 use warpui::elements::shimmering_text::ShimmeringTextStateHandle;
 use warpui::elements::{
-    Align, ChildAnchor, ChildView, Clipped, ClippedScrollStateHandle, ConstrainedBox,
-    Container, CornerRadius, CrossAxisAlignment, DispatchEventResult, DropTarget, DropTargetData,
-    Empty, EventHandler, Fill, Flex, Hoverable, Icon, LiveElement, MouseStateHandle,
-    NewScrollable, OffsetPositioning, ParentAnchor, ParentElement, ParentOffsetBounds,
-    PositionedElementAnchor, PositionedElementOffsetBounds, Radius, Rect, SavePosition,
-    ScrollStateHandle, Scrollable, ScrollableElement, ScrollbarWidth, Shrinkable, Stack, Text,
-    get_rich_content_position_id,
+    Align, ChildAnchor, ChildView, Clipped, ClippedScrollStateHandle, ConstrainedBox, Container,
+    CornerRadius, CrossAxisAlignment, DispatchEventResult, DropTarget, DropTargetData, Empty,
+    EventHandler, Fill, Flex, Hoverable, Icon, LiveElement, MouseStateHandle, NewScrollable,
+    OffsetPositioning, ParentAnchor, ParentElement, ParentOffsetBounds, PositionedElementAnchor,
+    PositionedElementOffsetBounds, Radius, Rect, SavePosition, ScrollStateHandle, Scrollable,
+    ScrollableElement, ScrollbarWidth, Shrinkable, Stack, Text, get_rich_content_position_id,
 };
 use warpui::event::ModifiersState;
 use warpui::fonts::{Cache as FontCache, FamilyId, Properties};
@@ -143,8 +140,8 @@ use warpui::windowing::WindowManager;
 use warpui::{
     AccessibilityData, AppContext, BlurContext, CursorInfo, Element, Entity, EntityId,
     EventContext, FocusContext, ModelAsRef, ModelHandle, SingletonEntity, Tracked, TypedActionView,
-    View, ViewContext, ViewHandle, WeakModelHandle, WeakViewHandle, WindowId,
-    end_trace_after_next, record_trace_event, windowing,
+    View, ViewContext, ViewHandle, WeakModelHandle, WeakViewHandle, WindowId, end_trace_after_next,
+    record_trace_event, windowing,
 };
 
 use self::link_detection::HighlightedLinkOption;
@@ -153,21 +150,17 @@ use super::available_shells::AvailableShell;
 use super::block_list_viewport::FindMatchScrollLocation;
 use super::event::SshLoginStatus;
 use super::find::FindOptions;
-use super::model::block::{
-    BlockSection, BlocklistEnvVarMetadata,
-};
+use super::model::block::{BlockSection, BlocklistEnvVarMetadata};
 use super::model::completions::ShellCompletion;
 use super::model::rich_content::RichContentType;
-use super::shimmering_warp_loading_text::shimmering_warp_loading_text;
 use super::model::selection::ExpandedSelectionRange;
 use super::model::session::SessionBootstrappedEvent;
 use super::settings::AltScreenPaddingMode;
+use super::shimmering_warp_loading_text::shimmering_warp_loading_text;
 use super::ssh::util::{InteractiveSshCommand, SshWarpifyCommand, parse_interactive_ssh_command};
 use super::warpify::WarpificationSource;
 use super::warpify::success_block::{WarpifySuccessBlock, WarpifySuccessBlockEvent};
 use super::warpify::trigger_state::{SshBlockState, WarpifyState};
-#[cfg(feature = "local_fs")]
-use crate::persisted_workspace::PersistedWorkspace;
 use crate::antivirus::AntivirusInfo;
 use crate::appearance::{Appearance, AppearanceEvent};
 use crate::auth::auth_manager::AuthManager;
@@ -201,9 +194,11 @@ use crate::features::FeatureFlag;
 use crate::menu::{Event as MenuEvent, Menu, MenuItem, MenuItemFields};
 use crate::pane_group::focus_state::PaneFocusHandle;
 use crate::pane_group::{
-    CodeReviewPanelArg, PaneConfiguration, PaneEvent, PaneGroupAction,
-    SplitPaneState, TerminalViewResources,
+    CodeReviewPanelArg, PaneConfiguration, PaneEvent, PaneGroupAction, SplitPaneState,
+    TerminalViewResources,
 };
+#[cfg(feature = "local_fs")]
+use crate::persisted_workspace::PersistedWorkspace;
 use crate::persistence::{self, FinishedCommandMetadata};
 use crate::remote_server::manager::{
     RemoteServerInitPhase, RemoteServerManager, RemoteServerManagerEvent,
@@ -214,18 +209,17 @@ use crate::resource_center::{
 use crate::server::ids::{ObjectUid, SyncId};
 use crate::server::server_api::ServerApi;
 use crate::server::telemetry::{
-    self, BootstrappingInfo,
-    NotificationsTurnedOnSource, PaletteSource,
-    SaveAsWorkflowModalSource, SecretInteraction, SlowBootstrapInfo,
-    TelemetryEvent, ToggleBlockFilterSource,
+    self, BootstrappingInfo, NotificationsTurnedOnSource, PaletteSource, SaveAsWorkflowModalSource,
+    SecretInteraction, SlowBootstrapInfo, TelemetryEvent, ToggleBlockFilterSource,
 };
 use crate::session_management::{CommandContext, SessionNavigationPromptElements};
 use crate::settings::import::view::{SettingsImportEvent, SettingsImportView};
-use crate::settings::{ AliasExpansionSettings, AppEditorSettings,
-    BlockVisibilitySettings, BlockVisibilitySettingsChangedEvent, CodeSettings, DebugSettings, EmacsBindingsSettings, FontSettings, FontSettingsChangedEvent,
-    InputModeSettings, InputModeSettingsChangedEvent, InputSettings, PaneSettings,
-    PaneSettingsChangedEvent, PrivacySettings, PrivacySettingsChangedEvent,
-    PrivacySettingsSnapshot, SelectionSettings, VimBannerSettings,
+use crate::settings::{
+    AliasExpansionSettings, AppEditorSettings, BlockVisibilitySettings,
+    BlockVisibilitySettingsChangedEvent, CodeSettings, DebugSettings, EmacsBindingsSettings,
+    FontSettings, FontSettingsChangedEvent, InputModeSettings, InputModeSettingsChangedEvent,
+    InputSettings, PaneSettings, PaneSettingsChangedEvent, PrivacySettings,
+    PrivacySettingsChangedEvent, PrivacySettingsSnapshot, SelectionSettings, VimBannerSettings,
 };
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
 use crate::settings_view::{SettingsSection, flags};
@@ -257,8 +251,8 @@ use crate::terminal::general_settings::GeneralSettings;
 use crate::terminal::grid_size_util::grid_cell_dimensions;
 use crate::terminal::input::decorations::InputBackgroundJobOptions;
 use crate::terminal::input::{
-    CommandExecutionSource, InputState, MenuPositioning,
-    MenuPositioningProvider, ShellWidgetApplyMode,
+    CommandExecutionSource, InputState, MenuPositioning, MenuPositioningProvider,
+    ShellWidgetApplyMode,
 };
 use crate::terminal::ligature_settings::{LigatureSettings, should_use_ligature_rendering};
 use crate::terminal::links::should_directly_open_link;
@@ -270,12 +264,11 @@ use crate::terminal::local_tty::shell::ShellStarter;
 #[cfg(all(windows, feature = "local_tty"))]
 use crate::terminal::local_tty::windows::get_user_and_system_env_variable;
 use crate::terminal::model::ansi::{ClearMode, Handler};
-use crate::terminal::model::block::{ Block, BlockId, BlockMetadata, LONG_RUNNING_BOTTOM_PADDING_LINES,
+use crate::terminal::model::block::{
+    Block, BlockId, BlockMetadata, LONG_RUNNING_BOTTOM_PADDING_LINES,
 };
 use crate::terminal::model::blockgrid::BlockGrid;
-use crate::terminal::model::blocks::{ BlockList,
-    BlockListPoint, Gap,
-};
+use crate::terminal::model::blocks::{BlockList, BlockListPoint, Gap};
 use crate::terminal::model::escape_sequences::{
     self, C1, EscCodes, ToEscapeSequence, alt_screen_scroll_to_pty_bytes,
 };
@@ -309,10 +302,11 @@ use crate::terminal::shared_session::{
 };
 use crate::terminal::view::block_onboarding::onboarding_prompt_block::OnboardingPromptBlock;
 use crate::terminal::view::inline_banner::{
-    AliasExpansionBannerState, NotificationsDiscoveryBannerState, NotificationsErrorBannerState, VimModeBannerState,
+    AliasExpansionBannerState, NotificationsDiscoveryBannerState, NotificationsErrorBannerState,
+    VimModeBannerState,
 };
-pub use crate::terminal::view::rich_content::{ RichContent, RichContentInsertionPosition,
-    RichContentMetadata,
+pub use crate::terminal::view::rich_content::{
+    RichContent, RichContentInsertionPosition, RichContentMetadata,
 };
 use crate::terminal::view::ssh_file_upload::FileUploadId;
 use crate::terminal::view::ssh_remote_server_choice_view::{
@@ -364,12 +358,12 @@ use crate::view_components::{DismissibleToast, ToastFlavor};
 use crate::workflows::workflow::Workflow;
 use crate::workspace::sync_inputs::SyncedInputState;
 use crate::workspace::{
-    CommandSearchOptions, OneTimeModalModel, ToastStack, WorkspaceAction,
-    WorkspaceRegistry,
+    CommandSearchOptions, OneTimeModalModel, ToastStack, WorkspaceAction, WorkspaceRegistry,
 };
 use crate::workspaces::user_workspaces::{UserWorkspaces, UserWorkspacesEvent};
-use crate::{ ActiveSession as WindowActiveSession,
-    safe_warn, send_telemetry_from_ctx, send_telemetry_sync_from_ctx,
+use crate::{
+    ActiveSession as WindowActiveSession, safe_warn, send_telemetry_from_ctx,
+    send_telemetry_sync_from_ctx,
 };
 
 lazy_static! {
@@ -824,9 +818,7 @@ impl InlineBannerType {
     pub fn is_visible_in_agent_view(&self) -> bool {
         match self {
             // Agent-related banners: visible in agent view
-            Self::PromptSuggestions
-            | Self::CodebaseIndexSpeedbump
-            | Self::AgentModeSetup => true,
+            Self::PromptSuggestions | Self::CodebaseIndexSpeedbump | Self::AgentModeSetup => true,
             // Terminal-context banners: hidden in agent view
             Self::NotificationsDiscovery
             | Self::NotificationsError
@@ -865,7 +857,6 @@ struct InlineBannersState {
     notifications_discovery_banner: NotificationsDiscoveryBanner,
     notifications_error_banner: NotificationsErrorBanner,
 
-
     alias_expansion_banner: AliasExpansionBanner,
 
     shared_session_banner_state: SharedSessionBanners,
@@ -878,10 +869,6 @@ struct InlineBannersState {
     open_in_warp_banner: Option<OpenInWarpBannerState>,
 
     vim_banner_state: Option<VimModeBannerState>,
-
-
-
-
 }
 
 impl InlineBannersState {
@@ -1680,7 +1667,6 @@ pub struct TerminalViewRenderContext {
     pub hovered_secret: Option<SecretHandle>,
 
     pub horizontal_clipped_scroll_state: ClippedScrollStateHandle,
-
 }
 
 #[derive(Default)]
@@ -1763,9 +1749,7 @@ pub enum ActiveSessionState {
 }
 
 enum SecretTooltip {
-    Grid {
-        tooltip: WithinModel<SecretHandle>,
-    },
+    Grid { tooltip: WithinModel<SecretHandle> },
 }
 
 type TerminalViewCallback = Box<dyn FnOnce(&mut TerminalView, &mut ViewContext<TerminalView>)>;
@@ -1800,13 +1784,11 @@ pub struct TerminalView {
     /// The input area at the bottom of the viewport.
     input: ViewHandle<Input>,
 
-
     /// Colors used for rendering.
     colors: color::List,
 
     /// The current scroll position.
     scroll_position: ScrollState,
-
 
     /// Scroll state for scrolling vertically in the blocklist.
     blocklist_vertical_scroll_state: ScrollStateHandle,
@@ -1840,8 +1822,6 @@ pub struct TerminalView {
 
     selected_blocks: SelectedBlocks,
 
-
-
     // Whether any session contains blocks from a remote session. Cached to improve performance.
     // Blocks don't necessarily need to be finished for this to be true (e.g. it's true for
     // an empty ssh session where just the active block is remote).
@@ -1869,7 +1849,6 @@ pub struct TerminalView {
     /// changes size.  Note that this size contains not just the content element
     /// but also the input.
     resize_tx: Sender<Vector2F>,
-
 
     find_link_tx: Sender<FindLinkArg>,
 
@@ -2002,15 +1981,12 @@ pub struct TerminalView {
     /// the `insert_rich_content` helper function.
     rich_content_views: Vec<RichContent>,
 
-
-
     // Whether the block onboarding view is active or not.
     block_onboarding_active: bool,
 
     // View handles for the onboarding blocks.
     onboarding_prompt_block: Option<ViewHandle<OnboardingPromptBlock>>,
     settings_import_onboarding_block: Option<ViewHandle<SettingsImportView>>,
-
 
     /// The type of the subshell that we will bootstrap/"warpify"" on the next [`AfterBlockStarted`]
     /// terminal model event. Will only be `Some` with a [`ShellType`] we can bootstrap.
@@ -2020,9 +1996,7 @@ pub struct TerminalView {
     show_snackbar: bool,
     hover_near_snackbar_area: bool,
 
-
     pending_env_var_collection: Option<CloudEnvVarCollection>,
-
 
     // TODO(suraj): consider flattening this to the [`SharedSessionKind`]
     // and adding a `Unshared` variant to it. This would require [`SharedSessionKind::Sharer`]
@@ -2032,8 +2006,6 @@ pub struct TerminalView {
     /// Stashed source from `attempt_to_share_session` so `on_session_share_started`
     /// can decide whether to auto-copy the link vs open the sharing dialog.
     pending_share_source: Option<SharedSessionActionSource>,
-
-
 
     /// The ID of the containing window.
     window_id: WindowId,
@@ -2100,8 +2072,6 @@ pub struct TerminalView {
 
     model_events_handle: ModelHandle<ModelEventDispatcher>,
 
-
-
     /// Per-repo git status model for the current repository, if any.
     git_repo_status: Option<ModelHandle<GitRepoStatusModel>>,
 
@@ -2116,7 +2086,6 @@ pub struct TerminalView {
     /// A list of callbacks to run on the next [`ModelEvent::AfterBlockCompleted`] received.
     block_completed_callbacks: Vec<TerminalViewCallback>,
 
-
     /// Path to the current repository, or None if not currently in a repo.
     current_repo_path: Option<LocalOrRemotePath>,
 
@@ -2127,17 +2096,8 @@ pub struct TerminalView {
     // we want to keep the title as the conversation title, so we should ignore the model event setting the title after bootstrapping finishes
     ignore_next_set_title_event: bool,
 
-
-
-
-
-
-
-
     /// Weak handle to the [`PaneStack`] this view is part of, allowing push/pop operations.
     pane_stack: Option<WeakModelHandle<crate::pane_group::pane::PaneStack<Self>>>,
-
-
 
     /// `true` if this view explicitly requested a PTY shutdown.
     ///
@@ -2145,7 +2105,6 @@ pub struct TerminalView {
     /// suppresses `AgentExitedShellProcess` telemetry so manual shutdown paths
     /// (tab close, update relaunch, etc.) are not attributed to agent commands.
     manual_pty_shutdown_requested: bool,
-
 
     /// Per-session PTY recorder for writing PTY bytes to a file.
     pty_recorder: ModelHandle<PtyRecorder>,
@@ -2316,7 +2275,6 @@ impl TerminalView {
         let active_session = ctx.add_model(|ctx| {
             ActiveSession::new(sessions.clone(), model_events_handle.clone(), ctx)
         });
-
 
         let find_model = ctx.add_model(|ctx| TerminalFindModel::new(model.clone(), ctx));
 
@@ -3738,10 +3696,6 @@ impl TerminalView {
         &self.input
     }
 
-
-
-
-
     pub fn active_session(&self) -> &ModelHandle<ActiveSession> {
         &self.active_session
     }
@@ -3914,7 +3868,6 @@ impl TerminalView {
     fn user_write_ctrl_c_to_pty(&mut self, ctx: &mut ViewContext<Self>) {
         self.write_user_bytes_to_pty(vec![escape_sequences::C0::ETX], ctx);
     }
-
 
     /// Windows users expect ctrl-c to copy if there is selected text. Otherwise,
     /// we perform the normal ctrl-c action.
@@ -5271,8 +5224,7 @@ impl TerminalView {
         // of the app, or from an interactive child the user is navigating/editing.
         let reset_focus = ctx.is_self_or_child_focused()
             && !self.find_bar.is_self_or_child_focused(ctx)
-            && !self.block_filter_editor.is_self_or_child_focused(ctx)
-;
+            && !self.block_filter_editor.is_self_or_child_focused(ctx);
         if reset_focus {
             self.redetermine_global_focus_with_policy(selection_focus_policy, ctx);
         }
@@ -5361,10 +5313,7 @@ impl TerminalView {
     fn active_block_is_considered_remote(&self, app: &AppContext) -> bool {
         let model = self.model.lock();
         let active_block = model.block_list().active_block();
-        self.is_block_considered_remote(
-            active_block.session_id(),
-            app,
-        )
+        self.is_block_considered_remote(active_block.session_id(), app)
     }
 
     /// Returns true if the block is considered remote.
@@ -5374,11 +5323,7 @@ impl TerminalView {
     ///
     /// For some organizations, we accept a regex list that we run against commands to
     /// further make the determination.
-    fn is_block_considered_remote(
-        &self,
-        session_id: Option<SessionId>,
-        app: &AppContext,
-    ) -> bool {
+    fn is_block_considered_remote(&self, session_id: Option<SessionId>, app: &AppContext) -> bool {
         session_id
             .map(|id| {
                 self.sessions
@@ -5540,12 +5485,9 @@ impl TerminalView {
                             match &repo_path_opt {
                                 Some(LocalOrRemotePath::Remote(remote_path)) => {
                                     #[cfg(not(target_family = "wasm"))]
-                                    DetectedRepositories::handle(ctx).update(
-                                        ctx,
-                                        |repos, _| {
-                                            repos.register_remote_repo_root(remote_path.clone());
-                                        },
-                                    );
+                                    DetectedRepositories::handle(ctx).update(ctx, |repos, _| {
+                                        repos.register_remote_repo_root(remote_path.clone());
+                                    });
 
                                     // Remote sessions can only materialize their working
                                     // directory after repo detection has resolved the host.
@@ -5579,9 +5521,7 @@ impl TerminalView {
                                         };
 
                                         let Ok(active_directory) =
-                                            CanonicalizedPath::try_from(
-                                                active_directory,
-                                            )
+                                            CanonicalizedPath::try_from(active_directory)
                                         else {
                                             return;
                                         };
@@ -5603,20 +5543,15 @@ impl TerminalView {
                                             },
                                         );
 
-                                        if old_repo_path
-                                            .as_ref()
-                                            .and_then(|p| p.to_local_path())
+                                        if old_repo_path.as_ref().and_then(|p| p.to_local_path())
                                             != Some(repo_path.as_path())
                                         {
-                                                me.clear_git_repo_status_subscription(ctx);
+                                            me.clear_git_repo_status_subscription(ctx);
                                             me.update_git_status_subscription(ctx);
                                         }
 
                                         me.input.update(ctx, |input, ctx| {
-                                            input.update_repo_path(
-                                                Some(repo_path.clone()),
-                                                ctx,
-                                            );
+                                            input.update_repo_path(Some(repo_path.clone()), ctx);
                                         });
 
                                         me.start_lsp_server_in_active_pwd(ctx);
@@ -6310,30 +6245,24 @@ impl TerminalView {
                     // session restoration is enabled.
                     ctx.emit(Event::BlockCompleted {
                         block: serialized_block.clone(),
-                        is_local: !self.is_block_considered_remote(
-                            serialized_block.session_id,
-                            ctx,
-                        ),
+                        is_local: !self
+                            .is_block_considered_remote(serialized_block.session_id, ctx),
                     });
                 } else if let BlockType::Background(serialized_block) = block_type {
                     // Because background output blocks are before the active block, they need to be saved
                     // via a BlockCompleted event but don't affect focus or input.
                     ctx.emit(Event::BlockCompleted {
                         block: serialized_block.clone(),
-                        is_local: !self.is_block_considered_remote(
-                            serialized_block.session_id,
-                            ctx,
-                        ),
+                        is_local: !self
+                            .is_block_considered_remote(serialized_block.session_id, ctx),
                     });
                 } else if let BlockType::BootstrapVisible(serialized_block) = block_type {
                     // Re-compute the focus after the visible bootstrap block has completed.
                     self.redetermine_terminal_focus(ctx);
                     ctx.emit(Event::BlockCompleted {
                         block: serialized_block.clone(),
-                        is_local: !self.is_block_considered_remote(
-                            serialized_block.session_id,
-                            ctx,
-                        ),
+                        is_local: !self
+                            .is_block_considered_remote(serialized_block.session_id, ctx),
                     });
                 }
 
@@ -7240,11 +7169,7 @@ impl TerminalView {
     }
 
     /// Opens a folder that the user may or may not have opened in the past
-    pub fn open_repo_folder(
-        &mut self,
-        path: String,
-        ctx: &mut ViewContext<Self>,
-    ) {
+    pub fn open_repo_folder(&mut self, path: String, ctx: &mut ViewContext<Self>) {
         let escaped = self.shell_family(ctx).shell_escape(&path);
         self.input.update(ctx, |input, ctx| {
             input.try_execute_command(&format!("cd {escaped}"), ctx);
@@ -7294,7 +7219,6 @@ impl TerminalView {
 }
 
 impl TerminalView {
-
     // Read the current terminal input text from the onboarding tutorial callout
     // and apply it to the terminal input box. Lock the input mode based on query type.
 
@@ -8543,7 +8467,6 @@ impl TerminalView {
                     );
                 }
 
-
                 items.append(&mut vec![
                     MenuItem::Separator,
                     MenuItemFields::new(find_str)
@@ -8992,7 +8915,6 @@ impl TerminalView {
                 .with_disabled(is_editor_disabled)
                 .into_item(),
         ]);
-
 
         // Section 3: Teams related
         if !all_current_input_text.is_empty() && WarpDriveSettings::is_warp_drive_enabled(ctx) {
@@ -10647,7 +10569,6 @@ impl TerminalView {
         ctx.notify();
     }
 
-
     fn reset_selection_to_single_block(
         &mut self,
         block_index: BlockIndex,
@@ -12136,8 +12057,6 @@ impl TerminalView {
             Some(block) => block,
         };
 
-        
-
         if block.honor_ps1() {
             block.prompt_contents_to_string(false)
         } else if block.prompt_snapshot().is_some() {
@@ -13196,7 +13115,6 @@ impl TerminalView {
         } else {
             block_list
         };
-        
 
         (SavePosition::new(element_to_save, &self.content_element_position_id).finish()) as _
     }
@@ -14307,7 +14225,6 @@ impl TerminalView {
             );
         });
     }
-
 }
 
 impl Entity for TerminalView {
@@ -14491,7 +14408,15 @@ impl TypedActionView for TerminalView {
                         ))
                     })
             }
-            BlockSelect { .. } | SelectPriorBlock | SelectNextBlock | SelectBookmarkUp | SelectBookmarkDown | Up | Down | JumpToBookmark(_) | ScrollToTopOfBlock { topmost_block: _ } => {
+            BlockSelect { .. }
+            | SelectPriorBlock
+            | SelectNextBlock
+            | SelectBookmarkUp
+            | SelectBookmarkDown
+            | Up
+            | Down
+            | JumpToBookmark(_)
+            | ScrollToTopOfBlock { topmost_block: _ } => {
                 if let Some(content) = self
                     .selected_blocks
                     .tail()
@@ -14617,7 +14542,59 @@ impl TypedActionView for TerminalView {
                 "Opened file search palette",
                 WarpA11yRole::ButtonRole,
             )),
-            InsertCommandCorrection { .. } | BlockListContextMenu(_) | CloseContextMenu | Paste | MiddleClickOnGrid { .. } | MiddleClickOnInput | CopyCommands | MaybeHoverSecret { .. } | CopyGitBranch | OpenShareModal | ReinputCommands | ReinputCommandsWithSudo | ClearBuffer | Focus | ShowFindBar | PageUp | PageDown | Home | End | KeyboardSelectText(_) | ContextMenu(_) | SplitRight(_) | SplitLeft(_) | SplitDown(_) | SplitUp(_) | OpenGridLink(_) | OpenRichContentLink(_) | ToggleGridSecret { .. } | CopyGridSecret(_) | ShowInFileExplorer(_) | OpenFileInWarp(_) | CtrlD | CtrlC | ClearSelectionsWhenShellMode | Close | TypedCharacters(_) | UserInputSequence(_) | ControlSequence(_) | TriggerSubshellBootstrap | ShowSubshellBanner(_) | DismissWarpifyBanner(_) | OpenBlockListContextMenu | AliasExpansionBanner(_) | VimModeBanner(_) | InsertMostRecentCommandCorrection | StopSharingCurrentSession { .. } | RequestSharedSessionRole(_) | ImportSettings | DragAndDropFiles(_) | ToggleBlockFilterOnSelectedOrLastBlock(_) | SetMarkedText { .. } | ClearMarkedText | StartLspServer => ActionAccessibilityContent::from_debug(),
+            InsertCommandCorrection { .. }
+            | BlockListContextMenu(_)
+            | CloseContextMenu
+            | Paste
+            | MiddleClickOnGrid { .. }
+            | MiddleClickOnInput
+            | CopyCommands
+            | MaybeHoverSecret { .. }
+            | CopyGitBranch
+            | OpenShareModal
+            | ReinputCommands
+            | ReinputCommandsWithSudo
+            | ClearBuffer
+            | Focus
+            | ShowFindBar
+            | PageUp
+            | PageDown
+            | Home
+            | End
+            | KeyboardSelectText(_)
+            | ContextMenu(_)
+            | SplitRight(_)
+            | SplitLeft(_)
+            | SplitDown(_)
+            | SplitUp(_)
+            | OpenGridLink(_)
+            | OpenRichContentLink(_)
+            | ToggleGridSecret { .. }
+            | CopyGridSecret(_)
+            | ShowInFileExplorer(_)
+            | OpenFileInWarp(_)
+            | CtrlD
+            | CtrlC
+            | ClearSelectionsWhenShellMode
+            | Close
+            | TypedCharacters(_)
+            | UserInputSequence(_)
+            | ControlSequence(_)
+            | TriggerSubshellBootstrap
+            | ShowSubshellBanner(_)
+            | DismissWarpifyBanner(_)
+            | OpenBlockListContextMenu
+            | AliasExpansionBanner(_)
+            | VimModeBanner(_)
+            | InsertMostRecentCommandCorrection
+            | StopSharingCurrentSession { .. }
+            | RequestSharedSessionRole(_)
+            | ImportSettings
+            | DragAndDropFiles(_)
+            | ToggleBlockFilterOnSelectedOrLastBlock(_)
+            | SetMarkedText { .. }
+            | ClearMarkedText
+            | StartLspServer => ActionAccessibilityContent::from_debug(),
             #[cfg(feature = "local_fs")]
             OpenCodeInWarp { .. } => ActionAccessibilityContent::from_debug(),
             OpenInWarpBanner(action) => self.open_in_warp_banner_accessibility_content(*action),
@@ -14629,7 +14606,40 @@ impl TypedActionView for TerminalView {
             ToggleCLIAgentVoiceInput(_) => Empty,
             // Below are actions that are most likely irrelevant to users or are very noisy and the
             // debug version shouldn't be announced.
-            Scroll { .. } | AltScroll { .. } | SharedSessionViewerAltScroll { .. } | ClickOnGrid { .. } | MaybeDismissToolTip { .. } | MaybeClearAltSelect | AltScreenContextMenu { .. } | AltSelect(_) | AltMouseAction(_) | ToggleMaximizePane | PromptContextMenu { .. } | OpenInputContextMenu { .. } | InputContextMenuItem(_) | NotificationsDiscoveryBanner(_) | NotificationsErrorBanner(_) | OpenWorkflowModal | OpenWorkflowModalForBlock(_) | OpenWorkflowModalWithCloudWorkflow(_) | OpenShareSessionModal { .. } | OpenSharedSessionViewerRoleMenu | CopySharedSessionLink { .. } | OpenSharedSessionOnDesktop { .. } | MakeAllParticipantsReaders { .. } | ToggleSnackbarInActivePane | HyperlinkClick { .. } | AttemptLoginGatedFeature | StartFileDropTarget | StopFileDropTarget | RunNativeShellCompletions { .. } | OpenTeamSettingsPage | ToggleCodeReviewPane { .. } | DismissCodeToolbeltTooltip | ToggleSessionRecording | Osc52AllowBlockedClipboardOperation => Empty,
+            Scroll { .. }
+            | AltScroll { .. }
+            | SharedSessionViewerAltScroll { .. }
+            | ClickOnGrid { .. }
+            | MaybeDismissToolTip { .. }
+            | MaybeClearAltSelect
+            | AltScreenContextMenu { .. }
+            | AltSelect(_)
+            | AltMouseAction(_)
+            | ToggleMaximizePane
+            | PromptContextMenu { .. }
+            | OpenInputContextMenu { .. }
+            | InputContextMenuItem(_)
+            | NotificationsDiscoveryBanner(_)
+            | NotificationsErrorBanner(_)
+            | OpenWorkflowModal
+            | OpenWorkflowModalForBlock(_)
+            | OpenWorkflowModalWithCloudWorkflow(_)
+            | OpenShareSessionModal { .. }
+            | OpenSharedSessionViewerRoleMenu
+            | CopySharedSessionLink { .. }
+            | OpenSharedSessionOnDesktop { .. }
+            | MakeAllParticipantsReaders { .. }
+            | ToggleSnackbarInActivePane
+            | HyperlinkClick { .. }
+            | AttemptLoginGatedFeature
+            | StartFileDropTarget
+            | StopFileDropTarget
+            | RunNativeShellCompletions { .. }
+            | OpenTeamSettingsPage
+            | ToggleCodeReviewPane { .. }
+            | DismissCodeToolbeltTooltip
+            | ToggleSessionRecording
+            | Osc52AllowBlockedClipboardOperation => Empty,
         }
     }
 
@@ -15069,43 +15079,41 @@ impl View for TerminalView {
                 self.render_waterfall_gap_element(&model, &viewport, active_gap, appearance, app)
             }
             (input_mode, _, _) => {
-                {
-                    let should_show_loading = model.shared_session_status().is_view_pending();
-                    let output_area = if should_show_loading {
-                        self.render_viewer_loading(app)
-                    } else if is_alt_screen_active {
-                        did_wrap_terminal_size = true;
-                        wrap_in_terminal_size_element(
-                            &self.resize_tx,
-                            self.render_alt_screen_element(
-                                app,
-                                &model,
-                                model.alt_screen().selection_range(semantic_selection),
-                            ),
-                        )
-                    } else {
-                        self.render_block_list_element(&model, input_mode, true, app)
-                    };
+                let should_show_loading = model.shared_session_status().is_view_pending();
+                let output_area = if should_show_loading {
+                    self.render_viewer_loading(app)
+                } else if is_alt_screen_active {
+                    did_wrap_terminal_size = true;
+                    wrap_in_terminal_size_element(
+                        &self.resize_tx,
+                        self.render_alt_screen_element(
+                            app,
+                            &model,
+                            model.alt_screen().selection_range(semantic_selection),
+                        ),
+                    )
+                } else {
+                    self.render_block_list_element(&model, input_mode, true, app)
+                };
 
-                    column.add_child(Shrinkable::new(1., output_area).finish());
+                column.add_child(Shrinkable::new(1., output_area).finish());
 
-                    let input_box_visible = self.is_input_box_visible(&model, app);
-                    if input_box_visible {
-                        column.add_child(self.render_input());
-                    } else if self.show_remote_server_loading_footer(&model, app) {
-                        column.add_child(
-                            self.render_remote_server_loading_footer(&model, appearance, app),
-                        );
-                    }
+                let input_box_visible = self.is_input_box_visible(&model, app);
+                if input_box_visible {
+                    column.add_child(self.render_input());
+                } else if self.show_remote_server_loading_footer(&model, app) {
+                    column.add_child(
+                        self.render_remote_server_loading_footer(&model, appearance, app),
+                    );
+                }
 
-                    let stack = Stack::new()
-                        .with_constrain_absolute_children()
-                        .with_child(Clipped::new(column.finish()).finish());
-                    if matches!(input_mode, InputMode::Waterfall) && !is_alt_screen_active {
-                        self.render_waterfall_mode_background(&model, stack, app)
-                    } else {
-                        stack
-                    }
+                let stack = Stack::new()
+                    .with_constrain_absolute_children()
+                    .with_child(Clipped::new(column.finish()).finish());
+                if matches!(input_mode, InputMode::Waterfall) && !is_alt_screen_active {
+                    self.render_waterfall_mode_background(&model, stack, app)
+                } else {
+                    stack
                 }
             }
         };
@@ -15413,10 +15421,7 @@ impl View for TerminalView {
             SavePosition::new(stack.finish(), &self.terminal_position_id()).finish()
         };
 
-        
-
-        (if self.is_file_drop_target && FeatureFlag::SshDragAndDrop.is_enabled()
-        {
+        (if self.is_file_drop_target && FeatureFlag::SshDragAndDrop.is_enabled() {
             Container::new(element)
                 .with_foreground_overlay(appearance.theme().accent_overlay())
                 .finish()
@@ -15488,10 +15493,9 @@ impl View for TerminalView {
         }
 
         let active_block = model_lock.block_list().active_block();
-        if active_block.is_active_and_long_running()
-            && !model_lock.is_alt_screen_active() {
-                context.set.insert("LongRunningCommand");
-            }
+        if active_block.is_active_and_long_running() && !model_lock.is_alt_screen_active() {
+            context.set.insert("LongRunningCommand");
+        }
 
         // Add keyboard protocol context if enabled.
         if model_lock.is_term_mode_set(TermMode::KEYBOARD_PROTOCOL) {

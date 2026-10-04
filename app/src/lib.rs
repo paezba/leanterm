@@ -1,6 +1,5 @@
 #![allow(clippy::doc_lazy_continuation)]
 
-mod persisted_workspace;
 mod alloc;
 mod antivirus;
 #[cfg(target_os = "macos")]
@@ -49,6 +48,7 @@ mod network;
 mod notebooks;
 mod notification;
 mod palette;
+mod persisted_workspace;
 mod persistence;
 mod platform;
 mod prefix;
@@ -121,8 +121,8 @@ pub mod settings_view;
 pub mod tab_configs;
 pub mod terminal;
 pub mod themes;
-use crate::settings::{ AccessibilitySettings, ScrollSettings, SelectionSettings};
 use crate::persisted_workspace::PersistedWorkspace;
+use crate::settings::{AccessibilitySettings, ScrollSettings, SelectionSettings};
 use auth::auth_manager::AuthManager;
 use auth::auth_state::{AuthState, AuthStateProvider};
 use code::editor_management::CodeManager;
@@ -232,8 +232,7 @@ use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::experiments::ServerExperiments;
 #[cfg(not(target_family = "wasm"))]
 use crate::server::sync_queue::{QueueItem, SyncQueue};
-pub use crate::server::telemetry::{ TelemetryEvent,
-};
+pub use crate::server::telemetry::TelemetryEvent;
 use crate::server::telemetry::{AppStartupInfo, CloseTarget, PaletteSource, TelemetryCollector};
 use crate::session_management::{RunningSessionSummary, SessionNavigationData};
 use crate::settings::cloud_preferences_syncer::{
@@ -305,7 +304,6 @@ pub(crate) enum LaunchMode {
         /// directory on the remote host.
         identity_key: String,
     },
-
 }
 
 enum AuthInitialization {
@@ -419,8 +417,7 @@ impl LaunchMode {
             LaunchMode::CommandLine { command, .. } => {
                 matches!(command, CliCommand::Agent(AgentCommand::Run(args)) if args.gui)
             }
-            LaunchMode::RemoteServerProxy
-            | LaunchMode::RemoteServerDaemon { .. } => false,
+            LaunchMode::RemoteServerProxy | LaunchMode::RemoteServerDaemon { .. } => false,
         }
     }
 
@@ -518,7 +515,6 @@ impl LaunchMode {
             LaunchMode::RemoteServerProxy => "remote_server_proxy",
         }
     }
-
 }
 
 /// If the given event is a key down event containing alt modifiers, and those
@@ -1204,7 +1200,6 @@ pub(crate) fn initialize_app(
     let auth_state = Arc::new(auth_state);
     timer.mark_interval_end("AUTH_MANAGER_SET_USER");
 
-
     // NetworkLogModel must be registered before ServerApiProvider so that
     // `NetworkLogModel::install_on_clients` can reach it when forwarding items
     // captured by the HTTP client hooks.
@@ -1348,7 +1343,6 @@ pub(crate) fn initialize_app(
     // This depends on the [`GlobalResourceHandlesProvider`] and so it must
     // be initialized after it.
     ctx.add_singleton_model(|ctx| ServerExperiments::new_from_cache(experiments, ctx));
-
 
     ctx.add_singleton_model(|ctx| {
         UserWorkspaces::new(
@@ -1743,7 +1737,6 @@ pub(crate) fn initialize_app(
     // LogManager must be registered before any subsystem (e.g. MCP, LSP) that creates file-based loggers.
     ctx.add_singleton_model(|_| simple_logger::manager::LogManager::new());
 
-
     // CloudViewModel subscribes to UpdateManager so that it can be notified when objects are
     // created on the server.
     ctx.add_singleton_model(CloudViewModel::new);
@@ -1829,10 +1822,7 @@ pub(crate) fn initialize_app(
             .or_else(|| user_is_logged_in.then_some(StartupUserAuthentication::RefreshUser))
     };
     if let Some(authentication) = startup_authentication {
-        authenticate_user_after_iap_access(
-            authentication,
-            ctx,
-        );
+        authenticate_user_after_iap_access(authentication, ctx);
     }
 
     // Add a singleton model that holds the current prompt configuration.
@@ -1851,16 +1841,13 @@ pub(crate) fn initialize_app(
     ctx.add_singleton_model(EnvVarCollectionManager::new);
     ctx.add_singleton_model(WorkflowManager::new);
 
-
     AutoupdateState::register(ctx, server_api.clone());
 
     ctx.add_singleton_model(LocalWorkflows::new);
 
-
     timer.mark_interval_end("SINGLETON_MODELS_REGISTERED");
 
     ctx.add_singleton_model(move |_| timer);
-
 
     ctx.add_singleton_model(DefaultTerminal::new);
 
@@ -1873,7 +1860,6 @@ pub(crate) fn initialize_app(
         )
     });
     ctx.add_singleton_model(move |_| persistence_writer);
-
 
     ctx.add_singleton_model(move |_| IgnoredSuggestionsModel::new(persisted_ignored_suggestions));
 

@@ -92,10 +92,6 @@ impl HistoryEntry {
     }
 }
 
-
-
-
-
 /// Initializes history for testing
 /// initialization is complete.
 ///
@@ -128,7 +124,6 @@ async fn initialize_history_for_testing<F>(
         );
     });
 }
-
 
 #[cfg_attr(windows, ignore = "TODO(CORE-3626)")]
 #[test]
@@ -610,8 +605,6 @@ fn test_sessions_no_dupes_new_session() {
         });
     });
 }
-
-
 
 #[test]
 fn is_appendable_vs_is_queryable() {

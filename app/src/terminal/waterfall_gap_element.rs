@@ -57,7 +57,6 @@ pub struct WaterfallGapElement {
     /// Standard element size and origin fields
     origin: Option<warpui::elements::Point>,
     size: Option<Vector2F>,
-
 }
 
 impl WaterfallGapElement {
@@ -146,9 +145,8 @@ impl Element for WaterfallGapElement {
         // Calculate the height after the scroll position of the blocklist without
         // the gap - this is the height the block list element would like to take
         // up in the viewport.
-        let visible_block_list_height_px = self.block_list_height_px
-            - self.scroll_top_px
-            - self.gap_size_px.y().into_pixels();
+        let visible_block_list_height_px =
+            self.block_list_height_px - self.scroll_top_px - self.gap_size_px.y().into_pixels();
 
         // Calculate the max height it could take up, which is a function of the pane height
         // and input size.

@@ -307,13 +307,7 @@ pub(super) fn start_confirm(me: &mut GitDialog, ctx: &mut ViewContext<GitDialog>
     });
 
     me.diff_state_model().update(ctx, |m, ctx| {
-        m.git_commit_chain(
-            intent,
-            message,
-            include_unstaged,
-            branch_name,
-            ctx,
-        );
+        m.git_commit_chain(intent, message, include_unstaged, branch_name, ctx);
     });
 }
 

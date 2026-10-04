@@ -44,7 +44,6 @@ impl From<GqlUserOutput> for UserProperties {
             .and_then(|experiments| convert_to_server_experiment!(experiments))
             .unwrap_or_default();
 
-
         let user = User {
             is_onboarded,
             local_id,

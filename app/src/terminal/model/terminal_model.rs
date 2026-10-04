@@ -9,9 +9,7 @@ use async_channel::Sender;
 use base64::Engine;
 use itertools::Either;
 use serde::Serialize;
-use session_sharing_protocol::common::{
-    OrderedTerminalEventType, ParticipantId,
-};
+use session_sharing_protocol::common::{OrderedTerminalEventType, ParticipantId};
 use session_sharing_protocol::sharer::SessionSourceType;
 use string_offset::CharOffset;
 use warp_completer::meta::Span;
@@ -30,8 +28,8 @@ use warpui::image_cache::ImageType;
 
 use super::super::{AltScreen, BlockList};
 use super::ansi::{BootstrappedValue, FinishUpdateValue, InputBufferValue, Mode, PendingHook};
-use super::block::{ Block, BlockId, BlockMetadata, BlockSize, BlockState,
-    BlocklistEnvVarMetadata, SerializedBlock,
+use super::block::{
+    Block, BlockId, BlockMetadata, BlockSize, BlockState, BlocklistEnvVarMetadata, SerializedBlock,
 };
 use super::blockgrid::BlockGrid;
 use super::blocks::ActiveBlockCompletion;
@@ -470,8 +468,6 @@ pub struct TerminalModel {
     /// this is not a shared session.
     shared_session_source: Option<SharedSessionSource>,
 
-
-
     /// A sender for terminal-state updates that must be ordered against each other.
     /// This goes through the [`TerminalModel`] because the [`TerminalModel`] is exposed as
     /// a synchronized data structure (i.e. [`FairMutex<TerminalModel>`]) and thus multiple
@@ -486,7 +482,6 @@ pub struct TerminalModel {
     ///
     /// This field is only [`Some`] if this session is shared.
     write_to_pty_events_for_shared_session_tx: Option<Sender<Vec<u8>>>,
-
 
     /// When some, the TerminalModel emits the event [Event::DetectedEndOfSshLogin]. This
     /// event is emitted either as the initial check or the confirmation check.
@@ -1305,8 +1300,7 @@ impl TerminalModel {
     }
 
     pub fn is_read_only(&self) -> bool {
-        self.handled_exit
-            || self.shared_session_status().is_finished_viewer()
+        self.handled_exit || self.shared_session_status().is_finished_viewer()
     }
 
     pub fn colors(&self) -> color::List {

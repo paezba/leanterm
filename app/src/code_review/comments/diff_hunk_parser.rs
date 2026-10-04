@@ -1,7 +1,5 @@
 //! Utilities for parsing unified diff hunks and extracting specific line content.
 
-
-
 impl std::fmt::Display for DiffHunkParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {

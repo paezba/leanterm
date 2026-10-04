@@ -931,7 +931,6 @@ impl WorkingDirectoriesModel {
             focused_repo,
         });
     }
-
 }
 
 #[cfg(not(feature = "local_fs"))]

@@ -1,8 +1,6 @@
 use std::cell::Cell;
 use std::rc::Rc;
 
-
-
 // ---------------------------------------------------------------------------
 // Echo-suppression for remote session-sharing context updates.
 //

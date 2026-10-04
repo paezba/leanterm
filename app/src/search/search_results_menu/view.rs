@@ -308,4 +308,3 @@ impl<T: Action + Clone> View for SearchResultsMenuView<T> {
         self.render_search_results(app)
     }
 }
-

@@ -14,7 +14,6 @@ use warpui::{App, ViewHandle};
 
 use super::*;
 use crate::NotebookKeybindings;
-use crate::persisted_workspace::PersistedWorkspace;
 use crate::auth::AuthStateProvider;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::code::buffer_location::LocalOrRemotePath;
@@ -30,6 +29,7 @@ use crate::code_review::diff_state::{DiffStateModel, FileDiff, GitFileStatus};
 use crate::code_review::editor_state::CodeReviewEditorState;
 use crate::code_review::git_repo_model::GitRepoModels;
 use crate::pane_group::WorkingDirectoriesModel;
+use crate::persisted_workspace::PersistedWorkspace;
 use crate::server::server_api::ServerApiProvider;
 use crate::server::server_api::team::MockTeamClient;
 use crate::server::server_api::workspace::MockWorkspaceClient;
@@ -250,7 +250,6 @@ fn create_general_comment(comment_content: &str) -> AttachedReviewComment {
     }
 }
 
-
 /// Creates a minimal LoadedState with file states containing editors.
 /// Must be called within an App context.
 fn create_loaded_state_with_editors(
@@ -350,7 +349,6 @@ impl TestContext {
         }
     }
 }
-
 
 #[test]
 fn test_relocate_comments_empty_input() {
@@ -568,8 +566,6 @@ fn test_relocate_comments_line_comment_with_absolute_path() {
         });
     });
 }
-
-
 
 #[test]
 fn test_relocate_comments_file_comment_no_matching_editor_marked_outdated() {

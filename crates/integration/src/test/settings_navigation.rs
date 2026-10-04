@@ -6,10 +6,11 @@
 //! refactors of the settings page model cannot silently regress them.
 
 use warp::integration_testing::settings::{
-    assert_settings_nav_page_visible, assert_settings_section, assert_umbrella_expanded, clear_settings_search, open_settings_page, type_settings_search,
+    assert_settings_nav_page_visible, assert_settings_section, assert_umbrella_expanded,
+    clear_settings_search, open_settings_page, type_settings_search,
 };
 use warp::integration_testing::terminal::wait_until_bootstrapped_single_pane_for_tab;
-use warp::settings_view::{SettingsSection,};
+use warp::settings_view::SettingsSection;
 
 use super::{Builder, new_builder};
 
@@ -20,13 +21,9 @@ const AGENTS_UMBRELLA: &str = "Agents";
 // Mouse navigation
 // ---------------------------------------------------------------------------
 
-
 // ---------------------------------------------------------------------------
 // Keyboard navigation
 // ---------------------------------------------------------------------------
-
-
-
 
 // ---------------------------------------------------------------------------
 // Search filtering
@@ -51,8 +48,6 @@ pub fn test_settings_search_filters_top_level_pages() -> Builder {
         .with_step(assert_settings_section(SettingsSection::Keybindings))
 }
 
-
-
 /// Clearing the search restores the umbrella expansion state the user had
 /// before searching, rather than leaving auto-expanded umbrellas open.
 pub fn test_settings_search_clear_restores_umbrella_state() -> Builder {
@@ -70,8 +65,6 @@ pub fn test_settings_search_clear_restores_umbrella_state() -> Builder {
         ))
 }
 
-
 // ---------------------------------------------------------------------------
 // MCP servers
 // ---------------------------------------------------------------------------
-

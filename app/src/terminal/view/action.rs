@@ -1,4 +1,4 @@
-use crate::server::telemetry::{ PaletteSource, ToggleBlockFilterSource};
+use crate::server::telemetry::{PaletteSource, ToggleBlockFilterSource};
 use std::fmt;
 use std::ops::Range;
 use std::path::PathBuf;
@@ -13,9 +13,7 @@ use warpui::elements::HyperlinkUrl;
 use warpui::event::ModifiersState;
 use warpui::units::Lines;
 
-use super::inline_banner::{ OpenInWarpBannerAction,
-    VimModeBannerAction,
-};
+use super::inline_banner::{OpenInWarpBannerAction, VimModeBannerAction};
 use super::{
     AliasExpansionBannerAction, ContextMenuAction, GridHighlightedLink, InputContextMenuAction,
     NotificationsDiscoveryBannerAction, NotificationsErrorBannerAction, RichContentLink,

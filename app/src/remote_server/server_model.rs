@@ -21,25 +21,24 @@ use super::diff_state_tracker::{
     DiffModelKey, DiffStateUpdate, RemoteDiffStateManager, SubscribeOutcome,
 };
 use super::proto::{
-    Abort, Authenticate, BranchInfo, BufferEdit, BufferUpdatedPush, ClientMessage, CloseBuffer, DeleteFile, DeleteFileResponse,
-    DeleteFileSuccess, DiscardFilesError, DiscardFilesResponse, DiscardFilesSuccess, ErrorCode, ErrorResponse,
-    FileOperationError, GetBranchesError, GetBranchesResponse, GetBranchesSuccess,
-    GetDiffStateResponse, GitCommitChainRequest,
+    Abort, Authenticate, BranchInfo, BufferEdit, BufferUpdatedPush, ClientMessage, CloseBuffer,
+    DeleteFile, DeleteFileResponse, DeleteFileSuccess, DiscardFilesError, DiscardFilesResponse,
+    DiscardFilesSuccess, ErrorCode, ErrorResponse, FileOperationError, GetBranchesError,
+    GetBranchesResponse, GetBranchesSuccess, GetDiffStateResponse, GitCommitChainRequest,
     GitCommitChainResponse, GitCommitChainSuccess, GitCreatePrRequest, GitCreatePrResponse,
     GitGetCommittedBranchFilesRequest, GitGetCommittedBranchFilesResponse,
     GitGetCommittedBranchFilesSuccess, GitHubPrInfoPush, GitHubRepositoryInfoPush, GitOpDelta,
-    GitOpError, GitPushRequest, GitPushResponse, GitStatusPush,
-    Initialize, InitializeResponse, NavigatedToDirectory,
-    NavigatedToDirectoryResponse, OpenBuffer, OpenBufferResponse, ResolveConflict,
-    ResolveConflictResponse, ResolveConflictSuccess, RipgrepSearchRequest,
+    GitOpError, GitPushRequest, GitPushResponse, GitStatusPush, Initialize, InitializeResponse,
+    NavigatedToDirectory, NavigatedToDirectoryResponse, OpenBuffer, OpenBufferResponse,
+    ResolveConflict, ResolveConflictResponse, ResolveConflictSuccess, RipgrepSearchRequest,
     RunCommandError, RunCommandErrorCode, RunCommandRequest, RunCommandResponse, RunCommandSuccess,
     SaveBuffer, SaveBufferResponse, SaveBufferSuccess, ServerMessage, SessionBootstrapped,
-    TextEdit, UpdateGitHubPrInfo, UpdateGitHubRepoInfo, UpdateGitStatus,
-    WriteFile, WriteFileResponse, WriteFileSuccess, client_message, delete_file_response,
-    discard_files_response, get_diff_state_response,
-    git_commit_chain_response, git_create_pr_response,
-    git_get_committed_branch_files_response, git_push_response, host_scoped_request, notification, resolve_conflict_response, run_command_response, save_buffer_response,
-    server_message, session_scoped_request, write_file_response,
+    TextEdit, UpdateGitHubPrInfo, UpdateGitHubRepoInfo, UpdateGitStatus, WriteFile,
+    WriteFileResponse, WriteFileSuccess, client_message, delete_file_response,
+    discard_files_response, get_diff_state_response, git_commit_chain_response,
+    git_create_pr_response, git_get_committed_branch_files_response, git_push_response,
+    host_scoped_request, notification, resolve_conflict_response, run_command_response,
+    save_buffer_response, server_message, session_scoped_request, write_file_response,
 };
 use super::server_buffer_tracker::{PendingBufferRequestKind, ServerBufferTracker};
 use super::{diff_state_proto, ripgrep_search};
@@ -743,7 +742,7 @@ impl ServerModel {
                         | host_scoped_request::Message::GetFragmentMetadataFromHash(_)
                         | host_scoped_request::Message::ResyncCodebase(_)
                         | host_scoped_request::Message::UploadHandoffSnapshot(_)
-                        | host_scoped_request::Message::GitGenerateCommitMessage(_)
+                        | host_scoped_request::Message::GitGenerateCommitMessage(_),
                     ) => invalid_request_response("Not supported by this build".to_string()),
                     None => {
                         log::warn!(

@@ -344,9 +344,6 @@ impl AuthManager {
                     model.handle_user_fetched(self.auth_state.clone(), ctx)
                 });
 
-
-
-
                 if !user.is_user_anonymous() {
                     GeneralSettings::handle(ctx).update(ctx, |settings, ctx| {
                         report_if_error!(

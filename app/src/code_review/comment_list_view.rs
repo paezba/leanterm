@@ -50,8 +50,7 @@ use crate::menu::{Event, Menu, MenuItem, MenuItemFields};
 use crate::notebooks::editor::view::{EditorViewEvent, RichTextEditorView};
 use crate::send_telemetry_from_ctx;
 use crate::view_components::action_button::{
-    ActionButton, ActionButtonTheme, ButtonSize, NakedTheme,
-    SecondaryTheme,
+    ActionButton, ActionButtonTheme, ButtonSize, NakedTheme, SecondaryTheme,
 };
 
 /// Header text for the outdated section when there is exactly one outdated comment.
@@ -188,7 +187,6 @@ impl CommentListView {
                     ctx.dispatch_typed_action(CommentListAction::ToggleCollapsed);
                 })
         });
-
 
         ctx.subscribe_to_view(&menu, |me, _, event, ctx| match event {
             Event::ItemSelected => {}

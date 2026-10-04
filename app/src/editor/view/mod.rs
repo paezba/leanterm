@@ -51,8 +51,7 @@ use warpui::actions::StandardAction;
 use warpui::r#async::Timer;
 use warpui::clipboard::ClipboardContent;
 use warpui::elements::{
-    CornerRadius, DEFAULT_UI_LINE_HEIGHT_RATIO,
-    Hoverable, MouseStateHandle, Radius,
+    CornerRadius, DEFAULT_UI_LINE_HEIGHT_RATIO, Hoverable, MouseStateHandle, Radius,
 };
 use warpui::fonts::{Cache as FontCache, FamilyId, Properties, Weight};
 use warpui::keymap::{EditableBinding, FixedBinding, Keystroke, PerPlatformKeystroke};
@@ -90,7 +89,9 @@ use crate::editor::autosuggestion_ignore_view::{AutosuggestionIgnore, Autosugges
 use crate::features::FeatureFlag;
 #[cfg(feature = "voice_input")]
 use crate::settings::AISettingsChangedEvent;
-use crate::settings::{ AppEditorSettings, AppEditorSettingsChangedEvent, CursorBlink, CursorDisplayType, SelectionSettings,
+use crate::settings::{
+    AppEditorSettings, AppEditorSettingsChangedEvent, CursorBlink, CursorDisplayType,
+    SelectionSettings,
 };
 use crate::settings_view::flags;
 use crate::terminal::grid_size_util::grid_cell_dimensions;
@@ -112,7 +113,6 @@ pub const VOICE_LIMIT_HIT_TOAST_TEXT: &str = "You have hit the limit for Voice r
 pub const VOICE_ERROR_TOAST_TEXT: &str = "An error occurred while processing your voice input.";
 
 pub const MAX_IMAGES_PER_CONVERSATION: usize = 200;
-
 
 #[derive(Clone, Copy)]
 pub enum AutosuggestionLocation {
@@ -1360,7 +1360,6 @@ pub enum BaselinePositionComputationMethod {
 // Re-export voice transcription types for backwards compatibility
 use warp_errors::report_error;
 
-
 /// Interface for picking different options for the editor's behavior.
 pub struct EditorOptions {
     pub text: TextOptions,
@@ -1695,12 +1694,8 @@ pub struct EditorView {
     #[cfg(feature = "voice_input")]
     voice_new_feature_popup: ViewHandle<FeaturePopup>,
 
-
-
     /// The mouse handle for the image context icon.
     image_context_button_mouse_handle: MouseStateHandle,
-
-
 
     /// Whether this editor should delegate handling of paste events to its parent.
     delegate_paste_handling: bool,
@@ -1708,7 +1703,6 @@ pub struct EditorView {
     /// Optional hook that transforms each dropped path before it is escaped and inserted into
     /// the buffer. See [`EditorOptions::drag_drop_path_transformer`].
     drag_drop_path_transformer: Option<PathTransformerFn>,
-
 
     is_password: bool,
 
@@ -7278,7 +7272,6 @@ impl EditorView {
             editor_model.clear_marked_text(ctx);
         });
     }
-
 }
 
 /// Try to convert display point to an anchor. If it is not possible, clamp to anchoring at end of buffer.

@@ -43,8 +43,7 @@ impl TeamScope for TeamContextForOperation {
 }
 
 #[cfg(test)]
-impl TeamContextForOperation {
-}
+impl TeamContextForOperation {}
 
 /// The team a view renders as, borrowed for the duration of a single read.
 ///
@@ -62,8 +61,7 @@ impl TeamScope for TeamContext<'_> {
 }
 
 #[cfg(not(target_family = "wasm"))]
-impl HeadlessTeamScope {
-}
+impl HeadlessTeamScope {}
 
 #[cfg(not(target_family = "wasm"))]
 impl sealed::Sealed for HeadlessTeamScope {}
@@ -243,7 +241,6 @@ impl UserWorkspaces {
             true,
         )
     }
-
 }
 
 /// The team a headless invocation acts as, resolved without a window.

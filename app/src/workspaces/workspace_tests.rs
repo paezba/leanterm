@@ -2,7 +2,6 @@ use super::*;
 
 // `ServerId::from_string_lossy` requires exactly 22 characters.
 
-
 fn billing_metadata_with_purchase_policy(
     purchase_policy: Option<PurchaseAddOnCreditsPolicy>,
 ) -> BillingMetadata {

@@ -97,7 +97,6 @@ impl CompactibleSplitActionButton {
             row.finish()
         }
     }
-
 }
 
 impl RenderCompactibleActionButton for CompactibleSplitActionButton {

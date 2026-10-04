@@ -10,7 +10,6 @@
 //! `DetachType::Closed`, while deliberately preserving it on
 //! `HiddenForClose` (undo-close grace window) and `Moved`.
 
-
 // Bring the `TerminalManager` trait into scope (named under a different alias
 // since the local `TerminalManager` struct shadows it) so the trait method
 // `on_view_detached` is callable on the struct.

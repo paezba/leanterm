@@ -77,14 +77,12 @@ pub fn init(app: &mut AppContext) {
         .with_enabled(|| crate::features::FeatureFlag::GitOperationsInCodeReview.is_enabled()),
     ]);
 
-    app.register_fixed_bindings([
-        FixedBinding::custom(
-            CustomAction::Undo,
-            CodeReviewAction::UndoRevert,
-            "Undo",
-            id!("CodeReviewView") & !id!("IMEOpen"),
-        ),
-    ]);
+    app.register_fixed_bindings([FixedBinding::custom(
+        CustomAction::Undo,
+        CodeReviewAction::UndoRevert,
+        "Undo",
+        id!("CodeReviewView") & !id!("IMEOpen"),
+    )]);
 
     diff_menu::init(app);
     diff_selector::init(app);

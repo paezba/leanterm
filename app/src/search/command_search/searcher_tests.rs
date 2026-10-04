@@ -377,7 +377,6 @@ fn test_blank_query_preserves_chronological_order_despite_differing_priors() {
     });
 }
 
-
 #[test]
 fn test_no_query_filter_runs_all_data_sources() {
     let _flag = FeatureFlag::HistorySearchRankingV2.override_enabled(true);
@@ -425,7 +424,6 @@ fn test_no_query_filter_runs_all_data_sources() {
         });
     });
 }
-
 
 #[test]
 fn test_async_data_source() {

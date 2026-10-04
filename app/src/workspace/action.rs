@@ -1,4 +1,4 @@
-use super::view::{ WorkspaceBanner};
+use super::view::WorkspaceBanner;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -25,9 +25,7 @@ use crate::pane_group::PaneGroup;
 use crate::prompt::editor_modal::OpenSource as PromptEditorOpenSource;
 use crate::search;
 use crate::server::ids::{ServerId, SyncId};
-use crate::server::telemetry::{
-    AddTabWithShellSource, PaletteSource, SharingDialogSource,
-};
+use crate::server::telemetry::{AddTabWithShellSource, PaletteSource, SharingDialogSource};
 use crate::settings_view::{SettingsAction as SettingsTabAction, SettingsSection};
 use crate::tab::{NewSessionMenuItem, SelectedTabColor};
 use crate::tab_configs::TabConfig;
@@ -642,10 +640,239 @@ impl WorkspaceAction {
     pub fn should_save_app_state_on_action(&self) -> bool {
         use WorkspaceAction::*;
         match self {
-            ActivateTab(_) | ActivateTabByNumber(_) | SetTabShortcutModifierKey { .. } | ActivatePrevTab | ActivateNextTab | ActivateLastTab | CyclePrevSession | CycleNextSession | MoveActiveTabLeft | MoveActiveTabRight | MoveTabLeft(_) | MoveTabRight(_) | DropTab | DropGroup | RenameTab(_) | ResetTabName(_) | RenamePane(_) | ResetPaneName(_) | RenameActiveTab | RenameActivePane | SetActiveTabName(_) | CycleActiveTabColor | SetActiveTabColor(_) | CloseTab(_) | CloseActiveTab | CloseOtherTabs(_) | CloseNonActiveTabs | CloseTabsRight(_) | CloseTabsRightActiveTab | CloseTabGroup(_) | ToggleTabGroupCollapsed(_) | RenameTabGroup(_) | NewTabGroupFromTab(_) | MoveTabToGroup { .. } | RemoveTabFromGroup(_) | NewTabGroupFromSelectedTabs | NewTabGroupFromActiveOrSelectedTabs | MoveSelectedTabsToGroup { .. } | RemoveSelectedTabsFromGroup | RemoveActiveOrSelectedTabsFromGroup | UngroupTabs(_) | NewTabInGroup(_) | MoveTabGroupUp(_) | MoveTabGroupDown(_) | CloseTabsOutsideGroup(_) | CloseTabsAboveGroup(_) | CloseTabsBelowGroup(_) | PinTab(_) | UnpinTab(_) | PinActiveTab | UnpinActiveTab | PinTabGroup(_) | UnpinTabGroup(_) | PinActiveTabGroup | UnpinActiveTabGroup | ToggleTabColor { .. } | ToggleTabGroupColor { .. } | AddDefaultTab | AddTerminalTab { .. } | AddTabWithShell { .. } | AddWindow | AddWindowWithShell { .. } | CloseWindow | ScrollToSettingsWidget { .. } | OpenNotebook { .. } | RunWorkflow { .. } | OpenFileInNewTab { .. } | NewCodeFile | OpenRepository { .. } | SelectTabConfig(_) | ToggleVerticalTabsPanel | OpenVerticalTabsPanel => true, // actions that actually change a state of the state of user's
+            ActivateTab(_)
+            | ActivateTabByNumber(_)
+            | SetTabShortcutModifierKey { .. }
+            | ActivatePrevTab
+            | ActivateNextTab
+            | ActivateLastTab
+            | CyclePrevSession
+            | CycleNextSession
+            | MoveActiveTabLeft
+            | MoveActiveTabRight
+            | MoveTabLeft(_)
+            | MoveTabRight(_)
+            | DropTab
+            | DropGroup
+            | RenameTab(_)
+            | ResetTabName(_)
+            | RenamePane(_)
+            | ResetPaneName(_)
+            | RenameActiveTab
+            | RenameActivePane
+            | SetActiveTabName(_)
+            | CycleActiveTabColor
+            | SetActiveTabColor(_)
+            | CloseTab(_)
+            | CloseActiveTab
+            | CloseOtherTabs(_)
+            | CloseNonActiveTabs
+            | CloseTabsRight(_)
+            | CloseTabsRightActiveTab
+            | CloseTabGroup(_)
+            | ToggleTabGroupCollapsed(_)
+            | RenameTabGroup(_)
+            | NewTabGroupFromTab(_)
+            | MoveTabToGroup { .. }
+            | RemoveTabFromGroup(_)
+            | NewTabGroupFromSelectedTabs
+            | NewTabGroupFromActiveOrSelectedTabs
+            | MoveSelectedTabsToGroup { .. }
+            | RemoveSelectedTabsFromGroup
+            | RemoveActiveOrSelectedTabsFromGroup
+            | UngroupTabs(_)
+            | NewTabInGroup(_)
+            | MoveTabGroupUp(_)
+            | MoveTabGroupDown(_)
+            | CloseTabsOutsideGroup(_)
+            | CloseTabsAboveGroup(_)
+            | CloseTabsBelowGroup(_)
+            | PinTab(_)
+            | UnpinTab(_)
+            | PinActiveTab
+            | UnpinActiveTab
+            | PinTabGroup(_)
+            | UnpinTabGroup(_)
+            | PinActiveTabGroup
+            | UnpinActiveTabGroup
+            | ToggleTabColor { .. }
+            | ToggleTabGroupColor { .. }
+            | AddDefaultTab
+            | AddTerminalTab { .. }
+            | AddTabWithShell { .. }
+            | AddWindow
+            | AddWindowWithShell { .. }
+            | CloseWindow
+            | ScrollToSettingsWidget { .. }
+            | OpenNotebook { .. }
+            | RunWorkflow { .. }
+            | OpenFileInNewTab { .. }
+            | NewCodeFile
+            | OpenRepository { .. }
+            | SelectTabConfig(_)
+            | ToggleVerticalTabsPanel
+            | OpenVerticalTabsPanel => true, // actions that actually change a state of the state of user's
             // workspace would most likely require a save, so that if the app gets
             // restarted, the user can continue working
-            AutoupdateFailureLink | ApplyUpdate | CopyVersion(_) | DownloadNewVersion | ConfigureKeybindingSettings { .. } | ExportAllWarpDriveObjects | ShowSettings | ShowSettingsPage(_) | ShowSettingsPageWithSearch { .. } | ShowThemeChooser(_) | ShowThemeChooserForActiveTheme | IncreaseFontSize | DecreaseFontSize | ResetFontSize | IncreaseZoom | DecreaseZoom | ResetZoom | OpenPalette { .. } | TogglePalette { mode: _, source: _ } | ShowUpgrade | ShowReferralSettingsPage | JoinSlack | ViewUserDocs | ViewLatestChangelog | ViewPrivacyPolicy | SendFeedback | ChangeCursor(_) | ToggleBlockSnackbar | ToggleErrorUnderlining | ToggleSyntaxHighlighting | OpenLaunchConfigSaveModal | ToggleTabRightClickMenu { .. } | ToggleTabSelectionRightClickMenu { .. } | ToggleTabGroupRightClickMenu { .. } | ToggleVerticalTabsPaneContextMenu { .. } | OpenNewSessionMenu { .. } | ToggleTabConfigsMenu | ToggleNewSessionMenu { .. } | SelectNewSessionMenuItem(_) | ToggleTabBarOverflowMenu | CheckForUpdate | SetA11yVerbosityLevel(_) | ToggleNotifications | DispatchToSettingsTab { .. } | ToggleResourceCenter | ToggleUserMenu | ToggleKeybindingsPage | ShowCommandSearch(_) | TriggerExternalCtrlTFileSearch | TriggerExternalAltCDirectorySearch | ToggleMouseReporting | ToggleScrollReporting | ToggleFocusReporting | ImportToPersonalDrive | ImportToTeamDrive | CreatePersonalNotebook | CreateTeamNotebook | CreatePersonalWorkflow | CreateTeamWorkflow | CreatePersonalFolder | CreateTeamFolder | CreateTeamEnvVarCollection | CreatePersonalEnvVarCollection | OpenInExplorer { .. } | DragTab { .. } | StartTabDrag | DragGroup { .. } | StartGroupDrag(_) | ToggleLeftPanel | ToggleWarpDrive | OpenWarpDrive | ClosePanel | ToggleRightPanel | OpenCodeReviewPanel(..) | ToggleVerticalTabsSettingsPopup | SetVerticalTabsDisplayGranularity(_) | SetVerticalTabsTabItemMode(_) | SetVerticalTabsViewMode(_) | SetVerticalTabsPrimaryInfo(_) | SetVerticalTabsCompactSubtitle(_) | ToggleVerticalTabsShowPrLink | ToggleVerticalTabsShowDiffStats | ToggleVerticalTabsShowDetailsOnHover | ToggleWelcomeTips | CopyTextToClipboard(_) | CopyCurrentPath | CopyAccessTokenToClipboard | OpenTabConfigRepoPicker { .. } | OpenNewWorktreeModal | OpenNewWorktreeRepoPicker | OpenWorktreeInRepo { .. } | OpenWorktreeAddRepoPicker | Crash | Panic | DumpHeapProfile | OpenViewTreeDebugWindow | DismissWorkspaceBanner(..) | ToggleSyncAllTerminalInputsInAllTabs | ToggleSyncTerminalInputsInTab | DisableTerminalInputSync | HandleConflictingWorkflow(_) | HandleConflictingEnvVarCollection(_) | OpenPromptEditor { .. } | OpenHeaderToolbarEditor | ShowHeaderToolbarContextMenu { .. } | Reauth | SignupAnonymousUser | LogOut | OpenLink(_) | OpenShareSessionModal(_) | StopSharingSessionFromTabMenu { .. } | StopSharingAllSessionsInTab { .. } | CopySharedSessionLinkFromTab { .. } | OpenSharedSessionQrCode { .. } | ReopenClosedSession | FocusLeftPanel | FocusRightPanel | DumpDebugInfo | ToggleInBandGenerators | ToggleDebugNetworkStatus | ToggleShowMemoryStats | RunCommand { .. } | InsertInInput { .. } | UndoTrash(_) | OpenFilePath { .. } | ViewObjectInWarpDrive(_) | OpenObjectSharingSettings { .. } | TerminateApp | SignInAnonymousWebUser | TabHoverWidthStart { .. } | TabHoverWidthEnd | FocusTerminalViewInWorkspace { .. } | FocusPane(..) | ShiftSelectTabRange { .. } | ToggleTabMultiSelection { .. } | ClearTabMultiSelection | CancelActiveRename | UndoRevertInCodeReviewPane { .. } | NavigatePrevPaneOrPanel | NavigateNextPaneOrPanel | ToggleProjectExplorer | OpenProjectExplorer | ToggleGlobalSearch | ToggleHiddenFiles | OpenGlobalSearch | OpenLightbox { .. } | UpdateLightboxImage { .. } | ShowSessionConfigModal | DismissSessionConfigTabConfigChip | SaveCurrentTabAsNewConfig(_) | SyncTrafficLights | OpenTabConfigErrorFile { .. } | TabConfigSidecarEditConfig { .. } | TabConfigSidecarRemoveConfig { .. } | OpenSettingsFile | OpenNetworkLogPane | OpenNewWindowForTeam { .. } | BrowseTeams | ShowTeamSwitcherMenu => false,
+            AutoupdateFailureLink
+            | ApplyUpdate
+            | CopyVersion(_)
+            | DownloadNewVersion
+            | ConfigureKeybindingSettings { .. }
+            | ExportAllWarpDriveObjects
+            | ShowSettings
+            | ShowSettingsPage(_)
+            | ShowSettingsPageWithSearch { .. }
+            | ShowThemeChooser(_)
+            | ShowThemeChooserForActiveTheme
+            | IncreaseFontSize
+            | DecreaseFontSize
+            | ResetFontSize
+            | IncreaseZoom
+            | DecreaseZoom
+            | ResetZoom
+            | OpenPalette { .. }
+            | TogglePalette { mode: _, source: _ }
+            | ShowUpgrade
+            | ShowReferralSettingsPage
+            | JoinSlack
+            | ViewUserDocs
+            | ViewLatestChangelog
+            | ViewPrivacyPolicy
+            | SendFeedback
+            | ChangeCursor(_)
+            | ToggleBlockSnackbar
+            | ToggleErrorUnderlining
+            | ToggleSyntaxHighlighting
+            | OpenLaunchConfigSaveModal
+            | ToggleTabRightClickMenu { .. }
+            | ToggleTabSelectionRightClickMenu { .. }
+            | ToggleTabGroupRightClickMenu { .. }
+            | ToggleVerticalTabsPaneContextMenu { .. }
+            | OpenNewSessionMenu { .. }
+            | ToggleTabConfigsMenu
+            | ToggleNewSessionMenu { .. }
+            | SelectNewSessionMenuItem(_)
+            | ToggleTabBarOverflowMenu
+            | CheckForUpdate
+            | SetA11yVerbosityLevel(_)
+            | ToggleNotifications
+            | DispatchToSettingsTab { .. }
+            | ToggleResourceCenter
+            | ToggleUserMenu
+            | ToggleKeybindingsPage
+            | ShowCommandSearch(_)
+            | TriggerExternalCtrlTFileSearch
+            | TriggerExternalAltCDirectorySearch
+            | ToggleMouseReporting
+            | ToggleScrollReporting
+            | ToggleFocusReporting
+            | ImportToPersonalDrive
+            | ImportToTeamDrive
+            | CreatePersonalNotebook
+            | CreateTeamNotebook
+            | CreatePersonalWorkflow
+            | CreateTeamWorkflow
+            | CreatePersonalFolder
+            | CreateTeamFolder
+            | CreateTeamEnvVarCollection
+            | CreatePersonalEnvVarCollection
+            | OpenInExplorer { .. }
+            | DragTab { .. }
+            | StartTabDrag
+            | DragGroup { .. }
+            | StartGroupDrag(_)
+            | ToggleLeftPanel
+            | ToggleWarpDrive
+            | OpenWarpDrive
+            | ClosePanel
+            | ToggleRightPanel
+            | OpenCodeReviewPanel(..)
+            | ToggleVerticalTabsSettingsPopup
+            | SetVerticalTabsDisplayGranularity(_)
+            | SetVerticalTabsTabItemMode(_)
+            | SetVerticalTabsViewMode(_)
+            | SetVerticalTabsPrimaryInfo(_)
+            | SetVerticalTabsCompactSubtitle(_)
+            | ToggleVerticalTabsShowPrLink
+            | ToggleVerticalTabsShowDiffStats
+            | ToggleVerticalTabsShowDetailsOnHover
+            | ToggleWelcomeTips
+            | CopyTextToClipboard(_)
+            | CopyCurrentPath
+            | CopyAccessTokenToClipboard
+            | OpenTabConfigRepoPicker { .. }
+            | OpenNewWorktreeModal
+            | OpenNewWorktreeRepoPicker
+            | OpenWorktreeInRepo { .. }
+            | OpenWorktreeAddRepoPicker
+            | Crash
+            | Panic
+            | DumpHeapProfile
+            | OpenViewTreeDebugWindow
+            | DismissWorkspaceBanner(..)
+            | ToggleSyncAllTerminalInputsInAllTabs
+            | ToggleSyncTerminalInputsInTab
+            | DisableTerminalInputSync
+            | HandleConflictingWorkflow(_)
+            | HandleConflictingEnvVarCollection(_)
+            | OpenPromptEditor { .. }
+            | OpenHeaderToolbarEditor
+            | ShowHeaderToolbarContextMenu { .. }
+            | Reauth
+            | SignupAnonymousUser
+            | LogOut
+            | OpenLink(_)
+            | OpenShareSessionModal(_)
+            | StopSharingSessionFromTabMenu { .. }
+            | StopSharingAllSessionsInTab { .. }
+            | CopySharedSessionLinkFromTab { .. }
+            | OpenSharedSessionQrCode { .. }
+            | ReopenClosedSession
+            | FocusLeftPanel
+            | FocusRightPanel
+            | DumpDebugInfo
+            | ToggleInBandGenerators
+            | ToggleDebugNetworkStatus
+            | ToggleShowMemoryStats
+            | RunCommand { .. }
+            | InsertInInput { .. }
+            | UndoTrash(_)
+            | OpenFilePath { .. }
+            | ViewObjectInWarpDrive(_)
+            | OpenObjectSharingSettings { .. }
+            | TerminateApp
+            | SignInAnonymousWebUser
+            | TabHoverWidthStart { .. }
+            | TabHoverWidthEnd
+            | FocusTerminalViewInWorkspace { .. }
+            | FocusPane(..)
+            | ShiftSelectTabRange { .. }
+            | ToggleTabMultiSelection { .. }
+            | ClearTabMultiSelection
+            | CancelActiveRename
+            | UndoRevertInCodeReviewPane { .. }
+            | NavigatePrevPaneOrPanel
+            | NavigateNextPaneOrPanel
+            | ToggleProjectExplorer
+            | OpenProjectExplorer
+            | ToggleGlobalSearch
+            | ToggleHiddenFiles
+            | OpenGlobalSearch
+            | OpenLightbox { .. }
+            | UpdateLightboxImage { .. }
+            | ShowSessionConfigModal
+            | DismissSessionConfigTabConfigChip
+            | SaveCurrentTabAsNewConfig(_)
+            | SyncTrafficLights
+            | OpenTabConfigErrorFile { .. }
+            | TabConfigSidecarEditConfig { .. }
+            | TabConfigSidecarRemoveConfig { .. }
+            | OpenSettingsFile
+            | OpenNetworkLogPane
+            | OpenNewWindowForTeam { .. }
+            | BrowseTeams
+            | ShowTeamSwitcherMenu => false,
             #[cfg(debug_assertions)]
             ShowHoaOnboardingFlow => false,
             #[cfg(debug_assertions)]

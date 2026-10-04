@@ -7,8 +7,7 @@ use warp_core::command::ExitCode;
 
 use crate::terminal::model::BlockId;
 use crate::terminal::model::block::{
-    Block, BlockState, MAX_SERIALIZED_STYLIZED_OUTPUT_LINES, PromptInfo,
-    has_block_failed,
+    Block, BlockState, MAX_SERIALIZED_STYLIZED_OUTPUT_LINES, PromptInfo, has_block_failed,
 };
 use crate::terminal::model::session::SessionId;
 use crate::util::extensions::TrimStringExt;
@@ -67,11 +66,9 @@ pub struct SerializedBlock {
     /// is different from PS1 and RPROMPT1
     pub prompt_snapshot: Option<String>,
 
-
     /// Whether this block was created locally (true) or remotely (false)
     #[serde(default)]
     pub is_local: Option<bool>,
-
 }
 
 impl SerializedBlock {
@@ -171,7 +168,6 @@ impl From<&Block> for SerializedBlock {
             honor_ps1: block.honor_ps1(),
             prompt_snapshot,
         };
-
 
         SerializedBlock {
             id: block.id.clone(),

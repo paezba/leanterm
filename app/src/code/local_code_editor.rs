@@ -2,7 +2,7 @@
 /// and displaying them in a code editor.
 /// It also handles applying an optional diff to the file content that will be applied
 /// when the file is loaded.
-use crate::settings::{ CodeSettings};
+use crate::settings::CodeSettings;
 use std::{
     ops::Range,
     path::{Path, PathBuf},
@@ -40,10 +40,10 @@ use warp_util::file::{FileId, FileLoadError, FileSaveError};
 use warp_util::local_or_remote_path::LocalOrRemotePath;
 use warp_util::sync::Condition;
 use warpui::elements::{
-    ChildAnchor, ChildView, ClippedScrollStateHandle, ConstrainedBox, Container,
-    CornerRadius, CrossAxisAlignment, Flex, Hoverable, MainAxisAlignment, MainAxisSize,
-    MouseStateHandle, OffsetPositioning, ParentAnchor, ParentElement, ParentOffsetBounds, Radius,
-    Rect, Shrinkable, Stack, Text,
+    ChildAnchor, ChildView, ClippedScrollStateHandle, ConstrainedBox, Container, CornerRadius,
+    CrossAxisAlignment, Flex, Hoverable, MainAxisAlignment, MainAxisSize, MouseStateHandle,
+    OffsetPositioning, ParentAnchor, ParentElement, ParentOffsetBounds, Radius, Rect, Shrinkable,
+    Stack, Text,
 };
 use warpui::platform::SaveFilePickerConfiguration;
 use warpui::text::point::Point;
@@ -54,7 +54,6 @@ use warpui::{
     ViewHandle, WindowId,
 };
 
-use crate::persisted_workspace::{PersistedWorkspace, PersistedWorkspaceEvent};
 use crate::code::buffer_location::LocalOrRemotePath as BufferFileLocation;
 use crate::code::editor::EditorReviewComment;
 use crate::code::editor::model::HoverableLink;
@@ -63,6 +62,7 @@ use crate::code::global_buffer_model::{BufferState, GlobalBufferModel, GlobalBuf
 use crate::code::{SaveOutcome, ShowFindReferencesCardProvider};
 use crate::code_review::comments::CommentId;
 use crate::menu::{Event, Menu, MenuItem, MenuItemFields};
+use crate::persisted_workspace::{PersistedWorkspace, PersistedWorkspaceEvent};
 
 const HOVER_DEBOUNCE_PERIOD: Duration = Duration::from_millis(500);
 
@@ -1999,7 +1999,6 @@ impl DiffViewer for LocalCodeEditorView {
     fn diff(&self) -> Option<&DiffType> {
         self.diff_type.as_ref()
     }
-
 }
 
 impl Entity for LocalCodeEditorView {

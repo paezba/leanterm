@@ -25,9 +25,7 @@ use crate::cloud_object::ObjectType;
 use crate::drive::{OpenWarpDriveObjectArgs, OpenWarpDriveObjectSettings};
 use crate::features::FeatureFlag;
 use crate::launch_configs::launch_config::LaunchConfig;
-use crate::root_view::{
-    OpenLaunchConfigArg, open_new_window_get_handles,
-};
+use crate::root_view::{OpenLaunchConfigArg, open_new_window_get_handles};
 use crate::server::ids::ServerId;
 use crate::server::telemetry::{LaunchConfigUiLocation, TelemetryEvent};
 use crate::settings_view::{
@@ -42,8 +40,7 @@ use crate::util::openable_file_type::{
 use crate::view_components::DismissibleToast;
 use crate::workspace::util::PaneViewLocator;
 use crate::workspace::{
-    ToastStack, Workspace, WorkspaceAction, WorkspaceRegistry,
-    active_terminal_in_window,
+    ToastStack, Workspace, WorkspaceAction, WorkspaceRegistry, active_terminal_in_window,
 };
 use crate::{
     ChannelState, OpenPath, quake_mode_window_id, quake_mode_window_is_open, safe_info,
@@ -1242,7 +1239,14 @@ fn validate_custom_uri(url: &Url) -> Result<UriHost> {
 
     // Check if this host is allowed to have arbitrary paths.
     let host_allows_arbitrary_path = match host {
-        UriHost::Action | UriHost::Launch | UriHost::SharedSession | UriHost::Drive | UriHost::Team | UriHost::Settings | UriHost::TabConfig | UriHost::Session => true,
+        UriHost::Action
+        | UriHost::Launch
+        | UriHost::SharedSession
+        | UriHost::Drive
+        | UriHost::Team
+        | UriHost::Settings
+        | UriHost::TabConfig
+        | UriHost::Session => true,
         // Auth and Home only allow the desktop redirect path
         UriHost::Auth | UriHost::Home => false,
     };

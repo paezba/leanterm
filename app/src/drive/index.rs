@@ -58,8 +58,8 @@ use crate::banner::BannerState;
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::model::view::{CloudViewModel, CloudViewModelEvent, UpdateTimestamp};
 use crate::cloud_object::{
-    CloudObject, CloudObjectEventEntrypoint, CloudObjectLocation, CloudObjectSyncStatus, GenericStringObjectFormat, JsonObjectType, NumInFlightRequests, ObjectType,
-    Space,
+    CloudObject, CloudObjectEventEntrypoint, CloudObjectLocation, CloudObjectSyncStatus,
+    GenericStringObjectFormat, JsonObjectType, NumInFlightRequests, ObjectType, Space,
 };
 use crate::drive::panel::DrivePanelAction;
 use crate::editor::{EditorView, Event as EditorEvent, SingleLineEditorOptions};
@@ -552,8 +552,6 @@ pub struct DriveIndex {
     num_errored_objects: usize,
 
     workspace_dropdown: ViewHandle<Dropdown<DriveIndexAction>>,
-
-
 }
 
 pub fn init(app: &mut AppContext) {
@@ -991,7 +989,6 @@ impl DriveIndex {
 
             dropdown
         });
-
 
         Self {
             window_id: ctx.window_id(),

@@ -396,7 +396,11 @@ impl SyncQueue {
     ) {
         let mut dependencies = match item {
             // Update requests will depend on any existing create/updates to the same object
-            QueueItem::UpdateNotebook { id, .. } | QueueItem::UpdateFolder { id, .. } | QueueItem::UpdateCloudPreferences { id, .. } | QueueItem::UpdateEnvVarCollection { id, .. } | QueueItem::UpdateWorkflowEnum { id, .. } => self.get_update_dependencies(id),
+            QueueItem::UpdateNotebook { id, .. }
+            | QueueItem::UpdateFolder { id, .. }
+            | QueueItem::UpdateCloudPreferences { id, .. }
+            | QueueItem::UpdateEnvVarCollection { id, .. }
+            | QueueItem::UpdateWorkflowEnum { id, .. } => self.get_update_dependencies(id),
 
             // Update workflow requests should depend on existing requests to that object, as well as
             // any enums or env vars they reference.
@@ -502,7 +506,13 @@ impl SyncQueue {
                         )
                     })
                 }
-                QueueItem::UpdateCloudPreferences { id, .. } | QueueItem::UpdateNotebook { id, .. } | QueueItem::UpdateWorkflow { id, .. } | QueueItem::UpdateFolder { id, .. } | QueueItem::UpdateEnvVarCollection { id, .. } | QueueItem::UpdateWorkflowEnum { id, .. }  if id.uid() == item_id =>
+                QueueItem::UpdateCloudPreferences { id, .. }
+                | QueueItem::UpdateNotebook { id, .. }
+                | QueueItem::UpdateWorkflow { id, .. }
+                | QueueItem::UpdateFolder { id, .. }
+                | QueueItem::UpdateEnvVarCollection { id, .. }
+                | QueueItem::UpdateWorkflowEnum { id, .. }
+                    if id.uid() == item_id =>
                 {
                     Some(QueueDependency::QueueItem(*queue_item_id))
                 }
@@ -598,7 +608,11 @@ impl SyncQueue {
     fn update_items_with_new_revision(&mut self, server_id: &str, new_revision: Revision) {
         for (_item_id, item) in &mut self.queue {
             match item {
-                QueueItem::UpdateNotebook { id, revision, .. } | QueueItem::UpdateWorkflow { id, revision, .. } | QueueItem::UpdateCloudPreferences { id, revision, .. } | QueueItem::UpdateEnvVarCollection { id, revision, .. } | QueueItem::UpdateWorkflowEnum { id, revision, .. } => {
+                QueueItem::UpdateNotebook { id, revision, .. }
+                | QueueItem::UpdateWorkflow { id, revision, .. }
+                | QueueItem::UpdateCloudPreferences { id, revision, .. }
+                | QueueItem::UpdateEnvVarCollection { id, revision, .. }
+                | QueueItem::UpdateWorkflowEnum { id, revision, .. } => {
                     Self::maybe_update_queue_item_with_new_revision(
                         &self.client_id_to_server,
                         id,

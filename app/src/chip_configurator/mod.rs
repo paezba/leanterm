@@ -41,7 +41,6 @@ pub enum ConfigurableItem {
 }
 
 impl ConfigurableItem {
-
     pub fn chip_kind(&self) -> Option<&ContextChipKind> {
         match self {
             Self::ContextChip(r) => Some(r.chip_kind()),

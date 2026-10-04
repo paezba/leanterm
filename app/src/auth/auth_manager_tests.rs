@@ -5,7 +5,7 @@ use std::time::Duration;
 use anyhow::anyhow;
 use warpui::{App, SingletonEntity};
 
-use super::{AuthManager, AuthManagerEvent,};
+use super::{AuthManager, AuthManagerEvent};
 use crate::ServerApiProvider;
 use crate::auth::auth_view_modal::AuthRedirectPayload;
 use crate::auth::credentials::{Credentials, LoginToken, RefreshToken};
@@ -165,8 +165,6 @@ fn validated_api_key_is_promoted_with_its_user() {
         assert!(auth_state.is_logged_in());
     });
 }
-
-
 
 /// Even when a user is logged in, a redirect with a bad state and a `user_uid`
 /// that does NOT match the current user must surface an `InvalidStateParameter`

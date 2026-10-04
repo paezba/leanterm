@@ -222,7 +222,6 @@ impl PersistedWorkspace {
             })
             .collect();
 
-
         // Collect workspace paths before metadata is moved into Self.
         #[cfg(feature = "local_fs")]
         let startup_workspace_paths: Vec<PathBuf> = metadata.keys().cloned().collect();

@@ -57,9 +57,8 @@ use crate::workspace::view::global_search::view::{
     Event as GlobalSearchViewEvent, GlobalSearchEntryFocus, GlobalSearchView,
 };
 use crate::workspace::view::{
-    LEFT_PANEL_GLOBAL_SEARCH_BINDING_NAME,
-    LEFT_PANEL_PROJECT_EXPLORER_BINDING_NAME, LEFT_PANEL_WARP_DRIVE_BINDING_NAME,
-    OPEN_GLOBAL_SEARCH_BINDING_NAME,
+    LEFT_PANEL_GLOBAL_SEARCH_BINDING_NAME, LEFT_PANEL_PROJECT_EXPLORER_BINDING_NAME,
+    LEFT_PANEL_WARP_DRIVE_BINDING_NAME, OPEN_GLOBAL_SEARCH_BINDING_NAME,
     TOGGLE_PROJECT_EXPLORER_BINDING_NAME, TOGGLE_WARP_DRIVE_BINDING_NAME,
 };
 
@@ -152,7 +151,6 @@ mod active_view_state {
         left_panel.active_view.0 = new_view;
         left_panel.update_button_active_states();
         ctx.notify();
-
 
         left_panel.update_active_file_tree_subscription_state(ctx);
     }
@@ -311,7 +309,6 @@ impl LeftPanelView {
         ctx.subscribe_to_view(&warp_drive_view, |_me, _, event, ctx| {
             ctx.emit(LeftPanelEvent::WarpDrive(event.clone()));
         });
-
 
         let active_view = views.first().copied().unwrap_or(ToolPanelView::WarpDrive);
         let toolbelt_buttons = views
@@ -1076,7 +1073,11 @@ impl LeftPanelView {
         }
     }
 
-    pub fn on_left_panel_visibility_changed(&self, _is_now_open: bool, ctx: &mut ViewContext<Self>) {
+    pub fn on_left_panel_visibility_changed(
+        &self,
+        _is_now_open: bool,
+        ctx: &mut ViewContext<Self>,
+    ) {
         self.update_active_file_tree_subscription_state(ctx);
     }
 
@@ -1118,7 +1119,6 @@ impl LeftPanelView {
             });
         }
     }
-
 }
 
 impl TypedActionView for LeftPanelView {

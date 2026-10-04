@@ -17,14 +17,6 @@ fn initialize_app(app: &mut App) {
     app.add_singleton_model(AuthManager::new_for_test);
 }
 
-
-
-
-
-
-
-
-
 /// If the user hasn't completed local onboarding, the helper must leave the
 /// server-side flag untouched — onboarding hasn't actually happened yet.
 #[test]
@@ -52,7 +44,6 @@ fn test_sync_noop_when_local_onboarding_not_completed() {
     });
 }
 
-
 struct SsoLinkTestHarnessView {
     login_slide_view: ViewHandle<LoginSlideView>,
     onboarding_view: ViewHandle<AgentOnboardingView>,
@@ -75,6 +66,3 @@ impl View for SsoLinkTestHarnessView {
 impl TypedActionView for SsoLinkTestHarnessView {
     type Action = ();
 }
-
-
-

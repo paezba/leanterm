@@ -1,5 +1,5 @@
+use crate::settings::PaneSettings;
 use crate::terminal::model::block::SerializedBlockListItem;
-use crate::settings::{ PaneSettings};
 use std::any::Any;
 use std::collections::HashMap;
 use std::ffi::OsString;
@@ -44,9 +44,9 @@ use warpui::{
 #[cfg(feature = "local_fs")]
 use crate::app_state::CodePaneSnapShot;
 use crate::app_state::{
-    self, BranchSnapshot, EnvVarCollectionPaneSnapshot, LeafContents,
-    LeafSnapshot, NotebookPaneSnapshot, PaneNodeSnapshot, PaneUuid, SettingsPaneSnapshot,
-    TerminalPaneSnapshot, WorkflowPaneSnapshot,
+    self, BranchSnapshot, EnvVarCollectionPaneSnapshot, LeafContents, LeafSnapshot,
+    NotebookPaneSnapshot, PaneNodeSnapshot, PaneUuid, SettingsPaneSnapshot, TerminalPaneSnapshot,
+    WorkflowPaneSnapshot,
 };
 use crate::appearance::Appearance;
 use crate::auth::AuthStateProvider;
@@ -89,9 +89,7 @@ use crate::terminal::general_settings::{GeneralSettings, GeneralSettingsChangedE
 #[cfg(feature = "local_tty")]
 use crate::terminal::local_tty::TerminalManager as LocalTtyTerminalManager;
 #[cfg(all(feature = "local_tty", not(feature = "remote_tty")))]
-use crate::terminal::local_tty::{
-    TerminalViewSurfaceConfig, create_terminal_view_surface,
-};
+use crate::terminal::local_tty::{TerminalViewSurfaceConfig, create_terminal_view_surface};
 use crate::terminal::model::session::Session;
 #[cfg(feature = "remote_tty")]
 use crate::terminal::remote_tty::TerminalManager as RemoteTtyTerminalManager;
@@ -106,12 +104,11 @@ use crate::terminal::shared_session::{
 };
 use crate::terminal::view::ssh_file_upload::FileUploadId;
 use crate::terminal::view::{
-    BlockNotification, ExecuteCommandEvent,
-    LeftPanelTargetView, SyncEvent, TerminalViewState,
+    BlockNotification, ExecuteCommandEvent, LeftPanelTargetView, SyncEvent, TerminalViewState,
 };
 use crate::terminal::{
-    ShareBlockModal, ShareBlockModalEvent, ShellLaunchData,
-    TerminalManager, TerminalModel, TerminalView,
+    ShareBlockModal, ShareBlockModalEvent, ShellLaunchData, TerminalManager, TerminalModel,
+    TerminalView,
 };
 use crate::undo_close::{UndoCloseStack, UndoCloseStackEvent};
 #[cfg(target_family = "wasm")]
@@ -123,9 +120,7 @@ use crate::view_components::ToastFlavor;
 use crate::workflows::workflow::Workflow;
 use crate::workflows::{WorkflowSelectionSource, WorkflowSource, WorkflowType};
 use crate::workspace::tab_group::TabGroupId;
-use crate::workspace::{
-    self, CommandSearchOptions, PaneViewLocator, TabBarLocation,
-};
+use crate::workspace::{self, CommandSearchOptions, PaneViewLocator, TabBarLocation};
 use crate::{cmd_or_ctrl_shift, send_telemetry_from_ctx};
 
 pub mod focus_state;
@@ -768,22 +763,12 @@ pub struct PaneGroup {
     /// Model that tracks the currently active file.
     active_file_model: ModelHandle<ActiveFileModel>,
 
-
     /// If the left panel is open for this pane group
     pub left_panel_open: bool,
     /// If the right panel is open for this pane group
     pub right_panel_open: bool,
     /// If the right panel is maximized
     pub is_right_panel_maximized: bool,
-
-
-
-
-
-
-
-
-
 
     /// Tab-level custom title set via the rename-tab flow.
     custom_title: Option<String>,
@@ -1313,7 +1298,7 @@ impl PaneGroup {
                         view_size,
                         model_event_sender.clone(),
                         deferred_panes,
-                            ) {
+                    ) {
                         Ok((child, child_focus)) => {
                             len += child.len();
                             nodes.push((flex.into(), child.root));
@@ -3083,7 +3068,6 @@ impl PaneGroup {
         self.cleanup_closed_pane(pane_id, ctx);
     }
 
-
     /// If this pane was the active session and or focused pane, focuses the previous session and pane.
     ///
     /// Called before removing a pane from a pane group (either because the pane is being closed or because it is being moved
@@ -3162,7 +3146,6 @@ impl PaneGroup {
                 self.hide_closed_pane(pane_id, ctx);
             }
 
-
             self.focus_next_terminal_pane_and_activate_session(
                 pane_id,
                 PaneRemovalReason::Close,
@@ -3182,7 +3165,6 @@ impl PaneGroup {
             }
 
             self.clean_up_pane(pane_id, ctx);
-
 
             self.focus_next_terminal_pane_and_activate_session(
                 pane_id,
@@ -4340,7 +4322,8 @@ impl PaneGroup {
             is_shared_session_creator,
             resources,
             None,
-            self.user_default_shell_unsupported_banner_model_handle.clone(),
+            self.user_default_shell_unsupported_banner_model_handle
+                .clone(),
             view_bounds.size(),
             self.model_event_sender.clone(),
             chosen_shell,
@@ -5265,7 +5248,6 @@ impl View for PaneGroup {
         {
             stack.add_child(ChildView::new(&self.shared_session_role_change_modal).finish());
         }
-
 
         stack.finish()
     }

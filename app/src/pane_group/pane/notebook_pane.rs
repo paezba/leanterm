@@ -4,7 +4,7 @@ use anyhow::Context;
 use url::Url;
 use warpui::{AppContext, ModelHandle, SingletonEntity, ViewContext, ViewHandle};
 
-use super::super::{ Direction};
+use super::super::Direction;
 use super::view::PaneView;
 use super::{
     DetachType, PaneConfiguration, PaneContent, PaneGroup, PaneId, ShareableLink,

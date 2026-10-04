@@ -7,8 +7,8 @@ use warpui::units::IntoLines;
 use super::*;
 use crate::settings::TerminalSpacing;
 use crate::terminal::model::ansi::Handler;
-use crate::terminal::model::test_utils::TestBlockListBuilder;
 use crate::terminal::model::test_utils;
+use crate::terminal::model::test_utils::TestBlockListBuilder;
 use crate::terminal::view::{InlineBannerItem, InlineBannerType};
 use crate::terminal::{BlockListSettings, SizeUpdateReason};
 
@@ -188,10 +188,6 @@ fn advance_to_bootstrapped(block_list: &mut BlockList, data: BootstrappedValue) 
         BootstrapStage::PostBootstrapPrecmd
     );
 }
-
-
-
-
 
 #[test]
 fn test_iterm_image_early_output_routes_to_background_block() {
@@ -441,15 +437,10 @@ fn test_update_padding_block_heights() {
 //     assert!(block_list.active_gap.is_none());
 // }
 
-
 // Add a few restored blocks and ensure they show up appropriately.
-
-
-
 
 // Bootstrap with no restored blocks and no script execution.
 // There will be a special hidden InitShell block and everything else should be empty.
-
 
 #[test]
 pub fn test_insert_non_block_item() {
@@ -620,7 +611,6 @@ pub fn test_insert_non_block_item() {
         total_height
     );
 }
-
 
 #[test]
 fn test_matching_block_by_index() {
@@ -1050,13 +1040,6 @@ fn test_block_height_update_shifts_indices() {
     );
 }
 
-
-
-
-
-
-
-
 #[test]
 pub fn clear_blocks_resets_index() {
     let mut block_list =
@@ -1077,11 +1060,6 @@ pub fn clear_blocks_resets_index() {
     block_list.clear_screen(ClearMode::ResetAndClear);
     assert_eq!(block_list.active_block().index(), 0.into());
 }
-
-
-
-
-
 
 #[test]
 fn test_interleaves_background_with_gaps() {
@@ -1195,4 +1173,3 @@ fn test_device_status_uses_active_block_if_no_typeahead() {
 
     assert_eq!(writer, "\x1b[1;21R".as_bytes());
 }
-

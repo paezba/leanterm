@@ -1,11 +1,10 @@
-use crate::settings::{ InputSettings, TerminalSpacing};
+use crate::settings::{InputSettings, TerminalSpacing};
 use serde::{Deserialize, Serialize};
 use settings::macros::define_settings_group;
 use settings::{RespectUserSyncSetting, SupportedPlatforms, SyncToCloud};
 use warp_core::features::FeatureFlag;
 use warpui::units::Pixels;
 use warpui::{AppContext, SingletonEntity};
-
 
 #[derive(
     Clone,

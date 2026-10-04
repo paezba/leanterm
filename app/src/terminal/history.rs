@@ -1,4 +1,4 @@
-use super::model::block::{ Block, SerializedBlock};
+use super::model::block::{Block, SerializedBlock};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
@@ -247,7 +247,6 @@ pub struct HistoryEntry {
     workflow_command: Option<String>,
 
     pub is_for_restored_block: bool,
-
 }
 
 impl HistoryEntry {

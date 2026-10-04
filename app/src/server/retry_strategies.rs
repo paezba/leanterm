@@ -2,7 +2,6 @@ use std::time::Duration;
 
 use warpui::RetryOption;
 
-
 /// Common duration for a periodic poll. In our app, we generally have the following to update the same data:
 /// - RTC messages
 /// - Out-of-band queries based on user actions (i.e. fetch team info when user opens the settings page, user

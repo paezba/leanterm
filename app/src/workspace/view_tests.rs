@@ -18,7 +18,6 @@ use warpui::{AddSingletonModel, App, ViewHandle};
 use watcher::HomeDirectoryWatcher;
 
 use super::*;
-use crate::persisted_workspace::PersistedWorkspace;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::model::view::CloudViewModel;
 use crate::context_chips::prompt::Prompt;
@@ -28,6 +27,7 @@ use crate::network::NetworkStatus;
 use crate::notebooks::editor::keys::NotebookKeybindings;
 use crate::notebooks::notebook::NotebookView;
 use crate::pane_group::{Direction, PaneGroupAction, PaneId};
+use crate::persisted_workspace::PersistedWorkspace;
 use crate::pricing::PricingInfoModel;
 use crate::resource_center::Tip;
 use crate::server::cloud_objects::listener::Listener;
@@ -61,8 +61,7 @@ use crate::workspaces::team_tester::TeamTesterStatus;
 use crate::workspaces::update_manager::TeamUpdateManager;
 use crate::workspaces::user_profiles::UserProfiles;
 use crate::workspaces::user_workspaces::UserWorkspaces;
-use crate::{ GlobalResourceHandlesProvider, ObjectActions, experiments, workspace,
-};
+use crate::{GlobalResourceHandlesProvider, ObjectActions, experiments, workspace};
 pub(crate) fn initialize_app(app: &mut App) {
     initialize_app_with_team_client(app, Arc::new(MockTeamClient::new()));
 }
@@ -163,7 +162,6 @@ pub(crate) fn initialize_app_with_team_client(app: &mut App, team_client: Arc<dy
     app.add_singleton_model(|_| crate::code_review::git_repo_model::GitRepoModels::new());
     app.add_singleton_model(remote_server::manager::RemoteServerManager::new);
     #[cfg(not(target_family = "wasm"))]
-
     #[cfg(feature = "local_fs")]
     app.add_singleton_model(RepoMetadataModel::new);
     app.add_singleton_model(search::files::model::FileSearchModel::new);
@@ -509,15 +507,6 @@ fn test_theme_chooser_does_not_suppress_tab_bar_traffic_light_padding() {
     });
 }
 
-
-
-
-
-
-
-
-
-
 /// Regression test for the raw-code toggle: the notebook-viewer target used to
 /// drop the `CodeSource` outright, so the raw view always started at line 1.
 #[cfg(feature = "local_fs")]
@@ -563,7 +552,6 @@ fn test_open_markdown_viewer_target_preserves_requested_line() {
         });
     });
 }
-
 
 /// Creates a workspace with a single, shared session.
 fn mock_workspace_with_shared_session(app: &mut App) -> ViewHandle<Workspace> {
@@ -982,7 +970,6 @@ fn test_set_active_tab_color() {
         });
     });
 }
-
 
 #[test]
 fn test_cycle_active_tab_color_mutates_group_color_without_member_overrides() {
@@ -2389,7 +2376,6 @@ fn set_left_panel_visibility_across_tabs(is_enabled: bool, ctx: &mut ViewContext
     });
 }
 
-
 #[test]
 fn test_left_panel_window_scoped_reconciles_between_terminal_tabs_when_enabled() {
     let _conversation_list_guard =
@@ -2450,7 +2436,6 @@ fn test_left_panel_window_scoped_reconciles_between_terminal_tabs_when_enabled()
         });
     });
 }
-
 
 #[test]
 fn test_left_panel_window_scoped_disabled_keeps_per_tab_state() {
@@ -2622,7 +2607,6 @@ fn test_vertical_tabs_panel_closed_when_disabled_even_if_persisted_open() {
         });
     });
 }
-
 
 #[test]
 fn test_vertical_tabs_panel_inherits_transferred_tab_source_window_state() {
@@ -3014,11 +2998,6 @@ fn test_unified_new_session_menu_includes_reopen_closed_session() {
     });
 }
 
-
-
-
-
-
 #[test]
 fn test_tab_mru_order() {
     App::test((), |mut app| async move {
@@ -3358,8 +3337,6 @@ fn test_close_tab_group_removes_group_and_members() {
         });
     });
 }
-
-
 
 #[test]
 fn test_move_tab_to_group_expands_collapsed_group() {

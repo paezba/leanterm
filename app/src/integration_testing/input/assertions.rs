@@ -59,7 +59,6 @@ pub fn input_is_empty(tab_idx: usize) -> AssertionCallback {
     })
 }
 
-
 pub fn tab_completions_menu_is_open(tab_idx: usize, is_opened: bool) -> AssertionCallback {
     Box::new(move |app, window_id| {
         let input = single_input_view_for_tab(app, window_id, tab_idx);

@@ -31,7 +31,6 @@ pub fn cloud_workflows_data_source(
 ) -> AsyncSnapshotDataSource<CloudWorkflowsSnapshot, CommandSearchItemAction> {
     AsyncSnapshotDataSource::new(
         move |query: &Query, app: &AppContext| {
-
             let cloud_model = CloudModel::as_ref(app);
             let user_workspaces = UserWorkspaces::as_ref(app);
 

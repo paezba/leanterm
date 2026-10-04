@@ -1,10 +1,7 @@
 use std::ffi::OsStr;
 use std::path::PathBuf;
 
-
-use super::{
-    app_database_file_path, database_file_path_for_scope,
-};
+use super::{app_database_file_path, database_file_path_for_scope};
 use crate::persistence::PersistenceScope;
 
 #[test]
@@ -35,7 +32,6 @@ fn tui_scope_database_path_is_tui_subdirectory_of_app_database_dir() {
     assert_eq!(tui_dir.file_name(), Some(OsStr::new("tui")));
     assert_eq!(tui_dir.parent(), app_path.parent());
 }
-
 
 #[test]
 fn remote_server_daemon_scope_database_path_uses_identity_data_dir() {
@@ -97,4 +93,3 @@ fn remote_server_daemon_database_permissions_are_owner_only() {
 // Regression: GH#10083. Users whose warp.sqlite already contains a 1px row
 // (because they hit the bug on an earlier build) must still recover to default
 // geometry on next launch rather than restoring the sliver.
-

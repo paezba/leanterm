@@ -16,7 +16,6 @@ impl OpenedFilesInRepo {
     pub fn get(&self, relative_path: &str) -> Option<&Instant> {
         self.0.get(relative_path)
     }
-
 }
 
 /// Model that tracks files that have been opened, organized by repository.

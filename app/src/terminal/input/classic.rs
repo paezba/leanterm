@@ -1,9 +1,8 @@
 use pathfinder_geometry::vector::vec2f;
 use settings::Setting;
 use warpui::elements::{
-    Border, ChildAnchor, Container, DropTarget, Element, Empty, Flex,
-    Hoverable, OffsetPositioning, ParentAnchor, ParentElement, ParentOffsetBounds, SavePosition,
-    Stack,
+    Border, ChildAnchor, Container, DropTarget, Element, Empty, Flex, Hoverable, OffsetPositioning,
+    ParentAnchor, ParentElement, ParentOffsetBounds, SavePosition, Stack,
 };
 use warpui::{AppContext, SingletonEntity};
 
@@ -32,11 +31,7 @@ impl Input {
 
         let model = self.model.lock();
         let should_render_prompt_using_editor_decorator_elements =
-            should_render_prompt_using_editor_decorator_elements(
-                false,
-                &model,
-                app,
-            );
+            should_render_prompt_using_editor_decorator_elements(false, &model, app);
 
         // We should likely rework this stack to not need to use `with_constrain_absolute_children`,
         // by reworking the positioning of the children to not depend on this.
@@ -189,13 +184,13 @@ impl Input {
 
         let input_mode = *InputModeSettings::as_ref(app).input_mode.value();
 
-        
-
         let border = match input_mode {
-            InputMode::PinnedToBottom => Border::top(get_input_box_top_border_width())
-            .with_border_fill(theme.outline()),
-            InputMode::PinnedToTop => Border::bottom(get_input_box_top_border_width())
-            .with_border_fill(theme.outline()),
+            InputMode::PinnedToBottom => {
+                Border::top(get_input_box_top_border_width()).with_border_fill(theme.outline())
+            }
+            InputMode::PinnedToTop => {
+                Border::bottom(get_input_box_top_border_width()).with_border_fill(theme.outline())
+            }
             InputMode::Waterfall => Border::new(get_input_box_top_border_width())
                 .with_sides(true, false, true, false)
                 .with_border_fill(theme.outline()),

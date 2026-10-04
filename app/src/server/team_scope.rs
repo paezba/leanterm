@@ -1,8 +1,6 @@
 use crate::server::ids::ServerId;
 
-impl RequestTeamScope {
-
-}
+impl RequestTeamScope {}
 
 /// The team an outbound request is scoped to, as sent in `X-Warp-Team-Uid`.
 ///

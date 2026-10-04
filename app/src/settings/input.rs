@@ -1,4 +1,3 @@
-
 use serde::{Deserialize, Serialize};
 use settings::Setting as _;
 /// TODO: move alias_expansion setting into this group.

@@ -1,8 +1,6 @@
 use warpui::elements::MouseStateHandle;
 
-
-impl SettingsTab {
-}
+impl SettingsTab {}
 
 pub struct SettingsTab {
     pub label: String,

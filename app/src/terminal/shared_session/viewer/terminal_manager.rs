@@ -5,8 +5,8 @@ use async_broadcast::InactiveReceiver;
 use parking_lot::FairMutex;
 use pathfinder_geometry::vector::Vector2F;
 use session_sharing_protocol::common::{
-    ActivePrompt, AddGuestsResponse, CommandExecutionFailureReason,
-    LinkAccessLevelUpdateResponse, RemoveGuestResponse, SessionId, TeamAccessLevelUpdateResponse, UpdatePendingUserRoleResponse,
+    ActivePrompt, AddGuestsResponse, CommandExecutionFailureReason, LinkAccessLevelUpdateResponse,
+    RemoveGuestResponse, SessionId, TeamAccessLevelUpdateResponse, UpdatePendingUserRoleResponse,
 };
 use session_sharing_protocol::viewer::SessionEndedReason;
 use settings::Setting as _;
@@ -18,9 +18,9 @@ use warpui::{
 
 use super::event_loop::SharedSessionInitialLoadMode;
 use super::network::{
-    Network, NetworkEvent,
-    command_execution_failure_reason_string, control_action_failure_reason_string,
-    session_ended_reason_string, viewer_removed_reason_string, write_to_pty_failure_reason_string,
+    Network, NetworkEvent, command_execution_failure_reason_string,
+    control_action_failure_reason_string, session_ended_reason_string,
+    viewer_removed_reason_string, write_to_pty_failure_reason_string,
 };
 use crate::context_chips::prompt_snapshot::PromptSnapshot;
 use crate::context_chips::prompt_type::PromptType;
@@ -84,7 +84,6 @@ pub struct TerminalManagerInit {
 }
 
 impl TerminalManager {
-
     fn current_network(
         current_network: &Arc<FairMutex<Option<ModelHandle<Network>>>>,
     ) -> Option<ModelHandle<Network>> {
@@ -192,7 +191,7 @@ impl TerminalManager {
                 sessions.clone(),
                 size_info,
                 colors,
-                None, // model_event_sender - not used for viewer
+                None,                // model_event_sender - not used for viewer
                 prompt_type.clone(), // no conversation restoration for shared session viewer
                 Some(inactive_pty_reads_rx.clone()),
                 ctx,
@@ -943,7 +942,6 @@ impl TerminalManager {
             .lock()
             .clear_write_to_pty_events_for_shared_session_tx();
     }
-
 }
 
 impl crate::terminal::TerminalManager for TerminalManager {

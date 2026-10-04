@@ -25,23 +25,7 @@ fn initialize_window_team_test_app(app: &mut App, workspaces: Vec<Workspace>) {
     });
 }
 
-
-
-
-
 const TEST_GCP_AUDIENCE: &str = "//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/warp-pool/providers/warp-provider";
-
-
-
-
-
-
-
-
-
-
-
-
 
 #[test]
 fn warp_agent_cli_upgrade_link_is_channel_aware_and_user_bound() {
@@ -66,13 +50,6 @@ fn warp_agent_cli_upgrade_link_uses_channel_aware_fallback_without_a_user() {
         )
     );
 }
-
-
-
-
-
-
-
 
 #[derive(Default)]
 struct TeamContextTestView;
@@ -109,19 +86,6 @@ fn link_sharing_fails_open_without_a_workspace() {
     })
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 #[test]
 fn test_team_switcher_hidden_with_zero_teams() {
     // When the user is in no workspace / no teams, `can_switch_teams` must return
@@ -136,12 +100,6 @@ fn test_team_switcher_hidden_with_zero_teams() {
         });
     })
 }
-
-
-
-
-
-
 
 #[test]
 fn test_purchase_addon_credits_forwards_teamless_team_uid() {
@@ -208,6 +166,3 @@ fn test_purchase_addon_credits_forwards_team_uid_when_present() {
         warpui::r#async::Timer::after(Duration::from_millis(100)).await;
     })
 }
-
-
-

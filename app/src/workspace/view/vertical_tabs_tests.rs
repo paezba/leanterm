@@ -6,14 +6,15 @@ use pathfinder_geometry::vector::Vector2F;
 use warpui::EntityId;
 use warpui::elements::PositionedElementOffsetBounds;
 
-use super::{ SummaryPaneKind, SummaryPaneKindIcons, VerticalTabsDetailTarget,
-    VerticalTabsDetailTargetKind, branch_label_display,
-    code_detail_kind_label, compact_branch_subtitle_display, detail_sidecar_width_and_bounds,
-    detail_target_for_hovered_row, group_name_highlight_indices, merge_group_name_matches, non_terminal_search_text_fragments,
-    pane_ids_for_display_granularity, pane_search_text_fragments, search_fragments_contain_query,
-    select_summary_pane_kind_icons, should_keep_detail_sidecar_visible_for_mouse_position,
-    should_show_tab_group_header, shows_synced_inputs_indicator, summary_overflow_count, tab_admitted_by_group_name, uses_outer_group_container, visible_pane_ids_for_detail_target,
-    vtab_diff_stats_text,
+use super::{
+    SummaryPaneKind, SummaryPaneKindIcons, VerticalTabsDetailTarget, VerticalTabsDetailTargetKind,
+    branch_label_display, code_detail_kind_label, compact_branch_subtitle_display,
+    detail_sidecar_width_and_bounds, detail_target_for_hovered_row, group_name_highlight_indices,
+    merge_group_name_matches, non_terminal_search_text_fragments, pane_ids_for_display_granularity,
+    pane_search_text_fragments, search_fragments_contain_query, select_summary_pane_kind_icons,
+    should_keep_detail_sidecar_visible_for_mouse_position, should_show_tab_group_header,
+    shows_synced_inputs_indicator, summary_overflow_count, tab_admitted_by_group_name,
+    uses_outer_group_container, visible_pane_ids_for_detail_target, vtab_diff_stats_text,
 };
 use crate::context_chips::display_chip::GitLineChanges;
 use crate::pane_group::{PaneId, TerminalPaneId};
@@ -21,7 +22,6 @@ use crate::safe_triangle::SafeTriangle;
 use crate::tab::{ShortcutModifierKind, reveals_shortcut_hints};
 use crate::workspace::tab_group::TabGroupId;
 use crate::workspace::tab_settings::VerticalTabsDisplayGranularity;
-
 
 fn pane_id() -> PaneId {
     TerminalPaneId::dummy_terminal_pane_id().into()
@@ -76,18 +76,6 @@ fn summary_pane_kind_icons_recompute_when_oldest_kind_is_removed() {
     );
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 #[test]
 fn code_detail_kind_label_uses_programming_language_display_name() {
     assert_eq!(
@@ -123,7 +111,6 @@ fn detail_target_matches_panes_granularity() {
     );
 }
 
-
 #[test]
 fn pane_detail_target_returns_hovered_pane_when_supported() {
     let hovered_pane_id = pane_id();
@@ -138,7 +125,6 @@ fn pane_detail_target_returns_hovered_pane_when_supported() {
         Some(vec![hovered_pane_id])
     );
 }
-
 
 #[test]
 fn tab_detail_target_returns_all_visible_panes_when_every_pane_is_supported() {
@@ -157,7 +143,6 @@ fn tab_detail_target_returns_all_visible_panes_when_every_pane_is_supported() {
         Some(visible_pane_ids)
     );
 }
-
 
 #[test]
 fn panes_granularity_returns_all_visible_panes_in_order() {
@@ -191,7 +176,6 @@ fn tabs_granularity_returns_focused_pane_when_present() {
         vec![pane_2]
     );
 }
-
 
 #[test]
 fn tabs_granularity_returns_empty_for_empty_visible_panes() {
@@ -343,14 +327,6 @@ fn tab_group_header_distinguishes_two_auto_named_multi_pane_tabs() {
     assert_eq!(renders_header, vec![true, true, true]);
 }
 
-
-
-
-
-
-
-
-
 #[test]
 fn pane_search_fragments_prepend_custom_title_and_keep_generated_metadata() {
     let fragments = pane_search_text_fragments(
@@ -446,18 +422,12 @@ fn compact_branch_subtitle_falls_back_to_working_directory_without_branch_icon()
     );
 }
 
-
-
-
 #[test]
 fn summary_overflow_count_caps_visible_region() {
     assert_eq!(summary_overflow_count(5, 3), 2);
     assert_eq!(summary_overflow_count(3, 3), 0);
     assert_eq!(summary_overflow_count(2, 3), 0);
 }
-
-
-
 
 #[test]
 fn synced_inputs_indicator_shows_on_synced_terminal_rows() {
@@ -468,7 +438,6 @@ fn synced_inputs_indicator_shows_on_synced_terminal_rows() {
 fn synced_inputs_indicator_hidden_when_tab_is_not_synced() {
     assert!(!shows_synced_inputs_indicator(true, false, true));
 }
-
 
 #[test]
 fn synced_inputs_indicator_hidden_on_non_terminal_rows() {
@@ -486,10 +455,6 @@ fn reveals_shortcut_hints_requires_overlap_with_binding_modifiers() {
     let empty = std::collections::HashSet::new();
     assert!(!reveals_shortcut_hints(&empty, &super_kind));
 }
-
-
-
-
 
 #[test]
 fn group_name_match_includes_members_that_did_not_match_on_their_own() {
@@ -656,4 +621,3 @@ fn group_name_highlights_do_not_use_fuzzy_matching() {
         Vec::<usize>::new()
     );
 }
-

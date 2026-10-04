@@ -1037,8 +1037,7 @@ impl BlockList {
                     while current_row >= selection_start_cursor.start().height {
                         if let Some(BlockHeightItem::RichContent(_item)) =
                             selection_start_cursor.item()
-                        {
-                        }
+                        {}
                         selection_start_cursor.next();
                     }
                     let Some(command_block) = self.block_at(start.within_grid_point.block_index)
@@ -1091,7 +1090,6 @@ impl BlockList {
                             }
                         }
                     }
-
                 }
 
                 // TODO: If `selected_texts` is empty, should we return `None` instead of `Some("")`?

@@ -52,8 +52,8 @@ use super::shared_session::presence_manager::{
 };
 use super::shared_session::render_util::SHARED_SESSION_AVATAR_DIAMETER;
 use super::view::{
-    BLOCK_BANNER_HEIGHT, InlineBannerId, RichContentMetadata,
-    SeparatorId, SharedSessionBanners, TerminalEditor, TerminalViewRenderContext,
+    BLOCK_BANNER_HEIGHT, InlineBannerId, RichContentMetadata, SeparatorId, SharedSessionBanners,
+    TerminalEditor, TerminalViewRenderContext,
 };
 use super::warpify::render::{draw_flag_pole, render_subshell_flag};
 use super::{HEIGHT_FUDGE_FACTOR_LINES, TerminalModel, heights_approx_eq};
@@ -61,8 +61,7 @@ use crate::appearance::Appearance;
 use crate::drive::settings::WarpDriveSettings;
 use crate::features::FeatureFlag;
 use crate::pane_group::SplitPaneState;
-use crate::settings::{ DebugSettings, EnforceMinimumContrast, PrivacySettings, TerminalSpacing,
-};
+use crate::settings::{DebugSettings, EnforceMinimumContrast, PrivacySettings, TerminalSpacing};
 use crate::terminal::alt_screen::{should_intercept_mouse, should_intercept_scroll};
 use crate::terminal::block_list_viewport::AutoscrollBehavior;
 use crate::terminal::blockgrid_renderer::BlockGridParams;
@@ -1078,7 +1077,6 @@ impl BlockListElement {
             .finish(),
         );
 
-
         if WarpDriveSettings::is_warp_drive_enabled(app) {
             let icon = Container::new(
                 ConstrainedBox::new(
@@ -1556,7 +1554,9 @@ impl BlockListElement {
                         }
                         // While rich content blocks can't be selected like command blocks,
                         // text selections can still originate in them (i.e. with AI blocks)
-                        Some(BlockHeightItem::RichContent(RichContentItem { view_id: _, .. })) => {
+                        Some(BlockHeightItem::RichContent(RichContentItem {
+                            view_id: _, ..
+                        })) => {
                             let bounds = self
                                 .bounds
                                 .expect("Bounds should be set before event dispatching");
@@ -2917,7 +2917,6 @@ impl BlockListElement {
 
         result
     }
-
 }
 
 fn command_grid_visible_cursor_shape(block: &Block) -> Option<CursorShape> {
@@ -3191,7 +3190,6 @@ impl Element for BlockListElement {
                                     prev_block_subshell_session_id = None;
                                 }
                             }
-
                         }
 
                         visible_items.push(VisibleItem::Block {

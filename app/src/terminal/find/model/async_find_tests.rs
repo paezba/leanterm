@@ -2,7 +2,6 @@
 
 use std::sync::Arc;
 
-
 use super::{
     AbsoluteMatch, AsyncFindConfig, AsyncFindStatus, BlockFindResults, is_query_refinement,
 };
@@ -31,9 +30,6 @@ fn make_match_at(row: u64, start_col: usize, end_col: usize) -> AbsoluteMatch {
         is_filtered: false,
     }
 }
-
-
-
 
 #[test]
 fn test_block_invalidation_with_dirty_range() {
@@ -69,7 +65,6 @@ fn test_block_invalidation_with_dirty_range() {
     assert_eq!(stored[2].start_row(), 18);
     assert_eq!(stored[3].start_row(), 25);
 }
-
 
 #[test]
 fn test_is_query_refinement() {
@@ -317,9 +312,3 @@ fn test_update_dirty_matches_clear_range() {
     assert_eq!(stored[0].start_row(), 5);
     assert_eq!(stored[1].start_row(), 25);
 }
-
-
-
-
-
-

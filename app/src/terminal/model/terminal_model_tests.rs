@@ -1,4 +1,3 @@
-
 use chrono::Local;
 use warp_core::command::ExitCode;
 
@@ -6,11 +5,8 @@ use super::*;
 use crate::terminal::model::block::BlockId;
 use crate::terminal::model::bootstrap::BootstrapStage;
 
-
 // Ensures that an SSH session successfully bootstraps even if the block list is empty and that
 // the parent shell resumes after the nested shell exits.
-
-
 
 #[test]
 fn test_selected_block_range_contains() {
@@ -124,11 +120,6 @@ fn test_selected_blocks_range_select() {
     assert_eq!(selected_blocks.tail(), Some(0.into()));
 }
 
-
-
-
-
-
 #[test]
 fn compare_within_block_points() {
     let a = WithinBlock::new(Point::new(4, 5), 1.into(), GridType::PromptAndCommand);
@@ -151,34 +142,6 @@ fn compare_within_block_points() {
     let j = WithinBlock::new(Point::new(1, 5), 2.into(), GridType::PromptAndCommand);
     assert!(i == j);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #[test]
 // An empty block that is restored should have a nonzero height and it should not get deleted.

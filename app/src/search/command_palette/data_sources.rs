@@ -1,4 +1,4 @@
-use super::{ warp_drive};
+use super::warp_drive;
 use std::collections::HashSet;
 use std::path::PathBuf;
 
@@ -52,7 +52,6 @@ impl DataSourceStore {
         let new_session_data_source = (FeatureFlag::ShellSelector.is_enabled()
             && cfg!(feature = "local_tty"))
         .then_some(ctx.add_model(|ctx| NewSessionDataSource::new(binding_source, ctx)));
-
 
         let repo_data_source = ctx.add_model(|_| RepoDataSource::new());
 

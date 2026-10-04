@@ -1,4 +1,4 @@
-use crate::settings::{ BlockVisibilitySettings, SettingsFileError};
+use crate::settings::{BlockVisibilitySettings, SettingsFileError};
 use crate::terminal::SizeInfo;
 use std::path::PathBuf;
 
@@ -42,9 +42,11 @@ use warpui::{
     UpdateView as _, View, ViewContext, ViewHandle, id,
 };
 
+use crate::GlobalResourceHandlesProvider;
 use crate::appearance::Appearance;
 use crate::editor::{
-    EditorView, Event as EditorEvent, PropagateAndNoOpNavigationKeys, SingleLineEditorOptions, TextOptions,
+    EditorView, Event as EditorEvent, PropagateAndNoOpNavigationKeys, SingleLineEditorOptions,
+    TextOptions,
 };
 use crate::menu::{self, Menu, MenuItem, MenuItemFields};
 use crate::pane_group::focus_state::PaneFocusHandle;
@@ -57,7 +59,6 @@ use crate::util::bindings::{BindingGroup, CustomAction, keybinding_name_to_displ
 use crate::view_components::ToastFlavor;
 use crate::workspace::WorkspaceAction;
 use crate::workspaces::workspace::{BillingMetadata, CustomerType};
-use crate::GlobalResourceHandlesProvider;
 
 mod about_page;
 mod admin_actions;
@@ -239,7 +240,11 @@ impl SettingsSection {
             return false;
         }
         match self {
-            Self::Account | Self::Referrals | Self::SharedBlocks | Self::Teams | Self::WarpDrive => true,
+            Self::Account
+            | Self::Referrals
+            | Self::SharedBlocks
+            | Self::Teams
+            | Self::WarpDrive => true,
             Self::About
             | Self::Appearance
             | Self::Features
@@ -2269,8 +2274,6 @@ impl View for SettingsView {
             );
         }
 
-
-
         SavePosition::new(stack.finish(), POSITION_ID).finish()
     }
 }
@@ -2282,7 +2285,6 @@ impl TypedActionView for SettingsView {
         match action {
             SettingsAction::SelectAndRefresh(section) => {
                 self.set_and_refresh_current_page_internal(*section, false, true, ctx);
-
             }
             SettingsAction::ToggleUmbrella(nav_index) => {
                 if let Some(SettingsNavItem::Umbrella(umbrella)) =

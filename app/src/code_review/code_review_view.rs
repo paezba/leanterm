@@ -1,4 +1,4 @@
-use crate::settings::{ CodeSettings};
+use crate::settings::CodeSettings;
 use crate::terminal::view::{TerminalAction, TerminalView};
 use std::collections::HashMap;
 use std::mem;
@@ -56,7 +56,7 @@ use warpui::{
 };
 
 use super::code_review_header::CodeReviewHeader;
-use super::comment_list_view::{ CommentListEvent, CommentListView};
+use super::comment_list_view::{CommentListEvent, CommentListView};
 use super::comments::{AttachedReviewComment, CommentOrigin};
 use super::diff_size_limits::DiffSize;
 use super::git_dialog::{GitDialog, GitDialogEvent, GitDialogKind};
@@ -96,8 +96,8 @@ use crate::code_review::find_model::CodeReviewFindModel;
 use crate::code_review::git_repo_model::{GitRepoModels, GitRepoStatusEvent, GitRepoStatusModel};
 use crate::code_review::github_repo_model::{GitHubRepoEvent, GitHubRepoModel};
 use crate::code_review::hidden_lines::calculate_hidden_lines;
-use crate::code_review::telemetry_event::{ CodeReviewTelemetryEvent, GitButtonKind,
-    PaneStateChange,
+use crate::code_review::telemetry_event::{
+    CodeReviewTelemetryEvent, GitButtonKind, PaneStateChange,
 };
 use crate::coding_panel_enablement_state::CodingPanelEnablementState;
 use crate::editor::InteractionState;
@@ -1246,7 +1246,6 @@ impl CodeReviewView {
         let ui_state_handles = UiStateHandles::default();
         let header = CodeReviewHeader::new();
 
-
         #[cfg(not(target_family = "wasm"))]
         let open_repository_button = ctx.add_typed_action_view(|_ctx| {
             ActionButton::new("Open repository", NakedTheme)
@@ -2286,7 +2285,8 @@ impl CodeReviewView {
                 }
                 self.update_diff_selector_selection(ctx);
             }
-            DiffStateModelEvent::GitOpCompleted(_) | DiffStateModelEvent::BranchCommittedFilesReceived(_) => {
+            DiffStateModelEvent::GitOpCompleted(_)
+            | DiffStateModelEvent::BranchCommittedFilesReceived(_) => {
                 // Handled by GitDialog's own subscription.
             }
         }
@@ -3053,7 +3053,6 @@ impl CodeReviewView {
             });
 
             let local_code_view = ctx.add_typed_action_view(|ctx| {
-                
                 // Deleted files have no file backing — no FileModel, no GlobalBufferModel.
                 // file_id() will be None for these editors; no downstream code in code_review
                 // relies on file_id for deleted entries (save/conflict flows early-return on None).
@@ -4646,7 +4645,6 @@ impl CodeReviewView {
         let mut right_row = Flex::row()
             .with_main_axis_alignment(MainAxisAlignment::End)
             .with_cross_axis_alignment(CrossAxisAlignment::Center);
-
 
         if FeatureFlag::DiscardPerFileAndAllChanges.is_enabled() {
             right_row.add_child(

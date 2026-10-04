@@ -1,4 +1,4 @@
-use crate::settings::{ PrivacySettings};
+use crate::settings::PrivacySettings;
 use anyhow::anyhow;
 use lazy_static::lazy_static;
 use warp_core::features::FeatureFlag;

@@ -1,7 +1,5 @@
 use warp::integration_testing::clipboard::assert_clipboard_contains_string;
-use warp::integration_testing::secret_redaction::{
-    assert_secret_tooltip_open,
-};
+use warp::integration_testing::secret_redaction::assert_secret_tooltip_open;
 use warp::integration_testing::settings::toggle_setting;
 use warp::integration_testing::step::new_step_with_default_assertions;
 use warp::integration_testing::terminal::util::ExpectedExitStatus;
@@ -239,4 +237,3 @@ pub fn test_secret_case_sensitivity() -> Builder {
                 )),
         )
 }
-

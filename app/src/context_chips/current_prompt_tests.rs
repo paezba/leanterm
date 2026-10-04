@@ -17,11 +17,11 @@ use super::{ChipUpdateStatus, CurrentPrompt, PromptContext};
 use crate::code_review::diff_state::DiffStats;
 #[cfg(feature = "local_fs")]
 use crate::code_review::git_repo_model::{GitRepoStatusModel, GitStatusMetadata};
+use crate::context_chips::ContextChipKind;
 use crate::context_chips::context_chip::{Environment, PromptGenerator};
 #[cfg(feature = "local_fs")]
 use crate::context_chips::display_chip::GitBranchTrackingStatus;
 use crate::context_chips::prompt::Prompt;
-use crate::context_chips::ContextChipKind;
 use crate::features::FeatureFlag;
 use crate::menu::MenuItem;
 use crate::settings::WarpPromptSeparator;
@@ -31,8 +31,7 @@ use crate::terminal::model::block::BlockMetadata;
 use crate::terminal::model::session::{
     CommandExecutor, ExecuteCommandOptions, SessionId, Sessions,
 };
-use crate::terminal::session_settings::{ SessionSettings,
-};
+use crate::terminal::session_settings::SessionSettings;
 use crate::terminal::shell::Shell;
 use crate::terminal::view::PromptPosition;
 
@@ -222,7 +221,6 @@ fn test_fingerprint_skips_contextual_chip_recompute_when_context_is_unchanged() 
     });
 }
 
-
 #[test]
 fn test_github_pr_chip_runtime_policy_configuration() {
     let _flag_guard = FeatureFlag::GithubPrPromptChip.override_enabled(true);
@@ -241,10 +239,6 @@ fn test_github_pr_chip_runtime_policy_configuration() {
     assert!(policy.fingerprint_inputs().is_empty());
     assert!(policy.invalidate_on_commands().is_empty());
 }
-
-
-
-
 
 #[cfg(feature = "local_fs")]
 #[test]
@@ -306,7 +300,6 @@ fn test_externally_driven_chip_skips_periodic_timer() {
         });
     });
 }
-
 
 #[cfg(feature = "local_fs")]
 #[test]
@@ -387,7 +380,6 @@ fn test_git_status_change_updates_branch_status_chip_value() {
         });
     });
 }
-
 
 /// A [`CommandExecutor`] implementation that records which commands were run, but does not
 /// execute them.

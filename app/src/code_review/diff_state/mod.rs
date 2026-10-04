@@ -732,22 +732,10 @@ impl DiffStateModel {
     ) {
         match self {
             Self::Local(local) => local.update(ctx, |local, ctx| {
-                local.git_commit_chain(
-                    mode,
-                    message,
-                    include_unstaged,
-                    branch,
-                    ctx,
-                );
+                local.git_commit_chain(mode, message, include_unstaged, branch, ctx);
             }),
             Self::Remote(remote) => remote.update(ctx, |remote, ctx| {
-                remote.git_commit_chain(
-                    mode,
-                    message,
-                    include_unstaged,
-                    branch,
-                    ctx,
-                );
+                remote.git_commit_chain(mode, message, include_unstaged, branch, ctx);
             }),
         }
     }

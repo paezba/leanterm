@@ -227,7 +227,6 @@ pub fn workflow_categories_view(app: &App, window_id: WindowId) -> ViewHandle<Ca
     singleton_view_of_type(app, window_id)
 }
 
-
 /// Panics if there isn't a single workspace view in the view hierarchy.
 pub fn workspace_view(app: &App, window_id: WindowId) -> ViewHandle<Workspace> {
     root_view(app, window_id).read(app, |root_view, _ctx| {
