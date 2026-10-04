@@ -19,6 +19,7 @@ mod alias;
 pub(crate) mod alt_screen;
 pub mod alt_screen_reporting;
 mod audible_bell;
+mod shimmering_warp_loading_text;
 pub use audible_bell::AudibleBell;
 pub mod available_shells;
 
@@ -29,7 +30,6 @@ pub mod blockgrid_element;
 mod blockgrid_renderer;
 mod bootstrap;
 pub mod color;
-mod command_corrections_denylist;
 pub mod dynamic_enum_suggestions;
 pub mod enable_auto_reload_modal;
 pub mod event;

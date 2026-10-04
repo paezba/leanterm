@@ -177,6 +177,7 @@ use super::model::block::{
 use super::model::blocks::RichContentItem;
 use super::model::completions::ShellCompletion;
 use super::model::rich_content::RichContentType;
+use super::shimmering_warp_loading_text::shimmering_warp_loading_text;
 use super::model::selection::ExpandedSelectionRange;
 use super::model::session::SessionBootstrappedEvent;
 use super::settings::AltScreenPaddingMode;
@@ -278,7 +279,6 @@ use crate::terminal::block_list_viewport::{
 };
 use crate::terminal::bootstrap::init_subshell_command;
 use crate::terminal::color::List;
-use crate::terminal::command_corrections_denylist::COMMAND_CORRECTIONS_PREFERRED_DENYLIST;
 use crate::terminal::event::{
     AfterBlockCompletedEvent, BlockType, RemoteServerSetupState, TerminalMode, UserBlockCompleted,
 };
@@ -837,29 +837,6 @@ pub enum NotificationsDiscoveryBanner {
 struct ShellProcessTerminatedBanner {
     banner_id: InlineBannerId,
     was_premature_termination: bool,
-}
-
-#[derive(Debug, Clone)]
-pub enum AgentModePromptSuggestion {
-    Success(PromptSuggestion),
-    None,
-    Error,
-}
-
-impl PromptSuggestion {
-    pub fn is_coding_query(&self) -> bool {
-        self.coding_query_context.is_some()
-    }
-
-    /// Returns specified label for Prompt Suggestion if it exists, otherwise returns the query
-    /// (which is considered to be the "default" label).
-    pub fn label(&self) -> &String {
-        self.label.as_ref().unwrap_or(&self.prompt)
-    }
-
-    pub fn is_static_prompt_suggestion(&self) -> bool {
-        self.static_prompt_suggestion_name.is_some()
-    }
 }
 
 /// A unique identifier for an inline banner.
@@ -1867,19 +1844,9 @@ enum SecretTooltip {
         is_agent_mode: bool,
         tooltip: WithinModel<SecretHandle>,
     },
-    RichContent {
-        is_agent_mode: bool,
-        tooltip: RichContentSecretTooltipInfo,
-    },
 }
 
 type TerminalViewCallback = Box<dyn FnOnce(&mut TerminalView, &mut ViewContext<TerminalView>)>;
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum AgentTranscriptNavigationDirection {
-    Previous,
-    Next,
-}
 
 #[derive(Debug, Clone)]
 pub struct TerminalDropTargetData {
@@ -2448,10 +2415,7 @@ impl TerminalView {
         model: &TerminalModel,
         app: &AppContext,
     ) -> bool {
-        let input_is_visible = self.is_input_box_visible(model, app);
-        // If there is a conversation tombstone and the input is hidden, should not broadcast input updates as
-        // the cloud agent session is over.
-        self.conversation_ended_tombstone_view_id.is_none() || input_is_visible
+        self.is_input_box_visible(model, app)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -3409,11 +3373,6 @@ impl TerminalView {
         }
         terminal_view.any_session_contains_restored_remote_blocks =
             terminal_view.contains_restored_remote_blocks();
-
-        // Restore AI conversations and create AI blocks after terminal view initialization
-        if let Some(restoration) = conversation_restoration {
-            terminal_view.restore_conversations_on_view_creation(restoration, ctx);
-        }
 
         send_telemetry_from_ctx!(TelemetryEvent::SessionCreation, ctx);
 
@@ -4826,13 +4785,6 @@ impl TerminalView {
         self.open_grid_link_tool_tip = None;
         self.open_secret_tool_tip = None;
         self.open_rich_content_link_tool_tip = None;
-        for rich_content in self.rich_content_views.iter() {
-            if let Some(ai_metadata) = rich_content.ai_block_metadata() {
-                ai_metadata.ai_block_handle.update(ctx, |ai_block, ctx| {
-                    ai_block.dismiss_ai_tooltips(ctx);
-                });
-            }
-        }
         if was_open {
             ctx.notify();
             // The mouse cursor may have been over the tooltip before it was dismissed. Reset it to
@@ -6309,8 +6261,6 @@ impl TerminalView {
                         self.warpify_state.clear_pending_ssh_host();
                     }
 
-                    self.maybe_insert_setup_command_blocks(block_id, ctx);
-
                     self.set_current_state(TerminalViewState::LongRunning, ctx);
                     ctx.emit(Event::BlockStarted {
                         is_for_in_band_command: *is_for_in_band_command,
@@ -7372,22 +7322,6 @@ impl TerminalView {
             self.invoke_environment_variables(env_var_collection, false, ctx);
         }
 
-        // If this is a new local session, update the PATH used for MCP command execution.
-        if let Some(path) = Self::local_session_path(&session) {
-            AISettings::handle(ctx).update(ctx, |settings, ctx| {
-                // TODO: This logic is likely incorrect, as it's dynamically determining the path based on the most
-                // recent session, which is not directly relevant to starting the MCP server. This caused an issue
-                // on Windows where the PATH was sometimes Unix-like and other times PowerShell-like, when it should
-                // always be PowerShell-like. Also an odd data flow problem to be updating an AI User Setting
-                // based on a local session bootstrapping.
-                if let Err(e) = settings.mcp_execution_path.set_value(Some(path), ctx) {
-                    log::warn!("Failed to set MCP execution path: {e:?}");
-                }
-            })
-        }
-
-        let is_subshell_or_ssh = session.is_subshell_or_ssh();
-
         // Make sure we decorate any text that is already in the input.  We
         // need to make sure external commands have finished loading before
         // doing the decoration to ensure we don't erroneously apply error
@@ -7444,114 +7378,15 @@ impl TerminalView {
             });
         }
 
-        // At the end of bootstrapping, set the title to the title of
-        // the selected conversation. If there is no selected conversation,
-        // the title will default to the regular terminal title.
         self.update_pane_configuration(ctx);
 
         self.ignore_next_set_title_event = true;
-
-        let auth_state = AuthStateProvider::as_ref(ctx).get();
-        let is_onboarded = auth_state.is_onboarded().unwrap_or(true);
-        let is_anonymous_or_logged_out = auth_state.is_anonymous_or_logged_out();
-        let should_show_onboarding = FeatureFlag::AgentOnboarding.is_enabled()
-            && !is_onboarded
-            && !is_anonymous_or_logged_out;
-        let is_launch_modal_open = OneTimeModalModel::as_ref(ctx).is_oz_launch_modal_open();
-
-        let has_plugin_instructions_block = self.rich_content_views.iter().any(|rc| {
-            matches!(
-                rc.metadata(),
-                Some(RichContentMetadata::PluginInstructionsBlock)
-            )
-        });
-
-        if FeatureFlag::AgentView.is_enabled()
-            && TerminalSettings::as_ref(ctx).should_show_zero_state_block(ctx)
-            && !self.model.lock().block_list().is_restored_session()
-            && !should_show_onboarding
-            && self.onboarding_callout_view.is_none()
-            && !is_launch_modal_open
-            && !is_subshell_or_ssh
-            && !has_plugin_instructions_block
-        {
-            let agent_view_zero_state = ctx.add_typed_action_view(|ctx| {
-                TerminalViewZeroStateBlock::new(
-                    &self.agent_view_controller,
-                    &self.model_events_handle,
-                    ctx,
-                )
-            });
-            self.insert_rich_content(
-                Some(RichContentType::TerminalViewZeroState),
-                agent_view_zero_state,
-                Some(RichContentMetadata::TerminalViewZeroState),
-                RichContentInsertionPosition::Append {
-                    insert_below_long_running_block: false,
-                },
-                ctx,
-            );
-        }
-
-        // Now that the session is bootstrapped, update any restored AI blocks that were
-        // created before bootstrapping with the shell launch data. This enables file link
-        // detection and the "Open in Warp" button on code blocks in restored conversations.
-        if let Some(shell_launch_data) = self.active_session.as_ref(ctx).shell_launch_data(ctx) {
-            let ai_block_handles: Vec<_> = self
-                .rich_content_views
-                .iter()
-                .filter_map(|rc| rc.ai_block_metadata())
-                .map(|metadata| metadata.ai_block_handle.clone())
-                .collect();
-            for handle in ai_block_handles {
-                handle.update(ctx, |block, ctx| {
-                    block.set_shell_launch_data(Some(shell_launch_data.clone()), ctx);
-                });
-            }
-        }
 
         self.refresh_warp_prompt(ctx);
         ctx.emit(Event::SessionBootstrapped);
     }
 
     // Helper function to get the PATH variable for a local session.
-    fn local_session_path(session: &Session) -> Option<String> {
-        if matches!(session.session_type(), SessionType::Local) && session.subshell_info().is_none()
-        {
-            #[cfg(all(windows, feature = "local_tty"))]
-            let path = {
-                let path_result =
-                    get_user_and_system_env_variable("PATH").map(|entry| entry.into_string());
-                let result = match path_result {
-                    Some(Ok(path_result)) => Some(path_result),
-                    None => {
-                        log::warn!("Failed to get PATH for session on Windows.");
-                        None
-                    }
-                    Some(Err(e)) => {
-                        log::warn!("Failed to convert PATH for session on Windows: `{e:?}`");
-                        None
-                    }
-                };
-                if result.is_none() {
-                    if session.shell_family() == ShellFamily::PowerShell {
-                        // This is a fallback for if the OsString cannot be converted to a String.
-                        // We cannot accept a Posix PATH on Windows.
-                        session.path().clone()
-                    } else {
-                        None
-                    }
-                } else {
-                    result
-                }
-            };
-            #[cfg(not(all(windows, feature = "local_tty")))]
-            let path = session.path().clone();
-
-            return path;
-        }
-        None
-    }
 
     pub fn insert_drive_sharing_onboarding_block(
         &mut self,
@@ -7720,15 +7555,8 @@ impl TerminalView {
     pub fn open_repo_folder(
         &mut self,
         path: String,
-        should_init_repo: bool,
         ctx: &mut ViewContext<Self>,
     ) {
-        let path_buf = PathBuf::from(&path);
-
-        if should_init_repo {
-            self.maybe_set_pending_repo_init_path(path_buf);
-        }
-
         let escaped = self.shell_family(ctx).shell_escape(&path);
         self.input.update(ctx, |input, ctx| {
             input.try_execute_command(&format!("cd {escaped}"), ctx);
@@ -7992,16 +7820,6 @@ impl TerminalView {
         ctx: &mut ViewContext<TerminalView>,
     ) {
         if let Some(correction) = corrections.into_iter().next() {
-            let rule = correction.rule_applied;
-
-            if AISettings::as_ref(ctx).is_intelligent_autosuggestions_enabled(ctx)
-                && UserWorkspaces::as_ref(ctx).is_next_command_enabled()
-                && COMMAND_CORRECTIONS_PREFERRED_DENYLIST.contains(rule.to_str())
-            {
-                // Defer to Next Command if the rule is in the denylist.
-                return;
-            }
-
             // Set the autosuggestion only if the input is still empty
             self.input.update(ctx, |input, ctx| {
                 if input.buffer_text(ctx).is_empty() {
@@ -8159,11 +7977,6 @@ impl TerminalView {
             return;
         }
 
-        // Don't send notifications for commands executed by an agent
-        if block.was_part_of_agent_interaction {
-            return;
-        }
-
         let notification_settings = session_settings_handle.notifications.value().clone();
         let long_running_trigger = NotificationsTrigger::LongRunningCommand(
             !block
@@ -8230,7 +8043,6 @@ impl TerminalView {
                     send_telemetry_from_ctx!(
                         TelemetryEvent::NotificationSent {
                             trigger: long_running_trigger,
-                            agent_variant: None,
                         },
                         ctx
                     );
@@ -10625,41 +10437,6 @@ impl TerminalView {
         ctx.notify();
     }
 
-    fn toggle_rich_content_secret(
-        &mut self,
-        tooltip_info: RichContentSecretTooltipInfo,
-        show_secret: bool,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        for rich_content in self.rich_content_views.iter() {
-            if let Some(ai_metadata) = rich_content.ai_block_metadata()
-                && ai_metadata.ai_block_handle.id() == tooltip_info.view_id
-            {
-                ai_metadata.ai_block_handle.update(ctx, |view, _ctx| {
-                    view.set_secret_redaction_state(
-                        &tooltip_info.location,
-                        &tooltip_info.secret_range,
-                        !show_secret,
-                    );
-                });
-                break;
-            }
-        }
-
-        self.dismiss_tooltips(ctx);
-        send_telemetry_from_ctx!(
-            TelemetryEvent::ToggleObfuscateSecret {
-                interaction: if show_secret {
-                    SecretInteraction::RevealSecret
-                } else {
-                    SecretInteraction::HideSecret
-                }
-            },
-            ctx
-        );
-        ctx.notify();
-    }
-
     fn copy_grid_secret(
         &mut self,
         secret_handle: &WithinModel<SecretHandle>,
@@ -10673,18 +10450,6 @@ impl TerminalView {
                 ctx.clipboard().write(ClipboardContent::plain_text(text));
             }
         }
-        send_telemetry_from_ctx!(TelemetryEvent::CopySecret, ctx);
-        self.dismiss_tooltips(ctx);
-        ctx.notify();
-    }
-
-    fn copy_rich_content_secret(
-        &mut self,
-        tooltip_info: RichContentSecretTooltipInfo,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        ctx.clipboard()
-            .write(ClipboardContent::plain_text(tooltip_info.secret));
         send_telemetry_from_ctx!(TelemetryEvent::CopySecret, ctx);
         self.dismiss_tooltips(ctx);
         ctx.notify();
@@ -12463,7 +12228,6 @@ impl TerminalView {
                     send_telemetry_from_ctx!(
                         TelemetryEvent::NotificationSent {
                             trigger: password_trigger,
-                            agent_variant: None,
                         },
                         ctx
                     );
