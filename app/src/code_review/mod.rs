@@ -92,12 +92,6 @@ pub fn init(app: &mut AppContext) {
             "Undo",
             id!("CodeReviewView") & !id!("IMEOpen"),
         ),
-        FixedBinding::new(
-            CODE_REVIEW_SUBMIT_KEYSTROKE,
-            CodeReviewAction::SubmitReviewComments,
-            id!("CodeReviewView_NotEditing"),
-        )
-        .with_command_description("Send code review comments to agent"),
     ]);
 
     diff_menu::init(app);

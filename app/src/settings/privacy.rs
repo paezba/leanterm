@@ -170,7 +170,6 @@ pub struct PrivacySettingsSnapshot {
     is_telemetry_enabled: bool,
     is_crash_reporting_enabled: bool,
     is_telemetry_force_enabled: bool,
-    should_collect_ai_ugc_telemetry: bool,
     // This is an option so that, if a user has not set this value (and it's set to its default value of true),
     // the default value won't override a value that the user previously set on a different device.
     // This is set to a non-option once the user manually changes this setting.
@@ -201,10 +200,6 @@ impl PrivacySettingsSnapshot {
             && !FeatureFlag::AgentModeAnalytics.is_enabled()
     }
 
-    pub fn should_collect_ai_ugc_telemetry(&self) -> bool {
-        self.should_collect_ai_ugc_telemetry
-    }
-
     #[cfg(test)]
     pub fn mock() -> Self {
         Self {
@@ -212,7 +207,6 @@ impl PrivacySettingsSnapshot {
             is_telemetry_enabled: true,
             is_crash_reporting_enabled: true,
             is_telemetry_force_enabled: true,
-            should_collect_ai_ugc_telemetry: true,
         }
     }
 }
@@ -478,10 +472,6 @@ impl PrivacySettings {
             is_telemetry_enabled: self.is_telemetry_enabled,
             is_crash_reporting_enabled: self.is_crash_reporting_enabled,
             is_telemetry_force_enabled: self.is_telemetry_force_enabled,
-            should_collect_ai_ugc_telemetry: should_collect_ai_ugc_telemetry(
-                app,
-                self.is_telemetry_enabled,
-            ),
         }
     }
 

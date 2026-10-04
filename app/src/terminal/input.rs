@@ -1848,7 +1848,7 @@ impl Input {
         let completions_menu_width = *input_settings.completions_menu_width.value();
         let completions_menu_height = *input_settings.completions_menu_height.value();
 
-        let input = Self {
+        let mut input = Self {
             input_suggestions,
             suggestions_mode_model,
             completions_menu_resizable_width: resizable_state_handle(completions_menu_width),

@@ -201,3 +201,15 @@ pub enum CurrentHead {
     BranchName(String),
     HeadlessCommitSha(String),
 }
+
+impl CurrentHead {
+    pub fn title(&self) -> String {
+        match self {
+            CurrentHead::BranchName(name) => name.clone(),
+            CurrentHead::HeadlessCommitSha(sha) => {
+                let short = sha.chars().take(7).collect::<String>();
+                format!("Commit {short}")
+            }
+        }
+    }
+}

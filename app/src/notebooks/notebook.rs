@@ -1015,10 +1015,7 @@ impl NotebookView {
     }
 
     pub fn is_plan(&self, ctx: &AppContext) -> bool {
-        self.active_notebook_data
-            .as_ref(ctx)
-            .ai_document_id(ctx)
-            .is_some()
+        self.active_notebook_data.as_ref(ctx).is_plan(ctx)
     }
 
     fn mode<C: ModelAsRef>(&self, ctx: &C) -> Mode {

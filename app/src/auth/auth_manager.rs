@@ -555,19 +555,6 @@ impl AuthManager {
                     |_, _, _| {},
                 );
 
-                // Once the user is authenticated, attempt to report the sandbox that Warp is running in, if any.
-                ctx.spawn(
-                    async { warp_isolation_platform::detect() },
-                    |_, platform, ctx| {
-                        if let Some(platform) = platform {
-                            send_telemetry_from_ctx!(
-                                TelemetryEvent::DetectedIsolationPlatform { platform },
-                                ctx
-                            );
-                        }
-                    },
-                );
-
                 ctx.emit(AuthManagerEvent::AuthComplete);
             }
             Err(error) => {

@@ -359,7 +359,6 @@ impl SettingsSection {
         let section = match slug {
             "About" => Self::About,
             "Account" => Self::Account,
-            "Billing and usage" => Self::BillingAndUsage,
             "Appearance" => Self::Appearance,
             "Features" => Self::Features,
             "Keyboard shortcuts" => Self::Keybindings,

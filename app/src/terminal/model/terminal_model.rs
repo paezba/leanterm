@@ -1307,7 +1307,6 @@ impl TerminalModel {
 
     pub fn is_read_only(&self) -> bool {
         self.handled_exit
-            || self.is_conversation_transcript_viewer()
             || self.shared_session_status().is_finished_viewer()
     }
 

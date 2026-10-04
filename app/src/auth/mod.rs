@@ -275,7 +275,6 @@ pub fn log_out(app: &mut AppContext) {
     AuthManager::handle(app).update(app, |auth_manager, ctx| {
         auth_manager.log_out(ctx);
     });
-    OneTimeModalModel::handle(app).update(app, |model, _| model.on_log_out());
     CloudModel::handle(app).update(app, |cloud_model, _| {
         cloud_model.reset();
     });

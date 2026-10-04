@@ -2166,7 +2166,6 @@ fn read_sqlite_data(
                         quake_mode: window.quake_mode,
                         bounds,
                         universal_search_width: window.universal_search_width,
-                        warp_ai_width: None,
                         voltron_width: window.voltron_width,
                         warp_drive_index_width: window.warp_drive_index_width,
                         left_panel_open: window_left_panel_open,

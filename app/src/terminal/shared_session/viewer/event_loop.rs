@@ -128,7 +128,6 @@ impl EventLoop {
             next_event_no: 0,
             buffer: HashMap::new(),
             catching_up_to_event_no,
-            should_suppress_existing_agent_conversation_replay,
         };
 
         // Respect the sharer's window size.

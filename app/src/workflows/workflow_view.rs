@@ -81,6 +81,7 @@ use crate::server::telemetry::{
     CloudObjectTelemetryMetadata, SharingDialogSource, TelemetryCloudObjectType, TelemetryEvent,
 };
 use crate::terminal::safe_mode_settings::get_secret_obfuscation_mode;
+use secret_redaction::find_secrets_in_text;
 use crate::ui_components::breadcrumb::{BreadcrumbState, render_breadcrumbs};
 use crate::ui_components::buttons::{accent_icon_button, icon_button};
 use crate::ui_components::dialog::{Dialog, dialog_styles};
@@ -1553,6 +1554,66 @@ impl WorkflowView {
             report_error!(e.context("Error saving aliases"));
             self.display_error_toast("Error saving aliases".to_string(), ctx);
         }
+    }
+
+    fn workflow_contains_secrets(&self, app: &AppContext) -> bool {
+        let secret_redaction = get_secret_obfuscation_mode(app);
+        if secret_redaction.should_redact_secret() {
+            let name_secrets = find_secrets_in_text(&self.name_editor.as_ref(app).buffer_text(app));
+            if !name_secrets.is_empty() {
+                return true;
+            }
+
+            let content_secrets =
+                find_secrets_in_text(&self.content_editor.as_ref(app).buffer_text(app));
+            if !content_secrets.is_empty() {
+                return true;
+            }
+
+            let description_secrets =
+                find_secrets_in_text(&self.description_editor.as_ref(app).buffer_text(app));
+            if !description_secrets.is_empty() {
+                return true;
+            }
+
+            for arg in self.arguments_rows.iter() {
+                if !find_secrets_in_text(&arg.name).is_empty() {
+                    return true;
+                }
+                if !find_secrets_in_text(&arg.description_editor.as_ref(app).buffer_text(app))
+                    .is_empty()
+                {
+                    return true;
+                }
+                if !find_secrets_in_text(&arg.default_value_editor.as_ref(app).buffer_text(app))
+                    .is_empty()
+                {
+                    return true;
+                }
+                if !find_secrets_in_text(&arg.argument_editor.as_ref(app).buffer_text(app))
+                    .is_empty()
+                {
+                    return true;
+                }
+                if !find_secrets_in_text(
+                    &arg.arg_type_editor
+                        .as_ref(app)
+                        .text_editor
+                        .as_ref(app)
+                        .buffer_text(app),
+                )
+                .is_empty()
+                {
+                    return true;
+                }
+            }
+            for value in self.alias_bar.as_ref(app).get_all_argument_values() {
+                if !find_secrets_in_text(&value).is_empty() {
+                    return true;
+                }
+            }
+        }
+        false
     }
 
     fn save_workflow(&mut self, ctx: &mut ViewContext<Self>) {
