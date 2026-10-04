@@ -771,32 +771,6 @@ pub enum InputAction {
 
     /// Persist the completions menu height when the user resizes it.
     UpdateCompletionsMenuHeight(f32),
-
-    /// Toggles the '?' shortcuts UI in the agent view.
-    ToggleAgentViewShortcuts,
-
-    /// Toggles the '/' slash commands menu in the agent view.
-    ToggleSlashCommandsMenu,
-
-    DismissCloudModeV2SlashCommandsMenu,
-
-    /// Opens the model selector menu.
-    OpenModelSelector,
-
-    /// Triggers a slash command from a custom keybinding. The string is the command name.
-    TriggerSlashCommandFromKeybinding(&'static str),
-
-    /// Clears attached blocks and text selection context.
-    ClearAttachedContext,
-
-    /// Fired when the "Get Figma MCP" contextual button is clicked.
-    FigmaAddButtonClicked,
-
-    /// Fired when the "Enable Figma MCP" contextual button is clicked.
-    FigmaEnableButtonClicked,
-
-    /// Activates `&` cloud handoff compose mode from the message bar hint.
-    ActivateCloudHandoff,
 }
 
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
