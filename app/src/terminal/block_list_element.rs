@@ -56,7 +56,7 @@ use super::shared_session::presence_manager::{
 };
 use super::shared_session::render_util::SHARED_SESSION_AVATAR_DIAMETER;
 use super::view::{
-    BLOCK_BANNER_HEIGHT, BlocklistAIRenderContext, InlineBannerId, RichContentMetadata,
+    BLOCK_BANNER_HEIGHT, InlineBannerId, RichContentMetadata,
     SeparatorId, SharedSessionBanners, TerminalEditor, TerminalViewRenderContext,
 };
 use super::warpify::render::{draw_flag_pole, render_subshell_flag};

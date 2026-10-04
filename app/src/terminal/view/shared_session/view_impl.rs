@@ -55,7 +55,7 @@ use crate::terminal::shared_session::{
     SharedSessionStatus, join_link,
 };
 use crate::terminal::view::{
-    ContextMenuAction, Event, InlineBannerItem, InlineBannerType, PendingUserQueryKind,
+    ContextMenuAction, Event, InlineBannerItem, InlineBannerType,
     RichContentInsertionPosition, SharedSessionBanners, SizeUpdateBuilder, TerminalAction,
     TerminalView,
 };

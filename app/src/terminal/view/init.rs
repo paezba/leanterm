@@ -8,7 +8,7 @@ use warpui::platform::OperatingSystem;
 use warpui::units::IntoLines;
 
 use super::{
-    AgentOnboardingVersion, AskAISource, ContextMenuAction, OnboardingIntention, OnboardingVersion,
+    AgentOnboardingVersion, ContextMenuAction, OnboardingIntention, OnboardingVersion,
     TerminalAction,
 };
 use crate::channel::{Channel, ChannelState};
