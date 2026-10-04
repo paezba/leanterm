@@ -64,8 +64,6 @@ pub enum CommandPaletteItemAction {
         file_name: String,
         current_directory: String,
     },
-    /// Start a new AI conversation
-    NewConversation,
     /// No-op action (used for non-interactable separator items that don't do anything on click).
     NoOp,
 }
@@ -121,7 +119,6 @@ impl CommandPaletteItemAction {
                 // CreateFile actions should not show up in recent items
                 ItemSummary::NoOp
             }
-            CommandPaletteItemAction::NewConversation => ItemSummary::NewConversation,
             CommandPaletteItemAction::NoOp => ItemSummary::NoOp,
         }
     }
@@ -177,9 +174,6 @@ pub enum ItemSummary {
     },
     Project {
         path: String,
-    },
-    Conversation {
-        id: AIConversationId,
     },
     ForkConversation,
     NewConversation,

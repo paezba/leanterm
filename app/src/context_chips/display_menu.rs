@@ -84,7 +84,6 @@ pub enum ChipMenuType {
     Directories,
     Branches,
     CodeReview,
-    Environments,
 }
 
 const LABEL_HORIZONTAL_PADDING: f32 = 14.;
@@ -111,17 +110,6 @@ const ENV_MENU_SEARCH_VERTICAL_PADDING: f32 = 4.;
 const ENV_MENU_SEARCH_BOTTOM_PADDING: f32 = 8.;
 const ENV_MENU_SEARCH_FOOTER_TOP_MARGIN: f32 = 4.;
 
-// Environments sidecar sizing from Figma mock.
-const ENV_SIDE_CAR_WIDTH: f32 = 320.;
-const ENV_SIDE_CAR_HEIGHT: f32 = 108.;
-const ENV_SIDE_CAR_HORIZONTAL_GAP: f32 = 1.;
-const ENV_SIDE_CAR_PADDING: f32 = 12.;
-const ENV_SIDE_CAR_ROW_GAP: f32 = 8.;
-const ENV_SIDE_CAR_ICON_LABEL_GAP: f32 = 4.;
-const ENV_SIDE_CAR_ICON_SIZE: f32 = 12.;
-const ENV_SIDE_CAR_COPY_BUTTON_SIZE: f32 = 16.;
-const ENV_SIDE_CAR_OUTER_RADIUS: f32 = 6.;
-const ENV_SIDE_CAR_INNER_RADIUS: f32 = 4.;
 
 pub fn init(app: &mut AppContext) {
     use warpui::keymap::macros::*;
@@ -154,20 +142,6 @@ pub fn init(app: &mut AppContext) {
 struct FilteredMenuItem {
     item: Arc<dyn GenericMenuItem>,
     match_result: Option<FuzzyMatchResult>,
-}
-
-#[derive(Clone, Debug)]
-struct EnvironmentSidecarData {
-    name: String,
-    id: String,
-    image: String,
-    repos_text: String,
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-enum EnvironmentSidecarSide {
-    Left,
-    Right,
 }
 
 /// Builds an optional synthetic menu item from the current search query.
@@ -218,12 +192,7 @@ pub struct DisplayChipMenu {
     /// [`CreateItemFromQueryFn`].
     create_item_from_query: Option<Arc<CreateItemFromQueryFn>>,
 
-    // Environment sidecar state
     window_id: WindowId,
-    env_sidecar_copy_id_mouse_state: MouseStateHandle,
-    env_sidecar_copy_image_mouse_state: MouseStateHandle,
-    env_sidecar_copy_feedback_times: HashMap<String, Instant>,
-    env_sidecar_scroll_state: ClippedScrollStateHandle,
 }
 
 #[derive(Debug, Clone)]
@@ -234,14 +203,12 @@ pub enum DisplayChipMenuAction {
     SelectDown,
     SelectEnter,
     SelectFixedFooterOption,
-    CopyEnvironmentSidecarField { key: String, value: String },
     Close,
 }
 
 impl DisplayChipMenu {
     fn menu_width(&self) -> f32 {
         match self.chip_menu_type {
-            ChipMenuType::Environments => ENV_MENU_WIDTH,
             ChipMenuType::Directories | ChipMenuType::Branches | ChipMenuType::CodeReview => {
                 MENU_WIDTH
             }
@@ -250,7 +217,6 @@ impl DisplayChipMenu {
 
     fn menu_item_horizontal_padding(&self) -> f32 {
         match self.chip_menu_type {
-            ChipMenuType::Environments => ENV_MENU_ITEM_HORIZONTAL_PADDING,
             ChipMenuType::Directories | ChipMenuType::Branches | ChipMenuType::CodeReview => {
                 LABEL_HORIZONTAL_PADDING
             }
@@ -259,7 +225,6 @@ impl DisplayChipMenu {
 
     fn menu_item_vertical_padding(&self) -> f32 {
         match self.chip_menu_type {
-            ChipMenuType::Environments => ENV_MENU_ITEM_VERTICAL_PADDING,
             ChipMenuType::Directories | ChipMenuType::Branches | ChipMenuType::CodeReview => {
                 LABEL_VERTICAL_PADDING
             }
@@ -268,7 +233,6 @@ impl DisplayChipMenu {
 
     fn menu_vertical_padding(&self) -> f32 {
         match self.chip_menu_type {
-            ChipMenuType::Environments => ENV_MENU_VERTICAL_PADDING,
             ChipMenuType::Directories | ChipMenuType::Branches | ChipMenuType::CodeReview => {
                 MENU_VERTICAL_PADDING
             }
@@ -286,14 +250,11 @@ impl DisplayChipMenu {
         ctx: &mut ViewContext<Self>,
     ) -> Self {
         let search_input = match chip_menu_type {
-            ChipMenuType::Directories | ChipMenuType::Branches | ChipMenuType::Environments => {
+            ChipMenuType::Directories | ChipMenuType::Branches => {
                 Some(ctx.add_typed_action_view(|ctx| {
                     let appearance = Appearance::handle(ctx).as_ref(ctx);
 
                     let text_options = match chip_menu_type {
-                        ChipMenuType::Environments => {
-                            TextOptions::ui_text(Some(ENV_MENU_ITEM_FONT_SIZE), appearance)
-                        }
                         ChipMenuType::Directories
                         | ChipMenuType::Branches
                         | ChipMenuType::CodeReview => {
@@ -317,7 +278,6 @@ impl DisplayChipMenu {
                     let placeholder_text = match chip_menu_type {
                         ChipMenuType::Directories => "Search directories...",
                         ChipMenuType::Branches => "Search branches...",
-                        ChipMenuType::Environments => "Search environments...",
                         ChipMenuType::CodeReview => {
                             unreachable!("search input should not be constructed")
                         }
@@ -395,10 +355,6 @@ impl DisplayChipMenu {
             create_item_from_query: None,
 
             window_id: ctx.window_id(),
-            env_sidecar_copy_id_mouse_state: Default::default(),
-            env_sidecar_copy_image_mouse_state: Default::default(),
-            env_sidecar_copy_feedback_times: HashMap::new(),
-            env_sidecar_scroll_state: Default::default(),
         }
     }
 
@@ -622,315 +578,12 @@ impl DisplayChipMenu {
         ctx.notify();
     }
 
-    fn should_show_environment_sidecar(&self) -> bool {
-        self.chip_menu_type == ChipMenuType::Environments
-            && !self.is_footer_selected()
-            && self.selected_index < self.filtered_items.len()
-    }
-
     fn parse_sync_id_lossy(s: &str) -> SyncId {
         if let Some(hashed) = ClientId::from_hash(s) {
             SyncId::ClientId(hashed)
         } else {
             SyncId::ServerId(ServerId::from_string_lossy(s))
         }
-    }
-
-    fn environment_sidecar_data(&self, app: &AppContext) -> Option<EnvironmentSidecarData> {
-        if !self.should_show_environment_sidecar() {
-            return None;
-        }
-
-        let item = self.filtered_items.get(self.selected_index)?.item.clone();
-        let sync_id = Self::parse_sync_id_lossy(&item.action_data());
-        let env = CloudAmbientAgentEnvironment::get_by_id(&sync_id, app)?;
-
-        let repo_names = env
-            .model()
-            .string_model
-            .github_repos
-            .iter()
-            .map(|repo| repo.repo.clone())
-            .collect::<Vec<_>>();
-        let repos_text = if repo_names.is_empty() {
-            "(none)".to_string()
-        } else {
-            repo_names.join(", ")
-        };
-
-        Some(EnvironmentSidecarData {
-            name: env.model().string_model.display_name(),
-            id: env.id.to_string(),
-            image: env.model().string_model.base_image_display(),
-            repos_text,
-        })
-    }
-
-    fn environment_sidecar_anchor_id(&self) -> Option<String> {
-        if !self.should_show_environment_sidecar() {
-            return None;
-        }
-
-        Some(format!("MenuPromptChip-{}", self.selected_index))
-    }
-
-    fn environment_sidecar_side(
-        &self,
-        position_id: &str,
-        app: &AppContext,
-    ) -> EnvironmentSidecarSide {
-        let Some(window) = app.windows().platform_window(self.window_id) else {
-            return EnvironmentSidecarSide::Left;
-        };
-
-        // Anchor is the currently selected/hovered row.
-        let Some(anchor_rect) =
-            app.element_position_by_id_at_last_frame(self.window_id, position_id)
-        else {
-            return EnvironmentSidecarSide::Left;
-        };
-
-        let gap = ENV_SIDE_CAR_HORIZONTAL_GAP;
-        let window_width = window.size().x();
-
-        // If sidecar is on the right of the anchor.
-        let right_edge_if_on_right = anchor_rect.max_x() + gap + ENV_SIDE_CAR_WIDTH;
-        let overflow_right = (right_edge_if_on_right - window_width).max(0.);
-
-        // If sidecar is on the left of the anchor.
-        let left_edge_if_on_left = anchor_rect.min_x() - gap - ENV_SIDE_CAR_WIDTH;
-        let overflow_left = (0. - left_edge_if_on_left).max(0.);
-
-        let would_overflow_right = overflow_right > 0.;
-        let would_overflow_left = overflow_left > 0.;
-
-        match (would_overflow_left, would_overflow_right) {
-            (true, false) => EnvironmentSidecarSide::Right,
-            (false, true) => EnvironmentSidecarSide::Left,
-            (false, false) => EnvironmentSidecarSide::Left,
-            (true, true) => {
-                if overflow_left <= overflow_right {
-                    EnvironmentSidecarSide::Left
-                } else {
-                    EnvironmentSidecarSide::Right
-                }
-            }
-        }
-    }
-
-    fn environment_sidecar_positioning(
-        &self,
-        position_id: String,
-        app: &AppContext,
-    ) -> Option<OffsetPositioning> {
-        // Ensure anchor rect exists in cache; otherwise positioning will be wrong.
-        app.element_position_by_id_at_last_frame(self.window_id, &position_id)?;
-
-        let side = self.environment_sidecar_side(&position_id, app);
-        let offset_y = -ENV_MENU_VERTICAL_PADDING;
-
-        Some(match side {
-            EnvironmentSidecarSide::Right => OffsetPositioning::offset_from_save_position_element(
-                position_id,
-                vec2f(ENV_SIDE_CAR_HORIZONTAL_GAP, offset_y),
-                PositionedElementOffsetBounds::WindowByPosition,
-                PositionedElementAnchor::TopRight,
-                ChildAnchor::TopLeft,
-            ),
-            EnvironmentSidecarSide::Left => OffsetPositioning::offset_from_save_position_element(
-                position_id,
-                vec2f(-ENV_SIDE_CAR_HORIZONTAL_GAP, offset_y),
-                PositionedElementOffsetBounds::WindowByPosition,
-                PositionedElementAnchor::TopLeft,
-                ChildAnchor::TopRight,
-            ),
-        })
-    }
-
-    fn environment_sidecar_overlay(
-        &self,
-        app: &AppContext,
-    ) -> Option<(Box<dyn Element>, OffsetPositioning)> {
-        let data = self.environment_sidecar_data(app)?;
-        let position_id = self.environment_sidecar_anchor_id()?;
-        let positioning = self.environment_sidecar_positioning(position_id, app)?;
-        Some((self.render_environment_sidecar(&data, app), positioning))
-    }
-
-    fn render_environment_sidecar(
-        &self,
-        data: &EnvironmentSidecarData,
-        app: &AppContext,
-    ) -> Box<dyn Element> {
-        let appearance = Appearance::as_ref(app);
-        let theme = appearance.theme();
-
-        let background = theme.surface_2();
-        let label_text_color = theme.sub_text_color(background).into_solid();
-        let main_text_color = theme.main_text_color(background).into_solid();
-
-        let label_font_size = 12.;
-        let value_font_size = 12.;
-
-        let id_key = format!("env-sidecar:{}:id", data.id);
-        let image_key = format!("env-sidecar:{}:image", data.id);
-
-        let icon = |icon: Icon| {
-            ConstrainedBox::new(icon.to_warpui_icon(Fill::Solid(label_text_color)).finish())
-                .with_width(ENV_SIDE_CAR_ICON_SIZE)
-                .with_height(ENV_SIDE_CAR_ICON_SIZE)
-                .finish()
-        };
-
-        let label_text = |text: &str| {
-            Text::new_inline(
-                text.to_string(),
-                appearance.ui_font_family(),
-                label_font_size,
-            )
-            .with_color(label_text_color)
-            .finish()
-        };
-
-        let value_text = |text: String| {
-            Text::new(text, appearance.ui_font_family(), value_font_size)
-                .with_color(main_text_color)
-                .with_selectable(true)
-                .finish()
-        };
-
-        let id_value = {
-            let env_id = data.id.clone();
-            render_copyable_text_field(
-                CopyableTextFieldConfig::new(env_id.clone())
-                    .with_font_size(value_font_size)
-                    .with_text_color(main_text_color)
-                    .with_icon_size(ENV_SIDE_CAR_COPY_BUTTON_SIZE)
-                    .with_mouse_state(self.env_sidecar_copy_id_mouse_state.clone())
-                    .with_last_copied_at(self.env_sidecar_copy_feedback_times.get(&id_key))
-                    .with_wrap_text(true)
-                    .with_cross_axis_alignment(CrossAxisAlignment::Start)
-                    .with_copy_button_placement(CopyButtonPlacement::NextToText),
-                move |ctx| {
-                    ctx.dispatch_typed_action(DisplayChipMenuAction::CopyEnvironmentSidecarField {
-                        key: id_key.clone(),
-                        value: env_id.clone(),
-                    });
-                },
-                app,
-            )
-        };
-
-        let image_value = {
-            let docker_image = data.image.clone();
-            render_copyable_text_field(
-                CopyableTextFieldConfig::new(docker_image.clone())
-                    .with_font_size(value_font_size)
-                    .with_text_color(main_text_color)
-                    .with_icon_size(ENV_SIDE_CAR_COPY_BUTTON_SIZE)
-                    .with_mouse_state(self.env_sidecar_copy_image_mouse_state.clone())
-                    .with_last_copied_at(self.env_sidecar_copy_feedback_times.get(&image_key))
-                    .with_wrap_text(true)
-                    .with_cross_axis_alignment(CrossAxisAlignment::Start)
-                    .with_copy_button_placement(CopyButtonPlacement::NextToText),
-                move |ctx| {
-                    ctx.dispatch_typed_action(DisplayChipMenuAction::CopyEnvironmentSidecarField {
-                        key: image_key.clone(),
-                        value: docker_image.clone(),
-                    });
-                },
-                app,
-            )
-        };
-
-        let row = |row_icon: Icon, label: &str, value: Box<dyn Element>, is_last: bool| {
-            let label_cluster = Flex::row()
-                .with_cross_axis_alignment(CrossAxisAlignment::Center)
-                .with_child(
-                    Container::new(icon(row_icon))
-                        .with_margin_right(ENV_SIDE_CAR_ICON_LABEL_GAP)
-                        .finish(),
-                )
-                .with_child(label_text(label))
-                .finish();
-
-            let element = Flex::row()
-                .with_main_axis_size(MainAxisSize::Max)
-                .with_cross_axis_alignment(CrossAxisAlignment::Start)
-                .with_child(
-                    Container::new(label_cluster)
-                        .with_margin_right(ENV_SIDE_CAR_ROW_GAP)
-                        .finish(),
-                )
-                .with_child(Shrinkable::new(1., value).finish())
-                .finish();
-
-            if is_last {
-                element
-            } else {
-                Container::new(element)
-                    .with_margin_bottom(ENV_SIDE_CAR_ROW_GAP)
-                    .finish()
-            }
-        };
-
-        let content = Flex::column()
-            .with_cross_axis_alignment(CrossAxisAlignment::Start)
-            .with_child(row(
-                Icon::Globe4,
-                "Name:",
-                value_text(data.name.clone()),
-                false,
-            ))
-            .with_child(row(Icon::Hash, "ID:", id_value, false))
-            .with_child(row(Icon::Docker, "Image:", image_value, false))
-            .with_child(row(
-                Icon::Github,
-                "Repos:",
-                value_text(data.repos_text.clone()),
-                true,
-            ))
-            .finish();
-
-        let scrollable_content = ClippedScrollable::vertical(
-            self.env_sidecar_scroll_state.clone(),
-            content,
-            ScrollbarWidth::Auto,
-            theme.nonactive_ui_detail().into(),
-            theme.active_ui_detail().into(),
-            // Leave the scrollbar gutter background transparent.
-            warpui::elements::Fill::None,
-        )
-        .with_padding_start(0.)
-        .with_padding_end(0.)
-        .with_overlayed_scrollbar()
-        .finish();
-
-        let inner = Container::new(scrollable_content)
-            .with_uniform_padding(ENV_SIDE_CAR_PADDING)
-            .with_border(
-                Border::all(1.).with_border_fill(Fill::Solid(internal_colors::neutral_2(theme))),
-            )
-            .with_corner_radius(CornerRadius::with_all(Radius::Pixels(
-                ENV_SIDE_CAR_INNER_RADIUS,
-            )))
-            .finish();
-
-        let outer = Container::new(inner)
-            .with_background(background)
-            .with_border(
-                Border::all(1.).with_border_fill(Fill::Solid(internal_colors::neutral_4(theme))),
-            )
-            .with_corner_radius(CornerRadius::with_all(Radius::Pixels(
-                ENV_SIDE_CAR_OUTER_RADIUS,
-            )))
-            .with_drop_shadow(Self::figma_menu_drop_shadow())
-            .finish();
-
-        ConstrainedBox::new(outer)
-            .with_width(ENV_SIDE_CAR_WIDTH)
-            .with_min_height(ENV_SIDE_CAR_HEIGHT)
-            .finish()
     }
 
     fn render_fixed_footer_option(
@@ -943,7 +596,6 @@ impl DisplayChipMenu {
 
         let chip_menu_type = self.chip_menu_type;
         let (font_size, icon_size) = match chip_menu_type {
-            ChipMenuType::Environments => (ENV_MENU_ITEM_FONT_SIZE, ENV_MENU_ICON_SIZE),
             ChipMenuType::Directories | ChipMenuType::Branches | ChipMenuType::CodeReview => {
                 let font_size = appearance.ui_font_size();
                 (font_size, font_size * 0.8)
@@ -960,7 +612,6 @@ impl DisplayChipMenu {
 
                 let background_color = if is_active {
                     match chip_menu_type {
-                        ChipMenuType::Environments => Some(internal_colors::fg_overlay_4(theme)),
                         ChipMenuType::Directories
                         | ChipMenuType::Branches
                         | ChipMenuType::CodeReview => Some(theme.accent()),
@@ -971,9 +622,6 @@ impl DisplayChipMenu {
 
                 let text_color = if is_active {
                     match chip_menu_type {
-                        ChipMenuType::Environments => {
-                            theme.main_text_color(theme.surface_2()).into_solid()
-                        }
                         ChipMenuType::Directories
                         | ChipMenuType::Branches
                         | ChipMenuType::CodeReview => {
@@ -1071,13 +719,6 @@ impl DisplayChipMenu {
                 // text color); other chip menus keep their existing styling.
                 let (label, font_size, horizontal_padding, vertical_padding, text_color) =
                     match self.chip_menu_type {
-                        ChipMenuType::Environments => (
-                            "No results",
-                            ENV_MENU_ITEM_FONT_SIZE,
-                            ENV_MENU_ITEM_HORIZONTAL_PADDING,
-                            ENV_MENU_ITEM_VERTICAL_PADDING,
-                            internal_colors::text_sub(theme, theme.surface_2()),
-                        ),
                         ChipMenuType::Directories
                         | ChipMenuType::Branches
                         | ChipMenuType::CodeReview => (
@@ -1132,10 +773,6 @@ impl DisplayChipMenu {
                         let icon_size = font_size * 0.8; // Icon slightly smaller than text
 
                         let (main_text, selected_background) = match chip_menu_type {
-                            ChipMenuType::Environments => (
-                                theme.main_text_color(theme.surface_2()).into_solid(),
-                                is_selected.then_some(internal_colors::fg_overlay_4(theme)),
-                            ),
                             ChipMenuType::Directories
                             | ChipMenuType::Branches
                             | ChipMenuType::CodeReview => {
@@ -1292,11 +929,6 @@ impl DisplayChipMenu {
         );
 
         let (scrollbar_width, max_height, overlayed_scrollbar) = match self.chip_menu_type {
-            ChipMenuType::Environments => (
-                ScrollbarWidth::Auto,
-                ENV_MENU_MAX_HEIGHT - (ENV_MENU_VERTICAL_PADDING * 2.0),
-                true,
-            ),
             ChipMenuType::Directories | ChipMenuType::Branches | ChipMenuType::CodeReview => {
                 (ScrollbarWidth::None, 200., false)
             }
@@ -1348,23 +980,6 @@ impl View for DisplayChipMenu {
         let border_radius = Radius::Pixels(6.);
 
         match self.chip_menu_type {
-            ChipMenuType::Environments => {
-                if !self.menu_items.is_empty() {
-                    main_container.add_child(
-                        Container::new(self.render_items(app))
-                            .with_padding_top(self.menu_vertical_padding())
-                            .with_padding_bottom(self.menu_vertical_padding())
-                            .finish(),
-                    );
-                }
-                if let Some(ref footer_option) = self.fixed_footer {
-                    main_container.add_child(self.render_fixed_footer_option(app, footer_option));
-                }
-                if let Some(ref search_input_handle) = self.search_input {
-                    main_container
-                        .add_child(self.render_env_search_footer(search_input_handle, app));
-                }
-            }
             ChipMenuType::Directories | ChipMenuType::Branches | ChipMenuType::CodeReview => {
                 if let Some(ref search_input_handle) = self.search_input {
                     let search_input = appearance
@@ -1411,12 +1026,6 @@ impl View for DisplayChipMenu {
                 .with_corner_radius(CornerRadius::with_all(border_radius));
 
             let menu_container = match self.chip_menu_type {
-                ChipMenuType::Environments => menu_container
-                    .with_border(
-                        Border::all(1.)
-                            .with_border_fill(Fill::Solid(internal_colors::neutral_4(theme))),
-                    )
-                    .with_drop_shadow(Self::figma_menu_drop_shadow()),
                 ChipMenuType::Directories | ChipMenuType::Branches | ChipMenuType::CodeReview => {
                     menu_container.with_drop_shadow(DropShadow::default())
                 }
@@ -1429,12 +1038,6 @@ impl View for DisplayChipMenu {
 
         let mut stack = Stack::new();
         stack.add_child(menu_card);
-
-        if self.should_show_environment_sidecar()
-            && let Some((sidecar, positioning)) = self.environment_sidecar_overlay(app)
-        {
-            stack.add_positioned_overlay_child(sidecar, positioning);
-        }
 
         Dismiss::new(stack.finish())
             .on_dismiss(|ctx, _app| ctx.dispatch_typed_action(DisplayChipMenuAction::Close))
@@ -1474,28 +1077,6 @@ impl TypedActionView for DisplayChipMenu {
             DisplayChipMenuAction::SelectDown => self.select_next(ctx),
             DisplayChipMenuAction::SelectEnter => self.select_enter(ctx),
             DisplayChipMenuAction::SelectFixedFooterOption => self.select_fixed_footer_option(ctx),
-            DisplayChipMenuAction::CopyEnvironmentSidecarField { key, value } => {
-                ctx.clipboard()
-                    .write(ClipboardContent::plain_text(value.clone()));
-
-                self.env_sidecar_copy_feedback_times
-                    .insert(key.clone(), Instant::now());
-
-                let duration = COPY_FEEDBACK_DURATION;
-                ctx.spawn(
-                    async move {
-                        Timer::after(duration).await;
-                    },
-                    move |me, _, ctx| {
-                        // Clean up old entries.
-                        me.env_sidecar_copy_feedback_times
-                            .retain(|_, time| time.elapsed() < duration);
-                        ctx.notify();
-                    },
-                );
-
-                ctx.notify();
-            }
             DisplayChipMenuAction::Close => self.close(ctx),
         }
     }

@@ -22,7 +22,6 @@ pub mod diff_viewer;
 pub mod editor;
 pub mod editor_management;
 pub mod global_buffer_model;
-pub mod inline_diff;
 #[cfg(feature = "local_fs")]
 pub mod language_server_shutdown_manager;
 #[cfg(not(target_family = "wasm"))]

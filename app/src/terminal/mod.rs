@@ -5,7 +5,7 @@ pub use model::terminal_model::TerminalModel;
 use ordered_float::Float;
 mod package_installers;
 pub use history::{
-    History, HistoryEntry, HistoryEvent, LinkedWorkflowData, ShellHost, UpArrowHistoryConfig,
+    History, HistoryEntry, HistoryEvent, LinkedWorkflowData, ShellHost,
 };
 pub use view::{Event, TerminalView};
 pub use warp_terminal::shell::{self, ShellLaunchData};

@@ -15,7 +15,6 @@ mod chip_configurator;
 mod cloud_object;
 mod code;
 mod code_review;
-mod coding_entrypoints;
 mod coding_panel_enablement_state;
 mod command_palette;
 mod completer;
@@ -1467,13 +1466,6 @@ pub(crate) fn initialize_app(
     {
         crash_reporting::set_task_id_tag(&task_id.to_string());
     }
-    #[cfg(not(target_family = "wasm"))]
-    // Refresh starts only after the authenticated server client exists; tracing initialization
-    // remains responsible for deciding whether this process opted in to cloud-agent export.
-    tracing::start_auth_refresh(
-        server_api_provider.as_ref(ctx).get_managed_secrets_client(),
-        ctx,
-    );
 
     ctx.add_singleton_model(|_ctx| AuthStateProvider::new(auth_state.clone()));
 
@@ -1863,6 +1855,7 @@ pub(crate) fn initialize_app(
     workspace::init(ctx);
     pane_group::init(ctx);
     terminal::init(ctx);
+    ui_components::keyboard_navigable_buttons::init(ctx);
     input::init(ctx);
     editor::init(ctx);
     onboarding::init(ctx);
@@ -1888,7 +1881,6 @@ pub(crate) fn initialize_app(
     context_chips::display_menu::init(ctx);
     context_chips::node_version_popup::init(ctx);
     env_vars::view::env_var_collection::init(ctx);
-    coding_entrypoints::project_buttons::init(ctx);
     if FeatureFlag::CodeReviewSaveChanges.is_enabled() {
         code_review::init(ctx);
     }

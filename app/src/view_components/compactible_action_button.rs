@@ -7,6 +7,7 @@ use warpui::elements::{
 };
 use warpui::{Action, AppContext, Element, TypedActionView, View, ViewContext, ViewHandle};
 
+use crate::ui_components::inline_action_icons::icon_size;
 use crate::ui_components::icons::Icon;
 use crate::view_components::action_button::{
     ActionButton, ActionButtonTheme, AdjoinedSide, ButtonSize, KeystrokeSource,

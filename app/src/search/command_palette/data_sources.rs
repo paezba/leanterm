@@ -27,7 +27,6 @@ pub struct DataSourceStore {
     warp_drive_data_source: ModelHandle<warp_drive::DataSource>,
     launch_config_data_source: ModelHandle<launch_config::DataSource>,
     new_session_data_source: Option<ModelHandle<NewSessionDataSource>>,
-    all_conversation_data_source: ModelHandle<conversations::DataSource>,
     repo_data_source: ModelHandle<RepoDataSource>,
     tabs_data_source: Option<ModelHandle<tabs::DataSource>>,
 }
@@ -54,8 +53,6 @@ impl DataSourceStore {
             && cfg!(feature = "local_tty"))
         .then_some(ctx.add_model(|ctx| NewSessionDataSource::new(binding_source, ctx)));
 
-        let all_conversation_data_source: ModelHandle<conversations::DataSource> =
-            ctx.add_model(|_| conversations::DataSource::new());
 
         let repo_data_source = ctx.add_model(|_| RepoDataSource::new());
 
@@ -65,7 +62,6 @@ impl DataSourceStore {
             warp_drive_data_source,
             launch_config_data_source,
             new_session_data_source,
-            all_conversation_data_source,
             repo_data_source,
             tabs_data_source: None,
         }
@@ -96,16 +92,11 @@ impl DataSourceStore {
             if WarpDriveSettings::is_warp_drive_enabled(ctx) {
                 let mut warp_drive_filters = HashSet::from([
                     QueryFilter::Notebooks,
-                    QueryFilter::Plans,
                     QueryFilter::Drive,
                     QueryFilter::Workflows,
                 ]);
 
                 warp_drive_filters.insert(QueryFilter::EnvironmentVariables);
-
-                if AISettings::as_ref(ctx).is_any_ai_enabled(ctx) {
-                    warp_drive_filters.insert(QueryFilter::AgentModeWorkflows);
-                }
                 mixer.add_sync_source(self.warp_drive_data_source.clone(), warp_drive_filters);
             }
 
@@ -139,14 +130,6 @@ impl DataSourceStore {
                         run_when_unfiltered: true,
                     },
                     ctx,
-                );
-            }
-
-            // Add conversation search if AI is enabled
-            if AISettings::as_ref(ctx).is_any_ai_enabled(ctx) {
-                mixer.add_sync_source(
-                    self.all_conversation_data_source.clone(),
-                    HashSet::from([QueryFilter::Conversations]),
                 );
             }
 
@@ -284,7 +267,6 @@ impl DataSourceStore {
                 // For now, return None as projects aren't expected in the regular command palette.
                 None
             }
-            ItemSummary::Conversation { id } => conversations::DataSource::query_result(id, app),
 
             ItemSummary::NewConversation => {
                 // The new conversation item should not show up in the recent command list,

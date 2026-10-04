@@ -48,7 +48,6 @@ pub struct InlineReposMenuView {
 impl InlineReposMenuView {
     pub fn new(
         input_suggestions_model: ModelHandle<InputSuggestionsModeModel>,
-        agent_view_controller: ModelHandle<AgentViewController>,
         input_buffer_model: &ModelHandle<InputBufferModel>,
         positioner: &ModelHandle<InlineMenuPositioner>,
         ctx: &mut ViewContext<Self>,
@@ -84,7 +83,6 @@ impl InlineReposMenuView {
                 mixer.clone(),
                 positioner.clone(),
                 &input_suggestions_model,
-                agent_view_controller,
                 ctx,
             )
         });

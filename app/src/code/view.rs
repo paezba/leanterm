@@ -86,7 +86,6 @@ pub const SAVE_FILE_BINDING_DESCRIPTION: &str = "Save file";
 
 pub fn init(app: &mut AppContext) {
     super::editor::view::init(app);
-    super::local_code_editor::init(app);
 
     let text_entry = id!("CodeEditorView") & !id!("IMEOpen");
     app.register_editable_bindings([
@@ -182,9 +181,6 @@ pub enum CodeViewEvent {
     FileOpened {
         location: LocalOrRemotePath,
         tab_index: usize,
-    },
-    RunTabConfigSkill {
-        path: PathBuf,
     },
     OpenLspLogs {
         log_path: PathBuf,
@@ -514,19 +510,6 @@ impl CodeView {
                 log::warn!("Failed to load file. {err:?}");
                 CodeView::display_load_failure(ctx.window_id(), ctx);
             }
-            LocalCodeEditorEvent::SelectionAddedAsContext {
-                relative_file_path,
-                line_range,
-                selected_text,
-            } => {
-                me.insert_selection_as_context(
-                    relative_file_path.clone(),
-                    line_range.start.as_usize(),
-                    line_range.end.as_usize(),
-                    selected_text.clone(),
-                    ctx,
-                );
-            }
             LocalCodeEditorEvent::FileSaved { auto_saved } => {
                 me.sync_active_tab_location(ctx);
                 me.set_title_after_content_update(ctx);
@@ -541,17 +524,9 @@ impl CodeView {
                 log::warn!("Failed to load file. {err:?}");
                 CodeView::display_save_failure(ctx.window_id(), ctx);
             }
-            LocalCodeEditorEvent::DiffAccepted => {
-                CodeManager::handle(ctx).update(ctx, |code_manager, ctx| {
-                    code_manager.complete_pending_diffs(me.source.clone(), ctx);
-                });
-            }
-            LocalCodeEditorEvent::DiffRejected => {
-                CodeManager::handle(ctx).update(ctx, |code_manager, ctx| {
-                    code_manager.complete_pending_diffs(me.source.clone(), ctx);
-                });
-            }
-            LocalCodeEditorEvent::DiffStatusUpdated => (),
+            LocalCodeEditorEvent::DiffAccepted
+            | LocalCodeEditorEvent::DiffRejected
+            | LocalCodeEditorEvent::DiffStatusUpdated => (),
             LocalCodeEditorEvent::UserEdited => (),
             LocalCodeEditorEvent::VimMinimizeRequested => (),
             LocalCodeEditorEvent::ViewportUpdated => (),
@@ -598,9 +573,6 @@ impl CodeView {
             | LocalCodeEditorEvent::RequestOpenComment(_)
             | LocalCodeEditorEvent::DeleteComment { .. } => {
                 // Comment events are handled by CodeReviewView, not CodeView
-            }
-            LocalCodeEditorEvent::RunTabConfigSkill { path } => {
-                ctx.emit(CodeViewEvent::RunTabConfigSkill { path: path.clone() });
             }
             LocalCodeEditorEvent::OpenLspLogs { log_path } => {
                 ctx.emit(CodeViewEvent::OpenLspLogs {
@@ -1072,53 +1044,6 @@ impl CodeView {
         self.tab_group.clear();
         GlobalBufferModel::handle(ctx).update(ctx, |model, ctx| {
             model.remove_deallocated_buffers(ctx);
-        });
-    }
-
-    fn insert_selection_as_context(
-        &mut self,
-        file_path: String,
-        start_line: usize,
-        end_line: usize,
-        selected_text: String,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        // If a CLI agent is active, send appropriate content to the PTY (or rich input if open).
-        let window_id = ctx.window_id();
-        if let Some(terminal_view) = get_context_target_terminal_view(window_id, ctx) {
-            let prompt = if start_line == end_line {
-                // Single-line: send the literal text with file/line context.
-                build_selection_substring_prompt(&file_path, start_line, &selected_text)
-            } else {
-                // Multi-line: send a line-range reference with format note.
-                build_selection_line_range_prompt(&file_path, start_line, end_line)
-            };
-            if let Some(routing) = terminal_view.update(ctx, |tv, ctx| {
-                tv.try_send_text_to_cli_agent_or_rich_input(prompt, ctx)
-            }) {
-                let destination = match routing {
-                    CliAgentRouting::RichInput => CodeContextDestination::RichInput,
-                    CliAgentRouting::Pty => CodeContextDestination::Pty,
-                };
-                send_telemetry_from_ctx!(
-                    TelemetryEvent::CodeSelectionAddedAsContext { destination },
-                    ctx
-                );
-                return;
-            }
-        }
-
-        // Otherwise insert the location snippet into the input buffer (original behavior).
-        send_telemetry_from_ctx!(
-            TelemetryEvent::CodeSelectionAddedAsContext {
-                destination: CodeContextDestination::AgentInput,
-            },
-            ctx
-        );
-        ctx.dispatch_typed_action(&WorkspaceAction::InsertInInput {
-            content: format!("{file_path}:{start_line}-{end_line} "),
-            replace_buffer: false,
-            ensure_agent_mode: true,
         });
     }
 
@@ -2242,12 +2167,6 @@ impl View for CodeView {
         let tab = self.tab_at(self.active_tab_index);
         let body = if let Some(tab) = tab {
             match self.source {
-                CodeSource::AIAction { .. } => Flex::column()
-                    .with_child(self.render_request_edit_action_header(tab, app))
-                    .with_child(
-                        Shrinkable::new(1., ChildView::new(&tab.editor_view).finish()).finish(),
-                    )
-                    .finish(),
                 _ => ChildView::new(&tab.editor_view).finish(),
             }
         } else {

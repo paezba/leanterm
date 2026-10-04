@@ -296,3 +296,15 @@ fn calculate_highlight_indices(
 
     (item_name_highlights, path_highlights)
 }
+
+/// Truncates `s` to at most `new_len` bytes without splitting a character.
+fn safe_truncate(s: &mut String, new_len: usize) {
+    if new_len >= s.len() {
+        return;
+    }
+    let mut safe_len = new_len;
+    while safe_len > 0 && !s.is_char_boundary(safe_len) {
+        safe_len -= 1;
+    }
+    s.truncate(safe_len);
+}

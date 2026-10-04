@@ -279,32 +279,14 @@ impl crate::search::mixer::SyncDataSource for DataSource {
             );
         }
 
-        if query.filters.contains(&QueryFilter::Plans) || should_include_all_drive_objects {
-            filtered_cloud_objects.extend(
-                self.searcher
-                    .search_plans(&query.text.to_lowercase(), app)
-                    .map_err(|err| {
-                        Box::new(DataSourceSearchError::new(err.to_string()))
-                            as DataSourceRunErrorWrapper
-                    })?
-                    .into_iter()
-                    .filter(|item| self.scope.contains(&item.cloud_notebook, app))
-                    .map(QueryResult::from),
-            );
-        }
-
-        let should_include_agent_mode_prompts =
-            (query.filters.contains(&QueryFilter::AgentModeWorkflows)
-                || should_include_all_drive_objects)
-                && AISettings::as_ref(app).is_any_ai_enabled(app);
         let should_include_command_workflows =
             query.filters.contains(&QueryFilter::Workflows) || should_include_all_drive_objects;
 
-        if should_include_agent_mode_prompts || should_include_command_workflows {
+        if should_include_command_workflows {
             filtered_cloud_objects.extend(
                 self.search_workflows(
                     query,
-                    should_include_agent_mode_prompts,
+                    false,
                     should_include_command_workflows,
                     app,
                 )

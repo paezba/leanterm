@@ -96,30 +96,7 @@ impl FilterChipRenderer for QueryFilter {
 
     fn icon_color(&self, appearance: &Appearance) -> ColorU {
         match self {
-            QueryFilter::History
-            | QueryFilter::NaturalLanguage
-            | QueryFilter::Actions
-            | QueryFilter::Sessions
-            | QueryFilter::Tabs
-            | QueryFilter::Drive
-            | QueryFilter::LaunchConfigurations
-            | QueryFilter::PromptHistory
-            | QueryFilter::Files
-            | QueryFilter::Commands
-            | QueryFilter::Blocks
-            | QueryFilter::Code
-            | QueryFilter::Rules
-            | QueryFilter::Repos
-            | QueryFilter::DiffSets
-            | QueryFilter::StaticSlashCommands
-            | QueryFilter::Skills
-            | QueryFilter::BaseModels
-            | QueryFilter::FullTerminalUseModels
-            | QueryFilter::CurrentDirectoryConversations => appearance
-                .theme()
-                .main_text_color(appearance.theme().surface_2())
-                .into_solid(),
-            QueryFilter::Conversations => appearance
+            QueryFilter::History | QueryFilter::Actions | QueryFilter::Sessions | QueryFilter::Tabs | QueryFilter::Drive | QueryFilter::LaunchConfigurations | QueryFilter::Files | QueryFilter::Commands | QueryFilter::Blocks | QueryFilter::Code | QueryFilter::Repos => appearance
                 .theme()
                 .main_text_color(appearance.theme().surface_2())
                 .into_solid(),
@@ -130,17 +107,8 @@ impl FilterChipRenderer for QueryFilter {
                     is_ai_document: false,
                 },
             ),
-            QueryFilter::Plans => warp_drive_icon_color(
-                appearance,
-                DriveObjectType::Notebook {
-                    is_ai_document: true,
-                },
-            ),
             QueryFilter::EnvironmentVariables => {
                 warp_drive_icon_color(appearance, DriveObjectType::EnvVarCollection)
-            }
-            QueryFilter::AgentModeWorkflows => {
-                warp_drive_icon_color(appearance, DriveObjectType::AgentModeWorkflow)
             }
         }
     }

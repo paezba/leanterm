@@ -47,9 +47,7 @@ use warpui::platform::FullscreenState;
 use warpui::windowing::{MIN_WINDOW_HEIGHT, MIN_WINDOW_WIDTH};
 use warpui::{AppContext, SingletonEntity};
 
-use super::block_list::{
-    delete_ai_conversation, delete_blocks, save_block, update_block_agent_view_visibility,
-    upsert_ai_query,
+use super::block_list::{ delete_blocks, save_block,
 };
 use super::model::{
     self, AI_DOCUMENT_PANE_KIND, AI_FACT_PANE_KIND, ActiveMCPServer, CODE_PANE_KIND,
@@ -82,8 +80,7 @@ use crate::code::editor_management::CodeSource;
 use crate::drive::OpenWarpDriveObjectSettings;
 use crate::notebooks::NotebookId;
 use crate::persistence::block_list::{
-    get_all_restored_blocks, process_ai_queries_for_nld_history_match,
-    process_ai_queries_for_uparrow_prompt, read_recent_ai_queries,
+    get_all_restored_blocks,
 };
 use crate::persistence::model::{
     CODE_REVIEW_PANE_KIND, GET_STARTED_PANE_KIND, NewPersistedObjectAction, NewTeamSettings,
@@ -2407,7 +2404,7 @@ impl From<StartedCommandMetadata> for model::NewCommand {
                 .cloud_workflow_id
                 .map(|id| id.sqlite_uid_hash(ObjectIdType::Workflow)),
             workflow_command: metadata.workflow_command,
-            is_agent_executed: Some(metadata.is_agent_executed),
+            is_agent_executed: None,
         }
     }
 }

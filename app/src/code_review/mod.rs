@@ -1,6 +1,5 @@
 pub mod code_review_view;
 pub mod comment_list_view;
-pub mod context;
 pub mod diff_size_limits;
 #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
 pub mod diff_state;
@@ -44,7 +43,6 @@ pub struct CodeReviewPanelArg {
     pub terminal_view: WeakViewHandle<TerminalView>,
     pub entrypoint: CodeReviewPaneEntrypoint,
     pub focus_new_pane: bool,
-    pub cli_agent: Option<CLIAgent>,
 }
 
 /// Scope for diff set context attachment

@@ -19,6 +19,8 @@ use warpui::{
     ViewContext,
 };
 
+use crate::ui_components::inline_action_header::{ExpandedConfig, HeaderConfig, InteractionMode, CONTENT_HORIZONTAL_PADDING, CONTENT_ITEM_VERTICAL_MARGIN, INLINE_ACTION_HORIZONTAL_PADDING};
+use crate::ui_components::inline_action_icons::{self, yellow_running_icon, yellow_stop_icon};
 use crate::appearance::Appearance;
 use crate::settings::InputModeSettings;
 use crate::terminal::block_list_element::BlockListMenuSource;

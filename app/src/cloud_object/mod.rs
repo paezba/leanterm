@@ -985,7 +985,7 @@ pub use cloud_object_client::{
 };
 pub use cloud_object_models::{
     ServerCloudObject, ServerEnvVarCollection, ServerFolder, ServerNotebook,
-    ServerPreference, ServerScheduledAmbientAgent, ServerTemplatableMCPServer, ServerWorkflow,
+    ServerPreference, ServerWorkflow,
     ServerWorkflowEnum, TryFromGql,
 };
 use warp_errors::report_error;

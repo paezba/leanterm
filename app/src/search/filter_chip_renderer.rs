@@ -29,7 +29,6 @@ pub trait FilterChipRenderer {
 impl FilterChipRenderer for QueryFilter {
     fn icon_size_offset(&self) -> f32 {
         match self {
-            QueryFilter::NaturalLanguage => 2.,
             _ => 0.,
         }
     }
@@ -38,7 +37,6 @@ impl FilterChipRenderer for QueryFilter {
         match self {
             QueryFilter::Sessions => 2.,
             QueryFilter::Tabs => 2.,
-            QueryFilter::NaturalLanguage => 2.,
             _ => 0.,
         }
     }

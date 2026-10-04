@@ -68,7 +68,7 @@ impl HeaderToolbarItemKind {
                     .get()
                     .is_user_web_anonymous_user()
                     .unwrap_or_default();
-                AISettings::as_ref(app).is_any_ai_enabled(app)
+                false
                     && FeatureFlag::AgentManagementView.is_enabled()
                     && !is_web_anonymous_user
             }

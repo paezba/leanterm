@@ -1045,7 +1045,7 @@ impl View for AuthViewBody {
                     // The `is_any_ai_enabled` helper also accounts for login /
                     // remote-session gating, so the cloud-conversation toggle
                     // hides whenever AI isn't effectively available.
-                    let is_ai_enabled = AISettings::as_ref(app).is_any_ai_enabled(app);
+                    let is_ai_enabled = false;
                     stack.add_child(
                         Dismiss::new(render_overlay(
                             render_privacy_settings_overlay_body(

@@ -40,10 +40,6 @@ pub fn tui_up_arrow_history(
                         linked_workflow_data: entry.linked_workflow_data(),
                     },
                 },
-                HistoryInputSuggestion::AIQuery { .. } => TuiUpArrowHistoryItem {
-                    text,
-                    kind: TuiUpArrowHistoryItemKind::Prompt,
-                },
             }
         })
         .collect()

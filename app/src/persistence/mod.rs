@@ -317,7 +317,6 @@ pub struct StartedCommandMetadata {
     pub git_branch: Option<String>,
     pub cloud_workflow_id: Option<SyncId>,
     pub workflow_command: Option<String>,
-    pub is_agent_executed: bool,
 }
 
 #[derive(Debug)]

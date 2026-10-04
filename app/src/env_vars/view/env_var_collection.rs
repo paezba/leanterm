@@ -20,6 +20,7 @@ use warpui::{
 
 use super::command_dialog::EnvVarCommandDialog;
 use super::menus::Menus;
+use secret_redaction::find_secrets_in_text_with_levels;
 use crate::cloud_object::breadcrumbs::ContainingObject;
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::{CloudObjectEventEntrypoint, Owner};

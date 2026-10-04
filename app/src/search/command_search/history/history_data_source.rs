@@ -45,12 +45,10 @@ pub(crate) fn history_data_source_for_session(
 ) -> AsyncSnapshotDataSource<HistorySnapshot, CommandSearchItemAction> {
     AsyncSnapshotDataSource::new(
         move |query: &Query, app: &AppContext| {
-            let include_agent_commands = *AISettings::as_ref(app).include_agent_commands_in_history;
             let commands: Arc<[Arc<HistoryEntry>]> = terminal::History::as_ref(app)
                 .commands_shared(session_id)
                 .unwrap_or_default()
                 .into_iter()
-                .filter(|entry| include_agent_commands || !entry.is_agent_executed)
                 .collect();
             HistorySnapshot {
                 commands,

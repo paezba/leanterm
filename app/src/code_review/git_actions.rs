@@ -39,7 +39,7 @@ pub async fn run_commit_chain(
         }
         CommitChainMode::CommitAndCreatePr => {
             git::run_push(repo_path, branch, path_env).await?;
-            Some(create_pr(repo_path, branch).await?)
+            Some(create_pr(repo_path, branch, path_env).await?)
         }
     };
     let (commits, upstream_ref) = git::compute_unpushed_state(repo_path).await;
@@ -63,5 +63,5 @@ pub async fn create_pr(
     branch: &str,
     path_env: Option<&str>,
 ) -> anyhow::Result<PrInfo> {
-    git::create_pr(repo_path, None, path_env).await
+    git::create_pr(repo_path, None, None, path_env).await
 }

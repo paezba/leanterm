@@ -1079,7 +1079,6 @@ impl LeftPanelView {
                         TelemetryEvent::FileTreeToggled {
                             source: FileTreeSource::ForceOpened,
                             is_code_mode_v2: true,
-                            cli_agent: None,
                         },
                         ctx
                     );
@@ -1088,7 +1087,6 @@ impl LeftPanelView {
                         TelemetryEvent::FileTreeToggled {
                             source: FileTreeSource::LeftPanelToolbelt,
                             is_code_mode_v2: true,
-                            cli_agent: None,
                         },
                         ctx
                     );

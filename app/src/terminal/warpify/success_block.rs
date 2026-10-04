@@ -15,6 +15,7 @@ use warpui::{AppContext, Element, Entity, SingletonEntity, TypedActionView, View
 use super::render::{HORIZONTAL_TEXT_MARGIN, SSH_DOCS_URL, SUBSHELL_DOCS_URL};
 use super::settings::WarpifySettings;
 use super::{WarpificationSource, render, subshell_bootstrap_success_block_bytes};
+use crate::ui_components::code_block::{CodeSnippetButtonHandles, render_runnable_code_snippet};
 use crate::appearance::Appearance;
 use crate::terminal::model::terminal_model::SubshellInitializationInfo;
 use crate::terminal::shell::{Shell, ShellType};
@@ -231,11 +232,10 @@ impl WarpifySuccessBlock {
             return None;
         }
 
-        let shell_language = ProgrammingLanguage::Shell(auto_warpify_snippet.shell_type);
         let runnable_command = render_runnable_code_snippet(
             &auto_warpify_snippet.output_grid,
             if auto_warpify_snippet.can_write_to_rc {
-                Some(&shell_language)
+                Some(auto_warpify_snippet.shell_type.name())
             } else {
                 None
             },

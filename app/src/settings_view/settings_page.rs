@@ -126,29 +126,14 @@ impl SettingsPageViewHandle {
             SharedBlocks(view_handle) => ChildView::new(view_handle).finish(),
             Keybindings(view_handle) => ChildView::new(view_handle).finish(),
             About(view_handle) => ChildView::new(view_handle).finish(),
-            CodeIndexing(view_handle) => ChildView::new(view_handle).finish(),
             EditorAndCodeReview(view_handle) => ChildView::new(view_handle).finish(),
             Teams(view_handle) => ChildView::new(view_handle).finish(),
-            WarpCloudAgentAPIKeys(view_handle) => ChildView::new(view_handle).finish(),
             Privacy(view_handle) => ChildView::new(view_handle).finish(),
             Warpify(view_handle) => ChildView::new(view_handle).finish(),
             Referrals(view_handle) => ChildView::new(view_handle).finish(),
             Scripting(view_handle) => ChildView::new(view_handle).finish(),
-            WarpAgent(view_handle) => ChildView::new(view_handle).finish(),
-            AgentProfiles(view_handle) => ChildView::new(view_handle).finish(),
-            Knowledge(view_handle) => ChildView::new(view_handle).finish(),
-            CLIAgents(view_handle) => ChildView::new(view_handle).finish(),
-            CloudEnvironments(view_handle) => ChildView::new(view_handle).finish(),
-            BillingAndUsage(view_handle) => ChildView::new(view_handle).finish(),
-            MCPServers(view_handle) => ChildView::new(view_handle).finish(),
             WarpDrive(view_handle) => ChildView::new(view_handle).finish(),
         }
-    }
-}
-
-impl From<ViewHandle<MCPServersSettingsPageView>> for SettingsPageViewHandle {
-    fn from(view_handle: ViewHandle<MCPServersSettingsPageView>) -> Self {
-        SettingsPageViewHandle::MCPServers(view_handle)
     }
 }
 
@@ -2050,7 +2035,6 @@ const LEAN_TERMINAL_HIDDEN_WIDGETS: &[&str] = &[
     "PrivacyPolicyWidget",
     // Appearance
     "AIFontWidget",
-    "ToolsPanelConversationHistoryWidget",
     "ToolsPanelWarpDriveWidget",
     "UseLatestUserPromptAsConversationTitleInTabNamesWidget",
     // Editor and Code Review
