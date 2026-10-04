@@ -781,14 +781,6 @@ struct WorkspaceBannerFields {
     button: Option<WorkspaceBannerButtonDetails>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum DefaultSessionModeBehavior {
-    /// Respect the user's default-session-mode setting and auto-enter agent view when applicable.
-    Apply,
-    /// Skip default-session-mode auto-entry because the caller is explicitly specifying the mode for the new session.
-    Ignore,
-}
-
 #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
 struct CodeReviewPaneContext {
     repo_path: Option<LocalOrRemotePath>,
@@ -1919,25 +1911,6 @@ impl Workspace {
     ) {
         match event {
             RemoveTabConfigConfirmationEvent::Confirm { path } => {
-                // If the removed config was the default, revert to Terminal.
-                let ai_settings = AISettings::as_ref(ctx);
-                let is_removed_default = ai_settings.default_session_mode(ctx)
-                    == DefaultSessionMode::TabConfig
-                    && ai_settings.default_tab_config_path() == path.to_string_lossy();
-                if is_removed_default {
-                    AISettings::handle(ctx).update(ctx, |settings, ctx| {
-                        report_if_error!(
-                            settings
-                                .default_session_mode_internal
-                                .set_value(DefaultSessionMode::Terminal, ctx)
-                        );
-                        report_if_error!(
-                            settings
-                                .default_tab_config_path
-                                .set_value(String::new(), ctx)
-                        );
-                    });
-                }
                 if let Err(e) = std::fs::remove_file(path) {
                     log::warn!("Failed to remove tab config file: {e:?}");
                     self.toast_stack.update(ctx, |toast_stack, ctx| {
@@ -2864,19 +2837,6 @@ impl Workspace {
             ctx.notify();
         });
 
-        ctx.subscribe_to_model(
-            &crate::workspace::bonus_grant_notification_model::BonusGrantNotificationModel::handle(
-                ctx,
-            ),
-            |me, _, event, ctx| {
-                let BonusGrantNotificationEvent::ShowNotification { message, .. } = event;
-                me.toast_stack.update(ctx, |toast_stack, ctx| {
-                    toast_stack
-                        .add_persistent_toast(DismissibleToast::success(message.clone()), ctx);
-                });
-            },
-        );
-
         let mut ws = Self {
             tabs: Vec::new(),
             active_tab_index: 0,
@@ -3419,7 +3379,6 @@ impl Workspace {
                     self.add_new_session_tab_with_default_mode(
                         NewSessionSource::Window,
                         None,  /* previous_active_window */
-                        None,  /* chosen_shell */
                         None,  /* ai_conversation */
                         false, /* hide_homepage */
                         ctx,
@@ -3687,8 +3646,7 @@ impl Workspace {
                 self.add_new_session_tab_with_default_mode(
                     NewSessionSource::Window,
                     previous_active_window,
-                    shell,
-                    None,  /* ai_conversation */
+                    shell,  /* ai_conversation */
                     false, /* hide_homepage */
                     ctx,
                 );
@@ -4547,32 +4505,6 @@ impl Workspace {
         });
     }
 
-    /// Notifies the agent views model and notifications model that a terminal view gained focus.
-    fn notify_terminal_focus_change(
-        &self,
-        focused_terminal_view_id: Option<EntityId>,
-        ambient_agent_task_id: Option<AmbientAgentTaskId>,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        let window_id = ctx.window_id();
-        ActiveAgentViewsModel::handle(ctx).update(ctx, |model, ctx| {
-            model.handle_pane_focus_change(
-                window_id,
-                focused_terminal_view_id,
-                ambient_agent_task_id,
-                ctx,
-            );
-        });
-        if let Some(terminal_view_id) = focused_terminal_view_id {
-            let is_active_window = ctx.windows().active_window() == Some(ctx.window_id());
-            if is_active_window {
-                AgentNotificationsModel::handle(ctx).update(ctx, |model, ctx| {
-                    model.mark_items_from_terminal_view_read(terminal_view_id, ctx);
-                });
-            }
-        }
-    }
-
     /// Change the active tab index. This must be used instead of setting `self.active_tab_index`
     /// directly, as it updates related state.
     pub(crate) fn set_active_tab_index(&mut self, index: usize, ctx: &mut ViewContext<Self>) {
@@ -4626,15 +4558,6 @@ impl Workspace {
                 ctx,
             );
         });
-
-        let pane_group = self.active_tab_pane_group();
-        let focused_terminal_view_id = self
-            .active_tab_pane_group()
-            .as_ref(ctx)
-            .terminal_view_from_pane_id(pane_group.as_ref(ctx).focused_pane_id(ctx), ctx)
-            .map(|tv| tv.id());
-        let ambient_agent_task_id = self.ambient_agent_task_id_for_focused_terminal_view(ctx);
-        self.notify_terminal_focus_change(focused_terminal_view_id, ambient_agent_task_id, ctx);
 
         self.update_active_session(ctx);
     }
@@ -5804,22 +5727,16 @@ impl Workspace {
     /// Builds the unified new-session menu items
     /// tab bar chevron and the vertical tab bar `+` button.
     ///
-    /// Order: Agent → Terminal (sidecar) → Cloud Agent → [tab configs] → separator → New worktree config (sidecar) → New tab config → separator → Reopen closed session.
+    /// Order: Terminal (sidecar) → [tab configs] → separator → New worktree config (sidecar) → New tab config → separator → Reopen closed session.
     fn unified_new_session_menu_items(
         &self,
         ctx: &mut ViewContext<Self>,
     ) -> Vec<MenuItem<WorkspaceAction>> {
         let mut menu_items = vec![];
 
-        let is_any_ai_enabled = false;
-        let ai_settings = AISettings::as_ref(ctx);
-        let effective_default = ai_settings.default_session_mode(ctx);
-        let default_tab_config_path = ai_settings.default_tab_config_path().to_string();
         let shortcut_label = keybinding_name_to_display_string(NEW_TAB_BINDING_NAME, ctx);
         let reopen_closed_session_shortcut_label =
             keybinding_name_to_display_string("app:reopen_closed_session", ctx);
-
-        // 1. Agent (if AI enabled)
 
         // 2. Terminal (+ individual shells on Windows)
         {
@@ -5827,15 +5744,12 @@ impl Workspace {
             // individual top-level items (no submenu) so each gets a sidecar.
             #[cfg(target_os = "windows")]
             {
-                let is_terminal_default = effective_default == DefaultSessionMode::Terminal;
                 let mut terminal_item = MenuItemFields::new("Terminal")
                     .with_on_select_action(WorkspaceAction::AddTerminalTab {
                         hide_homepage: false,
                     })
                     .with_icon(icons::Icon::LayoutAlt01);
-                if is_terminal_default {
-                    terminal_item = terminal_item.with_key_shortcut_label(shortcut_label.clone());
-                }
+                terminal_item = terminal_item.with_key_shortcut_label(shortcut_label.clone());
                 menu_items.push(terminal_item.into_item());
 
                 #[cfg(feature = "local_tty")]
@@ -5870,36 +5784,9 @@ impl Workspace {
                         hide_homepage: false,
                     })
                     .with_icon(icons::Icon::LayoutAlt01);
-                if effective_default == DefaultSessionMode::Terminal {
-                    terminal_item = terminal_item.with_key_shortcut_label(shortcut_label.clone());
-                }
+                terminal_item = terminal_item.with_key_shortcut_label(shortcut_label.clone());
                 menu_items.push(terminal_item.into_item());
             }
-        }
-
-        // 3. Cloud Agent (if flags enabled)
-        if is_any_ai_enabled
-            && FeatureFlag::AgentView.is_enabled()
-            && FeatureFlag::CloudMode.is_enabled()
-        {
-            let mut cloud_item = MenuItemFields::new("Cloud Agent")
-                .with_on_select_action(WorkspaceAction::AddAmbientAgentTab)
-                .with_icon(icons::Icon::LayoutAlt01);
-            if effective_default == DefaultSessionMode::CloudAgent {
-                cloud_item = cloud_item.with_key_shortcut_label(shortcut_label.clone());
-            }
-            menu_items.push(cloud_item.into_item());
-        }
-
-        // 3b. Local Docker Sandbox
-        if FeatureFlag::LocalDockerSandbox.is_enabled() {
-            let mut docker_item = MenuItemFields::new("Local Docker Sandbox")
-                .with_on_select_action(WorkspaceAction::AddDockerSandboxTab)
-                .with_icon(icons::Icon::Docker);
-            if effective_default == DefaultSessionMode::DockerSandbox {
-                docker_item = docker_item.with_key_shortcut_label(shortcut_label.clone());
-            }
-            menu_items.push(docker_item.into_item());
         }
 
         // 4. User tab configs
@@ -5921,12 +5808,6 @@ impl Workspace {
                 } else {
                     icons::Icon::LayoutAlt01
                 };
-                let is_default_config = effective_default == DefaultSessionMode::TabConfig
-                    && tab_config
-                        .source_path
-                        .as_ref()
-                        .is_some_and(|p| p.to_string_lossy() == default_tab_config_path);
-
                 let display_name = if name_totals.get(&tab_config.name).copied().unwrap_or(0) > 1 {
                     let seen = name_seen.entry(tab_config.name.clone()).or_default();
                     *seen += 1;
@@ -5939,12 +5820,9 @@ impl Workspace {
                     tab_config.name.clone()
                 };
 
-                let mut item = MenuItemFields::new(display_name)
+                let item = MenuItemFields::new(display_name)
                     .with_on_select_action(WorkspaceAction::SelectTabConfig(tab_config))
                     .with_icon(icon);
-                if is_default_config {
-                    item = item.with_key_shortcut_label(shortcut_label.clone());
-                }
                 menu_items.push(item.into_item());
             }
         }
@@ -6307,7 +6185,6 @@ impl Workspace {
             NewSessionSource::Tab,
             Some(ctx.window_id()),
             None,
-            None,
             false,
             ctx,
         );
@@ -6601,7 +6478,6 @@ impl Workspace {
         self.add_new_session_tab_with_default_mode(
             NewSessionSource::Tab,
             Some(ctx.window_id()),
-            None,
             None,
             false,
             ctx,
@@ -7176,16 +7052,6 @@ impl Workspace {
 
         if let Some(terminal_view_handle) = self.active_session_view(ctx) {
             let terminal_view_id = terminal_view_handle.id();
-
-            // Don't show onboarding block while agent is actively streaming
-            let is_agent_in_progress = BlocklistAIHistoryModel::handle(ctx)
-                .as_ref(ctx)
-                .active_conversation(terminal_view_id)
-                .is_some_and(|conversation| conversation.status().is_in_progress());
-
-            if is_agent_in_progress {
-                return;
-            }
 
             terminal_view_handle.update(ctx, |terminal_view, ctx| {
                 terminal_view.insert_drive_sharing_onboarding_block(object_id, ctx);
@@ -7951,35 +7817,6 @@ impl Workspace {
         }
     }
 
-    /// Open a code diff view by temporarily replacing the current pane or in a new tab.
-    fn open_code_diff(&mut self, view: ViewHandle<CodeDiffView>, ctx: &mut ViewContext<Self>) {
-        let focused_pane_id = self
-            .active_tab_pane_group()
-            .as_ref(ctx)
-            .focused_pane_id(ctx);
-        view.update(ctx, |view, _| {
-            view.set_original_pane_id(Some(focused_pane_id));
-        });
-
-        // Check if the ExpandEditToPane feature flag is enabled
-        if FeatureFlag::ExpandEditToPane.is_enabled() {
-            // Try to temporarily replace the current pane with the diff view
-            let new_pane = CodeDiffPane::from_view(view.clone(), ctx);
-            self.active_tab_pane_group().update(ctx, |pane_group, ctx| {
-                if !pane_group.replace_pane(focused_pane_id, new_pane, true, ctx) {
-                    // If replacement failed, remove the pane we just added and fall back
-                    //pane_group.close_pane(new_pane_id, ctx);
-                    log::warn!("Failed to temporarily replace pane, falling back to new tab");
-                }
-            });
-        } else {
-            // Feature flag disabled: use the original behavior of opening in a new tab
-            let new_pane = CodeDiffPane::from_view(view, ctx);
-            let (new_idx, group_id) = self.new_tab_index_and_group(ctx);
-            self.add_tab_from_existing_pane(Box::new(new_pane), new_idx, group_id, ctx);
-        }
-    }
-
     pub(super) fn active_session_view(
         &self,
         ctx: &mut ViewContext<Self>,
@@ -8025,7 +7862,6 @@ impl Workspace {
             if active_session_handle.is_none() {
                 self.add_new_session_tab_with_default_mode(
                     NewSessionSource::Tab,
-                    None,
                     None,
                     None,
                     false,
@@ -11340,7 +11176,6 @@ impl Workspace {
             NewSessionSource::Tab,
             Some(ctx.window_id()),
             None,
-            None,
             hide_homepage,
             ctx,
         );
@@ -11379,7 +11214,6 @@ impl Workspace {
             NewSessionSource::Tab,
             Some(ctx.window_id()),
             Some(shell),
-            None,
             false,
             ctx,
         );
@@ -11391,7 +11225,6 @@ impl Workspace {
         new_session_source: NewSessionSource,
         previous_session_window_id: Option<WindowId>,
         chosen_shell: Option<AvailableShell>,
-        conversation_restoration: Option<ConversationRestorationInNewPaneType>,
         hide_homepage: bool,
         ctx: &mut ViewContext<Self>,
     ) {
@@ -11399,9 +11232,7 @@ impl Workspace {
             new_session_source,
             previous_session_window_id,
             chosen_shell,
-            conversation_restoration,
             hide_homepage,
-            DefaultSessionModeBehavior::Apply,
             ctx,
         );
     }
@@ -11412,17 +11243,9 @@ impl Workspace {
         new_session_source: NewSessionSource,
         previous_session_window_id: Option<WindowId>,
         chosen_shell: Option<AvailableShell>,
-        conversation_restoration: Option<ConversationRestorationInNewPaneType>,
         hide_homepage: bool,
-        default_session_mode_behavior: DefaultSessionModeBehavior,
         ctx: &mut ViewContext<Self>,
     ) {
-        // Check if we should default to agent mode (only for new sessions, not restorations)
-        let should_enter_agent_view = matches!(
-            default_session_mode_behavior,
-            DefaultSessionModeBehavior::Apply
-        ) && conversation_restoration.is_none()
-            && AISettings::as_ref(ctx).default_session_mode(ctx) == DefaultSessionMode::Agent;
         #[cfg(feature = "local_tty")]
         let is_docker_sandbox = chosen_shell
             .as_ref()
@@ -11433,23 +11256,12 @@ impl Workspace {
             false
         };
 
-        // If restoring a conversation, use its startup working directory if it exists.
-        // For forks this is the conversation's latest working directory so the
-        // fork continues where the source conversation left off.
-        let startup_directory_from_conversation = conversation_restoration
-            .as_ref()
-            .and_then(|restoration| restoration.startup_working_directory())
-            .map(PathBuf::from)
-            .filter(|path| path.is_dir());
-
-        let startup_directory = startup_directory_from_conversation.or_else(|| {
-            self.get_new_tab_startup_directory(
-                new_session_source,
-                previous_session_window_id,
-                chosen_shell.as_ref(),
-                ctx,
-            )
-        });
+        let startup_directory = self.get_new_tab_startup_directory(
+            new_session_source,
+            previous_session_window_id,
+            chosen_shell.as_ref(),
+            ctx,
+        );
 
         self.add_tab_with_pane_layout(
             PanesLayout::SingleTerminal(Box::new(NewTerminalOptions {
@@ -11483,10 +11295,6 @@ impl Workspace {
         }
         #[cfg(not(all(feature = "local_tty", not(target_family = "wasm"))))]
         let _ = is_docker_sandbox;
-        // If the default session mode is Agent and AI is enabled, enter agent view
-        if should_enter_agent_view {
-            self.enter_agent_view_on_active_tab(ctx);
-        }
     }
 
     /// Returns where a newly-opened tab should be inserted and the group it
@@ -13564,19 +13372,6 @@ impl Workspace {
                     self.set_focused_index(None, ctx);
                 }
 
-                let focused_terminal_view_id = {
-                    let pane_group = self.active_tab_pane_group().as_ref(ctx);
-                    pane_group
-                        .terminal_view_from_pane_id(pane_group.focused_pane_id(ctx), ctx)
-                        .map(|tv| tv.id())
-                };
-                let ambient_agent_task_id =
-                    self.ambient_agent_task_id_for_focused_terminal_view(ctx);
-                self.notify_terminal_focus_change(
-                    focused_terminal_view_id,
-                    ambient_agent_task_id,
-                    ctx,
-                );
             }
             pane_group::Event::RepoChanged => {
                 self.refresh_working_directories_for_pane_group(&pane_group, ctx);
@@ -15760,33 +15555,6 @@ impl Workspace {
                         }
                     });
                 }
-                let cached_window_is_active = current.active_window == Some(self.window_id);
-                let app_became_active = previous.stage != ApplicationStage::Active
-                    && current.stage == ApplicationStage::Active;
-                let platform_window_is_active =
-                    ctx.windows().active_window() == Some(self.window_id);
-
-                // Notify focus listeners when this window is active after either a window focus
-                // change or app reactivation while the active window stayed the same.
-                // On macOS, app activation can beat the deferred key-window update, so
-                // reactivation also verifies the live platform window.
-                if cached_window_is_active
-                    && (did_window_change_focus || (app_became_active && platform_window_is_active))
-                    && let Some(terminal_view) = self
-                        .active_tab_pane_group()
-                        .as_ref(ctx)
-                        .focused_session_view(ctx)
-                {
-                    let ambient_agent_task_id = terminal_view
-                        .as_ref(ctx)
-                        .ambient_agent_task_id_for_details_panel(ctx);
-                    self.notify_terminal_focus_change(
-                        Some(terminal_view.id()),
-                        ambient_agent_task_id,
-                        ctx,
-                    );
-                }
-
                 // Re-render if fullscreen state for active window has changed.
                 if current.is_active_window_fullscreen != previous.is_active_window_fullscreen {
                     ctx.notify();
@@ -20118,51 +19886,13 @@ impl TypedActionView for Workspace {
                     self.unpin_tab_group(group_id, ctx);
                 }
             }
-            AddDefaultTab => {
-                let effective_mode = AISettings::as_ref(ctx).default_session_mode(ctx);
-                match effective_mode {
-                    DefaultSessionMode::TabConfig => {
-                        let ai_settings = AISettings::as_ref(ctx);
-                        if let Some(config) = ai_settings.resolved_default_tab_config(ctx) {
-                            self.open_tab_config(config, ctx);
-                        } else {
-                            // Config missing or deleted — clear and fall through to Terminal.
-                            AISettings::handle(ctx).update(ctx, |settings, ctx| {
-                                report_if_error!(
-                                    settings
-                                        .default_session_mode_internal
-                                        .set_value(DefaultSessionMode::Terminal, ctx)
-                                );
-                                report_if_error!(
-                                    settings
-                                        .default_tab_config_path
-                                        .set_value(String::new(), ctx)
-                                );
-                            });
-                            self.add_terminal_tab(false, ctx);
-                        }
-                    }
-                    DefaultSessionMode::CloudAgent => {
-                        self.add_ambient_agent_tab(ctx);
-                    }
-                    DefaultSessionMode::DockerSandbox => {
-                        self.add_docker_sandbox_tab(ctx);
-                    }
-                    // Terminal and Agent are handled by the existing path
-                    // (add_terminal_tab applies DefaultSessionMode::Agent internally).
-                    DefaultSessionMode::Terminal | DefaultSessionMode::Agent => {
-                        self.add_terminal_tab(false, ctx);
-                    }
-                }
-            }
+            AddDefaultTab => self.add_terminal_tab(false, ctx),
             AddTerminalTab { hide_homepage } => {
                 self.add_new_session_tab_internal_with_default_session_mode_behavior(
                     NewSessionSource::Tab,
                     Some(window_id),
                     None,
-                    None,
                     *hide_homepage,
-                    DefaultSessionModeBehavior::Ignore,
                     ctx,
                 );
                 ctx.notify();
