@@ -19763,12 +19763,6 @@ impl View for TerminalView {
             && FeatureFlag::MinimalistUI.is_enabled())
             || *BlockListSettings::as_ref(app).show_block_dividers.value())
             && self.is_input_box_visible(&model, app)
-            && !self
-                .input
-                .as_ref(app)
-                .should_show_universal_developer_input(app)
-            && !(FeatureFlag::AgentView.is_enabled()
-                && self.agent_view_controller.as_ref(app).is_fullscreen())
         {
             let positioning = match input_mode {
                 InputMode::PinnedToBottom | InputMode::Waterfall => {
