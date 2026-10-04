@@ -506,8 +506,7 @@ impl DisplayChipMenu {
             if has_footer && !self.is_footer_selected() {
                 self.is_footer_selected = true;
             }
-        } else {
-        }
+        } 
         self.list_state.scroll_to(self.selected_index);
         ctx.notify();
     }

@@ -1561,10 +1561,8 @@ impl PaneGroup {
     ) -> (PaneData, InitialFocus) {
         for (_placeholder_id, leaf) in deferred_panes {
             let _custom_vertical_tabs_title = leaf.custom_vertical_tabs_title.clone();
-            match leaf.contents {
-                _ => {
-                    // Ignore other pane types in deferred processing
-                }
+            {
+                // Ignore other pane types in deferred processing
             }
         }
 

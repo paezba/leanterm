@@ -1847,11 +1847,10 @@ impl Input {
                     CommandExecutionSource::User,
                     true,
                     ctx,
-                ) {
-                    if !current_input.is_empty() {
+                )
+                    && !current_input.is_empty() {
                         self.input_contents_before_prompt_chip_command = Some(current_input);
                     }
-                }
             }
         }
     }

@@ -1561,7 +1561,7 @@ impl Workspace {
 
     fn build_workflow_modal(ctx: &mut ViewContext<Self>) -> ViewHandle<WorkflowModal> {
         let workflow_modal =
-            ctx.add_typed_action_view(|ctx| WorkflowModal::new(ctx));
+            ctx.add_typed_action_view(WorkflowModal::new);
 
         ctx.subscribe_to_view(&workflow_modal, |me, _, event, ctx| {
             me.handle_workflow_modal_event(event, ctx);
@@ -2463,7 +2463,7 @@ impl Workspace {
 
         let close_session_confirmation_dialog = Self::build_close_session_confirmation_dialog(ctx);
         let command_search_view =
-            ctx.add_typed_action_view(|ctx| CommandSearchView::new(ctx));
+            ctx.add_typed_action_view(CommandSearchView::new);
         ctx.subscribe_to_view(&command_search_view, |me, _, event, ctx| {
             me.handle_command_search_event(event, ctx);
         });
@@ -22419,9 +22419,7 @@ fn render_group_member_icon_collage(
         // Ambient icons place their brand circle at the top-left of a total_size
         // element (leaving room for the cloud badge). Shift right-down by
         // (1 - CIRCLE_RATIO)/2 * icon_diameter so the circle centers on the grid point.
-        let collage_pos = match &kind {
-            _ => positions[idx],
-        };
+        let collage_pos = positions[idx];
         stack.add_positioned_child(
             mini,
             OffsetPositioning::offset_from_parent(

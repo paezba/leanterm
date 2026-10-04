@@ -1,6 +1,6 @@
 use crate::settings::{ CodeSettings};
 use crate::terminal::view::{TerminalAction, TerminalView};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::mem;
 use std::ops::Range;
 use std::path::{Path, PathBuf};
@@ -3053,13 +3053,12 @@ impl CodeReviewView {
             });
 
             let local_code_view = ctx.add_typed_action_view(|ctx| {
-                let local_code_view =
-                    LocalCodeEditorView::new(code_editor_view, None, false, None, ctx);
+                
                 // Deleted files have no file backing — no FileModel, no GlobalBufferModel.
                 // file_id() will be None for these editors; no downstream code in code_review
                 // relies on file_id for deleted entries (save/conflict flows early-return on None).
                 // Content is populated via reset_with_state in apply_diff_to_code_editor.
-                local_code_view
+                LocalCodeEditorView::new(code_editor_view, None, false, None, ctx)
             });
 
             let comment_line_numbers = self.comment_line_numbers_for_file(&full_file_location, ctx);
@@ -3474,7 +3473,7 @@ impl CodeReviewView {
         }
     }
 
-    fn reposition_comments_in_file(&mut self, diff_mode: &DiffMode, ctx: &mut ViewContext<Self>) {
+    fn reposition_comments_in_file(&mut self, _diff_mode: &DiffMode, ctx: &mut ViewContext<Self>) {
         let Some(model) = &self.active_comment_model else {
             report_error!(anyhow::anyhow!(
                 "Failed to relocate PR comments: CodeReviewView diff state not loaded",

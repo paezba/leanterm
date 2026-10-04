@@ -1242,9 +1242,7 @@ impl DisplayChip {
     }
 
     pub fn should_render(&self, _app: &AppContext) -> bool {
-        match &self.display_chip_kind {
-            _ => true,
-        }
+        true
     }
 
     fn git_branch_chip(

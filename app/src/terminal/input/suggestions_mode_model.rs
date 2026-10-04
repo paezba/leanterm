@@ -6,6 +6,12 @@ pub struct InputSuggestionsModeModel {
     mode: InputSuggestionsMode,
 }
 
+impl Default for InputSuggestionsModeModel {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl InputSuggestionsModeModel {
     pub fn new() -> Self {
         Self {

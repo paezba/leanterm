@@ -2082,9 +2082,7 @@ impl View for CodeView {
     fn render(&self, _app: &AppContext) -> Box<dyn Element> {
         let tab = self.tab_at(self.active_tab_index);
         let body = if let Some(tab) = tab {
-            match self.source {
-                _ => ChildView::new(&tab.editor_view).finish(),
-            }
+            ChildView::new(&tab.editor_view).finish()
         } else {
             Empty::new().finish()
         };

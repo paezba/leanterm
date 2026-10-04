@@ -28,9 +28,7 @@ pub trait FilterChipRenderer {
 
 impl FilterChipRenderer for QueryFilter {
     fn icon_size_offset(&self) -> f32 {
-        match self {
-            _ => 0.,
-        }
+        0.
     }
 
     fn icon_margin_top(&self) -> f32 {

@@ -885,30 +885,28 @@ impl WorkflowsMoreInfoView {
         wrap_text: WrapText,
         appearance: &Appearance,
     ) -> Box<dyn Element> {
-        match &self.workflow {
-            _ => appearance
-                .ui_builder()
-                .wrappable_text(
-                    self.workflow.as_workflow().name().to_owned(),
-                    matches!(wrap_text, WrapText::Yes),
-                )
-                .with_style(UiComponentStyles {
-                    font_family_id: Some(appearance.ui_font_family()),
-                    font_color: Some(
-                        appearance
-                            .theme()
-                            .main_text_color(appearance.theme().background())
-                            .into(),
-                    ),
-                    font_size: Some(
-                        appearance.monospace_font_size() * TITLE_FONT_SIZE_SCALE_FACTOR,
-                    ),
-                    font_weight: Some(Weight::Bold),
-                    ..Default::default()
-                })
-                .build()
-                .finish(),
-        }
+        appearance
+        .ui_builder()
+        .wrappable_text(
+            self.workflow.as_workflow().name().to_owned(),
+            matches!(wrap_text, WrapText::Yes),
+        )
+        .with_style(UiComponentStyles {
+            font_family_id: Some(appearance.ui_font_family()),
+            font_color: Some(
+                appearance
+                    .theme()
+                    .main_text_color(appearance.theme().background())
+                    .into(),
+            ),
+            font_size: Some(
+                appearance.monospace_font_size() * TITLE_FONT_SIZE_SCALE_FACTOR,
+            ),
+            font_weight: Some(Weight::Bold),
+            ..Default::default()
+        })
+        .build()
+        .finish()
     }
 
     fn render_workflow_source(
