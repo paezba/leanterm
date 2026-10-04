@@ -7,6 +7,8 @@ pub mod referral;
 pub mod team;
 pub mod workspace;
 
+#[cfg(feature = "tui")]
+use tui_onboarding::TuiOnboardingClient;
 use std::ops::Deref;
 use std::path::Path;
 use std::sync::Arc;

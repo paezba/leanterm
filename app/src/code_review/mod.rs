@@ -13,6 +13,7 @@ mod git_repo_models;
 pub mod github_repo_model;
 mod hidden_lines;
 pub mod telemetry_event;
+use crate::terminal::view::TerminalView;
 #[cfg_attr(not(feature = "local_fs"), allow(unused_imports))]
 pub use telemetry_event::CodeReviewTelemetryEvent;
 
@@ -32,8 +33,6 @@ use warpui::{
 
 use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code_review::telemetry_event::CodeReviewPaneEntrypoint;
-use crate::terminal::CLIAgent;
-use crate::terminal::view::TerminalView;
 use crate::util::bindings::CustomAction;
 
 /// Arguments needed to open or toggle the code review panel.

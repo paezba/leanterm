@@ -1,3 +1,5 @@
+use crate::terminal::model::block::SerializedBlockListItem;
+use crate::ai::persisted_workspace::PersistedWorkspace;
 use std::collections::HashMap;
 use std::sync::Arc;
 

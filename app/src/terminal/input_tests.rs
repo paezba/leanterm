@@ -1,3 +1,4 @@
+use crate::ai::persisted_workspace::PersistedWorkspace;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;

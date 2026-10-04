@@ -20,7 +20,6 @@ use super::workspace::{
     AdminEnablementSetting, EnterpriseSecretRegex, UgcCollectionEnablementSetting, Workspace,
     WorkspaceUid,
 };
-use crate::ai::llms::{AvailableLLMs, MODELS_BY_FEATURE_CACHE_KEY, ModelsByFeature};
 use crate::auth::{AuthStateProvider, UserUid};
 use crate::channel::ChannelState;
 use crate::cloud_object::model::persistence::CloudModel;
@@ -32,8 +31,7 @@ use crate::server::server_api::team::TeamClient;
 use crate::server::server_api::workspace::{PurchaseAddonCreditsOutcome, WorkspaceClient};
 #[cfg(test)]
 use crate::server::server_api::{team::MockTeamClient, workspace::MockWorkspaceClient};
-use crate::settings::{
-    AISettings, AISettingsChangedEvent, CodeSettings, CodeSettingsChangedEvent, PrivacySettings,
+use crate::settings::{ CodeSettings, CodeSettingsChangedEvent, PrivacySettings,
 };
 #[cfg(test)]
 use crate::workspaces::workspace::{

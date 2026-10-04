@@ -23,14 +23,9 @@ use warpui::units::IntoLines;
 use warpui::{AppContext, Element, ModelHandle, SingletonEntity, ViewContext};
 
 use super::adapter::{Adapter, Kind, Participant};
-use super::cloud_conversation_continuation::{
-    CloudConversationContinuationUiState, TombstoneCta, conversation_failed_before_task_creation,
-    resolve_cloud_conversation_continuation_ui_state,
-};
 use super::sharer::Sharer;
 use super::sharer::inactivity_modal::InactivityModalEvent;
 use super::viewer::Viewer;
-use super::{ConversationEndedTombstoneEvent, ConversationEndedTombstoneView};
 use crate::auth::UserUid;
 use crate::context_chips::ContextChipKind;
 use crate::drive::sharing::ShareableObject;

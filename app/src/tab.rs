@@ -27,7 +27,6 @@ use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
 use warpui::ui_components::text_input::TextInput;
 use warpui::{AppContext, Entity, ModelContext, SingletonEntity, ViewHandle};
 
-use crate::ai::conversation_status_ui::{STATUS_ELEMENT_PADDING, render_status_element};
 use crate::appearance::Appearance;
 /// Tab module contains structures related to Tabs (such as TabData or TabComponent) that simplify
 /// the rendering and management of tabs in general.

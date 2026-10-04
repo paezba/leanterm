@@ -1,3 +1,4 @@
+use crate::settings::CodeSettings;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
@@ -60,12 +61,7 @@ use crate::pane_group::{
 use crate::quit_warning::UnsavedStateSummary;
 use crate::search::ItemHighlightState;
 use crate::search::files::icon::icon_from_file_path;
-use crate::server::telemetry::CodeContextDestination;
-use crate::settings::CodeSettings;
 use crate::tab::TAB_BAR_BORDER_HEIGHT;
-use crate::terminal::cli_agent::{
-    build_selection_line_range_prompt, build_selection_substring_prompt,
-};
 use crate::terminal::view::CliAgentRouting;
 use crate::ui_components::blended_colors;
 use crate::ui_components::buttons::icon_button;

@@ -47,10 +47,6 @@ use warpui::platform::FullscreenState;
 use warpui::windowing::{MIN_WINDOW_HEIGHT, MIN_WINDOW_WIDTH};
 use warpui::{AppContext, SingletonEntity};
 
-use super::agent::{
-    backfill_conversation_summaries, delete_agent_conversations, read_agent_conversation_metadata,
-    upsert_agent_conversation,
-};
 use super::block_list::{
     delete_ai_conversation, delete_blocks, save_block, update_block_agent_view_visibility,
     upsert_ai_query,
@@ -67,10 +63,8 @@ use super::{
     BlockCompleted, FinishedCommandMetadata, ModelEvent, PersistedData, PersistedDataScope,
     PersistenceScope, StartedCommandMetadata, WriterHandles, schema,
 };
-use crate::ai::mcp::{TemplatableMCPServer, TemplatableMCPServerInstallation};
 use crate::persisted_workspace::EnablementState;
-use crate::app_state::{
-    AIFactPaneSnapshot, AmbientAgentPaneSnapshot, AppState, BranchSnapshot, CodePaneSnapShot,
+use crate::app_state::{ AppState, BranchSnapshot, CodePaneSnapShot,
     CodePaneTabSnapshot, CodeReviewPaneSnapshot, EnvVarCollectionPaneSnapshot, LeafContents,
     LeafSnapshot, LeftPanelSnapshot, NotebookPaneSnapshot, PaneFlex, PaneNodeSnapshot,
     RightPanelSnapshot, SettingsPaneSnapshot, SplitDirection, TabGroupSnapshot, TabSnapshot,
@@ -150,23 +144,6 @@ pub fn initialize(
                     None
                 }
             };
-
-            // Persist any read-time-derived conversation summaries so the
-            // derivation only happens once per pre-`summary`-column row.
-            if let (Some(persisted_data), Some(writer_handles)) =
-                (persisted_data.as_mut(), writer_handles.as_ref())
-            {
-                let backfills = std::mem::take(&mut persisted_data.conversation_summary_backfills);
-                if !backfills.is_empty() {
-                    log::info!("Backfilling {} conversation summaries", backfills.len());
-                    report_if_error!(
-                        writer_handles
-                            .sender
-                            .send(ModelEvent::BackfillConversationSummaries { backfills })
-                            .context("Error requesting conversation summary backfill")
-                    );
-                }
-            }
 
             (persisted_data, writer_handles)
         }
@@ -691,13 +668,13 @@ fn handle_model_event(event: ModelEvent, connection: &mut SqliteConnection) -> a
             server_creation_info,
         } => update_object_after_server_creation(connection, client_id, server_creation_info)
             .context("error executing object creation succeeded callback"),
-        ModelEvent::UpsertCodebaseIndexMetadata { index_metadata } => {
-            save_codebase_index_metadata(connection, *index_metadata)
-                .context("error upserting codebase index metadata")
+        ModelEvent::UpsertWorkspaceMetadata { metadata } => {
+            save_workspace_metadata(connection, *metadata)
+                .context("error upserting workspace metadata")
         }
-        ModelEvent::DeleteCodebaseIndexMetadata { repo_path } => {
-            delete_codebase_index_metadata(connection, &repo_path)
-                .context("error deleting codebase index metadata")
+        ModelEvent::DeleteWorkspaceMetadata { repo_path } => {
+            delete_workspace_metadata(connection, &repo_path)
+                .context("error deleting workspace metadata")
         }
         ModelEvent::UpsertProject { project } => {
             save_project(connection, project).context("error upserting project")
@@ -745,53 +722,9 @@ fn handle_model_event(event: ModelEvent, connection: &mut SqliteConnection) -> a
         ModelEvent::SaveExperiments { experiments } => {
             save_experiments(connection, experiments).context("error saving experiments")
         }
-        ModelEvent::UpsertAIQuery { query } => {
-            upsert_ai_query(connection, query).context("error upserting AI query")
-        }
-        ModelEvent::DeleteAIConversation { conversation_id } => {
-            delete_ai_conversation(connection, &conversation_id)
-                .context("error deleting AI conversation")
-        }
-        ModelEvent::UpdateMultiAgentConversation {
-            conversation_id,
-            updated_tasks,
-            conversation_data,
-        } => upsert_agent_conversation(
-            connection,
-            &conversation_id,
-            &updated_tasks,
-            conversation_data,
-        )
-        .map_err(anyhow::Error::from),
-        ModelEvent::BackfillConversationSummaries { backfills } => {
-            backfill_conversation_summaries(connection, backfills)
-                .map_err(anyhow::Error::from)
-                .context("error backfilling conversation summaries")
-        }
-        ModelEvent::DeleteMultiAgentConversations { conversation_ids } => {
-            delete_agent_conversations(connection, conversation_ids)
-                .map_err(anyhow::Error::from)
-                .context("error deleting multi-agent conversation")
-        }
         ModelEvent::UpsertCurrentUserInformation { user_information } => {
             upsert_current_user_information(connection, user_information)
                 .context("error upserting user information")
-        }
-        ModelEvent::UpsertMCPServerEnvironmentVariables {
-            mcp_server_uuid,
-            environment_variables,
-        } => upsert_mcp_server_environment_variables(
-            connection,
-            mcp_server_uuid,
-            environment_variables,
-        )
-        .context("error upserting mcp server mcp_environment variables"),
-        ModelEvent::UpsertProjectRules { project_rule_paths } => {
-            upsert_project_rules(connection, project_rule_paths)
-                .context("error upserting project rules")
-        }
-        ModelEvent::DeleteProjectRules { path } => {
-            delete_project_rules(connection, path).context("error deleting project rules")
         }
         ModelEvent::AddIgnoredSuggestion {
             suggestion,
@@ -803,38 +736,12 @@ fn handle_model_event(event: ModelEvent, connection: &mut SqliteConnection) -> a
             suggestion_type,
         } => remove_ignored_suggestion(connection, suggestion, suggestion_type)
             .context("error removing ignored suggestion"),
-        ModelEvent::UpsertMCPServerInstallation {
-            mcp_server_installation,
-        } => upsert_mcp_server_installation(connection, mcp_server_installation),
-        ModelEvent::DeleteMCPServerInstallations { installation_uuids } => {
-            delete_mcp_server_installations(connection, installation_uuids)
-        }
-        ModelEvent::DeleteMCPServerInstallationsByTemplateUuid { template_uuid } => {
-            delete_mcp_server_installations_by_template_uuid(connection, template_uuid)
-        }
-        ModelEvent::UpdateMCPInstallationRunning {
-            installation_uuid,
-            running,
-        } => update_mcp_server_running(connection, installation_uuid, running)
-            .context("Error updating running field for MCP installation"),
         ModelEvent::UpsertWorkspaceLanguageServer {
             workspace_path,
             lsp_type,
             enabled,
         } => upsert_workspace_language_server(connection, &workspace_path, lsp_type, enabled)
             .context("error upserting workspace language server"),
-        ModelEvent::UpdateBlockAgentViewVisibility {
-            block_id,
-            agent_view_visibility,
-        } => update_block_agent_view_visibility(connection, &block_id, &agent_view_visibility)
-            .context("error updating block agent view visibility"),
-        ModelEvent::SaveAIDocumentContent {
-            document_id,
-            content,
-            version,
-            title,
-        } => save_ai_document_content(connection, &document_id, &content, version, &title)
-            .context("error saving AI document content"),
     }
 }
 
@@ -1163,21 +1070,6 @@ fn save_app_state(conn: &mut SqliteConnection, app_state: &AppState) -> Result<(
             .values(new_app)
             .execute(conn)?;
 
-        // Save active MCP servers
-        let active_mcp_servers: Vec<NewActiveMCPServer> = app_state
-            .running_mcp_servers
-            .iter()
-            .map(|uuid| NewActiveMCPServer {
-                mcp_server_uuid: uuid.to_string(),
-            })
-            .collect();
-
-        if !active_mcp_servers.is_empty() {
-            diesel::insert_into(schema::active_mcp_servers::dsl::active_mcp_servers)
-                .values(active_mcp_servers)
-                .execute(conn)?;
-        }
-
         Ok(())
     })?;
     Ok(())
@@ -1199,15 +1091,8 @@ fn save_pane_state(
         LeafContents::Code(_) => CODE_PANE_KIND,
         LeafContents::Workflow(_) => WORKFLOW_PANE_KIND,
         LeafContents::Settings(_) => SETTINGS_PANE_KIND,
-        LeafContents::AIFact(_) => AI_FACT_PANE_KIND,
         LeafContents::CodeReview(_) => CODE_REVIEW_PANE_KIND,
-        LeafContents::AmbientAgent(_) => AMBIENT_AGENT_PANE_KIND,
-        LeafContents::ExecutionProfileEditor | LeafContents::CustomRouterEditor => {
-            EXECUTION_PROFILE_EDITOR_PANE_KIND
-        }
-        LeafContents::GetStarted => GET_STARTED_PANE_KIND,
-        LeafContents::AIDocument(_) => AI_DOCUMENT_PANE_KIND,
-        LeafContents::EnvironmentManagement(_) | LeafContents::NetworkLog => {
+        LeafContents::NetworkLog => {
             // These pane types are filtered out before this function is
             // called; see `LeafContents::is_persisted` and the skip in
             // `save_app_state`. Reaching this arm would mean a `pane_nodes`
@@ -1234,17 +1119,6 @@ fn save_pane_state(
 
     match &snapshot.contents {
         LeafContents::Terminal(terminal_snapshot) => {
-            let conversation_ids = if terminal_snapshot.conversation_ids_to_restore.is_empty() {
-                None
-            } else {
-                let ids: Vec<String> = terminal_snapshot
-                    .conversation_ids_to_restore
-                    .iter()
-                    .map(|id| id.to_string())
-                    .collect();
-                serde_json::to_string(&ids).ok()
-            };
-
             let terminal = model::NewTerminalPane {
                 id,
                 uuid: terminal_snapshot.uuid.clone(),
@@ -1254,19 +1128,6 @@ fn save_pane_state(
                     .shell_launch_data
                     .as_ref()
                     .and_then(|shell| serde_json::to_string(shell).ok()),
-                input_config: terminal_snapshot
-                    .input_config
-                    .as_ref()
-                    .and_then(|config| serde_json::to_string(config).ok()),
-                llm_model_override: terminal_snapshot.llm_model_override.clone(),
-                active_profile_id: terminal_snapshot
-                    .active_profile_id
-                    .as_ref()
-                    .and_then(|sync_id| serde_json::to_string(sync_id).ok()),
-                conversation_ids,
-                active_conversation_id: terminal_snapshot
-                    .active_conversation_id
-                    .map(|id| id.to_string()),
             };
 
             diesel::insert_into(schema::terminal_panes::dsl::terminal_panes)
@@ -1359,9 +1220,6 @@ fn save_pane_state(
                 .values(workflow)
                 .execute(conn)?;
         }
-        LeafContents::EnvironmentManagement(_) => {
-            // Unreachable: filtered by `is_persisted` in `save_app_state`.
-        }
         LeafContents::Settings(settings_pane_snapshot) => {
             let current_page = match settings_pane_snapshot {
                 SettingsPaneSnapshot::Local { current_page, .. } => current_page,
@@ -1374,13 +1232,6 @@ fn save_pane_state(
 
             diesel::insert_into(schema::settings_panes::dsl::settings_panes)
                 .values(settings_pane)
-                .execute(conn)?;
-        }
-        LeafContents::AIFact(_ai_fact_pane_snapshot) => {
-            let ai_fact = model::NewAIFactPane { id };
-
-            diesel::insert_into(schema::ai_memory_panes::dsl::ai_memory_panes)
-                .values(ai_fact)
                 .execute(conn)?;
         }
         LeafContents::CodeReview(code_review_pane_snapshot) => {
@@ -1398,68 +1249,10 @@ fn save_pane_state(
                 .values(code_review)
                 .execute(conn)?;
         }
-        LeafContents::ExecutionProfileEditor | LeafContents::CustomRouterEditor => {
-            // Editor panes: no pane-specific data to save.
-        }
-        LeafContents::GetStarted => {
-            // Stateless
-        }
-        LeafContents::AIDocument(ai_document_snapshot) => match ai_document_snapshot {
-            crate::app_state::AIDocumentPaneSnapshot::Local {
-                document_id,
-                version,
-                content,
-                title,
-            } => {
-                let ai_document_pane = model::NewAIDocumentPane {
-                    id,
-                    document_id: document_id.clone(),
-                    version: *version,
-                    content: content.clone(),
-                    title: title.clone(),
-                };
-
-                diesel::insert_into(schema::ai_document_panes::dsl::ai_document_panes)
-                    .values(ai_document_pane)
-                    .execute(conn)?;
-            }
-        },
-        LeafContents::AmbientAgent(snapshot) => {
-            let ambient_agent_pane = model::NewAmbientAgentPane {
-                id,
-                uuid: snapshot.uuid.clone(),
-                task_id: snapshot.task_id.map(|t| t.to_string()),
-            };
-
-            diesel::insert_into(schema::ambient_agent_panes::dsl::ambient_agent_panes)
-                .values(ambient_agent_pane)
-                .execute(conn)?;
-        }
         LeafContents::NetworkLog => {
             // Unreachable: filtered by `is_persisted` in `save_app_state`.
         }
     }
-
-    Ok(())
-}
-
-/// Update the content, version, and title of an AI document pane in SQLite.
-fn save_ai_document_content(
-    conn: &mut SqliteConnection,
-    doc_id: &str,
-    doc_content: &str,
-    doc_version: i32,
-    doc_title: &str,
-) -> Result<()> {
-    use schema::ai_document_panes::dsl::*;
-
-    diesel::update(ai_document_panes.filter(document_id.eq(doc_id)))
-        .set((
-            content.eq(Some(doc_content)),
-            version.eq(doc_version),
-            title.eq(Some(doc_title)),
-        ))
-        .execute(conn)?;
 
     Ok(())
 }
@@ -1507,7 +1300,7 @@ fn decode_path(bytes: Vec<u8>) -> PathBuf {
     }
 }
 
-fn save_codebase_index_metadata(
+fn save_workspace_metadata(
     conn: &mut SqliteConnection,
     index_metadata: ai::workspace::WorkspaceMetadata,
 ) -> Result<()> {
@@ -1525,7 +1318,7 @@ fn save_codebase_index_metadata(
     Ok(())
 }
 
-fn get_all_codebase_index_metadata(
+fn get_all_workspace_metadata(
     conn: &mut SqliteConnection,
 ) -> Result<Vec<ai::workspace::WorkspaceMetadata>, diesel::result::Error> {
     use schema::workspace_metadata::dsl::*;
@@ -1618,7 +1411,7 @@ fn upsert_workspace_language_server(
     Ok(())
 }
 
-fn delete_codebase_index_metadata(conn: &mut SqliteConnection, index_path: &Path) -> Result<()> {
+fn delete_workspace_metadata(conn: &mut SqliteConnection, index_path: &Path) -> Result<()> {
     use schema::workspace_metadata::dsl::*;
 
     let target_path = index_path.to_string_lossy().to_string();
@@ -1657,61 +1450,6 @@ fn delete_project(conn: &mut SqliteConnection, project_path: &str) -> Result<()>
     Ok(())
 }
 
-fn get_all_project_rules(
-    conn: &mut SqliteConnection,
-) -> Result<Vec<ProjectRulePath>, diesel::result::Error> {
-    use schema::project_rules::dsl::*;
-
-    Ok(project_rules
-        .load_iter::<ProjectRules, DefaultLoadingMode>(conn)?
-        .filter_map(|item| match item {
-            Ok(rule) => Some(ProjectRulePath {
-                path: PathBuf::from(rule.path),
-                project_root: PathBuf::from(rule.project_root),
-            }),
-            Err(_) => None,
-        })
-        .collect_vec())
-}
-
-fn upsert_project_rules(
-    conn: &mut SqliteConnection,
-    new_project_rules: Vec<ProjectRulePath>,
-) -> Result<()> {
-    use schema::project_rules::dsl::*;
-
-    // SQLite doesn't support batch upserts, so we need to iterate
-    for rule in new_project_rules {
-        let new_rule = model::NewProjectRules {
-            path: rule.path.to_string_lossy().to_string(),
-            project_root: rule.project_root.to_string_lossy().to_string(),
-        };
-
-        diesel::insert_into(project_rules)
-            .values(&new_rule)
-            .on_conflict(path)
-            .do_update()
-            .set(&new_rule)
-            .execute(conn)?;
-    }
-
-    Ok(())
-}
-
-fn delete_project_rules(conn: &mut SqliteConnection, rules_paths: Vec<PathBuf>) -> Result<()> {
-    use schema::project_rules::dsl::*;
-
-    // Convert PathBuf to String for comparison
-    let path_strings: Vec<String> = rules_paths
-        .into_iter()
-        .map(|p| p.to_string_lossy().to_string())
-        .collect();
-
-    diesel::delete(project_rules.filter(path.eq_any(path_strings))).execute(conn)?;
-
-    Ok(())
-}
-
 fn get_all_ignored_suggestions(
     conn: &mut SqliteConnection,
 ) -> Result<Vec<(String, SuggestionType)>, diesel::result::Error> {
@@ -1726,140 +1464,6 @@ fn get_all_ignored_suggestions(
                 .map(|parsed_suggestion_type| (suggestion_text, parsed_suggestion_type))
         })
         .collect())
-}
-
-fn get_all_mcp_server_installations(
-    conn: &mut SqliteConnection,
-) -> Result<HashMap<Uuid, TemplatableMCPServerInstallation>, diesel::result::Error> {
-    use schema::mcp_server_installations::dsl::*;
-
-    let rows: Vec<(String, String, String)> = mcp_server_installations
-        .select((id, templatable_mcp_server, variable_values))
-        .load::<(String, String, String)>(conn)?;
-    let rows_len = rows.len();
-
-    let result: HashMap<Uuid, TemplatableMCPServerInstallation> = rows
-        .into_iter()
-        .filter_map(|(id_str, templ_mcp, vars_json)| {
-            let uuid = uuid::Uuid::parse_str(&id_str).ok()?;
-
-            // Parse variable_values JSON into a flat HashMap<String, String>
-            let vars: HashMap<String, VariableValue> =
-                match serde_json::from_str::<HashMap<String, VariableValue>>(&vars_json) {
-                    Ok(map) => map,
-                    Err(_) => return None,
-                };
-
-            let mcp_server = match serde_json::from_str::<TemplatableMCPServer>(&templ_mcp) {
-                Ok(map) => map,
-                Err(_) => return None,
-            };
-
-            Some((
-                uuid,
-                TemplatableMCPServerInstallation::new(uuid, mcp_server, vars),
-            ))
-        })
-        .collect();
-
-    let improper_rows = rows_len - result.len();
-    if improper_rows > 0 {
-        log::warn!(
-            "Skipping {improper_rows} rows from mcp_server_installations table due to malformation."
-        );
-    }
-
-    Ok(result)
-}
-
-fn upsert_mcp_server_installation(
-    conn: &mut SqliteConnection,
-    mcp_server_installation: TemplatableMCPServerInstallation,
-) -> Result<()> {
-    use schema::mcp_server_installations::dsl::*;
-
-    let new_installation = model::NewMCPServerInstallation {
-        id: mcp_server_installation.uuid().to_string(),
-        templatable_mcp_server: serde_json::to_string(
-            mcp_server_installation.templatable_mcp_server(),
-        )?,
-        // TODO(pei): Change this to be the timestamp of the Cloud object
-        template_version_ts: Utc::now().naive_utc(),
-        variable_values: serde_json::to_string(mcp_server_installation.variable_values())?,
-        restore_running: false,
-        last_modified_at: Utc::now().naive_utc(),
-    };
-
-    conn.transaction::<_, Error, _>(|conn| {
-        diesel::insert_into(mcp_server_installations)
-            .values(&new_installation)
-            .on_conflict(id)
-            .do_update()
-            .set(&new_installation)
-            .execute(conn)?;
-
-        Ok(())
-    })?;
-
-    Ok(())
-}
-
-fn delete_mcp_server_installations(conn: &mut SqliteConnection, uuids: Vec<Uuid>) -> Result<()> {
-    use schema::mcp_server_installations::dsl::*;
-
-    let id_strings: Vec<String> = uuids.iter().map(|uuid| uuid.to_string()).collect();
-    diesel::delete(mcp_server_installations.filter(id.eq_any(id_strings))).execute(conn)?;
-
-    Ok(())
-}
-
-fn delete_mcp_server_installations_by_template_uuid(
-    conn: &mut SqliteConnection,
-    target_template_uuid: Uuid,
-) -> Result<()> {
-    use schema::mcp_server_installations::dsl::*;
-
-    diesel::delete(mcp_server_installations.filter(
-        json_extract(templatable_mcp_server, "$.uuid").eq(target_template_uuid.to_string()),
-    ))
-    .execute(conn)?;
-
-    Ok(())
-}
-
-fn get_mcp_servers_to_restore(
-    conn: &mut SqliteConnection,
-) -> Result<Vec<Uuid>, diesel::result::Error> {
-    use schema::mcp_server_installations::dsl::*;
-
-    let rows = mcp_server_installations
-        .filter(restore_running.eq(true))
-        .select(id)
-        .load::<String>(conn)?;
-
-    let installation_uuid = rows
-        .iter()
-        .filter_map(|uuid| uuid::Uuid::parse_str(uuid).ok())
-        .collect();
-
-    Ok(installation_uuid)
-}
-
-fn update_mcp_server_running(
-    conn: &mut SqliteConnection,
-    installation_uuid: Uuid,
-    running: bool,
-) -> Result<(), diesel::result::Error> {
-    use schema::mcp_server_installations::dsl::*;
-
-    diesel::update(mcp_server_installations.find(installation_uuid.to_string()))
-        .set((
-            restore_running.eq(running),
-            last_modified_at.eq(Utc::now().naive_utc()),
-        ))
-        .execute(conn)?;
-
-    Ok(())
 }
 
 fn add_ignored_suggestion(
@@ -2173,27 +1777,6 @@ fn upsert_generic_string_objects(
     upsert_generic_string_object_rows(conn, objects)
 }
 
-/// Parse conversation IDs from JSON string.
-fn parse_conversation_ids(ids_json: &Option<String>) -> Vec<AIConversationId> {
-    let Some(ids_str) = ids_json.as_ref() else {
-        return vec![];
-    };
-
-    let Ok(id_strings) = serde_json::from_str::<Vec<String>>(ids_str) else {
-        log::warn!("Failed to deserialize conversation IDs from column");
-        return vec![];
-    };
-
-    id_strings
-        .into_iter()
-        .map(AIConversationId::try_from)
-        .collect::<Result<Vec<_>, _>>()
-        .unwrap_or_else(|_| {
-            log::warn!("Failed to parse conversation IDs");
-            vec![]
-        })
-}
-
 fn read_root_node(conn: &mut SqliteConnection, tab_id_val: i32) -> Result<PaneNodeSnapshot> {
     use schema::pane_nodes::dsl::*;
 
@@ -2222,32 +1805,12 @@ fn read_node(conn: &mut SqliteConnection, node: model::PaneNode) -> Result<PaneN
                     let shell_launch_data: Option<ShellLaunchData> = terminal_pane
                         .shell_launch_data
                         .and_then(|shell_str| serde_json::from_str(&shell_str).ok());
-                    let input_config = terminal_pane
-                        .input_config
-                        .and_then(|config_str| serde_json::from_str(&config_str).ok());
-                    let active_profile_id = terminal_pane
-                        .active_profile_id
-                        .and_then(|profile_str| serde_json::from_str(&profile_str).ok());
-                    // Don't provide a fallback here - let the higher-level code with AppContext handle it
-
-                    let conversation_ids_to_restore =
-                        parse_conversation_ids(&terminal_pane.conversation_ids);
-
-                    let active_conversation_id = terminal_pane
-                        .active_conversation_id
-                        .and_then(|id_str| AIConversationId::try_from(id_str).ok());
-
                     LeafContents::Terminal(TerminalPaneSnapshot {
                         uuid: terminal_pane.uuid,
                         cwd: terminal_pane.cwd,
                         is_active: terminal_pane.is_active,
                         is_read_only: false,
                         shell_launch_data,
-                        input_config,
-                        llm_model_override: terminal_pane.llm_model_override,
-                        active_profile_id,
-                        conversation_ids_to_restore,
-                        active_conversation_id,
                     })
                 }
                 NOTEBOOK_PANE_KIND => {
@@ -2362,7 +1925,6 @@ fn read_node(conn: &mut SqliteConnection, node: model::PaneNode) -> Result<PaneN
                         search_query: None,
                     })
                 }
-                AI_FACT_PANE_KIND => LeafContents::AIFact(AIFactPaneSnapshot::Personal),
                 MCP_SERVER_PANE_KIND => {
                     // Legacy MCP server panes are no longer supported.
                     bail!("Legacy MCP server panes are no longer supported")
@@ -2387,35 +1949,6 @@ fn read_node(conn: &mut SqliteConnection, node: model::PaneNode) -> Result<PaneN
                             })
                         }
                     }
-                }
-                GET_STARTED_PANE_KIND => LeafContents::GetStarted,
-                AI_DOCUMENT_PANE_KIND => {
-                    let ai_document_pane = schema::ai_document_panes::dsl::ai_document_panes
-                        .find(node.id)
-                        .select(model::AIDocumentPane::as_select())
-                        .first(conn)?;
-
-                    LeafContents::AIDocument(crate::app_state::AIDocumentPaneSnapshot::Local {
-                        document_id: ai_document_pane.document_id,
-                        version: ai_document_pane.version,
-                        content: ai_document_pane.content,
-                        title: ai_document_pane.title,
-                    })
-                }
-                AMBIENT_AGENT_PANE_KIND => {
-                    let pane = schema::ambient_agent_panes::dsl::ambient_agent_panes
-                        .find(node.id)
-                        .select(model::AmbientAgentPane::as_select())
-                        .first(conn)?;
-
-                    let task_id = pane
-                        .task_id
-                        .and_then(|id_str| id_str.parse::<AmbientAgentTaskId>().ok());
-
-                    LeafContents::AmbientAgent(AmbientAgentPaneSnapshot {
-                        uuid: pane.uuid,
-                        task_id,
-                    })
                 }
                 other => bail!("Unrecognized pane kind: {other}"),
             };
@@ -2497,17 +2030,10 @@ fn read_sqlite_data(
             time_of_next_force_object_refresh: None,
             object_actions: Default::default(),
             experiments: Default::default(),
-            ai_queries: Default::default(),
-            nld_prompts: Default::default(),
-            codebase_indices: get_all_codebase_index_metadata(conn)?,
+            workspace_metadata: get_all_workspace_metadata(conn)?,
             workspace_language_servers: Default::default(),
-            multi_agent_conversations: Default::default(),
             projects: Default::default(),
-            project_rules: Default::default(),
             ignored_suggestions: Default::default(),
-            mcp_server_installations: Default::default(),
-            mcp_servers_to_restore: Default::default(),
-            conversation_summary_backfills: Default::default(),
         });
     }
 
@@ -2889,29 +2415,10 @@ fn read_sqlite_data(
 
     let time_of_next_force_object_refresh = read_time_of_next_force_object_refresh(conn)?;
 
-    // Seed up-arrow prompt history and (optionally) NLD prompt-history matching from a single
-    // SQLite read, deriving both from the same in-memory query vector instead of reading twice.
-    // TODO: Once up-arrow prompt history supports pagination, drop the 100-row up-arrow cap and
-    // serve both up-arrow and NLD matching from one consolidated query list.
-    let recent_ai_queries = read_recent_ai_queries(conn)?;
-    let nld_prompts = if FeatureFlag::NldPromptHistoryMatch.is_enabled() {
-        process_ai_queries_for_nld_history_match(&recent_ai_queries)
-    } else {
-        Vec::new()
-    };
-    let ai_queries = process_ai_queries_for_uparrow_prompt(recent_ai_queries);
-
-    let codebase_indices = get_all_codebase_index_metadata(conn)?;
+    let workspace_metadata = get_all_workspace_metadata(conn)?;
     let workspace_language_servers = get_all_workspace_language_servers_by_workspace(conn)?;
-    // Load conversation metadata only; task payloads are hydrated lazily
-    // per-conversation via `read_agent_conversation_by_id`.
-    let (multi_agent_conversations, conversation_summary_backfills) =
-        read_agent_conversation_metadata(conn)?;
     let projects = get_all_projects(conn)?;
-    let project_rules = get_all_project_rules(conn)?;
     let ignored_suggestions = get_all_ignored_suggestions(conn)?;
-    let mcp_server_installations = get_all_mcp_server_installations(conn)?;
-    let mcp_servers_to_restore = get_mcp_servers_to_restore(conn)?;
 
     Ok(PersistedData {
         app_state,
@@ -2923,17 +2430,10 @@ fn read_sqlite_data(
         time_of_next_force_object_refresh,
         object_actions,
         experiments: server_experiments,
-        ai_queries,
-        nld_prompts,
-        codebase_indices,
+        workspace_metadata,
         workspace_language_servers,
-        multi_agent_conversations,
         projects,
-        project_rules,
         ignored_suggestions,
-        mcp_server_installations,
-        mcp_servers_to_restore,
-        conversation_summary_backfills,
     })
 }
 
@@ -3087,36 +2587,6 @@ fn upsert_current_user_information(
             .execute(conn)?;
         Ok(())
     })
-}
-
-fn upsert_mcp_server_environment_variables(
-    conn: &mut SqliteConnection,
-    mcp_server_uuid: Vec<u8>,
-    environment_variables: String,
-) -> Result<(), Error> {
-    conn.transaction::<(), Error, _>(|conn| {
-        let env_vars = MCPEnvironmentVariables {
-            mcp_server_uuid,
-            environment_variables,
-        };
-        diesel::insert_into(schema::mcp_environment_variables::dsl::mcp_environment_variables)
-            .values(&env_vars)
-            .on_conflict(schema::mcp_environment_variables::dsl::mcp_server_uuid)
-            .do_update()
-            .set(&env_vars)
-            .execute(conn)?;
-        Ok(())
-    })
-}
-
-fn load_active_mcp_servers(conn: &mut SqliteConnection) -> Result<Vec<uuid::Uuid>, Error> {
-    use schema::active_mcp_servers::dsl::*;
-
-    Ok(active_mcp_servers
-        .load::<ActiveMCPServer>(conn)?
-        .into_iter()
-        .filter_map(|active_server| uuid::Uuid::parse_str(&active_server.mcp_server_uuid).ok())
-        .collect())
 }
 
 /// Converts the ObjectAction type into a uniform type that can be inserted into

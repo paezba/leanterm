@@ -12,13 +12,8 @@ pub use warp_graphql::billing::{
 
 use super::gql_convert::{ToAgentModeCommandExecutionPredicates, ToPathBufs};
 use super::team::{DiscoverableTeam, MembershipRole, Team};
-use crate::ai::execution_profiles::{
-    ActionPermission, ComputerUsePermission, WriteToPtyPermission,
-};
-use crate::ai::llms::{LLMModelHost, LLMProvider, ModelsByFeature};
 use crate::auth::UserUid;
 use crate::server::ids::ServerId;
-use crate::settings::AgentModeCommandExecutionPredicate;
 
 #[derive(Clone, Copy, Hash, Debug, PartialEq, Eq)]
 pub struct WorkspaceUid(ServerId);

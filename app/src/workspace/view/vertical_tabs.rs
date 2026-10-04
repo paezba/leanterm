@@ -1,5 +1,6 @@
 pub mod telemetry;
 
+use crate::terminal::{ TerminalView};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -36,7 +37,6 @@ use warpui::ui_components::text_input::TextInput;
 use warpui::{AppContext, EntityId, SingletonEntity, ViewHandle, WindowId};
 
 use super::{render_group_member_icon_collage, select_unique_pane_kinds};
-use crate::ai::agent::conversation::{ConversationStatus, StatusColorStyle};
 use crate::appearance::Appearance;
 use crate::cloud_object::CloudObjectLookup as _;
 use crate::cloud_object::model::generic_string_model::StringModel;
@@ -58,7 +58,6 @@ use crate::tab::{
 };
 use crate::terminal::session_settings::SessionSettings;
 use crate::terminal::view::TerminalViewState;
-use crate::terminal::{CLIAgent, TerminalView};
 use crate::themes::theme::Fill as ThemeFill;
 use crate::ui_components::buttons::combo_inner_button;
 use crate::ui_components::icon_with_status::{IconWithStatusVariant, render_icon_with_status};
@@ -4438,7 +4437,6 @@ impl PaneGroup {
                 self.downcast_pane_by_id::<CodePane>(pane_id)
                     .expect("IPaneType::Code must correspond to a CodePane"),
             ),
-            IPaneType::CodeDiff => TypedPane::CodeDiff,
             IPaneType::File => TypedPane::File,
             IPaneType::Notebook => {
                 let is_plan = self
@@ -4459,14 +4457,7 @@ impl PaneGroup {
             }
             IPaneType::Settings => TypedPane::Settings,
             IPaneType::EnvVarCollection => TypedPane::EnvVarCollection,
-            IPaneType::EnvironmentManagement => TypedPane::EnvironmentManagement,
-            IPaneType::AIFact => TypedPane::AIFact,
-            IPaneType::AIDocument => TypedPane::AIDocument,
-            IPaneType::ExecutionProfileEditor => TypedPane::ExecutionProfileEditor,
-            IPaneType::CustomRouterEditor
-            | IPaneType::GetStarted
-            | IPaneType::NetworkLog
-            | IPaneType::DeferredPlaceholder => TypedPane::Other,
+            IPaneType::NetworkLog | IPaneType::DeferredPlaceholder => TypedPane::Other,
             #[cfg(test)]
             IPaneType::Dummy => TypedPane::Other,
         }

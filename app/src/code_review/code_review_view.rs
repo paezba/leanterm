@@ -1,3 +1,5 @@
+use crate::settings::{ CodeSettings};
+use crate::terminal::view::{CliAgentRouting, TerminalAction, TerminalView};
 use std::collections::{HashMap, HashSet};
 use std::mem;
 use std::ops::Range;
@@ -62,9 +64,6 @@ use super::git_dialog::{GitDialog, GitDialogEvent, GitDialogKind};
 use super::{GlobalCodeReviewEvent, GlobalCodeReviewModel};
 #[cfg(feature = "local_fs")]
 use crate::TelemetryEvent;
-use crate::ai::agent::{
-    AIAgentAttachment, AgentReviewCommentBatch, CurrentHead, DiffBase, DiffSetHunk,
-};
 use crate::appearance::Appearance;
 use crate::code::ShowCommentEditorProvider;
 #[cfg(not(target_family = "wasm"))]
@@ -119,13 +118,8 @@ use crate::quit_warning::UnsavedStateSummary;
 use crate::send_telemetry_from_ctx;
 #[cfg(feature = "local_fs")]
 use crate::server::telemetry::CodePanelsFileOpenEntrypoint;
-use crate::settings::{AISettings, CodeSettings};
 use crate::settings_view::SettingsSection;
-use crate::terminal::cli_agent::{
-    build_selection_line_range_prompt, build_selection_substring_prompt,
-};
 use crate::terminal::input::MenuPositioning;
-use crate::terminal::view::{CliAgentRouting, InitProjectModel, TerminalAction, TerminalView};
 use crate::themes::theme::WarpTheme;
 use crate::ui_components::blended_colors::{neutral_2, neutral_3};
 use crate::ui_components::buttons::icon_button_with_color;

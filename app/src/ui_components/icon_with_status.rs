@@ -1,3 +1,4 @@
+use crate::themes::theme::Fill as ThemeFill;
 use pathfinder_color::ColorU;
 use pathfinder_geometry::vector::vec2f;
 use warp_core::ui::icons::Icon as WarpIcon;
@@ -8,9 +9,6 @@ use warpui::elements::{
     ParentElement, ParentOffsetBounds, Radius, Stack,
 };
 
-use crate::ai::agent::conversation::{ConversationStatus, StatusColorStyle};
-use crate::terminal::CLIAgent;
-use crate::themes::theme::Fill as ThemeFill;
 
 /// Background color used for the Oz agent's circle when it is running in an ambient (cloud)
 /// run. Matches the Oz brand purple used in the cloud-mode design spec.

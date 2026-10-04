@@ -1,3 +1,4 @@
+use crate::terminal::input::SET_INPUT_MODE_TERMINAL_ACTION_NAME;
 use std::sync::Arc;
 
 use parking_lot::FairMutex;
@@ -13,15 +14,7 @@ use warpui::{
 use super::buffer_model::InputBufferModel;
 use super::message_bar::common::render_terminal_message;
 use super::message_bar::{Message, MessageItem, MessageProvider, truncated_command_for_block};
-use crate::ai::blocklist::{
-    BlocklistAIContextEvent, BlocklistAIContextModel, BlocklistAIInputModel,
-};
-use crate::ai::pricing_promotion::{
-    PricingPromotionState, PricingPromotionStateEvent, PricingPromotionSurface,
-};
 use crate::appearance::Appearance;
-use crate::search::slash_command_menu::static_commands::commands;
-use crate::terminal::input::SET_INPUT_MODE_TERMINAL_ACTION_NAME;
 use crate::terminal::input::inline_history::{AcceptHistoryItem, HistoryTab};
 use crate::terminal::input::inline_menu::{InlineMenuModel, InlineMenuModelEvent};
 use crate::terminal::input::message_bar::MessageTransformer;

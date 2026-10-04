@@ -1,3 +1,4 @@
+use crate::ui_components::blended_colors;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
@@ -36,8 +37,6 @@ use crate::persisted_workspace::{
     LSPEnablementResultForFile, LspRepoStatus, PersistedWorkspace,
 };
 use crate::code::lsp_telemetry::{LspControlActionType, LspEnablementSource, LspTelemetryEvent};
-use crate::settings::AISettings;
-use crate::ui_components::blended_colors;
 #[cfg(feature = "local_fs")]
 use crate::user_config::is_tab_config_toml;
 use crate::view_components::action_button::{

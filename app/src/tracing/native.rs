@@ -68,7 +68,6 @@ use url::{Host, Url};
 use warpui::AppContext;
 
 use super::Initialization;
-use super::cloud_agent_auth::{self, AuthContext};
 use crate::channel::ChannelState;
 use crate::tracing::install_no_subscriber;
 

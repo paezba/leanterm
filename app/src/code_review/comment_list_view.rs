@@ -1,3 +1,4 @@
+use crate::ui_components::icons::Icon;
 use std::borrow::Cow;
 
 use indexmap::IndexMap;
@@ -35,7 +36,6 @@ use warpui::{
     ViewHandle, WeakViewHandle,
 };
 
-use crate::ai::request_usage_model::{AIRequestUsageModel, AIRequestUsageModelEvent};
 use crate::appearance::Appearance;
 use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code::editor::comment_editor::DEFAULT_COMMENT_MAX_WIDTH;
@@ -50,8 +50,6 @@ use crate::code_review::telemetry_event::CodeReviewTelemetryEvent;
 use crate::menu::{Event, Menu, MenuItem, MenuItemFields};
 use crate::notebooks::editor::view::{EditorViewEvent, RichTextEditorView};
 use crate::send_telemetry_from_ctx;
-use crate::settings::AISettings;
-use crate::ui_components::icons::Icon;
 use crate::view_components::action_button::{
     ActionButton, ActionButtonTheme, ButtonSize, KeystrokeSource, NakedTheme, PrimaryTheme,
     SecondaryTheme,

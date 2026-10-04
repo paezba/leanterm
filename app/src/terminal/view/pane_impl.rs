@@ -18,9 +18,6 @@ use warpui::{
 
 use super::shared_session::adapter::Kind as SharedSessionKind;
 use super::{Event, PaneConfiguration, TerminalAction, TerminalViewState, Viewer};
-use crate::ai::agent::conversation::{
-    AIConversation, ConversationStatus, ServerAIConversationMetadata,
-};
 use crate::appearance::Appearance;
 use crate::drive::sharing::ShareableObject;
 use crate::features::FeatureFlag;

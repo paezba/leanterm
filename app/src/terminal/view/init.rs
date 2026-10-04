@@ -1,3 +1,4 @@
+use crate::server::telemetry::{ ToggleBlockFilterSource};
 use warp_core::context_flag::ContextFlag;
 use warpui::AppContext;
 use warpui::keymap::{
@@ -10,12 +11,8 @@ use super::{
     AgentOnboardingVersion, AskAISource, ContextMenuAction, OnboardingIntention, OnboardingVersion,
     TerminalAction,
 };
-use crate::ai::blocklist::agent_view::{
-    AgentViewEntryOrigin, ENTER_AGENT_VIEW_NEW_CONVERSATION_KEYSTROKE,
-};
 use crate::channel::{Channel, ChannelState};
 use crate::features::FeatureFlag;
-use crate::server::telemetry::{InteractionSource, ToggleBlockFilterSource};
 use crate::settings_view::flags;
 use crate::terminal::TerminalView;
 use crate::terminal::input::{

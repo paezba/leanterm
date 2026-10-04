@@ -13,13 +13,12 @@ use super::app_installation_detection::UserAppInstallDetectionSettings;
 use super::cloud_preferences::CloudPreferencesSettings;
 use super::initializer::SettingsInitializer;
 use super::native_preference::NativePreferenceSettings;
-use super::{
-    AISettings, AccessibilitySettings, AliasExpansionSettings, AppEditorSettings,
+use super::{ AccessibilitySettings, AliasExpansionSettings, AppEditorSettings,
     BlockVisibilitySettings, ChangelogSettings, CodeSettings, DebugSettings, EmacsBindingsSettings,
     FontSettings, FontSettingsChangedEvent, GPUSettings, InputBoxType, InputModeSettings,
     InputSettings, LocalControlSettings, PaneSettings, SameLinePromptBlockSettings, ScrollSettings,
     SelectionSettings, SharedObjectLimitBannerSettings, SshSettings, ThemeSettings,
-    TuiAutoupdateSettings, TuiThemeSettings, TuiVoiceSettings, TuiZeroStateSettings,
+    TuiAutoupdateSettings, TuiThemeSettings, TuiZeroStateSettings,
     VimBannerSettings, WarpDrivePrivacySettings,
 };
 use crate::appearance;

@@ -1,3 +1,4 @@
+use crate::ai::persisted_workspace::PersistedWorkspace;
 use std::path::PathBuf;
 use std::sync::Arc;
 

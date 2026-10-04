@@ -1,3 +1,4 @@
+use crate::terminal::model::block::SerializedBlockListItem;
 use std::any::Any;
 use std::sync::Arc;
 
@@ -12,7 +13,6 @@ use super::terminal_manager::BlockSpacing;
 use super::{ShellLaunchState, TerminalManager, TerminalModel, TerminalView};
 use crate::context_chips::prompt_type::PromptType;
 use crate::pane_group::TerminalViewResources;
-use crate::terminal::view::ConversationRestorationInNewPaneType;
 
 pub struct MockTerminalManager {
     model: Arc<FairMutex<TerminalModel>>,
@@ -28,7 +28,6 @@ impl MockTerminalManager {
         shell_state: ShellLaunchState,
         resources: TerminalViewResources,
         restored_blocks: Option<&Vec<SerializedBlockListItem>>,
-        conversation_restoration: Option<ConversationRestorationInNewPaneType>,
         initial_size: Vector2F,
         window_id: WindowId,
         ctx: &mut AppContext,
@@ -74,11 +73,6 @@ impl MockTerminalManager {
                 None,
                 prompt_type,
                 None,
-                // We use conversation restoration to load a view-only cloud conversation
-                // into the web view.
-                conversation_restoration,
-                None, // inactive_pty_reads_rx
-                false,
                 ctx,
             )
         });
@@ -189,7 +183,6 @@ mod testing {
                     },
                     resources,
                     restored_blocks.map(|blocks| blocks.to_vec()).as_ref(),
-                    None,
                     Vector2F::new(7., 10.5),
                     ctx.window_id(),
                     ctx,

@@ -1,3 +1,4 @@
+use crate::settings::{ InputSettings, WarpPromptSeparator};
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash as _, Hasher as _};
 use std::sync::{Arc, Weak};
@@ -30,14 +31,13 @@ use crate::context_chips::display_chip::GitLineChanges;
 use crate::editor::EditorView;
 use crate::features::FeatureFlag;
 use crate::menu::{MenuItem, MenuItemFields};
-use crate::settings::{AISettings, AISettingsChangedEvent, InputSettings, WarpPromptSeparator};
 use crate::terminal::event::BlockType;
 use crate::terminal::model::block::{Block, BlockMetadata};
 use crate::terminal::model::session::{ExecuteCommandOptions, Session, Sessions, SessionsEvent};
 use crate::terminal::model::terminal_model::TerminalModel;
 use crate::terminal::model_events::{ModelEvent, ModelEventDispatcher};
 use crate::terminal::session_settings::{
-    SessionSettings, SessionSettingsChangedEvent, ToolbarChipSelection,
+    SessionSettings, SessionSettingsChangedEvent,
 };
 use crate::terminal::view::{ContextMenuAction, PromptPart, PromptPosition, TerminalAction};
 

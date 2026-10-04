@@ -1,3 +1,4 @@
+use crate::terminal::model::block::SerializedBlockListItem;
 use std::any::Any;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -129,8 +130,6 @@ pub(super) fn create_terminal_model(
     let sizes = compute_block_size(initial_size, &block_spacing, ctx);
 
     let obfuscate_secrets = get_secret_obfuscation_mode(ctx);
-    let is_ai_ugc_telemetry_enabled =
-        should_collect_ai_ugc_telemetry(ctx, PrivacySettings::as_ref(ctx).is_telemetry_enabled);
 
     TerminalModel::new(
         restored_blocks.map(|v| v.as_slice()),
@@ -144,7 +143,6 @@ pub(super) fn create_terminal_model(
         honor_ps1,
         is_inverted,
         obfuscate_secrets,
-        is_ai_ugc_telemetry_enabled,
         startup_directory,
         shell_state,
     )

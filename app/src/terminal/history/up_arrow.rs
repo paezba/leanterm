@@ -1,13 +1,11 @@
+use crate::suggestions::ignored_suggestions_model::{IgnoredSuggestionsModel, SuggestionType};
 use std::collections::HashSet;
 
 use warp_core::features::FeatureFlag;
 use warpui::{AppContext, EntityId, SingletonEntity};
 
 use super::History;
-use crate::ai::blocklist::{BlocklistAIHistoryModel, InputConfig};
 use crate::input_suggestions::HistoryInputSuggestion;
-use crate::settings::AISettings;
-use crate::suggestions::ignored_suggestions_model::{IgnoredSuggestionsModel, SuggestionType};
 use crate::terminal::model::session::SessionId;
 
 /// Controls which item types are included in up-arrow history results.

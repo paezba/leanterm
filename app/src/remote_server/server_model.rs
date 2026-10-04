@@ -25,11 +25,6 @@ use warpui::r#async::{Spawnable, SpawnableOutput, SpawnedFutureHandle};
 use warpui::platform::TerminationMode;
 use warpui::{Entity, ModelContext, ModelHandle, SingletonEntity};
 
-use super::codebase_index_status::{
-    codebase_index_status_to_proto, disabled_codebase_index_status,
-    not_enabled_codebase_index_status, queued_codebase_index_status,
-    unavailable_codebase_index_status,
-};
 use super::diff_state_tracker::{
     DiffModelKey, DiffStateUpdate, RemoteDiffStateManager, SubscribeOutcome,
 };
@@ -84,10 +79,6 @@ const MAX_BRANCH_COUNT_CAP: usize = 500;
 /// Unique identifier for a connected proxy session in daemon mode.
 pub type ConnectionId = uuid::Uuid;
 use super::protocol::RequestId;
-use crate::ai::blocklist::{ReadFileContextResult, read_local_file_context};
-use crate::ai::skills::{
-    BundledSkill, SkillManager, SkillManagerEvent, bundled_skill_snapshot_protos,
-};
 use crate::auth::auth_state::{AuthState, AuthStateProvider};
 use crate::code_review::git_actions;
 use crate::features::FeatureFlag;

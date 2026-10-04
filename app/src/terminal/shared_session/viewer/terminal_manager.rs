@@ -25,13 +25,6 @@ use super::network::{
     command_execution_failure_reason_string, control_action_failure_reason_string,
     session_ended_reason_string, viewer_removed_reason_string, write_to_pty_failure_reason_string,
 };
-use crate::ai::agent::conversation::{AIConversationId, ConversationStatus};
-use crate::ai::blocklist::agent_view::{AgentViewController, AgentViewControllerEvent};
-use crate::ai::blocklist::{
-    BlocklistAIContextEvent, BlocklistAIContextModel, BlocklistAIHistoryEvent,
-    BlocklistAIHistoryModel,
-};
-use crate::ai::llms::{LLMPreferences, LLMPreferencesEvent};
 use crate::context_chips::prompt_snapshot::PromptSnapshot;
 use crate::context_chips::prompt_type::PromptType;
 use crate::features::FeatureFlag;
@@ -39,9 +32,6 @@ use crate::network::{NetworkStatus, NetworkStatusEvent, NetworkStatusKind};
 use crate::pane_group::TerminalViewResources;
 use crate::pane_group::pane::DetachType;
 use crate::settings::{InputModeSettings, WarpPromptSeparator};
-use crate::terminal::cli_agent_sessions::{
-    CLIAgentInputState, CLIAgentSessionsModel, CLIAgentSessionsModelEvent,
-};
 use crate::terminal::event_listener::ChannelEventListener;
 use crate::terminal::input::CommandExecutionSource;
 use crate::terminal::model::ObfuscateSecrets;
@@ -324,11 +314,8 @@ impl TerminalManager {
                 size_info,
                 colors,
                 None, // model_event_sender - not used for viewer
-                prompt_type.clone(),
-                None, // initial_input_config - not used for viewer
-                None, // no conversation restoration for shared session viewer
+                prompt_type.clone(), // no conversation restoration for shared session viewer
                 Some(inactive_pty_reads_rx.clone()),
-                is_ambient_agent,
                 ctx,
             )
         });

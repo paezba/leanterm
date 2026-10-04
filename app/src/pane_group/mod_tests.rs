@@ -1,3 +1,4 @@
+use crate::ai::persisted_workspace::PersistedWorkspace;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;

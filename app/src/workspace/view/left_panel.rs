@@ -1,3 +1,4 @@
+use crate::settings_view::keybindings::{KeybindingChangedEvent, KeybindingChangedNotifier};
 use std::collections::HashSet;
 use std::path::PathBuf;
 
@@ -41,8 +42,6 @@ use crate::pane_group::{
 #[cfg(feature = "local_fs")]
 use crate::server::telemetry::CodePanelsFileOpenEntrypoint;
 use crate::server::telemetry::{FileTreeSource, WarpDriveSource};
-use crate::settings::AISettings;
-use crate::settings_view::keybindings::{KeybindingChangedEvent, KeybindingChangedNotifier};
 use crate::terminal::resizable_data::{ModalType, ResizableData};
 use crate::ui_components::buttons::{icon_button, icon_button_with_color};
 use crate::ui_components::icons;
@@ -55,9 +54,6 @@ use crate::util::openable_file_type::{
     EditorLayout, is_markdown_file, resolve_file_target_with_editor_choice,
 };
 use crate::workspace::WorkspaceAction;
-use crate::workspace::view::conversation_list::view::{
-    ConversationListView, Event as ConversationListViewEvent,
-};
 use crate::workspace::view::global_search::view::{
     Event as GlobalSearchViewEvent, GlobalSearchEntryFocus, GlobalSearchView,
 };
@@ -107,18 +103,6 @@ impl ToolPanelView {
                     ToolPanelAvailability::RequiresAccount
                 }
             }
-            ToolPanelView::ConversationListView => {
-                if AuthStateProvider::as_ref(app)
-                    .get()
-                    .is_anonymous_or_logged_out()
-                {
-                    ToolPanelAvailability::RequiresAccount
-                } else if AISettings::as_ref(app).is_conversation_history_available(app) {
-                    ToolPanelAvailability::Available
-                } else {
-                    ToolPanelAvailability::RequiresAi
-                }
-            }
         }
     }
 }
@@ -148,7 +132,6 @@ pub enum ToolPanelView {
     ProjectExplorer,
     GlobalSearch { entry_focus: GlobalSearchEntryFocus },
     WarpDrive,
-    ConversationListView,
 }
 
 /// Encapsulates the active view state to enforce that all mutations go through
@@ -256,14 +239,6 @@ impl LeftPanelView {
             (ToolPanelView::WarpDrive, ToolPanelAvailability::RequiresAccount) => (
                 "Sign in to access Warp Drive",
                 "Create an account to save and share workflows, notebooks, prompts, and more.",
-            ),
-            (ToolPanelView::ConversationListView, ToolPanelAvailability::RequiresAccount) => (
-                "Sign in to access Agent conversations",
-                "Create an account and enable AI to access your conversation history.",
-            ),
-            (ToolPanelView::ConversationListView, ToolPanelAvailability::RequiresAi) => (
-                "Turn on AI to access Agent conversations",
-                "Enable Warp AI to access your conversation history.",
             ),
             (
                 ToolPanelView::ProjectExplorer
@@ -592,22 +567,6 @@ impl LeftPanelView {
                     tooltip_keybinding_names,
                 }
             }
-            ToolPanelView::ConversationListView => {
-                let tooltip_keybinding_names = vec![
-                    LEFT_PANEL_AGENT_CONVERSATIONS_BINDING_NAME,
-                    TOGGLE_CONVERSATION_LIST_VIEW_BINDING_NAME,
-                ];
-
-                ToolbeltButtonConfig {
-                    icon: Icon::Conversation,
-                    active_icon: Some(Icon::Conversation),
-                    tooltip_text: "Agent conversations".to_string(),
-                    action: LeftPanelAction::ConversationListView,
-                    render_with_active_state: false,
-                    tooltip_keybinding: toolbelt_tooltip_keybinding(&tooltip_keybinding_names, ctx),
-                    tooltip_keybinding_names,
-                }
-            }
         }
     }
 
@@ -865,11 +824,6 @@ impl LeftPanelView {
                 ctx.focus(&self.warp_drive_view);
                 self.warp_drive_view.update(ctx, |view, ctx| {
                     view.reset_focused_index_in_warp_drive(true, ctx);
-                });
-            }
-            ToolPanelView::ConversationListView => {
-                self.conversation_list_view.update(ctx, |view, ctx| {
-                    view.on_left_panel_focused(ctx);
                 });
             }
         }
@@ -1291,7 +1245,6 @@ impl View for LeftPanelView {
                     }
                 }
                 ToolPanelView::WarpDrive => ctx.focus(&self.warp_drive_view),
-                ToolPanelView::ConversationListView => ctx.focus(&self.conversation_list_view),
             }
         }
     }
@@ -1366,10 +1319,6 @@ impl View for LeftPanelView {
                         .finish(),
                 )
                 .finish(),
-                ToolPanelView::ConversationListView => {
-                    Shrinkable::new(1.0, ChildView::new(&self.conversation_list_view).finish())
-                        .finish()
-                }
             }
         };
 

@@ -23,8 +23,6 @@ use warpui::platform::TerminationMode;
 use warpui::{AppContext, EntityId, SingletonEntity as _, TypedActionView, ViewHandle, WindowId};
 
 use self::docker::open_docker_container;
-use crate::ai::active_agent_views_model::{ActiveAgentViewsModel, ConversationOrTaskId};
-use crate::ai::chatgpt_subscription::{CHATGPT_LINK_URI_HOST, ChatGPTSubscriptionModel};
 use crate::cloud_object::ObjectType;
 use crate::drive::{OpenWarpDriveObjectArgs, OpenWarpDriveObjectSettings};
 use crate::features::FeatureFlag;

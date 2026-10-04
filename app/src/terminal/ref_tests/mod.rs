@@ -132,8 +132,7 @@ fn ref_test(dir: &Path) {
         false, /* should_show_memory_stats */
         false, /* honor_ps1 */
         false, /* is_inverted */
-        ObfuscateSecrets::No,
-        false, /* is_telemetry_enabled */
+        ObfuscateSecrets::No, /* is_telemetry_enabled */
         None,  /* session_startup_path */
         ShellLaunchState::ShellSpawned {
             available_shell: None,

@@ -1,3 +1,4 @@
+use crate::terminal::model::block::SerializedBlockListItem;
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -50,7 +51,7 @@ use crate::terminal::model::terminal_model::{ExitReason, ShellProcessInfo};
 #[cfg(unix)]
 use crate::terminal::model_events::ModelEvent as TerminalModelEvent;
 use crate::terminal::model_events::{ModelEventDispatcher, SshRemoteServerSupport};
-use crate::terminal::session_settings::{SessionSettings, ToolbarChipSelection};
+use crate::terminal::session_settings::{SessionSettings,};
 use crate::terminal::shared_session::sharer::network::Network;
 use crate::terminal::shared_session::{IsSharedSessionCreator, SharedSessionStatus};
 use crate::terminal::shell::ShellName;

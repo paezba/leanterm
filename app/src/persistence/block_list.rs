@@ -1,5 +1,6 @@
 //! Manages how we write to and read from our SQLite database for our AI features.
 
+use crate::terminal::model::block::SerializedBlockListItem;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -11,10 +12,9 @@ use itertools::Itertools;
 
 use super::model::Block;
 use super::{model, schema};
-use crate::ai::blocklist::{PersistedAIInput, PersistedAIInputType, SerializedBlockListItem};
 use crate::app_state::PaneUuid;
 use crate::persistence::schema::ai_queries;
-use crate::terminal::model::block::{SerializedAgentViewVisibility, SerializedBlock};
+use crate::terminal::model::block::{ SerializedBlock};
 
 const MAX_TERMINAL_BLOCKS_TO_PERSIST_PER_SESSION: i64 = 100;
 

@@ -1,3 +1,4 @@
+use super::{ warp_drive};
 use std::collections::HashSet;
 use std::path::PathBuf;
 
@@ -6,7 +7,6 @@ use warp_core::features::FeatureFlag;
 use warpui::keymap::BindingId;
 use warpui::{AppContext, Entity, ModelContext, ModelHandle, SingletonEntity, WindowId};
 
-use super::{conversations, warp_drive};
 use crate::drive::settings::WarpDriveSettings;
 use crate::search::QueryFilter;
 use crate::search::action::CommandBindingDataSource;
@@ -19,7 +19,6 @@ use crate::search::data_source::QueryResult;
 use crate::search::files::model::FileSearchModel;
 use crate::search::mixer::AddAsyncSourceOptions;
 use crate::session_management::SessionSource;
-use crate::settings::AISettings;
 
 /// Store of all of the [`crate::search::DataSource`]s for the command palette.
 pub struct DataSourceStore {

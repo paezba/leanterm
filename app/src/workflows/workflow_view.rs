@@ -1,3 +1,6 @@
+use crate::settings::app_installation_detection::{
+    UserAppInstallDetectionSettings, UserAppInstallStatus,
+};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
@@ -76,10 +79,6 @@ use crate::server::ids::{ClientId, ServerId, SyncId};
 use crate::server::server_api::ServerApiProvider;
 use crate::server::telemetry::{
     CloudObjectTelemetryMetadata, SharingDialogSource, TelemetryCloudObjectType, TelemetryEvent,
-};
-use crate::settings::AISettings;
-use crate::settings::app_installation_detection::{
-    UserAppInstallDetectionSettings, UserAppInstallStatus,
 };
 use crate::terminal::safe_mode_settings::get_secret_obfuscation_mode;
 use crate::ui_components::breadcrumb::{BreadcrumbState, render_breadcrumbs};

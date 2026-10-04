@@ -1,3 +1,5 @@
+use crate::server::telemetry::{ TelemetryEvent};
+use crate::terminal::view::{ Event as TerminalViewEvent};
 use std::any::Any;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -27,15 +29,6 @@ use warpui::{AppContext, ModelHandle, SingletonEntity, ViewContext, ViewHandle, 
 
 use super::terminal_manager::{TerminalManager, TerminalSurfaceInit, TerminalSurfaceResult};
 use crate::NetworkStatus;
-use crate::ai::blocklist::agent_view::{AgentViewController, AgentViewControllerEvent};
-use crate::ai::blocklist::pending_cli_harness_prompt_queue::{
-    PendingCliHarnessPromptQueue, QueuedCliHarnessPrompt,
-};
-use crate::ai::blocklist::{
-    BlocklistAIContextEvent, BlocklistAIContextModel, BlocklistAIControllerEvent,
-    BlocklistAIHistoryEvent, BlocklistAIHistoryModel, InputConfig, SerializedBlockListItem,
-};
-use crate::ai::llms::{LLMPreferences, LLMPreferencesEvent};
 use crate::context_chips::current_prompt::CurrentPrompt;
 use crate::context_chips::prompt_snapshot::PromptSnapshot;
 use crate::context_chips::prompt_type::PromptType;
@@ -45,10 +38,6 @@ use crate::network::{NetworkStatusEvent, NetworkStatusKind};
 use crate::pane_group::TerminalViewResources;
 use crate::persistence::ModelEvent;
 use crate::server::server_api::ServerApiProvider;
-use crate::server::telemetry::{TelemetryAgentViewEntryOrigin, TelemetryEvent};
-use crate::terminal::cli_agent_sessions::{
-    CLIAgentInputState, CLIAgentSessionsModel, CLIAgentSessionsModelEvent,
-};
 use crate::terminal::safe_mode_settings::get_secret_obfuscation_mode;
 use crate::terminal::session_settings::{SessionSettings, SessionSettingsChangedEvent};
 use crate::terminal::shared_session::manager::Manager;
@@ -68,7 +57,6 @@ use crate::terminal::shared_session::{
     SharedSessionActionSource, SharedSessionScrollbackType, SharedSessionSource,
     SharedSessionStatus, max_session_size,
 };
-use crate::terminal::view::{ConversationRestorationInNewPaneType, Event as TerminalViewEvent};
 use crate::terminal::writeable_pty::terminal_manager_util::wire_up_remote_server_controller_with_view;
 use crate::terminal::{TerminalManager as TerminalManagerTrait, TerminalModel, TerminalView};
 use crate::view_components::ToastFlavor;
@@ -224,38 +212,7 @@ pub(crate) struct TerminalViewSurfaceConfig {
     pub(crate) resources: TerminalViewResources,
     pub(crate) model_event_sender: Option<SyncSender<ModelEvent>>,
     pub(crate) window_id: WindowId,
-    pub(crate) initial_input_config: Option<InputConfig>,
-    pub(crate) conversation_restoration: Option<ConversationRestorationInNewPaneType>,
-    pub(crate) has_conversation_restoration: bool,
-    pub(crate) is_historical: bool,
-    pub(crate) should_use_live_appearance: bool,
     pub(crate) has_restored_command_blocks: bool,
-}
-
-/// Resolves the block list used by the GUI `TerminalView` surface.
-pub(crate) fn terminal_view_restored_blocks(
-    restored_blocks: Option<&Vec<SerializedBlockListItem>>,
-    conversation_restoration: &Option<ConversationRestorationInNewPaneType>,
-) -> Option<Vec<SerializedBlockListItem>> {
-    restored_blocks
-        .filter(|blocks| !blocks.is_empty())
-        .cloned()
-        .or_else(|| match conversation_restoration {
-            Some(ConversationRestorationInNewPaneType::Historical { conversation, .. })
-            | Some(ConversationRestorationInNewPaneType::Forked { conversation, .. }) => {
-                Some(conversation.to_serialized_blocklist_items())
-            }
-            Some(ConversationRestorationInNewPaneType::Startup { conversations, .. }) => {
-                let mut items: Vec<_> = conversations
-                    .iter()
-                    .flat_map(|c| c.to_serialized_blocklist_items())
-                    .collect();
-                // Because there are multiple conversations that may have interleaved timestamps, we need to sort by start_ts
-                items.sort_by_key(|item| item.start_ts());
-                if items.is_empty() { None } else { Some(items) }
-            }
-            _ => None,
-        })
 }
 
 /// Creates the GUI terminal surface and its manager-owned post-wiring closure.
@@ -280,11 +237,6 @@ pub(crate) fn create_terminal_view_surface(
         resources,
         model_event_sender,
         window_id,
-        initial_input_config,
-        conversation_restoration,
-        has_conversation_restoration,
-        is_historical,
-        should_use_live_appearance,
         has_restored_command_blocks,
     } = config;
     let current_prompt = ctx.add_model(|ctx| {
@@ -306,10 +258,7 @@ pub(crate) fn create_terminal_view_surface(
             colors,
             model_event_sender,
             prompt_type.clone(),
-            initial_input_config,
-            conversation_restoration,
             Some(inactive_pty_reads_rx),
-            false,
             ctx,
         )
     });
@@ -319,18 +268,12 @@ pub(crate) fn create_terminal_view_surface(
         post_wire: move |terminal_manager: &mut TerminalManager<TerminalView>,
                          view: &ViewHandle<TerminalView>,
                          ctx: &mut AppContext| {
-            // Append the session restoration separator to the block list if there are any
-            // restored blocks (command blocks or AI conversations) to show.
-            let should_show_restoration_separator = (has_conversation_restoration
-                || has_restored_command_blocks)
-                && !should_use_live_appearance;
-
-            if should_show_restoration_separator {
+            if has_restored_command_blocks {
                 terminal_manager
                     .model()
                     .lock()
                     .block_list_mut()
-                    .append_session_restoration_separator_to_block_list(is_historical);
+                    .append_session_restoration_separator_to_block_list();
             }
 
             // In unit tests, we know we aren't going to bootstrap a shell

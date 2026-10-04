@@ -61,14 +61,11 @@ use super::view::{
 };
 use super::warpify::render::{draw_flag_pole, render_subshell_flag};
 use super::{HEIGHT_FUDGE_FACTOR_LINES, TerminalModel, heights_approx_eq};
-use crate::ai::blocklist::{ATTACH_AS_AGENT_MODE_CONTEXT_TEXT, ai_brand_color};
-use crate::ai_assistant::{AI_ASSISTANT_SVG_PATH, ASK_AI_ASSISTANT_TEXT};
 use crate::appearance::Appearance;
 use crate::drive::settings::WarpDriveSettings;
 use crate::features::FeatureFlag;
 use crate::pane_group::SplitPaneState;
-use crate::settings::{
-    AISettings, DebugSettings, EnforceMinimumContrast, PrivacySettings, TerminalSpacing,
+use crate::settings::{ DebugSettings, EnforceMinimumContrast, PrivacySettings, TerminalSpacing,
 };
 use crate::terminal::alt_screen::{should_intercept_mouse, should_intercept_scroll};
 use crate::terminal::block_list_viewport::AutoscrollBehavior;
@@ -3427,10 +3424,7 @@ impl Element for BlockListElement {
                     });
                     visible_height_px += height_px;
                 }
-                BlockHeightItem::RestoredBlockSeparator {
-                    is_historical_conversation_restoration,
-                    ..
-                } => {
+                BlockHeightItem::RestoredBlockSeparator { .. } => {
                     let item_height = viewport_item.block_height_item.height();
                     let height_px = item_height.as_f64() * cell_size.y() as f64;
                     visible_items.push(VisibleItem::RestoredBlockSeparator {
@@ -3439,13 +3433,7 @@ impl Element for BlockListElement {
                     });
                     visible_height_px += height_px;
 
-                    // we want to show different text in the separator if this is an individual conversation
-                    // restored from the command palette
-                    let banner_intro_text = if is_historical_conversation_restoration {
-                        "Conversation restored".to_string()
-                    } else {
-                        "Previous session".to_string()
-                    };
+                    let banner_intro_text = "Previous session".to_string();
 
                     let separator_text =
                         if let Some(ts) = (*model).block_list().restored_session_ts() {

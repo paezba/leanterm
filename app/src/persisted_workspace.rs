@@ -32,11 +32,6 @@ use warp_util::{local_or_remote_path::LocalOrRemotePath, standardized_path::Stan
 use warpui::windowing::WindowManager;
 use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
 
-use crate::ai::blocklist::{BlocklistAIHistoryEvent, BlocklistAIHistoryModel};
-#[cfg(feature = "local_fs")]
-use crate::ai::codebase_auto_indexing::{
-    CodebaseAutoIndexingSurface, auto_index_candidate_roots, should_auto_index_codebase,
-};
 #[cfg(feature = "local_fs")]
 use crate::code::language_server_shutdown_manager::LanguageServerShutdownManager;
 #[cfg(feature = "local_fs")]

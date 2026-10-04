@@ -1,3 +1,4 @@
+use crate::workflows::CloudWorkflow;
 use std::collections::{HashMap, HashSet};
 
 use warp_errors::report_error;
@@ -21,8 +22,6 @@ use crate::search::mixer::DataSourceRunErrorWrapper;
 use crate::search::notebooks::fuzzy_match::FuzzyMatchNotebookResult;
 use crate::search::workflows::fuzzy_match::FuzzyMatchWorkflowResult;
 use crate::server::ids::{ObjectUid, ServerId, SyncId};
-use crate::settings::AISettings;
-use crate::workflows::CloudWorkflow;
 use crate::workspaces::user_workspaces::{UserWorkspaces, UserWorkspacesEvent};
 
 /// The Warp Drive spaces a window can see: its team, plus the user's personal and

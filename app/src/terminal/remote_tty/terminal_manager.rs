@@ -52,7 +52,6 @@ impl TerminalManager {
         initial_size: Vector2F,
         model_event_sender: Option<SyncSender<ModelEvent>>,
         window_id: WindowId,
-        initial_input_config: Option<InputConfig>,
         ctx: &mut AppContext,
     ) -> TerminalManagerInit {
         // Create all the necessary channels we need for communication.
@@ -127,11 +126,8 @@ impl TerminalManager {
                 size_info,
                 colors,
                 model_event_sender.clone(),
-                prompt_type,
-                initial_input_config,
-                None, // conversation_restoration - not used for remote
-                None, // inactive_pty_reads_rx
-                false,
+                prompt_type, // conversation_restoration - not used for remote
+                None,
                 ctx,
             )
         });

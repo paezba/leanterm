@@ -6,8 +6,7 @@ use warpui::{
 };
 
 pub use super::ContextChipKind;
-use crate::settings::{
-    AISettings, AISettingsChangedEvent, InputSettings, InputSettingsChangedEvent,
+use crate::settings::{ InputSettings, InputSettingsChangedEvent,
     WarpPromptSeparator,
 };
 use crate::terminal::session_settings::{SessionSettings, SessionSettingsChangedEvent};

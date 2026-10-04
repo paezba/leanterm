@@ -1,8 +1,7 @@
+use crate::terminal::view::CodeDiffAction;
 use warpui::ViewContext;
 
 use super::TerminalView;
-use crate::server::telemetry::InteractionSource;
-use crate::terminal::view::CodeDiffAction;
 
 #[derive(Copy, Clone, Debug)]
 pub enum PromptSuggestionResolution {

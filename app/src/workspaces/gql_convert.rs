@@ -1,3 +1,9 @@
+use crate::workspaces::workspace::{
+    AiOverages, BonusGrantsPurchased, ByoApiKeyPolicy, ByoEndpointPolicy, CodebaseContextPolicy,
+    EnterpriseCreditsAutoReloadPolicy, EnterprisePayAsYouGoPolicy, ManagedByokByoePolicy,
+    MultiAdminPolicy, NativeWorkspacesPolicy, PurchaseAddOnCreditsPolicy,
+    UsageBasedPricingSettings, WorkspaceUid,
+};
 use std::path::PathBuf;
 
 use anyhow::{Result, anyhow, bail};
@@ -71,23 +77,12 @@ use super::workspace::{
     UsageVisibilityGranularity, UsageVisibilityPolicy, WarpAiPolicy, Workspace, WorkspaceMember,
     WorkspaceMemberUsageInfo, WorkspaceSettings, WorkspaceSizePolicy,
 };
-use crate::ai::execution_profiles::{
-    ActionPermission, ComputerUsePermission, WriteToPtyPermission,
-};
-use crate::ai::{BonusGrant, BonusGrantScope};
 use crate::auth::UserUid;
 use crate::convert_to_server_experiment;
 use crate::server::cloud_objects::listener::ObjectUpdateMessage;
 use crate::server::experiments::ServerExperiment;
 use crate::server::graphql::schema::object_action_history_from_gql;
 use crate::server::ids::ServerId;
-use crate::settings::AgentModeCommandExecutionPredicate;
-use crate::workspaces::workspace::{
-    AiOverages, BonusGrantsPurchased, ByoApiKeyPolicy, ByoEndpointPolicy, CodebaseContextPolicy,
-    EnterpriseCreditsAutoReloadPolicy, EnterprisePayAsYouGoPolicy, ManagedByokByoePolicy,
-    MultiAdminPolicy, NativeWorkspacesPolicy, PurchaseAddOnCreditsPolicy,
-    UsageBasedPricingSettings, WorkspaceUid,
-};
 
 pub const PLACEHOLDER_WORKSPACE_UID: &str = "NOT_A_REAL_WORKSPACE_UID";
 

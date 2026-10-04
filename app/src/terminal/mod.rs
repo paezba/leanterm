@@ -67,7 +67,6 @@ pub mod settings;
 mod share_block_modal;
 pub mod shared_session;
 mod shell_launch_state;
-pub mod universal_developer_input;
 
 pub mod ssh;
 pub mod terminal_manager;

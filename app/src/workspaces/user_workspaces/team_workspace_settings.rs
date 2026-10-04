@@ -27,10 +27,8 @@ use super::SoleTeamError;
 use super::UserWorkspaces;
 #[cfg(any(test, feature = "test-util"))]
 use crate::ai::llms::LLMInfo;
-use crate::ai::llms::{LLMId, LLMModelHost, LLMProvider, ModelsByFeature};
 use crate::auth::AuthStateProvider;
 use crate::server::ids::ServerId;
-use crate::settings::{AISettings, AgentModeCommandExecutionPredicate};
 use crate::workspaces::gql_convert::ToAgentModeCommandExecutionPredicates;
 use crate::workspaces::team::Team;
 use crate::workspaces::workspace::{

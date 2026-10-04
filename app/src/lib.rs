@@ -132,6 +132,7 @@ pub mod settings_view;
 pub mod tab_configs;
 pub mod terminal;
 pub mod themes;
+use crate::settings::{ AccessibilitySettings, ScrollSettings, SelectionSettings};
 use ::ai::index::DEFAULT_SYNC_REQUESTS_PER_MIN;
 #[cfg(feature = "local_fs")]
 use ::ai::index::full_source_code_embedding::SnapshotStorage;
@@ -258,8 +259,7 @@ use crate::server::experiments::ServerExperiments;
 #[cfg(not(target_family = "wasm"))]
 use crate::server::iap_identity_minter::ManagedSecretsIapMinter;
 use crate::server::sync_queue::{QueueItem, SyncQueue};
-pub use crate::server::telemetry::{
-    AgentModeEntrypoint, AgentModeEntrypointSelectionType, TelemetryEvent,
+pub use crate::server::telemetry::{ TelemetryEvent,
 };
 use crate::server::telemetry::{AppStartupInfo, CloseTarget, PaletteSource, TelemetryCollector};
 use crate::session_management::{RunningSessionSummary, SessionNavigationData};
@@ -267,7 +267,6 @@ use crate::settings::cloud_preferences_syncer::{
     CloudPreferencesSyncerEvent, initialize_cloud_preferences_syncer,
 };
 use crate::settings::manager::SettingsManager;
-use crate::settings::{AISettings, AccessibilitySettings, ScrollSettings, SelectionSettings};
 use crate::settings_view::DisplayCount;
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
 use crate::suggestions::ignored_suggestions_model::IgnoredSuggestionsModel;
@@ -297,48 +296,6 @@ use crate::workspaces::user_workspaces::{UserWorkspaces, UserWorkspacesEvent};
 /// Our embedded application assets.
 pub static ASSETS: warp_assets::Assets = warp_assets::Assets;
 const TUI_SECURE_STORAGE_SERVICE_SUFFIX: &str = ".tui";
-
-fn determine_agent_source(
-    launch_mode: &LaunchMode,
-) -> Option<crate::ai::ambient_agents::AgentSource> {
-    match launch_mode {
-        LaunchMode::CommandLine { .. } => {
-            if std::env::var("GITHUB_ACTIONS").ok().as_deref() == Some("true") {
-                Some(crate::ai::ambient_agents::AgentSource::GitHubAction)
-            } else {
-                Some(crate::ai::ambient_agents::AgentSource::Cli)
-            }
-        }
-        LaunchMode::App { .. } | LaunchMode::Test { .. } => {
-            Some(crate::ai::ambient_agents::AgentSource::CloudMode)
-        }
-        // RemoteServerProxy and RemoteServerDaemon are headless server
-        // processes that don't use the agent subsystem.
-        // TODO: the TUI front-end has no agent harness wired up yet; give it an
-        // appropriate `AgentSource` once that lands.
-        LaunchMode::RemoteServerProxy
-        | LaunchMode::RemoteServerDaemon { .. }
-        | LaunchMode::Tui { .. } => None,
-    }
-}
-
-#[cfg(feature = "local_fs")]
-fn daemon_codebase_index_snapshot_storage(launch_mode: &LaunchMode) -> Option<SnapshotStorage> {
-    match launch_mode {
-        LaunchMode::RemoteServerDaemon { identity_key } => {
-            let data_dir = remote_server::setup::remote_server_daemon_data_dir(identity_key);
-            let snapshot_dir = PathBuf::from(tilde(&data_dir).into_owned())
-                .join("cache")
-                .join("codebase_index_snapshots");
-            SnapshotStorage::from_dir(snapshot_dir)
-        }
-        LaunchMode::App { .. }
-        | LaunchMode::CommandLine { .. }
-        | LaunchMode::RemoteServerProxy
-        | LaunchMode::Test { .. }
-        | LaunchMode::Tui { .. } => None,
-    }
-}
 
 /// Launch mode for how to start up Warp.
 #[allow(clippy::large_enum_variant)]
@@ -1483,7 +1440,6 @@ pub(crate) fn initialize_app(
     let auth_state = Arc::new(auth_state);
     timer.mark_interval_end("AUTH_MANAGER_SET_USER");
 
-    let agent_source = determine_agent_source(launch_mode);
 
     // NetworkLogModel must be registered before ServerApiProvider so that
     // `NetworkLogModel::install_on_clients` can reach it when forwarding items
@@ -1501,32 +1457,19 @@ pub(crate) fn initialize_app(
     let server_api_provider = ctx.add_singleton_model({
         let auth_state = auth_state.clone();
         let iap_state = iap_state.clone();
-        move |ctx| ServerApiProvider::new(auth_state, agent_source, iap_state, ctx)
+        move |ctx| ServerApiProvider::new(auth_state, iap_state, ctx)
     });
 
     let server_api = server_api_provider.as_ref(ctx).get();
     // Parse the ambient-agent task id once. A set-but-unparseable OZ_RUN_ID is
     // treated as absent everywhere: it identifies no task and must not enable the
     // runner-context IAP WIF mint below.
-    #[cfg(not(target_family = "wasm"))]
-    let ambient_agent_task_id: Option<AmbientAgentTaskId> = std::env::var(warp_cli::OZ_RUN_ID_ENV)
-        .ok()
-        .and_then(|run_id| match run_id.parse() {
-            Ok(task_id) => Some(task_id),
-            Err(err) => {
-                log::warn!("Ignoring invalid {}: {err}", warp_cli::OZ_RUN_ID_ENV);
-                None
-            }
-        });
     #[cfg(all(not(target_family = "wasm"), feature = "crash_reporting"))]
     if matches!(launch_mode, LaunchMode::CommandLine { .. })
         && let Some(task_id) = ambient_agent_task_id
     {
         crash_reporting::set_task_id_tag(&task_id.to_string());
     }
-    #[cfg(not(target_family = "wasm"))]
-    server_api.set_ambient_agent_task_id(ambient_agent_task_id);
-    let ai_client = server_api_provider.as_ref(ctx).get_ai_client();
     #[cfg(not(target_family = "wasm"))]
     // Refresh starts only after the authenticated server client exists; tracing initialization
     // remains responsible for deciding whether this process opted in to cloud-agent export.
@@ -1624,16 +1567,10 @@ pub(crate) fn initialize_app(
         time_of_next_force_object_refresh,
         object_actions,
         experiments,
-        ai_queries,
-        nld_prompts,
         persisted_workspaces,
         workspace_language_servers,
-        multi_agent_conversations,
         persisted_projects,
-        persisted_project_rules,
         persisted_ignored_suggestions,
-        persisted_mcp_server_installations,
-        mcp_servers_to_restore,
     ) = sqlite_data
         .map(|sqlite_data| {
             (
@@ -1646,57 +1583,19 @@ pub(crate) fn initialize_app(
                 sqlite_data.time_of_next_force_object_refresh,
                 sqlite_data.object_actions,
                 sqlite_data.experiments,
-                sqlite_data.ai_queries,
-                sqlite_data.nld_prompts,
-                sqlite_data.codebase_indices,
+                sqlite_data.workspace_metadata,
                 sqlite_data.workspace_language_servers,
-                sqlite_data.multi_agent_conversations,
                 sqlite_data.projects,
-                sqlite_data.project_rules,
                 sqlite_data.ignored_suggestions,
-                sqlite_data.mcp_server_installations,
-                sqlite_data.mcp_servers_to_restore,
             )
         })
-        .unwrap_or_else(|| {
-            (
-                Default::default(),
-                Default::default(),
-                Default::default(),
-                Default::default(),
-                Default::default(),
-                Default::default(),
-                Default::default(),
-                Default::default(),
-                Default::default(),
-                Default::default(),
-                Default::default(),
-                Default::default(),
-                Default::default(),
-                Default::default(),
-                Default::default(),
-                Default::default(),
-                Default::default(),
-                Default::default(),
-                Default::default(),
-            )
-        });
-
-    // The daemon's `PersistedDataScope::CodebaseIndicesOnly` read already
-    // skips everything except codebase index metadata.
-    if matches!(launch_mode, LaunchMode::RemoteServerDaemon { .. }) {
-        let codebase_index_count = persisted_workspaces.len();
-        log::debug!(
-            "[Remote codebase indexing] Restored daemon codebase index metadata: metadata_count={codebase_index_count}"
-        );
-    }
+        .unwrap_or_default();
 
     // Initialize a global model to track server-side experiment state.
     // This depends on the [`GlobalResourceHandlesProvider`] and so it must
     // be initialized after it.
     ctx.add_singleton_model(|ctx| ServerExperiments::new_from_cache(experiments, ctx));
 
-    ctx.add_singleton_model(|ctx| AIRequestUsageModel::new(ai_client, ctx));
 
     ctx.add_singleton_model(|ctx| {
         UserWorkspaces::new(
@@ -1707,77 +1606,6 @@ pub(crate) fn initialize_app(
             ctx,
         )
     });
-
-    // Initialize ApiKeyManager after UserWorkspaces so it can subscribe to workspace/settings changes
-    ctx.add_singleton_model(|ctx| {
-        #[cfg_attr(target_family = "wasm", allow(unused_mut))]
-        let mut manager = ::ai::api_keys::ApiKeyManager::new(ctx);
-        #[cfg(not(target_family = "wasm"))]
-        if matches!(launch_mode, LaunchMode::Tui { .. }) {
-            manager.subscribe_to_tui_api_key_changes(ctx);
-        }
-        #[cfg(not(target_family = "wasm"))]
-        manager.subscribe_to_settings_changes(ctx);
-        // Gemini Enterprise (GEAP) credential refresh triggers: workspace
-        // settings saves / team changes and the member's enablement toggle.
-        #[cfg(not(target_family = "wasm"))]
-        if FeatureFlag::GeminiEnterprise.is_enabled() {
-            manager.subscribe_to_geap_settings_changes(ctx);
-        }
-        // The Grok subscription refresher (`ai::grok_subscription`) has no
-        // visibility into workspace policy, so wire the BYO API key policy in
-        // here. The initial value resumes proactive refresh of any tokens
-        // restored from secure storage; TeamsChanged keeps the policy aligned
-        // as team data loads or the workspace changes.
-        #[cfg(not(target_family = "wasm"))]
-        if FeatureFlag::SuperGrok.is_enabled() {
-            use crate::workspaces::user_workspaces::UserWorkspacesEvent;
-            ctx.subscribe_to_model(&UserWorkspaces::handle(ctx), |manager, _, event, ctx| {
-                if matches!(event, UserWorkspacesEvent::TeamsChanged) {
-                    let allowed = UserWorkspaces::as_ref(ctx).is_byo_api_key_enabled(ctx);
-                    manager.set_grok_refresh_allowed(allowed, ctx);
-                }
-            });
-            let allowed = UserWorkspaces::as_ref(ctx).is_byo_api_key_enabled(ctx);
-            manager.set_grok_refresh_allowed(allowed, ctx);
-        }
-        manager
-    });
-
-    ctx.subscribe_to_model(&UserWorkspaces::handle(ctx), |_, event, ctx| {
-        if matches!(
-            event,
-            UserWorkspacesEvent::CurrentWorkspaceChanged
-                | UserWorkspacesEvent::AiOveragesUpdated
-                | UserWorkspacesEvent::PurchaseAddonCreditsSuccess
-        ) {
-            AIRequestUsageModel::handle(ctx).update(ctx, |usage_model, ctx| {
-                usage_model.request_availability_refresh(ctx);
-            });
-        }
-    });
-    ctx.subscribe_to_model(
-        &::ai::api_keys::ApiKeyManager::handle(ctx),
-        |_, event, ctx| {
-            if let ::ai::api_keys::ApiKeyManagerEvent::KeysUpdated = event {
-                AIRequestUsageModel::handle(ctx).update(ctx, |usage_model, ctx| {
-                    usage_model.request_availability_refresh(ctx);
-                });
-            }
-        },
-    );
-    if FeatureFlag::ChatGPTSubscription.is_enabled() {
-        let ai_client = server_api_provider.as_ref(ctx).get_ai_client();
-        ctx.add_singleton_model(|_| ChatGPTSubscriptionModel::new(ai_client));
-        ChatGPTSubscriptionModel::handle(ctx).update(ctx, |model, ctx| model.refresh(ctx));
-        ctx.subscribe_to_model(&AuthManager::handle(ctx), |_, event, ctx| {
-            if matches!(event, AuthManagerEvent::AuthComplete) {
-                ChatGPTSubscriptionModel::handle(ctx).update(ctx, |model, ctx| {
-                    model.refresh(ctx);
-                });
-            }
-        });
-    }
 
     ctx.add_singleton_model(AntivirusInfo::new);
 
@@ -1826,19 +1654,7 @@ pub(crate) fn initialize_app(
     App::record_last_active_timestamp();
 
     ctx.add_singleton_model(|_| SettingsPaneManager::new());
-    ctx.add_singleton_model(|_| AIFactManager::new());
-    ctx.add_singleton_model(|_| RecordingController::new());
-    ctx.add_singleton_model(|_| ExecutionProfileEditorManager::default());
     ctx.add_singleton_model(|_| NetworkLogPaneManager::default());
-    ctx.add_singleton_model(|_| pricing::PricingInfoModel::new());
-    ctx.add_singleton_model(ai::pricing_promotion::PricingPromotionState::new);
-    ctx.add_singleton_model(|ctx| {
-        // Not using the *Provider types isn't ideal, but it's worth it for the ability to move managed secrets to a separate crate.
-        ManagedSecretManager::new(
-            server_api_provider.as_ref(ctx).get_managed_secrets_client(),
-            auth_state.clone(),
-        )
-    });
 
     #[cfg(target_os = "macos")]
     if launch_mode.is_gui() {
@@ -1863,8 +1679,6 @@ pub(crate) fn initialize_app(
     ctx.add_singleton_model(|_ctx| SyncedInputState::new());
 
     ctx.add_singleton_model(remote_server::manager::RemoteServerManager::new);
-    #[cfg(not(target_family = "wasm"))]
-    ctx.add_singleton_model(remote_server::codebase_index_model::RemoteCodebaseIndexModel::new);
     #[cfg(not(target_family = "wasm"))]
     remote_server::wire_auth_token_rotation(ctx);
 
@@ -2051,7 +1865,6 @@ pub(crate) fn initialize_app(
     timer.mark_interval_end("INITIALIZE_TELEMETRY_COLLECTION");
 
     // Register initial keybindings prior to creating menus
-    ai::init(ctx);
     app_services::init(ctx);
     // // TODO: Temporarily disabling keybindings for WASM builds. Will be implemented in future WASM support.
     #[cfg(not(target_family = "wasm"))]
@@ -2075,23 +1888,15 @@ pub(crate) fn initialize_app(
     reward_view::init(ctx);
     crate::view_components::find::init(ctx);
     prompt::editor_modal::init(ctx);
-    ai::blocklist::agent_view::editor::init(ctx);
     undo_close::init(ctx);
-    billing::shared_objects_creation_denied_modal::init(ctx);
     tab_configs::new_worktree_modal::init(ctx);
     tab_configs::params_modal::init(ctx);
-    ai::blocklist::init(ctx);
-    ai::blocklist::block::status_bar::init(ctx);
     drive::index::init(ctx);
     drive::sharing::dialog::init(ctx);
-    ai_assistant::panel::init(ctx);
-    settings_view::update_environment_form::init(ctx);
     env_vars::env_var_collection_block::init(ctx);
     context_chips::display_menu::init(ctx);
     context_chips::node_version_popup::init(ctx);
     env_vars::view::env_var_collection::init(ctx);
-    ai::agent::todos::popup::init(ctx);
-    terminal::view::init_environment::mode_selector::init(ctx);
     coding_entrypoints::project_buttons::init(ctx);
     if FeatureFlag::CodeReviewSaveChanges.is_enabled() {
         code_review::init(ctx);
@@ -2102,10 +1907,8 @@ pub(crate) fn initialize_app(
 
     ctx.add_singleton_model(|_| RelaunchModel::new());
     ctx.add_singleton_model(|_| ChangelogModel::new(server_api.clone()));
-    ctx.add_singleton_model(|_| GitHubAuthNotifier::new());
     ctx.add_singleton_model(|_| NetworkStatus::new());
     ctx.add_singleton_model(|_| SystemStats::new());
-    workspace::auto_handoff::init(ctx);
     ctx.add_singleton_model(|_| KeybindingChangedNotifier::new());
     ctx.add_singleton_model(|_| TabShortcutModifierState::new());
     ctx.add_singleton_model(|_| search::command_palette::SelectedItems::new());
@@ -2115,9 +1918,6 @@ pub(crate) fn initialize_app(
     ctx.add_singleton_model(|_| ToastStack);
     ctx.add_singleton_model(|_| GlobalCodeReviewModel);
     ctx.add_singleton_model(workspace::OneTimeModalModel::new);
-    ctx.add_singleton_model(
-        workspace::bonus_grant_notification_model::BonusGrantNotificationModel::new,
-    );
     #[cfg(feature = "local_fs")]
     ctx.add_singleton_model(FileModel::new);
     ctx.add_singleton_model(GlobalBufferModel::new);
@@ -2125,12 +1925,6 @@ pub(crate) fn initialize_app(
     ctx.add_singleton_model(util::traffic_lights::windows::RendererState::new);
     #[cfg(feature = "local_fs")]
     ctx.add_singleton_model(|_| LanguageServerShutdownManager::new());
-
-    #[cfg(feature = "voice_input")]
-    ctx.add_singleton_model(voice_input::VoiceInput::new);
-    ctx.add_singleton_model(|_| {
-        VoiceTranscriber::new(Arc::new(ServerVoiceTranscriber::new(server_api.clone())))
-    });
 
     let notebooks = cloud_objects
         .iter()
@@ -2158,7 +1952,6 @@ pub(crate) fn initialize_app(
             time_of_next_force_object_refresh,
         )
     });
-    ctx.add_singleton_model(ai::cloud_environments::CloudEnvironmentCatalog::new);
 
     let unsynced_actions: Vec<(CloudObjectTypeAndId, ObjectAction)> = object_actions
         .iter()
@@ -2183,70 +1976,6 @@ pub(crate) fn initialize_app(
         )
     });
 
-    // Seed the orchestration pin set from persisted conversation data
-    // before the conversations vec is consumed by the singletons below.
-    // Each conversation's `AgentConversationData.pinned` is the source of
-    // truth; the singleton mirrors them in memory for fast cross-pane lookups.
-    let initial_pinned_conversations: HashSet<AIConversationId> = multi_agent_conversations
-        .iter()
-        .filter_map(|conv| {
-            let data =
-                serde_json::from_str::<AgentConversationData>(&conv.conversation.conversation_data)
-                    .ok()?;
-            if !data.pinned {
-                return None;
-            }
-            AIConversationId::try_from(conv.conversation.conversation_id.clone()).ok()
-        })
-        .collect();
-    {
-        let conversations = &multi_agent_conversations;
-        ctx.add_singleton_model(move |_| {
-            // Only wire NLD prompt history when the feature is enabled; disabled
-            // (stable/preview) builds skip this so they don't retain the prompt snapshot.
-            let nld_prompts = if FeatureFlag::NldPromptHistoryMatch.is_enabled() {
-                nld_prompts
-            } else {
-                Vec::new()
-            };
-            BlocklistAIHistoryModel::new(ai_queries, nld_prompts, conversations)
-        });
-    }
-    // Per-conversation queued prompts. Registered after the history model
-    // since it subscribes to history events for cleanup.
-    ctx.add_singleton_model(ai::blocklist::QueuedQueryModel::new);
-    // Cross-pane UI state for the orchestration pill bar. Registered
-    // after the history model since it subscribes to history events.
-    ctx.add_singleton_model(move |ctx| {
-        ai::blocklist::agent_view::orchestration_pill_bar_model::OrchestrationPillBarModel::new(
-            initial_pinned_conversations,
-            ctx,
-        )
-    });
-    // Conversations restore lazily from the local DB on demand; startup only
-    // loads metadata.
-    ctx.add_singleton_model(|_| RestoredAgentConversations::new());
-    ctx.add_singleton_model(|_| CLIAgentSessionsModel::new());
-    // ActiveAgentViewsModel is used to track active agent conversations and notify listeners when they change.
-    ctx.add_singleton_model(|_| ActiveAgentViewsModel::new());
-    ctx.add_singleton_model(AgentNotificationsModel::new);
-    ctx.add_singleton_model(BlocklistAIPermissions::new);
-    ctx.add_singleton_model(ai::blocklist::orchestration_events::OrchestrationEventService::new);
-    ctx.add_singleton_model(
-        ai::blocklist::local_agent_task_sync_model::LocalAgentTaskSyncModel::new,
-    );
-    ctx.add_singleton_model(
-        ai::blocklist::pending_cli_harness_prompt_queue::PendingCliHarnessPromptQueue::new,
-    );
-    ctx.add_singleton_model(
-        ai::blocklist::orchestration_event_streamer::OrchestrationEventStreamer::new,
-    );
-
-    if launch_mode.supports_indexing() {
-        ctx.add_singleton_model(RepoOutlines::new);
-    } else {
-        ctx.add_singleton_model(|ctx| RepoOutlines::new_with_indexing_enabled(false, ctx));
-    }
     ctx.add_singleton_model(|ctx| {
         warp_core::sync_queue::SyncQueue::<SyncTask>::new_with_rate_limit(
             &ctx.background_executor(),
@@ -2293,50 +2022,14 @@ pub(crate) fn initialize_app(
             window_settings::migrate_legacy_background_backdrop(ctx);
         }
     });
-    ai::custom_endpoints::init(launch_mode, ctx);
 
     // LogManager must be registered before any subsystem (e.g. MCP, LSP) that creates file-based loggers.
     ctx.add_singleton_model(|_| simple_logger::manager::LogManager::new());
 
-    let running_mcp_servers = app_state
-        .as_ref()
-        .map(|app_state| app_state.running_mcp_servers.as_slice())
-        .unwrap_or(&[]);
-
-    // FileMCPWatcher must be registered before FileBasedMCPManager, which subscribes to it.
-    ctx.add_singleton_model(FileMCPWatcher::new);
-    ctx.add_singleton_model(FileBasedMCPManager::new);
-
-    // TemplatableMCPServerManager must be registered after UpdateManager and MCPServerManager so it can migrate legacy MCPs on start up
-    // It should also be registered after FileBasedMCPManager so it can receive file-based server updates.
-    ctx.add_singleton_model(|ctx| {
-        TemplatableMCPServerManager::new(
-            persisted_mcp_server_installations,
-            mcp_servers_to_restore,
-            running_mcp_servers,
-            ctx,
-        )
-    });
-
-    // MCPGalleryManager subscribes to UpdateManager so that it can be notified when gallery items are updated.
-    // The registration of this singleton must be after UpdateManager is registered.
-    ctx.add_singleton_model(MCPGalleryManager::new);
-
-    // SkillManager is used to cache SKILL.md files for all active terminal views and their working directories
-    ctx.add_singleton_model(SkillManager::new);
 
     // CloudViewModel subscribes to UpdateManager so that it can be notified when objects are
     // created on the server.
     ctx.add_singleton_model(CloudViewModel::new);
-
-    // AIDocumentModel subscribes to UpdateManager so that it can be notified when notebooks are created on the server.
-    ctx.add_singleton_model(AIDocumentModel::new);
-
-    // AgentConversationsModel subscribes to UpdateManager for RTC task updates.
-    ctx.add_singleton_model(AgentConversationsModel::new);
-
-    // ByoLlmAuthBannerSessionState tracks dismissal of the BYO LLM auth banner (e.g., AWS Bedrock login).
-    ctx.add_singleton_model(ByoLlmAuthBannerSessionState::new);
 
     ctx.add_singleton_model(ExportManager::new);
     ctx.add_singleton_model(|ctx| NotebookManager::new(notebooks, ctx));
@@ -2358,16 +2051,6 @@ pub(crate) fn initialize_app(
         ctx.add_singleton_model(system::SystemInfo::new);
     }
 
-    // In a sandboxed Oz runner, mint IAP tokens by self-minting via Workload
-    // Identity Federation (impersonating the IAP access service account). Gated
-    // on a valid ambient-agent task id so local staging clients — and any runner
-    // with a stray or malformed OZ_RUN_ID — keep using the gcloud path.
-    #[cfg(not(target_family = "wasm"))]
-    let managed_iap_mint = ambient_agent_task_id.is_some().then(|| {
-        let client = server_api_provider.as_ref(ctx).get_managed_secrets_client();
-        ManagedIapMint::new(Arc::new(ManagedSecretsIapMinter::new(client)))
-    });
-    #[cfg(target_family = "wasm")]
     let managed_iap_mint: Option<ManagedIapMint> = None;
 
     // `IapManager` drives IAP token refresh for staging builds.
@@ -2454,108 +2137,18 @@ pub(crate) fn initialize_app(
     ctx.add_singleton_model(EnvVarCollectionManager::new);
     ctx.add_singleton_model(WorkflowManager::new);
 
-    if FeatureFlag::ScheduledAmbientAgents.is_enabled() {
-        ctx.add_singleton_model(ScheduledAgentManager::new);
-    }
 
     AutoupdateState::register(ctx, server_api.clone());
 
     ctx.add_singleton_model(LocalWorkflows::new);
 
-    ctx.add_singleton_model(LLMPreferences::new);
-    ctx.add_singleton_model(HarnessAvailabilityModel::new);
-    ctx.add_singleton_model(ConnectedSelfHostedWorkersModel::new);
-
-    let tip_model_handle = ctx.add_singleton_model(|ctx| {
-        ai::agent_tips::AITipModel::<ai::AgentTip>::new_for_agent_tips(ctx)
-    });
-    {
-        // Rebuild the tip pool when AI settings change so tips whose applicability
-        // depends on AI settings appear/disappear without waiting for the next cooldown cycle.
-        let tip_model_handle_for_ai = tip_model_handle.clone();
-        ctx.subscribe_to_model(&AISettings::handle(ctx), move |_, _, ctx| {
-            tip_model_handle_for_ai.update(ctx, |model, ctx| {
-                model.revalidate_tips(ctx);
-            });
-        });
-        // Also revalidate when workspace/team data changes (e.g. voice toggled at
-        // the org level). Billing metadata — including `warp_ai_policy.is_voice_enabled`
-        // — lives inside the team data, so `TeamsChanged` covers all policy updates.
-        let tip_model_handle_for_teams = tip_model_handle.clone();
-        ctx.subscribe_to_model(&UserWorkspaces::handle(ctx), move |_, event, ctx| {
-            if matches!(event, UserWorkspacesEvent::TeamsChanged) {
-                tip_model_handle_for_teams.update(ctx, |model, ctx| {
-                    model.revalidate_tips(ctx);
-                });
-            }
-        });
-        // Revalidate when any keybinding changes so tips with `<keybinding>`
-        // placeholders are hidden/shown when the referenced binding is cleared
-        // or reassigned.
-        ctx.subscribe_to_model(&KeybindingChangedNotifier::handle(ctx), move |_, _, ctx| {
-            tip_model_handle.update(ctx, |model, ctx| {
-                model.revalidate_tips(ctx);
-            });
-        });
-    }
 
     timer.mark_interval_end("SINGLETON_MODELS_REGISTERED");
 
     ctx.add_singleton_model(move |_| timer);
 
-    ctx.add_singleton_model(|ctx| AIExecutionProfilesModel::new(launch_mode, ctx));
 
     ctx.add_singleton_model(DefaultTerminal::new);
-
-    ctx.add_singleton_model(|ctx| {
-        let should_restore_indices = launch_mode.supports_indexing()
-            && (matches!(launch_mode, LaunchMode::RemoteServerDaemon { .. })
-                || UserWorkspaces::as_ref(ctx).is_codebase_context_enabled(ctx));
-        let indices_to_restore = if should_restore_indices {
-            persisted_workspaces.clone()
-        } else {
-            vec![]
-        };
-
-        let codebase_limits = AIRequestUsageModel::as_ref(ctx).codebase_context_limits();
-        let mut codebase_index_config = CodebaseIndexManagerConfig::new(
-            indices_to_restore,
-            codebase_limits.max_indices_allowed,
-            codebase_limits.max_files_per_repo,
-            codebase_limits.embedding_generation_batch_size,
-            server_api_provider.as_ref(ctx).get(),
-            launch_mode.supports_indexing(),
-        );
-        if matches!(launch_mode, LaunchMode::RemoteServerDaemon { .. }) {
-            codebase_index_config = codebase_index_config.defer_persisted_index_restore();
-        }
-        #[cfg(feature = "local_fs")]
-        if let Some(snapshot_storage) = daemon_codebase_index_snapshot_storage(launch_mode) {
-            return CodebaseIndexManager::new_with_snapshot_storage(
-                codebase_index_config,
-                Some(snapshot_storage),
-                ctx,
-            );
-        }
-
-        CodebaseIndexManager::new_with_config(codebase_index_config, ctx)
-    });
-
-    ctx.add_singleton_model(|ctx| {
-        ProjectContextModel::new_from_persisted(
-            persisted_project_rules,
-            read_project_rule_contents,
-            ctx,
-        )
-    });
-
-    // Index global rules (e.g. ~/.agents/AGENTS.md) on a background task so
-    // they are available to subsequent agent queries.
-    ProjectContextModel::handle(ctx).update(ctx, |me, ctx| me.index_global_rules(ctx));
-    #[cfg(all(not(target_family = "wasm"), feature = "local_fs"))]
-    {
-        ctx.add_singleton_model(ai::remote_agent_context::RemoteAgentContext::new);
-    }
 
     ctx.add_singleton_model(|ctx| {
         PersistedWorkspace::new(
@@ -2567,7 +2160,6 @@ pub(crate) fn initialize_app(
     });
     ctx.add_singleton_model(move |_| persistence_writer);
 
-    ctx.add_singleton_model(input_classifier::InputClassifierModel::new);
 
     ctx.add_singleton_model(move |_| IgnoredSuggestionsModel::new(persisted_ignored_suggestions));
 

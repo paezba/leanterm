@@ -171,22 +171,6 @@ fn is_falsey(val: &Option<bool>) -> bool {
     val.is_none_or(|v| !v)
 }
 
-/// The mode a leaf pane opens in.
-///
-/// Used by tab configs to distinguish terminal, agent, and cloud panes.
-/// Launch configs always produce `Terminal` (the default).
-#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-pub enum PaneMode {
-    /// A standard terminal shell session.
-    #[default]
-    Terminal,
-    /// A terminal that immediately enters Agent Mode.
-    Agent,
-    /// A cloud-mode (ambient agent) pane with no local shell.
-    Cloud,
-}
-
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(untagged, rename_all = "lowercase")]
 pub enum PaneTemplateType {
@@ -197,8 +181,6 @@ pub enum PaneTemplateType {
         commands: Vec<CommandTemplate>,
         #[serde(skip_serializing_if = "is_falsey", default)]
         is_focused: Option<bool>,
-        #[serde(default)]
-        pane_mode: PaneMode,
         /// Optional shell override for this pane (e.g. `"pwsh"`, `"zsh"`).
         /// Sourced from the `shell` field of a tab config pane node.
         #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -239,24 +221,10 @@ impl TryFrom<PaneNodeSnapshot> for PaneTemplateType {
                     cwd: PathBuf::from(terminal.cwd.unwrap_or_default()),
                     commands: Vec::new(),
                     is_focused: Some(leaf.is_focused),
-                    pane_mode: PaneMode::Terminal,
                     shell: None,
                 }),
                 // Currently, notebook panes cannot be saved in launch configurations.
-                LeafContents::Notebook(_)
-                | LeafContents::EnvVarCollection(_)
-                | LeafContents::Code(_)
-                | LeafContents::Workflow(_)
-                | LeafContents::Settings(_)
-                | LeafContents::AIFact(_)
-                | LeafContents::CodeReview(_)
-                | LeafContents::CustomRouterEditor
-                | LeafContents::ExecutionProfileEditor
-                | LeafContents::GetStarted
-                | LeafContents::NetworkLog
-                | LeafContents::AIDocument(_)
-                | LeafContents::EnvironmentManagement(_)
-                | LeafContents::AmbientAgent(_) => {
+                LeafContents::Notebook(_) | LeafContents::EnvVarCollection(_) | LeafContents::Code(_) | LeafContents::Workflow(_) | LeafContents::Settings(_) | LeafContents::CodeReview(_) | LeafContents::NetworkLog => {
                     // TODO: Handle AIDocument in launch config
                     Err(())
                 }
@@ -390,7 +358,6 @@ pub fn make_mock_single_window_launch_config() -> LaunchConfig {
                         is_focused: Some(true),
                         cwd: PathBuf::from("/some/path"),
                         commands: vec!["echo test_command".into()],
-                        pane_mode: PaneMode::Terminal,
                         shell: None,
                     },
                     commands: Vec::new(),
@@ -403,7 +370,6 @@ pub fn make_mock_single_window_launch_config() -> LaunchConfig {
                         is_focused: Some(true),
                         cwd: PathBuf::from("/some/path"),
                         commands: vec!["echo test_command_on_another_tab".into()],
-                        pane_mode: PaneMode::Terminal,
                         shell: None,
                     },
                     commands: Vec::new(),

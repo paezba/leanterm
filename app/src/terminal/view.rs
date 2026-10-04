@@ -9,12 +9,16 @@ pub mod inline_banner;
 #[cfg(test)]
 #[path = "view/queued_prompts_tests.rs"]
 mod queued_prompts_tests;
+use crate::server::telemetry::AnonymousUserSignupEntrypoint;
+use crate::settings::DebugSettingsChangedEvent;
+use super::{ GridType, should_right_click_paste};
+use crate::server::cloud_objects::update_manager::UpdateManager;
+#[cfg(feature = "local_fs")]
+use crate::settings::import::model::ImportedConfigModel;
+use crate::terminal::keys::TerminalKeybindings;
+use crate::terminal::waterfall_gap_element::WaterfallGapElement;
 use ai::agent::action::InsertReviewComment;
 // TODO(advait): if we align on prompt suggestions banner in Input, move code out of inline_banner mod.
-pub use init_project::{
-    InitActionResult, InitProjectModel, InitProjectModelEvent, InitStepBlock, InitStepKind,
-    ProjectScopedRulesResult,
-};
 use onboarding::callout::{FinalState, OnboardingCalloutViewEvent, OnboardingQuery};
 use onboarding::{OnboardingCalloutView, OnboardingKeybindings};
 use repo_metadata::CanonicalizedPath;
@@ -109,12 +113,6 @@ use session_sharing_protocol::sharer::{
     RoleUpdateReason, SessionEndedReason, SessionRetentionReason,
 };
 use settings::{Setting, ToggleableSetting};
-pub(crate) use shared_session::cloud_conversation_continuation::{
-    AIQueryRouting, CloudRoutingIndicator, CompletedChildPresentation, ConversationAccess,
-    completed_child_conversation_access, completed_child_presentation,
-    is_retained_setup_failure_debug_editable_for_task, resolve_ai_query_routing,
-    resolve_ambient_agent_task_id,
-};
 use shared_session::{SharedSessionAdapter, Viewer};
 use ssh_file_upload::{FileUpload, FileUploadEvent};
 use sum_tree::SeekBias;
@@ -190,77 +188,10 @@ use super::ssh::util::{InteractiveSshCommand, SshWarpifyCommand, parse_interacti
 use super::warpify::WarpificationSource;
 use super::warpify::success_block::{WarpifySuccessBlock, WarpifySuccessBlockEvent};
 use super::warpify::trigger_state::{SshBlockState, WarpifyState};
-use super::{CLIAgent, GridType, cli_agent, should_right_click_paste};
 #[cfg(any(test, feature = "integration_tests"))]
 use crate::ai::agent::UserQueryMode;
-use crate::ai::agent::conversation::{AIConversation, AIConversationId, ConversationStatus};
-use crate::ai::agent::todos::popup::{AgentTodosPopupEvent, AgentTodosPopupView};
-use crate::ai::agent::{
-    AIAgentActionId, AIAgentActionType, AIAgentCitation, AIAgentContext, AIAgentExchangeId,
-    AIAgentInput, AIAgentOutputStatus, AIAgentPtyWriteMode, AIAgentTextSection,
-    AgentReviewCommentBatch, CancellationReason, FileLocations, FinishedAIAgentOutput,
-    PassiveCodeDiffEntry, PassiveSuggestionResultType, PassiveSuggestionTrigger, RenderableAIError,
-    ServerOutputId, ShellCommandCompletedTrigger,
-};
-#[cfg(feature = "local_fs")]
-use crate::ai::agent::{CurrentHead, DiffBase};
-use crate::ai::agent_conversations_model::{AgentConversationsModel, AgentConversationsModelEvent};
-use crate::ai::ambient_agents::{
-    AmbientAgentTask, AmbientAgentTaskId, AmbientConversationStatus,
-    conversation_output_status_from_conversation,
-};
-use crate::ai::blocklist::agent_view::{
-    AgentViewController, AgentViewControllerEvent, AgentViewConversationSelection,
-    AgentViewDisplayMode, AgentViewEntryBlockParams, AgentViewEntryOrigin,
-    AgentViewHeaderDisabledTheme, AgentViewHeaderTheme, AgentViewZeroStateBlock,
-    AgentViewZeroStateEvent, ENTER_OR_EXIT_CONFIRMATION_WINDOW, EphemeralMessageModel,
-    ExitConfirmationTrigger, GuiInputModePolicy, InlineAgentViewHeader, OrchestrationPillBar,
-    fork_from_last_known_good_state_exchange_id, get_agent_view_entry_block_position_id,
-    is_in_cloud_context,
-};
-use crate::ai::blocklist::block::cli::{CLISubagentView, CLISubagentViewEvent};
-use crate::ai::blocklist::block::cli_controller::{
-    CLISubagentController, CLISubagentEvent, UserTakeOverReason,
-};
-use crate::ai::blocklist::block::{AIBlockAction, FinishReason};
-use crate::ai::blocklist::codebase_index_speedbump_banner::{
-    CodebaseIndexSpeedbumpBannerAction, CodebaseIndexSpeedbumpBannerState, VisibilityState,
-};
-use crate::ai::blocklist::model::{
-    AIBlockModel, AIBlockModelHelper, AIBlockModelImpl, AIBlockOutputStatus,
-};
-use crate::ai::blocklist::telemetry_banner::{TelemetryBanner, should_collect_ai_ugc_telemetry};
-use crate::ai::blocklist::usage::conversation_usage_view::{
-    ConversationUsageInfo, ConversationUsageView, TimingInfo,
-};
-use crate::ai::blocklist::usage::request_metadata_turn_view::{
-    RequestMetadataTurnView, RequestMetadataTurnViewEvent,
-};
-use crate::ai::blocklist::{
-    AIBlock, AIBlockEvent, ATTACH_AS_AGENT_MODE_CONTEXT_TEXT, AutofireAction,
-    BlocklistAIActionEvent, BlocklistAIActionModel, BlocklistAIContextEvent,
-    BlocklistAIContextModel, BlocklistAIController, BlocklistAIControllerEvent,
-    BlocklistAIHistoryEvent, BlocklistAIHistoryModel, BlocklistAIInputEvent, BlocklistAIInputModel,
-    ClientIdentifiers, ConversationSelection, ConversationStatusUpdate, InputConfig, InputType,
-    InputTypeAutoDetectionSource, LegacyPassiveSuggestionsEvent, LegacyPassiveSuggestionsModel,
-    MaaPassiveSuggestionsEvent, MaaPassiveSuggestionsModel, PRE_REWIND_PREFIX,
-    PassiveSuggestionsModels, PendingAttachment, PendingQueryState, QueuedQuery, QueuedQueryId,
-    QueuedQueryModel, QueuedQueryOrigin, RequestFileEditsFormatKind, ShellCommandExecutor,
-    ShellCommandExecutorEvent, SlashCommandRequest, StartAgentExecutor, StartAgentExecutorEvent,
-    StartAgentRequest, ai_brand_color, block_context_from_terminal_model,
-    get_ai_block_overflow_menu_element_position_id, get_attached_blocks_chip_element_position_id,
-    is_lrc_auto_queue_active,
-};
-use crate::ai::document::ai_document_model::{AIDocumentId, AIDocumentModel, AIDocumentVersion};
-use crate::ai::llms::{LLMId, LLMModelHost, LLMPreferences};
 #[cfg(feature = "local_fs")]
 use crate::persisted_workspace::PersistedWorkspace;
-use crate::ai::predict::prompt_suggestions::{
-    has_pending_code_or_unit_test_prompt_suggestion,
-    is_accept_prompt_suggestion_bound_to_cmd_enter,
-    is_accept_prompt_suggestion_bound_to_ctrl_enter,
-};
-use crate::ai_assistant::{ASK_AI_ASSISTANT_TEXT, AskAIType};
 use crate::antivirus::AntivirusInfo;
 use crate::appearance::{Appearance, AppearanceEvent};
 use crate::auth::auth_manager::AuthManager;
@@ -319,26 +250,18 @@ use crate::remote_server::manager::{
 use crate::resource_center::{
     Tip, TipHint, TipsCompleted, mark_feature_used_and_write_to_user_defaults,
 };
-use crate::search::slash_command_menu::static_commands::commands;
-use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::ids::{ObjectUid, SyncId};
 use crate::server::server_api::ServerApi;
 use crate::server::telemetry::{
-    self, AgentModeAttachContextMethod, AgentModeEntrypoint, AgentModeRewindEntrypoint,
-    AnonymousUserSignupEntrypoint, BootstrappingInfo, InteractionSource, NotificationAgentVariant,
-    NotificationsTurnedOnSource, PaletteSource, PromptSuggestionViewType,
+    self, BootstrappingInfo,
+    NotificationsTurnedOnSource, PaletteSource,
     SaveAsWorkflowModalSource, SecretInteraction, SharingDialogSource, SlowBootstrapInfo,
     TelemetryEvent, ToggleBlockFilterSource, WorkflowTelemetryMetadata,
 };
 use crate::session_management::{CommandContext, SessionNavigationPromptElements};
-use crate::settings::ai::FocusedTerminalInfo;
-#[cfg(feature = "local_fs")]
-use crate::settings::import::model::ImportedConfigModel;
 use crate::settings::import::view::{SettingsImportEvent, SettingsImportView};
-use crate::settings::{
-    AISettings, AISettingsChangedEvent, AliasExpansionSettings, AppEditorSettings,
-    BlockVisibilitySettings, BlockVisibilitySettingsChangedEvent, CodeSettings, DebugSettings,
-    DebugSettingsChangedEvent, EmacsBindingsSettings, FontSettings, FontSettingsChangedEvent,
+use crate::settings::{ AliasExpansionSettings, AppEditorSettings,
+    BlockVisibilitySettings, BlockVisibilitySettingsChangedEvent, CodeSettings, DebugSettings, EmacsBindingsSettings, FontSettings, FontSettingsChangedEvent,
     InputModeSettings, InputModeSettingsChangedEvent, InputSettings, PaneSettings,
     PaneSettingsChangedEvent, PrivacySettings, PrivacySettingsChangedEvent,
     PrivacySettingsSnapshot, SelectionSettings, VimBannerSettings,
@@ -364,18 +287,6 @@ use crate::terminal::block_list_viewport::{
     ScrollState, ViewportState,
 };
 use crate::terminal::bootstrap::init_subshell_command;
-use crate::terminal::cli_agent_sessions::event::{
-    CLI_AGENT_NOTIFICATION_SENTINEL, CLIAgentEvent, CLIAgentEventPayload, CLIAgentEventSource,
-    CLIAgentEventType, parse_event,
-};
-use crate::terminal::cli_agent_sessions::listener::{CLIAgentSessionListener, is_agent_supported};
-#[cfg(not(target_family = "wasm"))]
-use crate::terminal::cli_agent_sessions::plugin_manager::{PluginModalKind, plugin_manager_for};
-use crate::terminal::cli_agent_sessions::{
-    CLIAgentInputEntrypoint, CLIAgentInputState, CLIAgentRichInputCloseReason, CLIAgentSession,
-    CLIAgentSessionContext, CLIAgentSessionStatus, CLIAgentSessionsModel,
-    CLIAgentSessionsModelEvent,
-};
 use crate::terminal::color::List;
 use crate::terminal::command_corrections_denylist::COMMAND_CORRECTIONS_PREFERRED_DENYLIST;
 use crate::terminal::event::{
@@ -386,13 +297,10 @@ use crate::terminal::general_settings::GeneralSettings;
 use crate::terminal::grid_size_util::grid_cell_dimensions;
 use crate::terminal::input::decorations::InputBackgroundJobOptions;
 use crate::terminal::input::inline_menu::InlineMenuPositioner;
-#[cfg(not(target_family = "wasm"))]
-use crate::terminal::input::slash_commands::fork_button_action;
 use crate::terminal::input::{
     CommandExecutionSource, InputAction, InputEmptyStateChangeReason, InputState, MenuPositioning,
     MenuPositioningProvider, ShellWidgetApplyMode,
 };
-use crate::terminal::keys::TerminalKeybindings;
 use crate::terminal::ligature_settings::{LigatureSettings, should_use_ligature_rendering};
 use crate::terminal::links::should_directly_open_link;
 #[cfg(feature = "local_tty")]
@@ -403,12 +311,10 @@ use crate::terminal::local_tty::shell::ShellStarter;
 #[cfg(all(windows, feature = "local_tty"))]
 use crate::terminal::local_tty::windows::get_user_and_system_env_variable;
 use crate::terminal::model::ansi::{ClearMode, Handler};
-use crate::terminal::model::block::{
-    AgentInteractionMetadata, Block, BlockId, BlockMetadata, LONG_RUNNING_BOTTOM_PADDING_LINES,
+use crate::terminal::model::block::{ Block, BlockId, BlockMetadata, LONG_RUNNING_BOTTOM_PADDING_LINES,
 };
 use crate::terminal::model::blockgrid::BlockGrid;
-use crate::terminal::model::blocks::{
-    AgentTranscriptNavigableItem, BlockHeight, BlockHeightItem, BlockHeightSummary, BlockList,
+use crate::terminal::model::blocks::{ BlockHeight, BlockHeightItem, BlockHeightSummary, BlockList,
     BlockListPoint, Gap, RemovableBlocklistItem,
 };
 use crate::terminal::model::escape_sequences::{
@@ -431,7 +337,7 @@ use crate::terminal::recorder::PtyRecorder;
 use crate::terminal::safe_mode_settings::get_secret_obfuscation_mode;
 use crate::terminal::session_settings::{
     DEFAULT_THRESHOLD_FOR_LONG_RUNNING_NOTIFICATION, NotificationsMode, NotificationsSettings,
-    SessionSettings, SessionSettingsChangedEvent, ToolbarChipSelection,
+    SessionSettings, SessionSettingsChangedEvent,
 };
 use crate::terminal::settings::{TerminalSettings, TerminalSettingsChangedEvent};
 use crate::terminal::shared_session::manager::Manager;
@@ -443,14 +349,8 @@ use crate::terminal::shared_session::{
     SharedSessionStatus,
 };
 use crate::terminal::view::block_onboarding::onboarding_prompt_block::OnboardingPromptBlock;
-use crate::terminal::view::init_environment::mode_selector::{
-    EnvironmentSetupMode, EnvironmentSetupModeSelector, EnvironmentSetupModeSelectorEvent,
-};
-use crate::terminal::view::init_environment::{InitEnvironmentBlock, InitEnvironmentBlockEvent};
 use crate::terminal::view::inline_banner::{
-    AgentModeSetupSpeedbumpBannerAction, AgentModeSetupSpeedbumpBannerState,
-    AliasExpansionBannerState, NotificationsDiscoveryBannerState, NotificationsErrorBannerState,
-    PromptSuggestionBannerState, VimModeBannerState, render_agent_mode_setup_banner,
+    AliasExpansionBannerState, NotificationsDiscoveryBannerState, NotificationsErrorBannerState, VimModeBannerState,
 };
 use crate::terminal::view::passive_suggestions::PromptSuggestionResolution;
 pub use crate::terminal::view::rich_content::{
@@ -467,12 +367,10 @@ use crate::terminal::view::ssh_remote_server_failed_banner::{
 use crate::terminal::view::ssh_tmux_deprecation_banner::{
     SshTmuxDeprecationBanner, SshTmuxDeprecationBannerEvent,
 };
-use crate::terminal::view::telemetry::PromptSuggestionFallbackReason;
 use crate::terminal::view::zero_state_block::TerminalViewZeroStateBlock;
 use crate::terminal::warpify::SubshellSource;
 use crate::terminal::warpify::render::render_subshell_separator;
 use crate::terminal::warpify::settings::WarpifySettings;
-use crate::terminal::waterfall_gap_element::WaterfallGapElement;
 use crate::terminal::writeable_pty::{PtyIntent, PtyIntentEvent, TerminalSurface};
 use crate::terminal::{
     AudibleBell, BlockListSettings, BlockListSettingsChangedEvent, CellSizeAndWindowPadding,
@@ -519,8 +417,7 @@ use crate::workspace::{
 };
 use crate::workspaces::user_workspaces::{UserWorkspaces, UserWorkspacesEvent};
 use crate::workspaces::workspace::CustomerType;
-use crate::{
-    AIAgentActionResultType, AIRequestUsageModel, ActiveSession as WindowActiveSession, safe_error,
+use crate::{ ActiveSession as WindowActiveSession, safe_error,
     safe_warn, send_telemetry_from_ctx, send_telemetry_sync_from_ctx,
 };
 
@@ -1677,7 +1574,6 @@ pub enum Event {
     },
     Pane(PaneEvent),
     OpenSettings(SettingsSection),
-    AskAIAssistant(AskAIType),
     /// Event propagates terminal inputs up to the workspace,
     /// to be processed on the way back down through the view hierarchy.
     SyncInput(SyncEvent),
@@ -1696,52 +1592,13 @@ pub enum Event {
     // Tell the pane group to open the workflow modal with an unsaved workflow.
     OpenWorkflowModalWithTemporary(Box<Workflow>),
     OpenWarpDriveObjectInPane(ObjectUid),
-    OpenSuggestedAgentModeWorkflowModal {
-        workflow_and_id: SuggestedAgentModeWorkflowAndId,
-    },
-    OpenSuggestedRuleDialog {
-        rule_and_id: SuggestedRuleAndId,
-    },
-    OpenAIFactCollection {
-        /// If set, open the fact collection to the specific rule.
-        sync_id: Option<SyncId>,
-    },
-    ToggleAIDocumentPane {
-        document_id: AIDocumentId,
-        document_version: AIDocumentVersion,
-    },
-    /// Closes all visible AI document panes without opening a new one.
-    HideAIDocumentPanes,
-    /// Opens an AI document pane.
-    /// When `is_auto_open` is true, subject to conditions to check if auto opening is acceptable.
-    /// When `is_auto_open` is false (user-triggered), always opens unconditionally.
-    OpenAIDocumentPane {
-        document_id: AIDocumentId,
-        document_version: AIDocumentVersion,
-        is_auto_open: bool,
-    },
     OpenPromptEditor,
-    OpenAgentToolbarEditor,
-    OpenCLIAgentToolbarEditor,
-    SummarizationCancelDialogToggled {
-        is_open: bool,
-    },
-    EnvironmentSetupModeSelectorToggled {
-        is_open: bool,
-    },
-    AuthSecretDeleteConfirmationDialogToggled {
-        is_open: bool,
-    },
     CtrlD,
     ShutdownPty,
     // TODO: break this event down into higher-level events that hide the
     // `bytes` detail from the view.
     WriteBytesToPty {
         bytes: Cow<'static, [u8]>,
-    },
-    WriteAgentInputToPty {
-        bytes: Cow<'static, [u8]>,
-        mode: AIAgentPtyWriteMode,
     },
     Resize {
         size_update: SizeUpdate,
@@ -1765,27 +1622,8 @@ pub enum Event {
     PreviewCodeInWarp {
         source: CodeSource,
     },
-    OpenCodeDiff {
-        view: ViewHandle<CodeDiffView>,
-    },
     OpenCodeReviewPane(CodeReviewPanelArg),
     ToggleCodeReviewPane(CodeReviewPanelArg),
-    InsertCodeReviewComments {
-        repo_path: LocalOrRemotePath,
-        comments: Vec<PendingImportedReviewComment>,
-        diff_mode: DiffMode,
-        open_code_review: Option<CodeReviewPanelArg>,
-    },
-    OpenCodeReviewPaneAndScrollToComment {
-        open_code_review: CodeReviewPanelArg,
-        comment: AttachedReviewComment,
-        diff_mode: DiffMode,
-    },
-    ImportAllCodeReviewComments {
-        open_code_review: CodeReviewPanelArg,
-        comments: Vec<AttachedReviewComment>,
-        diff_mode: DiffMode,
-    },
     StartSharingCurrentSession {
         scrollback_type: SharedSessionScrollbackType,
         source: SharedSessionSource,
@@ -1850,16 +1688,6 @@ pub enum Event {
         reason: RoleUpdateReason,
     },
     RequestSharedSessionRole(Role),
-    /// A viewer in a shared session is requesting to send an agent prompt.
-    SendAgentPrompt {
-        server_conversation_token: Option<SessionSharingServerConversationToken>,
-        prompt: String,
-        attachments: Vec<AgentAttachment>,
-    },
-    /// A viewer in a shared session is requesting to cancel the active agent conversation.
-    CancelSharedSessionConversation {
-        server_conversation_token: SessionSharingServerConversationToken,
-    },
     /// The viewer is reporting its terminal size for viewer-driven PTY sizing.
     ReportViewerTerminalSize {
         window_size: SessionSharingWindowSize,
@@ -1938,17 +1766,6 @@ pub enum Event {
     },
 
     OpenThemeChooser,
-    OpenConversationHistory,
-    OpenMCPSettingsPage {
-        page: Option<MCPServersSettingsPage>,
-    },
-    OpenAddRulePane,
-    OpenRulesPane,
-    OpenAddPromptPane {
-        /// The initial prompt body content.
-        initial_content: Option<String>,
-    },
-    OpenEnvironmentManagementPane,
     OpenFilesPalette {
         source: PaletteSource,
     },
@@ -1975,22 +1792,9 @@ pub enum Event {
         force_open: bool,
     },
     SlowBootstrap,
-    OpenAgentProfileEditor {
-        profile_id: ExecutionProfileId,
-    },
-    OpenAutoReloadModal {
-        purchased_credits: i32,
-    },
-    #[cfg(not(target_family = "wasm"))]
-    OpenPluginInstructionsPane(CLIAgent, PluginModalKind),
     ShowToast {
         message: String,
         flavor: ToastFlavor,
-    },
-    /// Emitted when the agent's interaction state with a long-running command changes.
-    LongRunningCommandAgentInteractionStateChanged {
-        state: LongRunningCommandAgentInteractionState,
-        block_id: Option<BlockId>,
     },
     /// A pluggable notification triggered via OSC 9 or OSC 777 escape sequences.
     /// Used to show an in-app toast notification.
@@ -1998,66 +1802,6 @@ pub enum Event {
         title: Option<String>,
         body: String,
     },
-    /// Emitted when cloud mode runs should display the cloud-agent capacity/credits modal.
-    ShowCloudAgentCapacityModal {
-        variant: CloudAgentCapacityModalVariant,
-    },
-    /// Emitted when the StartAgent executor needs the workspace to create
-    /// a new child agent conversation in a split pane. The freshly-created
-    /// child conversation id is echoed back to the executor via
-    /// [`BlocklistAIHistoryModel::record_new_conversation_request_complete`]
-    /// so the executor can disambiguate per-request pendings when multiple
-    /// StartAgent requests are in flight in parallel.
-    StartAgentConversation(StartAgentRequest),
-    /// Emitted when the user clicks a child agent row in the status card to reveal
-    /// its hidden pane.
-    RevealChildAgent {
-        conversation_id: AIConversationId,
-    },
-    /// Emitted when the user clicks a pill in the orchestration pill bar.
-    /// The pane group swaps visibility instead of cloning the conversation.
-    SwapPaneToConversation {
-        conversation_id: AIConversationId,
-    },
-    /// Carries the fetched task snapshot so pane construction uses the same
-    /// current-state materialization decision as pill-click restoration.
-    EnsureUnifiedViewerChildPane {
-        conversation_id: AIConversationId,
-        task: Box<AmbientAgentTask>,
-    },
-    /// A unified-stack child viewer could not join its dedicated live
-    /// execution session. The pane group keeps the child passive and
-    /// re-drives it from current task metadata.
-    OrchestrationChildSharedSessionJoinFailed {
-        conversation_id: AIConversationId,
-        session_id: session_sharing_protocol::common::SessionId,
-    },
-    /// Emitted when "Open in new tab" is picked from a child pill's 3-dot menu.
-    /// Bubbles up to the workspace to create the new tab.
-    OpenChildAgentInNewTab {
-        conversation_id: AIConversationId,
-    },
-    /// Emitted when "Open in new pane" is picked from a child pill's 3-dot menu.
-    /// Reuses the existing dedicated child pane to preserve in-flight state.
-    OpenChildAgentInNewPane {
-        conversation_id: AIConversationId,
-    },
-    /// Emitted when "Stop agent" is picked from a child pill's 3-dot menu.
-    StopAgentConversation {
-        conversation_id: AIConversationId,
-    },
-    /// Emitted when "Kill agent" is picked from a child pill's 3-dot menu.
-    KillAgentConversation {
-        conversation_id: AIConversationId,
-    },
-    /// Emitted when this pane's [`ambient_agent::AmbientAgentViewModel`] is lazily
-    /// created — e.g. a raw `shared_session` link-join viewer that only discovers the
-    /// joined session is an ambient (cloud) run at `SessionJoined`. Lets
-    /// `PaneGroup::create_shared_session_viewer` wire the viewer `TerminalManager` to the
-    /// model's session lifecycle events (via
-    /// [`ambient_agent::wire_ambient_agent_session_events`]) so follow-up runs after the
-    /// previous VM ends re-attach the viewer to the new execution session.
-    AmbientAgentViewModelCreated,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -3158,10 +2902,7 @@ impl TerminalView {
         colors: List,
         model_event_sender: Option<SyncSender<persistence::ModelEvent>>,
         current_prompt: ModelHandle<PromptType>,
-        initial_input_config: Option<InputConfig>,
-        conversation_restoration: Option<ConversationRestorationInNewPaneType>,
         inactive_pty_reads_rx: Option<async_broadcast::InactiveReceiver<Arc<Vec<u8>>>>,
-        is_ambient_agent: bool,
         ctx: &mut ViewContext<Self>,
     ) -> Self {
         let terminal_view_id = ctx.view_id();
@@ -13377,20 +13118,6 @@ impl TerminalView {
             }
             ModelEvent::BootstrapPrecmdDone => {
                 self.execute_pending_command((), ctx);
-            }
-            ModelEvent::AgentTaggedInChanged {
-                block_id,
-                is_tagged_in,
-            } => {
-                let state = if *is_tagged_in {
-                    LongRunningCommandAgentInteractionState::TaggedIn
-                } else {
-                    LongRunningCommandAgentInteractionState::NotInteracting
-                };
-                ctx.emit(Event::LongRunningCommandAgentInteractionStateChanged {
-                    state,
-                    block_id: Some(block_id.clone()),
-                });
             }
             ModelEvent::PluggableNotification { title, body } => {
                 // Intercept structured CLI agent notifications (e.g. from Claude Code plugin).
@@ -27005,10 +26732,6 @@ impl PtyIntentEvent for Event {
             Event::CtrlD => Some(PtyIntent::CtrlD),
             Event::ShutdownPty => Some(PtyIntent::ShutdownPty),
             Event::WriteBytesToPty { bytes } => Some(PtyIntent::WriteBytes(bytes.clone())),
-            Event::WriteAgentInputToPty { bytes, mode } => Some(PtyIntent::WriteAgentInput {
-                bytes: bytes.clone(),
-                mode: *mode,
-            }),
             Event::Resize { size_update } => Some(PtyIntent::Resize(*size_update)),
             Event::ExecuteCommand(event) => Some(PtyIntent::ExecuteCommand(event.clone())),
             Event::RunNativeShellCompletions {

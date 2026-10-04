@@ -425,14 +425,6 @@ pub struct TerminalPane {
     pub is_active: bool,
     /// This is serialized JSON data for a ShellLaunchData struct.
     pub shell_launch_data: Option<String>,
-    /// This is serialized JSON data for an InputConfig struct.
-    pub input_config: Option<String>,
-    pub llm_model_override: Option<String>,
-    pub active_profile_id: Option<String>,
-    /// This is serialized JSON data for a Vec<AIConversationId>.
-    pub conversation_ids: Option<String>,
-    /// The active conversation ID if the agent view was open in fullscreen mode.
-    pub active_conversation_id: Option<String>,
 }
 
 #[derive(Identifiable, Queryable, Selectable)]
@@ -603,14 +595,6 @@ pub struct NewTerminalPane {
     pub is_active: bool,
     /// This is serialized JSON data for a ShellLaunchData struct.
     pub shell_launch_data: Option<String>,
-    /// This is serialized JSON data for an InputConfig struct.
-    pub input_config: Option<String>,
-    pub llm_model_override: Option<String>,
-    pub active_profile_id: Option<String>,
-    /// This is serialized JSON data for a Vec<AIConversationId>.
-    pub conversation_ids: Option<String>,
-    /// The active conversation ID if the agent view was open in fullscreen mode.
-    pub active_conversation_id: Option<String>,
 }
 
 #[derive(Insertable)]

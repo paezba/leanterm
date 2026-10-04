@@ -1,3 +1,4 @@
+use crate::ui_components::icons::Icon;
 use std::iter;
 
 use markdown_parser::{FormattedText, FormattedTextFragment, FormattedTextLine};
@@ -13,12 +14,7 @@ use warpui::{
     AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
 };
 
-use crate::ai::blocklist::code_block::{
-    CodeBlockOptions, CodeSnippetButtonHandles, render_code_block_plain,
-};
 use crate::appearance::Appearance;
-use crate::terminal::CLIAgent;
-use crate::ui_components::icons::Icon;
 use crate::view_components::DismissibleToast;
 use crate::view_components::action_button::{ActionButton, ButtonSize, NakedTheme};
 use crate::workspace::{ToastStack, WorkspaceAction};

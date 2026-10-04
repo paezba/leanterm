@@ -1,3 +1,4 @@
+use crate::terminal::shared_session::shared_handlers::RemoteUpdateGuard;
 use std::collections::HashMap;
 use std::io::{Sink, sink};
 use std::sync::Arc;
@@ -11,8 +12,6 @@ use warpui::{Entity, ModelContext, SingletonEntity, WeakViewHandle};
 use crate::features::FeatureFlag;
 use crate::terminal::event_listener::ChannelEventListener;
 use crate::terminal::model::ansi::{self};
-use crate::terminal::model::block::AgentInteractionMetadata;
-use crate::terminal::shared_session::shared_handlers::RemoteUpdateGuard;
 use crate::terminal::shared_session::{SharedSessionStatus, decode_scrollback};
 use crate::terminal::{TerminalModel, TerminalView};
 

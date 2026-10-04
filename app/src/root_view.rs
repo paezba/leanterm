@@ -1,3 +1,4 @@
+use crate::terminal::model::block::SerializedBlockListItem;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -37,10 +38,6 @@ use warpui::{
     ViewContext, ViewHandle, WindowId, id,
 };
 
-use crate::ai::llms::{LLMPreferences, LLMPreferencesEvent};
-use crate::ai::onboarding::{
-    build_onboarding_models, current_onboarding_auth_state, onboarding_pricing_promotion_message,
-};
 use crate::app_state::{AppState, PaneUuid, WindowSnapshot};
 use crate::appearance::Appearance;
 use crate::auth::auth_manager::{AuthManager, AuthManagerEvent};
@@ -79,9 +76,7 @@ use crate::server::telemetry::{LaunchConfigUiLocation, TelemetryEvent};
 use crate::settings::cloud_preferences_syncer::{
     CloudPreferencesSyncer, CloudPreferencesSyncerEvent,
 };
-use crate::settings::{
-    AISettings, QuakeModeSettings, ThemeSettings, apply_account_first_onboarding_settings,
-    apply_onboarding_settings,
+use crate::settings::{ QuakeModeSettings, ThemeSettings,
 };
 use crate::settings_view::{OpenTeamsSettingsModalArgs, SettingsSection, flags};
 use crate::terminal::available_shells::AvailableShell;
@@ -98,7 +93,6 @@ use crate::view_components::DismissibleToast;
 use crate::window_settings::WindowSettings;
 use crate::workspace::hoa_onboarding::mark_hoa_onboarding_completed;
 use crate::workspace::tab_settings::TabSettings;
-use crate::workspace::view::OnboardingTutorial;
 use crate::workspace::{
     OneTimeModalModel, PaneViewLocator, Workspace, WorkspaceAction, WorkspaceRegistry,
 };

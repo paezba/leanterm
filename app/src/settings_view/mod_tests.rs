@@ -160,28 +160,7 @@ const SECTIONS_WITH_RENAMED_DISPLAY_LABELS: &[SettingsSection] =
 fn all_sections_list_is_exhaustive() {
     fn is_listed(section: SettingsSection) -> bool {
         let known = match section {
-            SettingsSection::About
-            | SettingsSection::Account
-            | SettingsSection::BillingAndUsage
-            | SettingsSection::Appearance
-            | SettingsSection::Features
-            | SettingsSection::Keybindings
-            | SettingsSection::Privacy
-            | SettingsSection::Referrals
-            | SettingsSection::Scripting
-            | SettingsSection::SharedBlocks
-            | SettingsSection::Teams
-            | SettingsSection::WarpDrive
-            | SettingsSection::Warpify
-            | SettingsSection::WarpAgent
-            | SettingsSection::AgentProfiles
-            | SettingsSection::AgentMCPServers
-            | SettingsSection::Knowledge
-            | SettingsSection::ThirdPartyCLIAgents
-            | SettingsSection::CodeIndexing
-            | SettingsSection::EditorAndCodeReview
-            | SettingsSection::CloudEnvironments
-            | SettingsSection::WarpCloudAgentAPIKeys => section,
+            SettingsSection::About | SettingsSection::Account | SettingsSection::Appearance | SettingsSection::Features | SettingsSection::Keybindings | SettingsSection::Privacy | SettingsSection::Referrals | SettingsSection::Scripting | SettingsSection::SharedBlocks | SettingsSection::Teams | SettingsSection::WarpDrive | SettingsSection::Warpify | SettingsSection::EditorAndCodeReview => section,
         };
         ALL_SECTIONS.contains(&known)
     }

@@ -7,14 +7,16 @@ pub mod inline_menu;
 pub mod message_bar;
 pub mod prompts;
 pub mod repos;
-pub mod slash_command_model;
-pub mod slash_commands;
 mod suggestions_mode_menu;
 pub mod suggestions_mode_model;
 mod terminal;
 mod terminal_message_bar;
 mod universal;
 
+use crate::terminal::input::prompts::{InlinePromptsMenuEvent, InlinePromptsMenuView};
+use crate::terminal::model::session::active_session::ActiveSession;
+use crate::terminal::view::init::{CAN_ATTACH_FILE_KEY, CLI_AGENT_SESSION_ACTIVE_KEY};
+use crate::{ ServerApiProvider, cmd_or_ctrl_shift, send_telemetry_from_ctx};
 use std::any::Any;
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -96,13 +98,11 @@ use warpui::{
 };
 
 use self::decorations::InputBackgroundJobOptions;
-pub use self::handoff_compose::{HandoffComposeState, HandoffComposeStateEvent};
 use super::alias::is_expandable_alias;
 use super::block_list_viewport::InputMode;
 use super::event::{BlockCompletedEvent, BlockType, UserBlockCompleted};
 use super::ligature_settings::LigatureSettings;
-use super::model::block::{
-    AgentInteractionMetadata, BlockId, BlockMetadata, BlocklistEnvVarMetadata,
+use super::model::block::{ BlockId, BlockMetadata, BlocklistEnvVarMetadata,
 };
 use super::model::completions::ShellCompletion;
 use super::model::session::{Session, SessionId, SessionType, Sessions};
@@ -119,17 +119,6 @@ use super::shared_session::SharedSessionStatus;
 use super::shared_session::presence_manager::PresenceManager;
 use super::shared_session::viewer::history_model::SharedSessionHistoryModel;
 use super::shell::ShellType;
-use super::universal_developer_input::{
-    UniversalDeveloperInputButtonBar, UniversalDeveloperInputButtonBarEvent,
-};
-use super::view::ambient_agent::{
-    AmbientAgentViewModel, AmbientAgentViewModelEvent, is_cloud_agent_pre_first_exchange,
-};
-use super::view::inline_banner::{
-    PromptSuggestionBannerState, ZeroStatePromptSuggestionTriggeredFrom,
-    ZeroStatePromptSuggestionType,
-};
-use super::view::queued_prompts_panel::{QueuedPromptsPanelEvent, QueuedPromptsPanelView};
 use super::view::{
     ExecuteCommandEvent, PADDING_LEFT as TERMINAL_VIEW_PADDING_LEFT, SyncInputType, TerminalAction,
 };
@@ -140,50 +129,6 @@ use super::{
 };
 #[allow(unused_imports)]
 use crate::ASSETS;
-use crate::ai::agent::{
-    AIAgentContext, AIAgentExchangeId, CancellationReason, EntrypointType, ImageContext,
-};
-use crate::ai::agent_conversations_model::{
-    AgentConversationNavigationSubject, AgentConversationsModel,
-};
-use crate::ai::blocklist::agent_view::{
-    AgentInputFooter, AgentInputFooterEvent, AgentViewController, AgentViewEntryOrigin,
-    EphemeralMessageModel, is_in_cloud_context,
-};
-use crate::ai::blocklist::block::cli_controller::{CLISubagentController, CLISubagentEvent};
-#[cfg(all(feature = "local_fs", not(target_family = "wasm")))]
-use crate::ai::blocklist::handoff::{
-    HandoffLaunchAttachments, PendingCloudLaunch, suggest_handoff_environment,
-};
-use crate::ai::blocklist::prompt::prompt_alert::{PromptAlertEvent, PromptAlertView};
-use crate::ai::blocklist::{
-    AttachmentType, BLOCK_CONTEXT_ATTACHMENT_REGEX, BlocklistAIActionModel,
-    BlocklistAIContextEvent, BlocklistAIContextModel, BlocklistAIController,
-    BlocklistAIControllerEvent, BlocklistAIHistoryEvent, BlocklistAIHistoryModel,
-    BlocklistAIInputEvent, BlocklistAIInputModel, DIFF_HUNK_ATTACHMENT_REGEX,
-    DRIVE_OBJECT_ATTACHMENT_REGEX, InputConfig, InputType, InputTypeAutoDetectionSource,
-    PendingAttachment, PendingFile, QueuedQuery, QueuedQueryEvent, QueuedQueryId, QueuedQueryModel,
-    QueuedQueryOrigin, SlashCommandRequest, ai_brand_color, ai_indicator_height,
-    render_ai_agent_mode_icon, render_ai_follow_up_icon,
-};
-use crate::ai::cloud_agent_settings::{AuthSecretPreference, CloudAgentSettings};
-use crate::ai::connected_self_hosted_workers::{
-    ConnectedSelfHostedWorkersEvent, ConnectedSelfHostedWorkersModel,
-};
-use crate::ai::document::ai_document_model::{AIDocumentId, AIDocumentVersion};
-use crate::ai::harness_availability::{
-    CloudAgentStartBlocker, HarnessAvailabilityModel, cloud_agent_start_blocker,
-};
-use crate::ai::llms::{LLMPreferences, LLMPreferencesEvent};
-use crate::ai::predict::next_command_model::{
-    NextCommandModel, NextCommandModelEvent, NextCommandSuggestionState, ZeroStateSuggestionInfo,
-    is_command_valid, is_next_command_enabled,
-};
-use crate::ai::predict::prompt_suggestions::{
-    has_pending_code_or_unit_test_prompt_suggestion,
-    is_accept_prompt_suggestion_bound_to_ctrl_enter,
-};
-use crate::ai::skills::{SkillOpenOrigin, SkillTelemetryEvent};
 use crate::appearance::{Appearance, AppearanceEvent};
 use crate::channel::{Channel, ChannelState};
 use crate::cloud_object::model::actions::ObjectActionType;
@@ -199,11 +144,10 @@ use crate::context_chips::display::{PromptDisplay, PromptDisplayEvent};
 use crate::context_chips::display_chip::{DisplayChipConfig, PromptChipShellCommand};
 use crate::context_chips::prompt_type::PromptType;
 use crate::context_chips::spacing;
-use crate::editor::{
-    AttachedImage as AttachedImageRawData, AutosuggestionLocation, AutosuggestionType,
+use crate::editor::{ AutosuggestionLocation, AutosuggestionType,
     BaselinePositionComputationMethod, CommandXRayAnchor, CrdtOperation, CursorColors,
     DisplayPoint, EditOrigin, EditorAction, EditorDecoratorElements, EditorOptions, EditorSnapshot,
-    EditorView, Event as EditorEvent, ImageContextOptions, InteractionState,
+    EditorView, Event as EditorEvent, InteractionState,
     MAX_IMAGES_PER_CONVERSATION, PathTransformerFn, PlainTextEditorViewAction,
     Point as BufferPoint, PropagateAndNoOpEscapeKey, PropagateAndNoOpNavigationKeys,
     PropagateHorizontalNavigationKeys, ReplicaId, TextColors, TextRun, default_cursor_colors,
@@ -226,21 +170,15 @@ use crate::resource_center::{
     Tip, TipAction, TipHint, TipsCompleted, mark_feature_used_and_write_to_user_defaults,
 };
 use crate::search::QueryFilter;
-use crate::search::slash_command_menu::static_commands::commands::{self, COMMAND_REGISTRY};
 use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::ids::SyncId;
 use crate::server::server_api::ServerApi;
-use crate::server::server_api::ai::{AIClient, AttachmentFileInfo};
 use crate::server::team_scope::RequestTeamScope;
-use crate::server::telemetry::{
-    AICommandSearchEntrypoint, AgentModeAutoDetectionFalsePositivePayload,
-    AgentModeAutoDetectionSettingOrigin, AnonymousUserSignupEntrypoint, CommandXRayTrigger,
-    EnvVarTelemetryMetadata, PaletteSource, QueuedPromptSendNowTrigger,
-    SlashCommandAcceptedDetails, SlashMenuSource, TelemetryEvent, WorkflowTelemetryMetadata,
+use crate::server::telemetry::{ AnonymousUserSignupEntrypoint, CommandXRayTrigger,
+    EnvVarTelemetryMetadata, PaletteSource, TelemetryEvent, WorkflowTelemetryMetadata,
 };
 use crate::session_management::SessionNavigationPromptElements;
-use crate::settings::{
-    AISettings, AISettingsChangedEvent, AliasExpansionSettings, AppEditorSettings,
+use crate::settings::{ AliasExpansionSettings, AppEditorSettings,
     AppEditorSettingsChangedEvent, InputModeSettings, InputSettings, InputSettingsChangedEvent,
     MAX_TIMES_TO_SHOW_AUTOSUGGESTION_HINT, PrivacySettings,
 };
@@ -248,54 +186,18 @@ use crate::settings_view::{SettingsSection, flags};
 use crate::suggestions::ignored_suggestions_model::{
     IgnoredSuggestionsModel, IgnoredSuggestionsModelEvent, SuggestionType,
 };
-use crate::terminal::CLIAgent;
-use crate::terminal::buy_credits_banner::{BuyCreditsBanner, BuyCreditsBannerEvent};
-use crate::terminal::cli_agent_sessions::{
-    CLIAgentInputState, CLIAgentSessionsModel, CLIAgentSessionsModelEvent,
-};
 use crate::terminal::input::buffer_model::InputBufferModel;
-use crate::terminal::input::conversations::{
-    InlineConversationMenuEvent, InlineConversationMenuView,
-};
 use crate::terminal::input::inline_history::InlineHistoryMenuView;
 use crate::terminal::input::inline_menu::InlineMenuPositioner;
-use crate::terminal::input::models::{
-    InlineModelSelectorEvent, InlineModelSelectorTab, InlineModelSelectorView,
-};
-use crate::terminal::input::plans::{InlinePlanMenuEvent, InlinePlanMenuView};
-use crate::terminal::input::profiles::{InlineProfileSelectorEvent, InlineProfileSelectorView};
-use crate::terminal::input::prompts::{InlinePromptsMenuEvent, InlinePromptsMenuView};
 use crate::terminal::input::repos::{InlineReposMenuEvent, InlineReposMenuView};
-use crate::terminal::input::rewind::{RewindMenuEvent, RewindMenuView};
-use crate::terminal::input::skills::{
-    InlineSkillSelectorEvent, InlineSkillSelectorView, LOCAL_SKILLS_REMOTE_EXECUTION_ERROR_MESSAGE,
-};
-use crate::terminal::input::slash_command_model::{SlashCommandEntryState, SlashCommandModel};
-use crate::terminal::input::slash_commands::{
-    CloudModeV2SlashCommandView, GuiSlashCommandDataSource, InlineSlashCommandView,
-    SlashCommandDataSource as _, SlashCommandTrigger, UpdatedActiveCommands,
-    slash_command_is_submitted_as_prompt,
-};
 use crate::terminal::input::suggestions_mode_model::{
     InputSuggestionsModeEvent, InputSuggestionsModeModel,
 };
 use crate::terminal::input::terminal_message_bar::TerminalInputMessageBar;
-use crate::terminal::input::user_query::{UserQueryMenuEvent, UserQueryMenuView};
-use crate::terminal::model::session::active_session::ActiveSession;
 use crate::terminal::model::session::shell_quote_arg;
 use crate::terminal::package_installers::command_at_cursor_has_common_package_installer_prefix;
 use crate::terminal::prompt_render_helper::should_render_ps1_prompt;
-use crate::terminal::universal_developer_input::AtContextMenuDisabledReason;
-use crate::terminal::view::ambient_agent::{
-    AuthSecretFtuxView, AuthSecretFtuxViewEvent, AuthSecretSelector, AuthSecretSelectorEvent,
-    HarnessSelector, HarnessSelectorEvent, HostSelector, HostSelectorEvent, NakedHeaderButtonTheme,
-    cloud_agent_team_required_toast_message,
-};
-use crate::terminal::view::init::{CAN_ATTACH_FILE_KEY, CLI_AGENT_SESSION_ACTIVE_KEY};
-use crate::terminal::view::inline_banner::{PromptSuggestionsEvent, PromptSuggestionsView};
-use crate::terminal::view::{
-    AIQueryRouting, CodeDiffAction, file_attach_allowed_for_shared_session,
-    resolve_ai_query_routing, resolve_ambient_agent_task_id,
+use crate::terminal::view::{ CodeDiffAction, file_attach_allowed_for_shared_session,
 };
 use crate::ui_components::blended_colors;
 use crate::ui_components::icons::Icon;
@@ -330,8 +232,6 @@ use crate::workspace::{
 use crate::workspaces::user_workspaces::{
     ResolvedTeamScope, TeamContext, UserWorkspaces, UserWorkspacesEvent,
 };
-#[allow(unused_imports)]
-use crate::{AgentModeEntrypoint, ServerApiProvider, cmd_or_ctrl_shift, send_telemetry_from_ctx};
 
 /// Drop target data for dropping content on the [`Input`].
 #[derive(Debug, Clone)]
@@ -1035,12 +935,6 @@ pub enum Event {
         /// The CRDT-compliant operations.
         operations: Rc<Vec<CrdtOperation>>,
     },
-    /// A viewer in a shared session is requesting to send an agent prompt.
-    SendAgentPrompt {
-        server_conversation_token: Option<ServerConversationToken>,
-        prompt: String,
-        attachments: Vec<AgentAttachment>,
-    },
     /// A disconnected Cloud Mode pane is requesting to submit a cloud follow-up.
     SubmitCloudFollowup {
         prompt: String,
@@ -1051,10 +945,6 @@ pub enum Event {
     SubmitSetupFailureDebugFollowup {
         task_id: crate::ai::ambient_agents::AmbientAgentTaskId,
         prompt: String,
-    },
-    /// A viewer in a shared session is requesting to cancel the active agent conversation.
-    CancelSharedSessionConversation {
-        server_conversation_token: ServerConversationToken,
     },
     InputFocusedFromMiddleClick,
     EditorFocused,
@@ -1074,31 +964,15 @@ pub enum Event {
     AttachDiffSetContext {
         diff_mode: DiffMode,
     },
-    OpenConversationHistory,
     OpenViewMCPPane,
     OpenAddMCPPane,
     OpenProjectRulesPane,
-    OpenEnvironmentManagementPane,
     OpenFilesPalette {
         source: PaletteSource,
     },
     TryHandlePassiveCodeDiff(CodeDiffAction),
-    ToggleAIDocumentPane {
-        document_id: AIDocumentId,
-        document_version: AIDocumentVersion,
-    },
     SubmitCLIAgentInput {
         text: String,
-    },
-    OpenAIDocumentPane {
-        document_id: AIDocumentId,
-        document_version: AIDocumentVersion,
-    },
-    OpenAutoReloadModal {
-        purchased_credits: i32,
-    },
-    AuthSecretDeleteConfirmationDialogToggled {
-        is_open: bool,
     },
     ShowToast {
         message: String,
@@ -1128,8 +1002,6 @@ pub enum Event {
         repos: Vec<String>,
     },
     RegisterPluginListener(CLIAgent),
-    #[cfg(not(target_family = "wasm"))]
-    OpenPluginInstructionsPane(CLIAgent, PluginModalKind),
     OpenShareSessionModal,
     StartRemoteControl,
     OpenHandoffEnvironmentCreationModal,
@@ -2307,9 +2179,6 @@ pub fn init(app: &mut AppContext) {
     let slash_command_bindings = COMMAND_REGISTRY
         .all_commands()
         .map(|command| {
-            use crate::search::slash_command_menu::static_commands::{
-                bindings as slash_command_bindings, bindings::DefaultSlashCommandBinding,
-            };
 
             let context_predicate = id!("Input")
                 & !id!("IMEOpen")
@@ -11628,9 +11497,6 @@ impl Input {
                 ctx.emit(Event::InputFocusedFromMiddleClick);
             }
             EditorEvent::Focused => ctx.emit(Event::EditorFocused),
-            EditorEvent::ProcessingAttachedImages(is_processing) => {
-                self.set_is_processing_attached_images(*is_processing, ctx);
-            }
             EditorEvent::VoiceStateUpdated {
                 is_listening,
                 is_transcribing,
@@ -11659,164 +11525,8 @@ impl Input {
                     self.set_zero_state_hint_text(ctx);
                 }
             }
-            EditorEvent::SetAIContextMenuOpen(open) => {
-                self.set_ai_context_menu_open(*open, ctx);
-            }
-            EditorEvent::SelectAIContextMenuCategory { .. } => {
-                // Get the at_symbol_position and clear the text
-                if let Some(at_pos) = if let InputSuggestionsMode::AIContextMenu {
-                    at_symbol_position,
-                    ..
-                } = self.suggestions_mode_model.as_ref(ctx).mode()
-                {
-                    Some(*at_symbol_position)
-                } else {
-                    None
-                } {
-                    let cursor_position = self.editor.read(ctx, |editor, ctx| {
-                        editor.start_byte_index_of_last_selection(ctx)
-                    });
-
-                    // Delete text from @ to cursor using system delete
-                    let replacement_range =
-                        ByteOffset::from(at_pos + 1)..ByteOffset::from(cursor_position.as_usize());
-                    self.editor.update(ctx, |editor, ctx| {
-                        editor.system_delete(replacement_range, ctx);
-                    });
-                }
-            }
-            EditorEvent::AcceptAIContextMenuItem(action) => {
-                // Handle different action types
-                match action {
-                    AIContextMenuSearchableAction::InsertText { text } => {
-                        // Only enter AI mode if we're in autodetect mode (not locked in terminal mode)
-                        if self
-                            .ai_input_model
-                            .as_ref(ctx)
-                            .should_run_input_autodetection(ctx)
-                        {
-                            self.enter_ai_mode(
-                                Some(InputTypeAutoDetectionSource::AtContextMenuInsert),
-                                ctx,
-                            );
-                        }
-
-                        // For InsertText, we replace the "@" and any filter text with the provided text
-                        self.replace_at_symbol_with_text(text, ctx);
-                    }
-                    AIContextMenuSearchableAction::InsertFilePath { file_path } => {
-                        // Handle file/directory path insertion
-                        let is_ai_mode = self.ai_input_model.as_ref(ctx).is_ai_input_enabled();
-                        let file_path = if is_ai_mode {
-                            file_path.to_string()
-                        } else {
-                            #[cfg(feature = "local_fs")]
-                            {
-                                // Try to get current working directory and process the file path
-                                let processed_path = self
-                                    .active_block_metadata
-                                    .as_ref()
-                                    .and_then(BlockMetadata::current_working_directory)
-                                    .and_then(|pwd| {
-                                        // Find git repo and construct absolute path
-                                        use repo_metadata::repositories::DetectedRepositories;
-                                        use warp_util::local_or_remote_path::LocalOrRemotePath;
-                                        let git_repo_path = DetectedRepositories::as_ref(ctx)
-                                            .get_root_for_path(&LocalOrRemotePath::Local(
-                                                Path::new(pwd).to_path_buf(),
-                                            ))
-                                            .and_then(|r| PathBuf::try_from(r).ok())?;
-                                        let absolute_path = git_repo_path.join(file_path);
-
-                                        // Try to get relative path if it's shorter
-                                        let is_wsl = self
-                                            .active_session(ctx)
-                                            .map(|session| session.is_wsl())
-                                            .unwrap_or(false);
-
-                                        let relative_path = warp_util::path::to_relative_path(
-                                            is_wsl,
-                                            &absolute_path,
-                                            Path::new(pwd),
-                                        );
-
-                                        match relative_path {
-                                            Some(rel)
-                                                if rel.len()
-                                                    < absolute_path.to_string_lossy().len() =>
-                                            {
-                                                Some(rel)
-                                            }
-                                            _ => Some(absolute_path.to_string_lossy().to_string()),
-                                        }
-                                    });
-
-                                processed_path.unwrap_or_else(|| file_path.to_string())
-                            }
-
-                            #[cfg(not(feature = "local_fs"))]
-                            file_path.to_string()
-                        };
-                        self.replace_at_symbol_with_text(&file_path, ctx);
-                    }
-                    AIContextMenuSearchableAction::InsertDriveObject {
-                        object_type,
-                        object_uid,
-                    } => {
-                        // For InsertDriveObject, format as <object_type:uid> and replace the "@" and any filter text
-                        let drive_object_text = format!("<{object_type}:{object_uid}>");
-                        self.replace_at_symbol_with_text(&drive_object_text, ctx);
-                    }
-                    AIContextMenuSearchableAction::InsertPlan { ai_document_uid } => {
-                        // For InsertPlan, format as <plan:uid> and replace the "@" and any filter text
-                        let ai_document_text = format!("<plan:{ai_document_uid}>");
-                        self.replace_at_symbol_with_text(&ai_document_text, ctx);
-                    }
-                    AIContextMenuSearchableAction::InsertConversation { conversation_id } => {
-                        let conversation_text = format!("<convo:{conversation_id}>");
-                        self.replace_at_symbol_with_text(&conversation_text, ctx);
-                    }
-                    AIContextMenuSearchableAction::InsertDiffSet { diff_mode } => {
-                        // Emit event to the TerminalView to attach the diff set
-                        ctx.emit(Event::AttachDiffSetContext {
-                            diff_mode: diff_mode.clone(),
-                        });
-                    }
-                    AIContextMenuSearchableAction::InsertSkill { name } => {
-                        self.replace_at_symbol_with_text(&format!("/{name}"), ctx);
-                    }
-                }
-                self.close_ai_context_menu(ctx);
-            }
             EditorEvent::Paste => {
                 self.process_paste_event(ctx);
-            }
-            EditorEvent::DroppedImageFiles(image_filepaths) => {
-                // Handle image processing from EditorView drag-and-drop
-                let num_attached =
-                    self.handle_pasted_or_dragdropped_image_filepaths(image_filepaths.clone(), ctx);
-
-                // If any attachment failed, insert all dropped image paths as text. Apply the
-                // same session-aware path transformation that the editor uses for dropped
-                // non-image paths so the fallback matches the primary drop flow (e.g.
-                // `/mnt/c/...` in a WSL session).
-                if num_attached < image_filepaths.len() {
-                    let shell_family = self.editor.read(ctx, |editor, _| editor.shell_family());
-                    let converter = self
-                        .active_session(ctx)
-                        .as_deref()
-                        .and_then(Session::windows_path_converter);
-                    let transformed: Vec<String> = match converter {
-                        Some(convert) => image_filepaths.iter().map(|p| convert(p)).collect(),
-                        None => image_filepaths.clone(),
-                    };
-                    let paths_str =
-                        warpui::clipboard_utils::escaped_paths_str(&transformed, shell_family);
-
-                    self.editor.update(ctx, |editor, ctx| {
-                        editor.user_insert(&paths_str, ctx);
-                    });
-                }
             }
             EditorEvent::IgnoreAutosuggestion { suggestion } => {
                 IgnoredSuggestionsModel::handle(ctx).update(ctx, |model, ctx| {

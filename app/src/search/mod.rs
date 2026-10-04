@@ -12,7 +12,6 @@ mod notebooks;
 mod palette_styles;
 mod search_bar;
 pub mod search_results_menu;
-pub mod slash_command_menu;
 mod workflows;
 
 pub use data_source::QueryFilter;
