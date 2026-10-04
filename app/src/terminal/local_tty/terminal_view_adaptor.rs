@@ -391,11 +391,6 @@ impl TerminalManager<TerminalView> {
                         source.source_type.clone(),
                         ctx,
                     );
-
-                    // Set the sharer's participant id on the AI controller for tracking query initiators
-                    view.ai_controller().update(ctx, |controller, _ctx| {
-                        controller.set_sharer_participant_id(sharer_id.clone());
-                    });
                 });
                 Self::log_shared_session_lifecycle(
                     &terminal_view,
@@ -513,67 +508,7 @@ impl TerminalManager<TerminalView> {
                     );
                 });
             }
-            NetworkEvent::ControlActionRequested {
-                participant_id,
-                request_id,
-                action,
-            } => {
-                if !FeatureFlag::AgentSharedSessions.is_enabled() {
-                    return;
-                }
-
-                // Control actions injected via the server's conversation steering API are
-                // attributed to the sharer, who is never in its own viewer list, so they bypass
-                // the viewer role check just like injected agent prompts.
-                let mut is_sharer = false;
-                let viewer_role_opt = terminal_view
-                    .as_ref(ctx)
-                    .shared_session_presence_manager()
-                    .and_then(|manager| {
-                        let manager_ref = manager.as_ref(ctx);
-                        if manager_ref.sharer_id() == *participant_id {
-                            is_sharer = true;
-                            None
-                        } else {
-                            manager_ref.viewer_role(participant_id)
-                        }
-                    });
-
-                if !is_sharer {
-                    let viewer_is_executor = viewer_role_opt
-                        .map(|role| role.can_execute())
-                        .unwrap_or_else(|| {
-                            log::warn!(
-                                "Failed to get viewer's role during control action request for participant_id={participant_id} (not sharer)"
-                            );
-                            false
-                        });
-
-                    if !viewer_is_executor {
-                        network.update(ctx, |network, _ctx| {
-                            network.send_control_action_rejection(
-                                participant_id.clone(),
-                                request_id.clone(),
-                                ControlActionFailureReason::InsufficientPermissions,
-                            );
-                        });
-                        return;
-                    }
-                }
-
-                match action {
-                    ControlAction::CancelConversation {
-                        server_conversation_token,
-                    } => {
-                        terminal_view.update(ctx, |view, ctx| {
-                            view.handle_shared_session_cancel_action(
-                                *server_conversation_token,
-                                ctx,
-                            );
-                        });
-                    }
-                }
-            }
+            NetworkEvent::ControlActionRequested { .. } => {}
             NetworkEvent::ParticipantListUpdated(participant_list) => {
                 let was_viewer_driven_sizing_eligible = terminal_view
                     .update(ctx, |view, ctx| view.is_viewer_driven_sizing_eligible(true, ctx));
@@ -782,7 +717,7 @@ impl TerminalManager<TerminalView> {
                 }
 
                 terminal_view.update(ctx, |view, ctx| {
-                    view.write_viewer_bytes_to_pty(bytes.clone(), ctx);
+                    view.write_user_bytes_to_pty(bytes.clone(), ctx);
                 });
             }
             NetworkEvent::AgentPromptRequested {
