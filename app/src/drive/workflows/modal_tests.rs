@@ -50,19 +50,6 @@ fn create_modal(app: &mut App) -> ViewHandle<WorkflowModal> {
     modal_view
 }
 
-fn build_argument(
-    name: impl Into<String>,
-    description: impl Into<Option<String>>,
-    default_value: impl Into<Option<String>>,
-) -> Argument {
-    Argument {
-        name: name.into(),
-        description: description.into(),
-        default_value: default_value.into(),
-        arg_type: Default::default(),
-    }
-}
-
 #[test]
 fn test_pasting_command_no_argument_overlap_fewer_arguments() {
     App::test((), |mut app| async move {

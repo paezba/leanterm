@@ -217,7 +217,3 @@ impl Entity for OneTimeModalModel {
 }
 
 impl SingletonEntity for OneTimeModalModel {}
-
-#[cfg(test)]
-#[path = "one_time_modal_model_tests.rs"]
-mod tests;

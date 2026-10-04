@@ -20,15 +20,6 @@ use crate::workspaces::workspace::{
     MultiAdminPolicy, Tier,
 };
 
-fn member(email: &str, role: MembershipRole) -> TeamMember {
-    TeamMember {
-        uid: UserUid::new(email),
-        email: email.to_string(),
-        role,
-        is_disabled: false,
-    }
-}
-
 #[cfg(not(target_family = "wasm"))]
 #[test]
 fn joining_a_workspace_team_opens_only_a_new_scoped_window() {
@@ -89,40 +80,6 @@ fn joining_a_workspace_team_opens_only_a_new_scoped_window() {
         });
     });
 }
-
-fn disabled_member(email: &str, role: MembershipRole) -> TeamMember {
-    TeamMember {
-        is_disabled: true,
-        ..member(email, role)
-    }
-}
-
-fn team_with_members(members: Vec<TeamMember>, multi_admin_enabled: bool) -> Team {
-    Team {
-        uid: 1.into(),
-        name: "Test Team".to_string(),
-        color: None,
-        invite_link: None,
-        members,
-        pending_email_invites: vec![],
-        invite_link_domain_restrictions: vec![],
-        billing_metadata: BillingMetadata {
-            tier: Tier {
-                multi_admin_policy: Some(MultiAdminPolicy {
-                    enabled: multi_admin_enabled,
-                }),
-                ..Default::default()
-            },
-            ..Default::default()
-        },
-        stripe_customer_id: None,
-        settings: Default::default(),
-        is_eligible_for_discovery: false,
-        has_billing_history: false,
-        visibility: Default::default(),
-    }
-}
-
 
 fn open_team(uid: &str, name: &str) -> DiscoverableTeam {
     DiscoverableTeam {
@@ -372,18 +329,6 @@ fn workspace_discovery_page_routes_each_option_through_the_expected_client_bound
 }
 
 
-/// Returns the action labels rendered for the item with the given `text` (a
-/// member email or pending-invite email), in the order they were pushed.
-fn action_labels(items: &[Item], text: &str) -> Vec<String> {
-    items
-        .iter()
-        .find(|item| item.text == text)
-        .map(|item| item.actions.iter().map(|a| a.label.clone()).collect())
-        .unwrap_or_default()
-}
-
-const OWNER_EMAIL: &str = "owner@example.com";
-const ADMIN_EMAIL: &str = "admin@example.com";
 const MEMBER_EMAIL: &str = "member@example.com";
 
 

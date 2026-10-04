@@ -14,14 +14,3 @@
 // Bring the `TerminalManager` trait into scope (named under a different alias
 // since the local `TerminalManager` struct shadows it) so the trait method
 // `on_view_detached` is callable on the struct.
-
-/// Stub UUID used for the orchestrator's `AmbientAgentTaskId`; opaque to
-/// the manager.
-const PARENT_TASK_ID: &str = "11111111-1111-1111-1111-111111111111";
-
-
-
-
-
-
-

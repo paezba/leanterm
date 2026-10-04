@@ -584,14 +584,6 @@ fn no_group_name_match_leaves_the_filtered_tabs_untouched() {
     assert_eq!(merged, own_matches);
 }
 
-fn tab_groups_map(groups: Vec<TabGroup>) -> HashMap<TabGroupId, TabGroup> {
-    groups.into_iter().map(|group| (group.id, group)).collect()
-}
-
-
-
-
-
 #[test]
 fn tab_is_admitted_by_group_name_only_when_its_group_matched() {
     let matched = TabGroupId::new();

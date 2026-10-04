@@ -106,7 +106,7 @@ use warp::integration_testing::navigation_palette::{
 };
 use warp::integration_testing::pane_group::assert_focused_pane_index;
 use warp::integration_testing::settings::{
-    assert_theme_chooser_contains, set_window_custom_size, toggle_setting,
+    assert_theme_chooser_contains, toggle_setting,
 };
 use warp::integration_testing::step::{
     assert_no_pending_model_events, new_step_with_default_assertions,
@@ -136,9 +136,8 @@ use warp::integration_testing::terminal::{
     validate_git_branch, wait_until_bootstrapped_pane, wait_until_bootstrapped_single_pane_for_tab,
 };
 use warp::integration_testing::view_getters::{
-    pane_group_view, single_input_suggestions_view_for_tab, single_input_view_for_tab,
+    single_input_suggestions_view_for_tab, single_input_view_for_tab,
     single_terminal_pane_view_for_tab, single_terminal_view, single_terminal_view_for_tab,
-    workspace_view,
 };
 use warp::integration_testing::warp_drive::{
     assert_is_left_panel_open, assert_warp_drive_is_closed, assert_warp_drive_is_open,
@@ -149,7 +148,6 @@ use warp::integration_testing::window::{
 };
 use warp::integration_testing::workspace::assert_tab_count;
 use warp::integration_testing::{self, view_of_type};
-use warp::pane_group::AGENT_MODE_PANE_DEFAULT_MINIMUM_WIDTH;
 use warp::settings::{
     CompletionsOpenWhileTyping, CtrlTabBehavior, INPUT_MODE, MonospaceFontSize,
     NativeShellCompletionsEnabled, TabBehavior,
@@ -176,7 +174,7 @@ use warp::terminal::{TerminalView, shell};
 use warp::util::bindings::CustomAction;
 use warp::workflows::categories::CategoriesView;
 use warp::workspace::{
-    NEW_SESSION_MENU_BUTTON_POSITION_ID, NEW_TAB_BUTTON_POSITION_ID, Workspace, WorkspaceAction,
+    NEW_SESSION_MENU_BUTTON_POSITION_ID, NEW_TAB_BUTTON_POSITION_ID, Workspace,
 };
 use warp::{ cmd_or_ctrl_shift};
 use warpui_core::event::KeyState;

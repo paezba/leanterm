@@ -158,13 +158,6 @@ fn classifies_next_block_ids_relative_to_the_active_block() {
         NextBlockIdDisposition::ActiveDuplicate
     );
 }
-fn drain_terminal_events(events_rx: &async_channel::Receiver<Event>) -> Vec<Event> {
-    let mut events = Vec::new();
-    while let Ok(event) = events_rx.try_recv() {
-        events.push(event);
-    }
-    events
-}
 
 /// Advances the block list to the ScriptExecution stage.
 fn advance_to_script_execution(block_list: &mut BlockList) {

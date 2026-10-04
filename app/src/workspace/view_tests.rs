@@ -567,44 +567,6 @@ fn test_open_markdown_viewer_target_preserves_requested_line() {
 }
 
 
-/// RAII guard that removes tab config TOML files whose name starts with
-/// `prefix` from `~/.warp/tab_configs/` on drop. Because `Drop` runs even
-/// when a test panics, this prevents stale worktree configs from leaking
-/// into Warp dev.
-#[cfg(feature = "local_fs")]
-struct TabConfigCleanupGuard {
-    prefix: &'static str,
-}
-
-#[cfg(feature = "local_fs")]
-impl TabConfigCleanupGuard {
-    fn new(prefix: &'static str) -> Self {
-        // Eagerly clean up leftovers from any previously-crashed run.
-        Self::clean(prefix);
-        Self { prefix }
-    }
-
-    fn clean(prefix: &str) {
-        let dir = tab_configs_dir();
-        if let Ok(entries) = std::fs::read_dir(&dir) {
-            for entry in entries.flatten() {
-                let name = entry.file_name();
-                let name = name.to_string_lossy();
-                if name.starts_with(prefix) && name.ends_with(".toml") {
-                    let _ = std::fs::remove_file(entry.path());
-                }
-            }
-        }
-    }
-}
-
-#[cfg(feature = "local_fs")]
-impl Drop for TabConfigCleanupGuard {
-    fn drop(&mut self) {
-        Self::clean(self.prefix);
-    }
-}
-
 /// Creates a workspace with a single, shared session.
 fn mock_workspace_with_shared_session(app: &mut App) -> ViewHandle<Workspace> {
     use crate::terminal::shared_session::manager::Manager;
@@ -2429,26 +2391,6 @@ fn set_left_panel_visibility_across_tabs(is_enabled: bool, ctx: &mut ViewContext
     });
 }
 
-
-fn find_terminal_tab_index(workspace: &Workspace, ctx: &AppContext) -> usize {
-    workspace
-        .tabs
-        .iter()
-        .position(|tab| tab.pane_group.as_ref(ctx).has_terminal_panes())
-        .expect("Expected a terminal tab")
-}
-
-fn find_non_following_tab_index(workspace: &Workspace, ctx: &AppContext) -> usize {
-    workspace
-        .tabs
-        .iter()
-        .position(|tab| {
-            !Workspace::should_enable_file_tree_and_global_search_for_pane_group(
-                tab.pane_group.as_ref(ctx),
-            )
-        })
-        .expect("Expected a non-following tab")
-}
 
 #[test]
 fn test_left_panel_window_scoped_reconciles_between_terminal_tabs_when_enabled() {

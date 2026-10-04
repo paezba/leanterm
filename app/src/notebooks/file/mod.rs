@@ -544,12 +544,6 @@ impl FileNotebookView {
         }
     }
 
-    /// The [`FileId`] this view currently holds open, if any.
-    #[cfg(all(test, feature = "local_fs"))]
-    pub(crate) fn file_id_for_test(&self) -> Option<FileId> {
-        self.file_id
-    }
-
     /// Releases everything this view holds in the shared [`FileModel`]: the in-flight read, the
     /// file's watcher registration, and this view's subscription to the model's events.
     ///

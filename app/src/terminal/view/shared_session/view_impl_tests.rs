@@ -131,60 +131,6 @@ fn test_resize_shared_session_viewer_independent_of_sharer() {
 
 
 
-fn current_user_owner_permissions() -> ServerPermissions {
-    server_permissions(Owner::mock_current_user())
-}
-
-fn server_permissions(space: Owner) -> ServerPermissions {
-    ServerPermissions {
-        space,
-        guests: vec![],
-        anyone_link_sharing: None,
-        permissions_last_updated_ts: Utc::now().into(),
-    }
-}
-
-
-
-
-
-fn cloud_mode_terminal_for_test(app: &mut App) -> ViewHandle<TerminalView> {
-    initialize_app_for_terminal_view(app);
-    let tips_model = app.add_model(|_| Default::default());
-    let (_, terminal) = app.add_window(WindowStyle::NotStealFocus, |ctx| {
-        TerminalView::new_for_test_with_cloud_mode(tips_model, None, true, ctx)
-    });
-    terminal
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // APP-5027 regression: "Copy link" / "Copy session sharing link" must not silently do
 // nothing when the Manager has no session id (e.g. during ViewPending / SharePending).
 

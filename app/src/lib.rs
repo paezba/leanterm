@@ -519,13 +519,6 @@ impl LaunchMode {
         }
     }
 
-    #[cfg(any(test, feature = "test-util"))]
-    pub(crate) fn new_for_unit_test() -> Self {
-        LaunchMode::Test {
-            driver: Box::new(None),
-            is_integration_test: false,
-        }
-    }
 }
 
 /// If the given event is a key down event containing alt modifiers, and those

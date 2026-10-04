@@ -65,13 +65,6 @@ fn queue_item_dependencies<const N: usize>(
         .collect()
 }
 
-fn bulk_create_dependency(queue_item_id: QueueItemId, client_id: ClientId) -> QueueDependency {
-    QueueDependency::BulkCreateGenericStringObject {
-        queue_item_id,
-        client_id,
-    }
-}
-
 fn create_sync_queue(
     app: &mut App,
     queue_items: Vec<QueueItem>,

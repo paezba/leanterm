@@ -1270,7 +1270,7 @@ impl NotebookView {
         // local edits.
         let content = self.content(ctx);
         let title = self.title.as_ref(ctx).buffer_text(ctx);
-        let active_notebook = self.active_notebook_data.as_ref(ctx).active_notebook();
+        let _active_notebook = self.active_notebook_data.as_ref(ctx).active_notebook();
 
         let copy_client_id = ClientId::new();
         let copy_sync_id = SyncId::ClientId(copy_client_id);

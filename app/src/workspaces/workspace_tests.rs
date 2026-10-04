@@ -1,22 +1,6 @@
 use super::*;
 
 // `ServerId::from_string_lossy` requires exactly 22 characters.
-const TEST_WORKSPACE_UID: &str = "workspace_uid123456789";
-
-
-fn policy(
-    granularity: UsageVisibilityGranularity,
-    max_prior_cycles: MaxPriorCycles,
-) -> UsageVisibilityPolicy {
-    UsageVisibilityPolicy {
-        admin_granularity: granularity,
-        max_prior_cycles,
-    }
-}
-
-
-
-
 
 
 fn billing_metadata_with_purchase_policy(

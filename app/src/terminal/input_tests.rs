@@ -355,15 +355,6 @@ fn bootstrap_terminal(
     });
 }
 
-fn enable_vim_mode(app: &mut App) {
-    AppEditorSettings::handle(app).update(app, |editor_settings, ctx| {
-        editor_settings
-            .vim_mode
-            .set_value(true, ctx)
-            .expect("set value must succeed");
-    });
-}
-
 pub async fn add_window_with_bootstrapped_terminal(
     app: &mut App,
     history_file_commands: Option<Vec<String>>,
@@ -494,34 +485,6 @@ fn argument_suggestion(name: impl Into<SmolStr>) -> MatchedSuggestion {
     )
 }
 
-/// Creates a [`MatchedSuggestion`] for a file completion result.
-/// Specifically, we ensure the replacement is the entire path
-/// while the display text is just the string after the last valid path separator.
-fn file_suggestion(path: impl Into<SmolStr>) -> MatchedSuggestion {
-    let replacement = path.into();
-    let display = replacement
-        .rsplit(PathSeparators::for_os().all)
-        .next()
-        .map(Into::into)
-        .unwrap_or_else(|| replacement.clone());
-
-    let suggestion = Suggestion::new(
-        display,
-        replacement,
-        None,
-        SuggestionType::Argument,
-        Priority::default(),
-    )
-    .with_file_type(EngineFileType::File);
-
-    MatchedSuggestion::new(
-        suggestion,
-        Match::Prefix {
-            is_case_sensitive: true,
-        },
-    )
-}
-
 fn case_insensitive_argument_suggestion(name: impl Into<SmolStr>) -> MatchedSuggestion {
     let suggestion = Suggestion::with_same_display_and_replacement(
         name,
@@ -584,44 +547,6 @@ fn set_alias_expansion_setting(new_value: bool, app: &mut App) {
         if let Err(e) = settings.alias_expansion_enabled.set_value(new_value, ctx) {
             panic!("Unable to set alias expansion setting in test, {e:?}");
         }
-    });
-}
-
-/// Inserts block with dummy text and returns the block index.
-fn insert_dummy_block(terminal: ViewHandle<TerminalView>, app: &mut App) -> BlockIndex {
-    terminal.update(app, |terminal_view, _ctx| {
-        let mut terminal_model = terminal_view.model.lock();
-        let blocks = terminal_model.block_list_mut();
-        // Add two lines to the command grid and output grid in a new block.
-        insert_block(blocks, "cmd_a\ncmd_b\n", "output_a\noutput_b\n")
-    })
-}
-
-/// Selects the first line in the command grid of given block.
-fn select_first_command_line_of_block(
-    block_index: BlockIndex,
-    terminal: ViewHandle<TerminalView>,
-    app: &mut App,
-) {
-    terminal.update(app, |terminal_view, _ctx| {
-        let mut terminal_model = terminal_view.model.lock();
-        let blocks = terminal_model.block_list_mut();
-        let block = blocks.block_at(block_index).expect("block should exist");
-        // Selections are inclusive of endpoint, hence we need to identify the last column to select the first command.
-        let block_command_columns = block.prompt_and_command_grid().grid_handler().columns();
-        let command_grid_offset = block.command_grid_offset();
-        // Create a selection that just spans the first line of the command grid in the block.
-        blocks.start_selection(
-            BlockListPoint::new(command_grid_offset, 0),
-            SelectionType::Simple,
-            Side::Left,
-        );
-        blocks.update_selection(
-            BlockListPoint::new(command_grid_offset, block_command_columns),
-            Side::Right,
-        );
-        let selection = blocks.selection();
-        assert!(selection.is_some());
     });
 }
 

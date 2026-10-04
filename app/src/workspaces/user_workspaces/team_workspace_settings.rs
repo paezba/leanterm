@@ -44,11 +44,6 @@ impl TeamScope for TeamContextForOperation {
 
 #[cfg(test)]
 impl TeamContextForOperation {
-    pub(crate) fn new_for_test(team_uid: ServerId) -> Self {
-        Self {
-            team_uid: Some(team_uid),
-        }
-    }
 }
 
 /// The team a view renders as, borrowed for the duration of a single read.
@@ -177,14 +172,6 @@ impl UserWorkspaces {
     }
 
     pub fn team_context_for_window(&self, window_id: WindowId) -> TeamContext<'_> {
-        self.team_context_for_window_id(window_id)
-    }
-
-    /// [`Self::team_context_for_view`] for tests, which build scopes for bare windows rather
-    /// than standing up a view for each one. Production exchanges a view or a [`ViewContext`]
-    /// for a scope; this is `#[cfg(test)]` precisely so that contract holds.
-    #[cfg(test)]
-    pub(crate) fn team_context_for_window_for_test(&self, window_id: WindowId) -> TeamContext<'_> {
         self.team_context_for_window_id(window_id)
     }
 

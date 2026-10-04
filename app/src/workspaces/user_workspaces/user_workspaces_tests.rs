@@ -39,65 +39,6 @@ struct CachedResources {
     workspaces: Vec<Workspace>,
 }
 
-fn initialize_app(
-    app: &mut App,
-    resources: CachedResources,
-    team_client: Arc<dyn TeamClient>,
-    workspace_client: Arc<dyn WorkspaceClient>,
-) {
-    initialize_app_with_auth(
-        app,
-        resources,
-        team_client,
-        workspace_client,
-        AuthStateProvider::new_for_test(),
-    );
-}
-
-fn initialize_app_with_auth(
-    app: &mut App,
-    resources: CachedResources,
-    team_client: Arc<dyn TeamClient>,
-    workspace_client: Arc<dyn WorkspaceClient>,
-    auth_state_provider: AuthStateProvider,
-) {
-    // Add the necessary singleton models to the App
-    app.add_singleton_model(|_| NetworkStatus::new());
-    app.add_singleton_model(|_| SystemStats::new());
-    app.add_singleton_model(TeamTesterStatus::new);
-    app.add_singleton_model(SyncQueue::mock);
-    app.add_singleton_model(CloudModel::mock);
-    app.add_singleton_model(|ctx| {
-        UserWorkspaces::mock(
-            team_client.clone(),
-            workspace_client.clone(),
-            resources.workspaces,
-            ctx,
-        )
-    });
-    app.add_singleton_model(|ctx| TeamUpdateManager::new(team_client.clone(), None, ctx));
-    app.add_singleton_model(UpdateManager::mock);
-    app.add_singleton_model(PrivacySettings::mock);
-    app.add_singleton_model(|_| ServerApiProvider::new_for_test());
-    app.add_singleton_model(|_| auth_state_provider);
-    app.add_singleton_model(AuthManager::new_for_test);
-    app.add_singleton_model(AppTelemetryContextProvider::new_context_provider);
-    app.add_singleton_model(|_| {
-        PublicPreferences::new(Box::<user_preferences::in_memory::InMemoryPreferences>::default())
-    });
-    app.add_singleton_model(|_| {
-        PrivatePreferences::new(Box::<user_preferences::in_memory::InMemoryPreferences>::default())
-    });
-
-    app.add_singleton_model(CodeSettings::new_with_defaults);
-
-    // The start of polling is normally triggered by authentication completion, but
-    // we need to do it manually for tests.
-    TeamTesterStatus::handle(app).update(app, |team_tester, ctx| {
-        team_tester.initiate_data_pollers(false, ctx);
-    });
-}
-
 fn initialize_window_team_test_app(app: &mut App, workspaces: Vec<Workspace>) {
     app.add_singleton_model(PrivacySettings::mock);
     app.add_singleton_model(|ctx| {
@@ -114,46 +55,10 @@ fn initialize_window_team_test_app(app: &mut App, workspaces: Vec<Workspace>) {
 
 
 
-/// Registers a fresh window on `team` and returns its id, so tests can build a
-/// [`TeamScope`] via [`UserWorkspaces::team_context_for_window_for_test`].
-fn window_on_team(app: &mut App, team: &Team) -> WindowId {
-    let window_id = WindowId::new();
-    UserWorkspaces::handle(app).update(app, |user_workspaces, ctx| {
-        user_workspaces.set_team_for_window(window_id, team.uid, ctx);
-    });
-    window_id
-}
-
-
-
-
-
-
 const TEST_GCP_AUDIENCE: &str = "//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/warp-pool/providers/warp-provider";
-const TEST_GCP_SA_EMAIL: &str = "warp-geap@test-project.iam.gserviceaccount.com";
 
 
 
-
-
-
-
-
-
-
-
-
-
-fn team_selection(team: Option<Option<String>>) -> warp_cli::scope::TeamSelection {
-    warp_cli::scope::TeamSelection { team }
-}
-
-fn object_scope(team: Option<Option<String>>, personal: bool) -> warp_cli::scope::ObjectScope {
-    warp_cli::scope::ObjectScope {
-        team_selection: team_selection(team),
-        personal,
-    }
-}
 
 
 
@@ -215,74 +120,6 @@ impl View for TeamContextTestView {
 impl TypedActionView for TeamContextTestView {
     type Action = ();
 }
-
-fn create_test_window(app: &mut App) -> (WindowId, ViewHandle<TeamContextTestView>) {
-    app.add_window(WindowStyle::NotStealFocus, |_| TeamContextTestView)
-}
-
-
-
-
-fn set_team_remote_session_policy(team: &mut Team, allow_ai: bool, patterns: &[&str]) {
-    team.settings
-        .ai_permissions
-        .allow_ai_in_remote_sessions
-        .value = allow_ai;
-    team.settings.ai_permissions.remote_session_regex_list = patterns
-        .iter()
-        .map(|pattern| Regex::new(pattern).expect("test pattern should compile"))
-        .collect();
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #[test]
 fn link_sharing_fails_open_without_a_workspace() {
@@ -397,128 +234,6 @@ fn test_purchase_addon_credits_forwards_team_uid_when_present() {
         warpui::r#async::Timer::after(Duration::from_millis(100)).await;
     })
 }
-
-
-
-
-fn gql_tier(purchase_policy: Option<GqlPurchaseAddOnCreditsPolicy>) -> GqlTier {
-    GqlTier {
-        name: "Free".to_string(),
-        description: "Free tier".to_string(),
-        warp_ai_policy: None,
-        team_size_policy: None,
-        shared_notebooks_policy: None,
-        shared_workflows_policy: None,
-        session_sharing_policy: None,
-        ai_autonomy_policy: None,
-        telemetry_data_collection_policy: None,
-        ugc_data_collection_policy: None,
-        usage_based_pricing_policy: None,
-        codebase_context_policy: None,
-        byo_api_key_policy: None,
-        byo_endpoint_policy: None,
-        managed_byok_byoe_policy: None,
-        purchase_add_on_credits_policy: purchase_policy,
-        enterprise_pay_as_you_go_policy: None,
-        enterprise_credits_auto_reload_policy: None,
-        multi_admin_policy: None,
-        native_workspaces_policy: None,
-        ambient_agents_policy: None,
-        usage_visibility_policy: None,
-    }
-}
-
-
-
-
-fn apply_workspaces_metadata(app: &mut App, metadata: WorkspacesMetadataResponse) {
-    UserWorkspaces::handle(app).update(app, |user_workspaces, ctx| {
-        user_workspaces.on_workspaces_updated(
-            Ok(WorkspacesMetadataWithPricing {
-                metadata,
-                pricing_info: None,
-            }),
-            ctx,
-        );
-    });
-}
-
-fn current_team_names(user_workspaces: &UserWorkspaces) -> Vec<String> {
-    user_workspaces
-        .current_workspace()
-        .map(|workspace| {
-            workspace
-                .teams
-                .iter()
-                .map(|team| team.name.clone())
-                .collect()
-        })
-        .unwrap_or_default()
-}
-
-
-
-
-
-fn gql_premium_purchase_policy() -> GqlPurchaseAddOnCreditsPolicy {
-    GqlPurchaseAddOnCreditsPolicy {
-        enabled: false,
-        premium_enabled: true,
-        price_premium_bps: 1000,
-    }
-}
-
-fn gql_user(
-    user_purchase_policy: Option<GqlPurchaseAddOnCreditsPolicy>,
-    workspaces: Vec<GqlWorkspace>,
-) -> GqlUser {
-    GqlUser {
-        profile: GqlUserProfile {
-            uid: "test-user".to_string(),
-        },
-        ai_credit_availability: warp_graphql::ai::AICreditAvailability {
-            available: true,
-            denial_reason: warp_graphql::ai::AICreditAvailabilityDenialReason::None,
-            credit_source: None,
-        },
-        billing_metadata: user_purchase_policy.map(|policy| UserPurchasePolicyBillingMetadata {
-            tier: UserPurchasePolicyTier {
-                purchase_add_on_credits_policy: Some(policy),
-            },
-        }),
-        workspaces,
-        experiments: None,
-        discoverable_teams: vec![],
-    }
-}
-
-fn discovery_options_for_test() -> DiscoveryOptions {
-    DiscoveryOptions {
-        workspaces: vec![DiscoverableWorkspace {
-            workspace_uid: ServerId::from(10).into(),
-            name: "Discoverable Workspace".to_string(),
-            open_teams: vec![DiscoverableTeam {
-                team_uid: ServerId::from(11).to_string(),
-                num_members: 2,
-                name: "Open Team".to_string(),
-                team_accepting_invites: true,
-            }],
-            member_count: 4,
-        }],
-        legacy_teams: vec![DiscoverableTeam {
-            team_uid: ServerId::from(12).to_string(),
-            num_members: 3,
-            name: "Legacy Team".to_string(),
-            team_accepting_invites: true,
-        }],
-    }
-}
-
-
-
-
-
-
 
 
 

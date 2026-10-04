@@ -7,9 +7,7 @@ use lazy_static::lazy_static;
 use ordered_float::OrderedFloat;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use warp_core::features::FeatureFlag;
 use warp_core::ui::appearance::Appearance;
-use warp_core::ui::icons::Icon;
 use warp_core::ui::theme::Fill;
 use warpui_core::{Action, AppContext, Element, Entity, ModelHandle};
 

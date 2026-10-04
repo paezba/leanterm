@@ -21,21 +21,3 @@ use crate::workspace::tab_group::TabGroupId;
 
 
 
-
-fn group(name: &str, id: TabGroupId) -> TabGroupSnapshot {
-    TabGroupSnapshot {
-        id,
-        name: Some(name.to_string()),
-        color: SelectedTabColor::Color(AnsiColorIdentifier::Blue),
-        collapsed: false,
-        pinned: false,
-    }
-}
-
-
-
-
-
-
-
-

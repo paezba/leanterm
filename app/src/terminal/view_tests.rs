@@ -58,29 +58,6 @@ use crate::workspace::view::tests::{initialize_app as initialize_workspace_app, 
 
 
 
-/// Bootstraps the terminal model with one completed block and one active long-running block.
-fn bootstrap_with_long_running_block(view: &mut TerminalView) {
-    let mut model = view.model.lock();
-    model.init_shell(InitShellValue {
-        session_id: 0.into(),
-        shell: "zsh".to_owned(),
-        ..Default::default()
-    });
-    model.bootstrapped(BootstrappedValue {
-        shell: "zsh".to_owned(),
-        ..Default::default()
-    });
-    model.simulate_block("ls", "file.txt");
-    model.simulate_long_running_block("long-command", "output");
-}
-
-
-
-
-
-
-
-
 struct TestTerminalManager {
     model: Arc<FairMutex<TerminalModel>>,
     _view: ViewHandle<TerminalView>,
@@ -159,29 +136,7 @@ fn command_first_word_and_suffix_handles_alias_without_args() {
 impl TerminalView {
 
 
-    fn is_vertically_scrollable(&self, app: &AppContext) -> bool {
-        let total_block_heights = self
-            .model
-            .lock()
-            .block_list()
-            .block_heights()
-            .summary()
-            .height;
-        let visible_rows = self.content_element_height_lines(app);
-        heights_approx_gt(total_block_heights, visible_rows)
-    }
 }
-
-fn read_from_clipboard(ctx: &mut ViewContext<TerminalView>) -> String {
-    TerminalView::read_from_clipboard(Some(ShellFamily::Posix), ctx)
-}
-
-
-const BODY_PREFIX: &str = "Latest output: ";
-
-
-
-
 
 // Regression test for WAR-3433 on find bar selection crash.
 
@@ -351,54 +306,6 @@ fn test_bash_vim_banner_already_shown() {
         );
     })
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/// Subscribes to the terminal view's PTY writes so tests can assert on the bytes forwarded to the
-/// shell.
-fn capture_pty_writes(
-    app: &mut App,
-    terminal: &ViewHandle<TerminalView>,
-) -> Rc<RefCell<Vec<Vec<u8>>>> {
-    let pty_writes: Rc<RefCell<Vec<Vec<u8>>>> = Rc::new(RefCell::new(Vec::new()));
-    let writes = pty_writes.clone();
-    app.update(|ctx| {
-        ctx.subscribe_to_view(terminal, move |_, event, _| {
-            if let Event::WriteBytesToPty { bytes } = event {
-                writes.borrow_mut().push(bytes.to_vec());
-            }
-        });
-    });
-    pty_writes
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

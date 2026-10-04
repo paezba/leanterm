@@ -117,24 +117,3 @@ pub fn initialize_app_for_terminal_view(app: &mut App) {
     app.update(experiments::init);
     AltScreenReporting::register(app);
 }
-
-/// Creates a window in `app` with a [`TerminalView`] as the root view.
-/// Returns the handle to that terminal view.
-pub fn add_window_with_terminal(
-    app: &mut App,
-    restored_blocks: Option<&[SerializedBlockListItem]>,
-) -> ViewHandle<TerminalView> {
-    add_window_with_id_and_terminal(app, restored_blocks).1
-}
-
-/// Creates a window in `app` with a [`TerminalView`] as the root view.
-/// Returns the WindowID and the handle to that terminal view.
-pub fn add_window_with_id_and_terminal(
-    app: &mut App,
-    restored_blocks: Option<&[SerializedBlockListItem]>,
-) -> (WindowId, ViewHandle<TerminalView>) {
-    let tips_model = app.add_model(|_| Default::default());
-    app.add_window(WindowStyle::NotStealFocus, |ctx| {
-        TerminalView::new_for_test(tips_model, restored_blocks, ctx)
-    })
-}

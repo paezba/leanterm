@@ -708,7 +708,7 @@ mod full_text_searcher {
         fn search_notebooks_with_filter(
             &self,
             query: &str,
-            filter_by_plan: bool,
+            _filter_by_plan: bool,
             app: &AppContext,
         ) -> anyhow::Result<Vec<NotebookSearchItem>> {
             if query.is_empty() {

@@ -1,8 +1,7 @@
-use std::sync::Arc;
 use std::time::Duration;
 
 use warpui::integration::{AssertionOutcome, TestStep};
-use warpui::{Event, SingletonEntity, async_assert};
+use warpui::{SingletonEntity, async_assert};
 
 use super::util::{ExpectedExitStatus, ExpectedOutput, current_shell_starter_and_version, nonce};
 use super::{

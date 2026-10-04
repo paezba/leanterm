@@ -2,18 +2,6 @@ use super::*;
 
 
 
-fn team_names(workspace: &Workspace) -> Vec<&str> {
-    workspace
-        .teams
-        .iter()
-        .map(|team| team.name.as_str())
-        .collect()
-}
-
-
-
-
-
 #[test]
 fn team_member_conversion_preserves_is_disabled() {
     let enabled_member = GqlTeamMember {

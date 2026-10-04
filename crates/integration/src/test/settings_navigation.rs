@@ -6,10 +6,7 @@
 //! refactors of the settings page model cannot silently regress them.
 
 use warp::integration_testing::settings::{
-    assert_settings_nav_page_visible, assert_settings_nav_subpage_visible, assert_settings_section,
-    assert_settings_widget_rendered, assert_umbrella_expanded, clear_settings_search,
-    click_settings_nav_subpage, click_settings_umbrella, open_settings_page,
-    press_settings_nav_down, press_settings_nav_up, type_settings_search,
+    assert_settings_nav_page_visible, assert_settings_section, assert_umbrella_expanded, clear_settings_search, open_settings_page, type_settings_search,
 };
 use warp::integration_testing::terminal::wait_until_bootstrapped_single_pane_for_tab;
 use warp::settings_view::{SettingsSection,};

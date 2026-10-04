@@ -102,18 +102,6 @@ fn match_data_countable_zero_is_not_truthy() {
 
 
 
-/// Mutably flips an umbrella's `expanded` flag at `nav_index`.
-fn set_expanded(nav_items: &mut [SettingsNavItem], nav_index: usize, expanded: bool) {
-    if let Some(SettingsNavItem::Umbrella(u)) = nav_items.get_mut(nav_index) {
-        u.expanded = expanded;
-    }
-}
-
-
-
-
-
-
 // ── current_stop_index ──────────────────────────────────────────────────────
 
 
@@ -137,37 +125,6 @@ fn next_stop_index_handles_single_stop() {
 // These tests simulate the sequence of nav-stop activations that would result
 // from repeatedly pressing Down/Up, ensuring a collapsed umbrella is never
 // skipped over.
-
-/// Computes the section that would become active after applying the direction
-/// once, starting from `current`. Mirrors the final target-resolution step in
-/// `cycle_pages`.
-fn simulate_cycle(
-    nav_items: &[SettingsNavItem],
-    stops: &[NavStop],
-    current: SettingsSection,
-    direction: CycleDirection,
-) -> SettingsSection {
-    let active = current_stop_index(stops, nav_items, current)
-        .expect("current should exist in stops in these tests");
-    let next = next_stop_index(active, stops.len(), direction);
-    match stops[next] {
-        NavStop::Section(section) => section,
-        NavStop::CollapsedUmbrella {
-            first_subpage,
-            last_subpage,
-            ..
-        } => match direction {
-            CycleDirection::Up => last_subpage,
-            CycleDirection::Down => first_subpage,
-        },
-    }
-}
-
-
-
-
-
-
 
 // ── PageType filter lifecycle across a rebuild (APP-4922) ────────────────────
 // Rebuilding a page's PageType resets its widget filter to every widget, so an
@@ -213,14 +170,6 @@ impl SettingsWidget for StubWidget {
     }
 }
 
-
-/// Number of widgets the page would render under its current filter.
-fn visible_widget_count<V: View>(page: &PageType<V>) -> usize {
-    let FilteredPageType::Uncategorized { widgets, .. } = page.get_filtered() else {
-        panic!("expected Uncategorized page");
-    };
-    widgets.len()
-}
 
 #[test]
 fn search_terms_match_direct_unit_checks() {

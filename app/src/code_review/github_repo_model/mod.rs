@@ -98,39 +98,5 @@ impl GitHubRepoModel {
 
 #[cfg(all(test, feature = "local_fs"))]
 impl GitHubRepoModel {
-    /// Wraps an inert local-backend test model in the unified enum.
-    pub(crate) fn new_local_for_test(
-        git_status: ModelHandle<GitRepoStatusModel>,
-        ctx: &mut ModelContext<Self>,
-    ) -> Self {
-        let inner = ctx.add_model(move |_| LocalGitHubRepoModel::new_for_test(git_status));
-        ctx.subscribe_to_model(&inner, |me, _, event, ctx| me.forward_event(event, ctx));
-        Self::Local(inner)
-    }
 
-    pub(crate) fn set_pr_info_for_test(
-        &mut self,
-        pr_info: Option<PrInfo>,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        match self {
-            #[cfg(feature = "local_fs")]
-            Self::Local(m) => m.update(ctx, |m, ctx| m.set_pr_info_for_test(pr_info, ctx)),
-            Self::Remote(_) => unreachable!("remote test models are not used"),
-        }
-    }
-
-    pub(crate) fn set_repository_info_for_test(
-        &mut self,
-        repository_info: Option<RepositoryInfo>,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        match self {
-            #[cfg(feature = "local_fs")]
-            Self::Local(m) => m.update(ctx, |m, ctx| {
-                m.set_repository_info_for_test(repository_info, ctx)
-            }),
-            Self::Remote(_) => unreachable!("remote test models are not used"),
-        }
-    }
 }

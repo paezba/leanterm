@@ -15,7 +15,7 @@ use warp_graphql::mutations::create_anonymous_user::{
 use warp_server_auth::API_KEY_PREFIX;
 use warp_server_auth::user::persistence::PersistedUser;
 use warpui::clipboard::ClipboardContent;
-use warpui::{AppContext, Entity, ModelContext, SingletonEntity, UpdateModel};
+use warpui::{Entity, ModelContext, SingletonEntity, UpdateModel};
 
 use super::auth_state::{AuthState, PersistAction};
 use super::auth_view_modal::{AuthRedirectPayload, AuthViewVariant};

@@ -118,7 +118,7 @@ pub fn initialize_settings_for_tests_with_mode(
     CodeSettings::register(app);
     SemanticSelection::register(app);
 
-    app.update(|ctx| {
+    app.update(|_ctx| {
         // Add settings models that are backed by secure storage, not user preferences.
     });
 }
