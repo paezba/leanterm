@@ -2548,7 +2548,6 @@ pub struct TerminalView {
     /// (tab close, update relaunch, etc.) are not attributed to agent commands.
     manual_pty_shutdown_requested: bool,
 
-    ephemeral_message_model: ModelHandle<EphemeralMessageModel>,
 
     /// Per-session PTY recorder for writing PTY bytes to a file.
     pty_recorder: ModelHandle<PtyRecorder>,
@@ -2776,7 +2775,6 @@ impl TerminalView {
             ActiveSession::new(sessions.clone(), model_events_handle.clone(), ctx)
         });
 
-        let ephemeral_message_model = ctx.add_model(|_| EphemeralMessageModel::new());
 
         let find_model = ctx.add_model(|ctx| TerminalFindModel::new(model.clone(), ctx));
 
@@ -2922,7 +2920,6 @@ impl TerminalView {
                 None, // current_repo_path - will be set when CWD is determined
                 model_events_handle.clone(),
                 active_session.clone(),
-                ephemeral_message_model.clone(),
                 ctx,
             )
         });
@@ -3366,7 +3363,6 @@ impl TerminalView {
             ignore_next_set_title_event: false,
             manual_pty_shutdown_requested: false,
             pane_stack: None,
-            ephemeral_message_model,
             pty_recorder: ctx
                 .add_model(|ctx| PtyRecorder::new(inactive_pty_reads_rx, window_id, ctx)),
             active_viewer_driven_size: None,
