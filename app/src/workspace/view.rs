@@ -2744,8 +2744,6 @@ impl Workspace {
             me.handle_window_settings_changed_event(event, ctx);
         });
 
-        }
-
         let tab_settings_handle = TabSettings::handle(ctx);
         ctx.subscribe_to_model(&tab_settings_handle, |me, _, event, ctx| {
             me.handle_tab_settings_change(event, ctx)
