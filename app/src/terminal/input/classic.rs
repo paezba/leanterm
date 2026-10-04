@@ -192,23 +192,12 @@ impl Input {
 
         let input_mode = *InputModeSettings::as_ref(app).input_mode.value();
 
-        // When AgentView is enabled, match terminal-mode input behavior and only render the
-        // divider adjacent to the status/message line when block dividers are enabled.
-        let show_block_dividers = *BlockListSettings::as_ref(app).show_block_dividers.value();
-        let should_render_divider = !FeatureFlag::AgentView.is_enabled() || show_block_dividers;
+        
 
         let border = match input_mode {
-            InputMode::PinnedToBottom => Border::top(if should_render_divider {
-                get_input_box_top_border_width()
-            } else {
-                0.
-            })
+            InputMode::PinnedToBottom => Border::top(get_input_box_top_border_width())
             .with_border_fill(theme.outline()),
-            InputMode::PinnedToTop => Border::bottom(if should_render_divider {
-                get_input_box_top_border_width()
-            } else {
-                0.
-            })
+            InputMode::PinnedToTop => Border::bottom(get_input_box_top_border_width())
             .with_border_fill(theme.outline()),
             InputMode::Waterfall => Border::new(get_input_box_top_border_width())
                 .with_sides(true, false, true, false)
@@ -231,126 +220,7 @@ impl Input {
         )
         .finish();
 
-        let mut column = Flex::column();
-        let is_slash_commands = self.suggestions_mode_model.as_ref(app).is_slash_commands();
-        let is_conversation_menu = self
-            .suggestions_mode_model
-            .as_ref(app)
-            .is_conversation_menu();
-        let is_model_selector = self
-            .suggestions_mode_model
-            .as_ref(app)
-            .is_inline_model_selector();
-        let is_prompts_menu = self.suggestions_mode_model.as_ref(app).is_prompts_menu();
-        let is_skill_menu = self.suggestions_mode_model.as_ref(app).is_skill_menu();
-        let is_inline_history_menu = FeatureFlag::InlineHistoryMenu.is_enabled()
-            && self
-                .suggestions_mode_model
-                .as_ref(app)
-                .is_inline_history_menu();
-        let is_repos_menu = FeatureFlag::InlineRepoMenu.is_enabled()
-            && self.suggestions_mode_model.as_ref(app).is_repos_menu();
-
-        match input_mode {
-            InputMode::PinnedToBottom => {
-                column.add_children(
-                    [
-                        if is_model_selector {
-                            Some(ChildView::new(&self.inline_model_selector_view).finish())
-                        } else if is_slash_commands {
-                            Some(ChildView::new(&self.inline_slash_commands_view).finish())
-                        } else if is_prompts_menu {
-                            Some(ChildView::new(&self.inline_prompts_menu_view).finish())
-                        } else if is_conversation_menu {
-                            Some(ChildView::new(&self.inline_conversation_menu_view).finish())
-                        } else if FeatureFlag::ListSkills.is_enabled() && is_skill_menu {
-                            Some(ChildView::new(&self.inline_skill_selector_view).finish())
-                        } else if is_inline_history_menu {
-                            Some(ChildView::new(&self.inline_history_menu_view).finish())
-                        } else if is_repos_menu {
-                            Some(ChildView::new(&self.inline_repos_menu_view).finish())
-                        } else {
-                            None
-                        },
-                        Some(ChildView::new(&self.agent_status_view).finish()),
-                        Some(input),
-                    ]
-                    .into_iter()
-                    .flatten(),
-                );
-            }
-            InputMode::PinnedToTop => {
-                column.add_children(
-                    [
-                        Some(input),
-                        Some(ChildView::new(&self.agent_status_view).finish()),
-                        if is_model_selector {
-                            Some(ChildView::new(&self.inline_model_selector_view).finish())
-                        } else if is_slash_commands {
-                            Some(ChildView::new(&self.inline_slash_commands_view).finish())
-                        } else if is_prompts_menu {
-                            Some(ChildView::new(&self.inline_prompts_menu_view).finish())
-                        } else if is_conversation_menu {
-                            Some(ChildView::new(&self.inline_conversation_menu_view).finish())
-                        } else if FeatureFlag::ListSkills.is_enabled() && is_skill_menu {
-                            Some(ChildView::new(&self.inline_skill_selector_view).finish())
-                        } else if is_inline_history_menu {
-                            Some(ChildView::new(&self.inline_history_menu_view).finish())
-                        } else if is_repos_menu {
-                            Some(ChildView::new(&self.inline_repos_menu_view).finish())
-                        } else {
-                            None
-                        },
-                    ]
-                    .into_iter()
-                    .flatten(),
-                );
-            }
-            InputMode::Waterfall => {
-                let should_render_below = self
-                    .inline_terminal_menu_positioner
-                    .as_ref(app)
-                    .should_render_inline_menu_below_input();
-
-                if is_slash_commands && !should_render_below {
-                    column.add_child(ChildView::new(&self.inline_slash_commands_view).finish());
-                } else if is_prompts_menu && !should_render_below {
-                    column.add_child(ChildView::new(&self.inline_prompts_menu_view).finish());
-                } else if is_conversation_menu && !should_render_below {
-                    column.add_child(ChildView::new(&self.inline_conversation_menu_view).finish());
-                } else if FeatureFlag::ListSkills.is_enabled()
-                    && is_skill_menu
-                    && !should_render_below
-                {
-                    column.add_child(ChildView::new(&self.inline_skill_selector_view).finish());
-                } else if is_inline_history_menu && !should_render_below {
-                    column.add_child(ChildView::new(&self.inline_history_menu_view).finish());
-                } else if is_repos_menu && !should_render_below {
-                    column.add_child(ChildView::new(&self.inline_repos_menu_view).finish());
-                }
-
-                column.add_children([ChildView::new(&self.agent_status_view).finish(), input]);
-
-                if is_model_selector && should_render_below {
-                    column.add_child(ChildView::new(&self.inline_model_selector_view).finish());
-                } else if is_slash_commands && should_render_below {
-                    column.add_child(ChildView::new(&self.inline_slash_commands_view).finish());
-                } else if is_prompts_menu && should_render_below {
-                    column.add_child(ChildView::new(&self.inline_prompts_menu_view).finish());
-                } else if is_conversation_menu && should_render_below {
-                    column.add_child(ChildView::new(&self.inline_conversation_menu_view).finish());
-                } else if FeatureFlag::ListSkills.is_enabled()
-                    && is_skill_menu
-                    && should_render_below
-                {
-                    column.add_child(ChildView::new(&self.inline_skill_selector_view).finish());
-                } else if is_inline_history_menu && should_render_below {
-                    column.add_child(ChildView::new(&self.inline_history_menu_view).finish());
-                } else if is_repos_menu && should_render_below {
-                    column.add_child(ChildView::new(&self.inline_repos_menu_view).finish());
-                }
-            }
-        }
+        let column = Flex::column().with_child(input);
 
         SavePosition::new(column.finish(), &self.save_position_id()).finish()
     }
