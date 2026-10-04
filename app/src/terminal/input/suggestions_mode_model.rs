@@ -1,24 +1,15 @@
-use super::{BufferState, DynamicEnumSuggestionStatus, InputSuggestionsMode};
-use warpui::{Entity, ModelContext, ModelHandle};
-
-use crate::terminal::input::buffer_model::InputBufferModel;
-use crate::terminal::input::inline_menu::InlineMenuType;
+use super::{DynamicEnumSuggestionStatus, InputSuggestionsMode};
+use warpui::{Entity, ModelContext};
 
 /// Model responsible for managing the input suggestions mode state.
 pub struct InputSuggestionsModeModel {
     mode: InputSuggestionsMode,
-    /// Buffer state saved when an inline menu is opened, so it can be restored on dismiss.
-    buffer_to_restore: Option<BufferState>,
-    /// Handle to the input buffer model, used to snapshot buffer state when opening menus.
-    buffer_model: ModelHandle<InputBufferModel>,
 }
 
 impl InputSuggestionsModeModel {
-    pub fn new(buffer_model: ModelHandle<InputBufferModel>) -> Self {
+    pub fn new() -> Self {
         Self {
             mode: InputSuggestionsMode::Closed,
-            buffer_to_restore: None,
-            buffer_model,
         }
     }
 
@@ -31,53 +22,15 @@ impl InputSuggestionsModeModel {
             return;
         }
 
-        let input_config_to_restore = self.mode.input_config_to_restore();
-
         // If we're setting a new non-closed mode while the current mode is also non-closed,
         // first emit a mode change for the implicit close before transitioning to the new mode.
         if self.is_visible() && !matches!(mode, InputSuggestionsMode::Closed) {
             self.mode = InputSuggestionsMode::Closed;
-            ctx.emit(InputSuggestionsModeEvent::ModeChanged {
-                buffer_to_restore: None,
-                input_config_to_restore,
-            });
-        }
-
-        // Snapshot the buffer state when opening a mode that supports buffer restoration.
-        if mode.should_snapshot_and_restore_buffer() {
-            let buffer_model = self.buffer_model.as_ref(ctx);
-            self.buffer_to_restore = Some(BufferState::new(
-                buffer_model.current_value().to_owned(),
-                buffer_model.cursor_point(),
-            ));
-        }
-
-        // When closing via set_mode, we always discard saved buffer state.
-        // To restore buffer state, callers should use close_and_restore_buffer.
-        if matches!(mode, InputSuggestionsMode::Closed) {
-            self.buffer_to_restore = None;
+            ctx.emit(InputSuggestionsModeEvent::ModeChanged);
         }
 
         self.mode = mode;
-        ctx.emit(InputSuggestionsModeEvent::ModeChanged {
-            buffer_to_restore: None,
-            input_config_to_restore: None,
-        });
-    }
-
-    /// Closes the current menu, restoring the buffer if it was snapshotted on open.
-    pub fn close_and_restore_buffer(&mut self, ctx: &mut ModelContext<Self>) {
-        if self.is_closed() {
-            return;
-        }
-
-        let buffer_to_restore = self.buffer_to_restore.take();
-        let input_config_to_restore = self.mode.input_config_to_restore();
-        self.mode = InputSuggestionsMode::Closed;
-        ctx.emit(InputSuggestionsModeEvent::ModeChanged {
-            buffer_to_restore,
-            input_config_to_restore,
-        });
+        ctx.emit(InputSuggestionsModeEvent::ModeChanged);
     }
 
     pub fn set_dynamic_enum_status(
@@ -91,10 +44,7 @@ impl InputSuggestionsModeModel {
         } = &mut self.mode
         {
             *dynamic_enum_status = status;
-            ctx.emit(InputSuggestionsModeEvent::ModeChanged {
-                buffer_to_restore: None,
-                input_config_to_restore: None,
-            });
+            ctx.emit(InputSuggestionsModeEvent::ModeChanged);
         }
     }
 
@@ -130,95 +80,6 @@ impl InputSuggestionsModeModel {
             InputSuggestionsMode::DynamicWorkflowEnumSuggestions { .. }
         )
     }
-
-    pub fn is_ai_context_menu(&self) -> bool {
-        matches!(self.mode, InputSuggestionsMode::AIContextMenu { .. })
-    }
-
-    pub fn is_slash_commands(&self) -> bool {
-        matches!(self.mode, InputSuggestionsMode::SlashCommands)
-    }
-
-    pub fn is_conversation_menu(&self) -> bool {
-        matches!(self.mode, InputSuggestionsMode::ConversationMenu)
-    }
-
-    pub fn is_inline_model_selector(&self) -> bool {
-        matches!(self.mode, InputSuggestionsMode::ModelSelector)
-    }
-
-    pub fn is_profile_selector(&self) -> bool {
-        matches!(self.mode, InputSuggestionsMode::ProfileSelector)
-    }
-
-    pub fn is_prompts_menu(&self) -> bool {
-        matches!(self.mode, InputSuggestionsMode::PromptsMenu)
-    }
-
-    pub fn is_skill_menu(&self) -> bool {
-        matches!(self.mode, InputSuggestionsMode::SkillMenu)
-    }
-
-    pub fn is_user_query_menu(&self) -> bool {
-        matches!(
-            self.mode,
-            InputSuggestionsMode::UserQueryMenu {
-                action: super::UserQueryMenuAction::ForkFrom,
-                ..
-            }
-        )
-    }
-
-    pub fn is_rewind_menu(&self) -> bool {
-        matches!(
-            self.mode,
-            InputSuggestionsMode::UserQueryMenu {
-                action: super::UserQueryMenuAction::Rewind,
-                ..
-            }
-        )
-    }
-
-    /// Returns the conversation_id if the current mode is UserQueryMenu (ForkFrom).
-    pub fn user_query_conversation_id(&self) -> Option<AIConversationId> {
-        match &self.mode {
-            _ => None,
-        }
-    }
-
-    /// Returns the conversation_id if the current mode is RewindMenu.
-    pub fn rewind_conversation_id(&self) -> Option<AIConversationId> {
-        match &self.mode {
-            _ => None,
-        }
-    }
-
-    pub fn is_inline_history_menu(&self) -> bool {
-        matches!(self.mode, InputSuggestionsMode::InlineHistoryMenu { .. })
-    }
-
-    pub fn is_repos_menu(&self) -> bool {
-        matches!(self.mode, InputSuggestionsMode::IndexedReposMenu)
-    }
-
-    pub fn is_plan_menu(&self) -> bool {
-        matches!(self.mode, InputSuggestionsMode::PlanMenu { .. })
-    }
-
-    /// Returns the conversation_id if the current mode is PlanMenu.
-    pub fn plan_menu_conversation_id(&self) -> Option<AIConversationId> {
-        match &self.mode {
-            _ => None,
-        }
-    }
-
-    pub fn inline_menu_type(&self) -> Option<InlineMenuType> {
-        InlineMenuType::from_suggestions_mode(&self.mode)
-    }
-
-    pub fn is_inline_menu_open(&self) -> bool {
-        self.mode.is_inline_menu()
-    }
 }
 
 impl Entity for InputSuggestionsModeModel {
@@ -226,12 +87,5 @@ impl Entity for InputSuggestionsModeModel {
 }
 
 pub enum InputSuggestionsModeEvent {
-    ModeChanged {
-        /// The saved buffer state to restore, if this mode change is an inline menu closing.
-        /// `None` for all other transitions.
-        buffer_to_restore: Option<BufferState>,
-        /// The saved input config to restore, if this mode change closes inline history menu
-        /// without accepting the temporary preview state.
-        input_config_to_restore: Option<InputConfig>,
-    },
+    ModeChanged,
 }

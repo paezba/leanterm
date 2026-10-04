@@ -3,8 +3,6 @@ pub mod autosuggestions;
 mod classic;
 mod common;
 pub mod decorations;
-pub mod inline_history;
-pub mod inline_menu;
 mod suggestions_mode_menu;
 pub mod suggestions_mode_model;
 
@@ -181,8 +179,6 @@ use crate::suggestions::ignored_suggestions_model::{
     IgnoredSuggestionsModel, IgnoredSuggestionsModelEvent, SuggestionType,
 };
 use crate::terminal::input::buffer_model::InputBufferModel;
-use crate::terminal::input::inline_history::InlineHistoryMenuView;
-use crate::terminal::input::inline_menu::InlineMenuPositioner;
 use crate::terminal::input::suggestions_mode_model::{
     InputSuggestionsModeEvent, InputSuggestionsModeModel,
 };
@@ -404,7 +400,6 @@ pub enum TelemetryInputSuggestionsMode {
     NaturalLanguageCommandSearch,
     StaticWorkflowEnumSuggestions,
     DynamicWorkflowEnumSuggestions,
-    InlineHistoryMenu,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -434,21 +429,6 @@ impl TabCompletionsMenuPosition {
                 editor_view_id,
                 COMPLETIONS_START_OF_REPLACEMENT_SPAN_POSITION_ID,
             ),
-        }
-    }
-}
-
-#[derive(PartialEq, Eq, Debug, Clone)]
-pub struct BufferState {
-    buffer: String,
-    cursor_point: Option<BufferPoint>,
-}
-
-impl BufferState {
-    pub fn new(buffer: String, cursor_point: Option<BufferPoint>) -> Self {
-        Self {
-            buffer,
-            cursor_point,
         }
     }
 }
@@ -519,10 +499,6 @@ pub enum InputSuggestionsMode {
         command: String,
     },
 
-    /// Inline history menu mode for selecting commands and conversations from history.
-    InlineHistoryMenu {
-    },
-
     /// Mode indicating that no suggestion UI is being shown.
     Closed,
 }
@@ -544,36 +520,6 @@ impl InputSuggestionsMode {
         *self != InputSuggestionsMode::Closed
     }
 
-    pub fn is_inline_menu(&self) -> bool {
-        matches!(
-            self,
-            Self::SlashCommands
-                | Self::ConversationMenu
-                | Self::ModelSelector
-                | Self::PromptsMenu
-                | Self::UserQueryMenu { .. }
-                | Self::InlineHistoryMenu { .. }
-                | Self::PlanMenu { .. }
-        ) || (FeatureFlag::InlineProfileSelector.is_enabled()
-            && matches!(self, Self::ProfileSelector))
-            || (FeatureFlag::ListSkills.is_enabled() && matches!(self, Self::SkillMenu))
-            || (FeatureFlag::InlineRepoMenu.is_enabled() && matches!(self, Self::IndexedReposMenu))
-    }
-
-    /// Whether this mode should snapshot the input buffer on open and restore it on dismiss.
-    fn should_snapshot_and_restore_buffer(&self) -> bool {
-        // For now this just delegates to whether the current mode is an inline menu,
-        // but in the future we might build this out/add more detail here.
-        self.is_inline_menu()
-    }
-
-    /// Returns the placeholder text for this mode, if it has a custom one.
-    pub fn placeholder_text(&self) -> Option<&'static str> {
-        match self {
-            _ => None,
-        }
-    }
-
     fn to_telemetry_mode(&self) -> TelemetryInputSuggestionsMode {
         match *self {
             InputSuggestionsMode::HistoryUp {
@@ -592,9 +538,6 @@ impl InputSuggestionsMode {
             }
             InputSuggestionsMode::DynamicWorkflowEnumSuggestions { .. } => {
                 TelemetryInputSuggestionsMode::DynamicWorkflowEnumSuggestions
-            }
-            InputSuggestionsMode::InlineHistoryMenu { .. } => {
-                TelemetryInputSuggestionsMode::InlineHistoryMenu
             }
             InputSuggestionsMode::Closed => unreachable!(),
         }
@@ -792,7 +735,6 @@ pub enum Event {
     OpenFilesPalette {
         source: PaletteSource,
     },
-    TryHandlePassiveCodeDiff(CodeDiffAction),
     ShowToast {
         message: String,
         flavor: ToastFlavor,
@@ -812,10 +754,6 @@ pub enum InputAction {
     CtrlR,
     CtrlD,
     Up,
-    /// Deferred so Up does not update InlineHistoryMenuView while it is already checked out.
-    SelectPreviousInlineHistoryItem,
-    /// Deferred so Down does not update InlineHistoryMenuView while it is already checked out.
-    SelectNextInlineHistoryItem,
     PageUp,
     PageDown,
     ClearScreen,
@@ -837,8 +775,6 @@ pub enum InputAction {
 
 
 
-    /// A passive code diff action.
-    TryHandlePassiveCodeDiff(CodeDiffAction),
 
 
 
@@ -853,9 +789,6 @@ pub enum InputAction {
 
     /// Toggles the '/' slash commands menu in the agent view.
     ToggleSlashCommandsMenu,
-
-    /// Opens the inline history menu for cycling through past commands and conversations.
-    OpenInlineHistoryMenu,
 
     DismissCloudModeV2SlashCommandsMenu,
 
@@ -1102,9 +1035,6 @@ pub trait Autosuggester {
 pub trait MenuPositioningProvider {
     fn menu_position(&self, app: &AppContext) -> MenuPositioning;
 
-    fn inline_menu_position(&self, _inline_menu_height: f32, _app: &AppContext) -> MenuPositioning {
-        MenuPositioning::AboveInputBox
-    }
 }
 
 /// Stores state referenced by the Input view and PromptRenderHelper.
@@ -1415,11 +1345,8 @@ pub struct Input {
 
 
 
-    /// Inline history menu for up-arrow with conversations and commands.
-    inline_history_menu_view: ViewHandle<InlineHistoryMenuView>,
 
 
-    inline_terminal_menu_positioner: ModelHandle<InlineMenuPositioner>,
 
 
     /// Cached flag indicating whether the editor buffer is empty, used to track changes between
@@ -1894,42 +1821,13 @@ impl Input {
 
         let buffer_model = ctx.add_model(|ctx| InputBufferModel::new(&editor, ctx));
         let suggestions_mode_model =
-            ctx.add_model(|_| InputSuggestionsModeModel::new(buffer_model.clone()));
+            ctx.add_model(|_| InputSuggestionsModeModel::new());
 
         let terminal_content_element_position_id =
             format!("terminal_content_element_{terminal_view_id}");
         let input_save_position_id = format!("status_free_input_{}", ctx.view_id());
         let window_id = ctx.window_id();
-        let inline_terminal_menu_positioner = ctx.add_model(|ctx| {
-            InlineMenuPositioner::new(
-                &suggestions_mode_model,
-                terminal_content_element_position_id,
-                input_save_position_id,
-                size_info,
-                window_id,
-                ctx,
-            )
-        });
 
-        let inline_history_menu_view = ctx.add_view({
-            let active_session = active_session.clone();
-            let buffer_model = buffer_model.clone();
-            |ctx| {
-                inline_history::InlineHistoryMenuView::new(
-                    terminal_view_id,
-                    active_session,
-                    &suggestions_mode_model,
-                    &inline_terminal_menu_positioner,
-                    buffer_model,
-                    ctx,
-                )
-            }
-        });
-        if FeatureFlag::InlineHistoryMenu.is_enabled() {
-            ctx.subscribe_to_view(&inline_history_menu_view, |me, _, event, ctx| {
-                me.handle_inline_history_menu_event(event, ctx);
-            });
-        }
 
         current_prompt.update(ctx, |prompt_type, ctx| {
             if let PromptType::Dynamic { prompt } = prompt_type {
@@ -2021,14 +1919,7 @@ impl Input {
         );
 
 
-        ctx.subscribe_to_model(&suggestions_mode_model, |me, _, event, ctx| {
-            let InputSuggestionsModeEvent::ModeChanged {
-                buffer_to_restore, ..
-            } = event;
-            if let Some(buffer_state) = buffer_to_restore {
-                me.restore_buffer_state(buffer_state, ctx);
-            }
-
+        ctx.subscribe_to_model(&suggestions_mode_model, |me, _, _, ctx| {
             me.set_zero_state_hint_text(ctx);
             ctx.notify();
         });
@@ -2081,8 +1972,6 @@ impl Input {
             last_user_block_completed: None,
             hoverable_handle: Default::default(),
             terminal_view_id,
-            inline_history_menu_view,
-            inline_terminal_menu_positioner,
             is_editor_empty_on_last_edit: is_editor_empty,
             weak_view_handle: ctx.handle(),
             input_contents_before_prompt_chip_command: None,
@@ -2161,42 +2050,6 @@ impl Input {
         self.suggestions_mode_model.update(ctx, |model, ctx| {
             model.set_mode(InputSuggestionsMode::IndexedReposMenu, ctx);
         });
-        ctx.notify();
-    }
-
-    fn restore_buffer_state(&mut self, buffer_state: &BufferState, ctx: &mut ViewContext<Self>) {
-        self.editor.update(ctx, |editor, ctx| {
-            editor.set_buffer_text_ignoring_undo(&buffer_state.buffer, ctx);
-            if let Some(original_cursor_point) = &buffer_state.cursor_point {
-                editor.reset_selections_to_point(original_cursor_point, ctx);
-            }
-        });
-        ctx.notify();
-    }
-
-    fn open_inline_history_menu(&mut self, ctx: &mut ViewContext<Self>) {
-        if !FeatureFlag::InlineHistoryMenu.is_enabled() {
-            return;
-        }
-
-        // Don't open inline history menu if a chip menu or model selector is already open
-        let agent_footer = self.agent_input_footer.as_ref(ctx);
-        if self.prompt_render_helper.has_open_chip_menu(ctx)
-            || agent_footer.has_open_chip_menu(ctx)
-            || agent_footer.is_model_selector_open(ctx)
-        {
-            return;
-        }
-
-        let original_input_config = self.ai_input_model.as_ref(ctx).input_config();
-        self.suggestions_mode_model.update(ctx, |m, ctx| {
-            m.set_mode(
-                InputSuggestionsMode::InlineHistoryMenu {
-                },
-                ctx,
-            );
-        });
-
         ctx.notify();
     }
 
@@ -2407,10 +2260,6 @@ impl Input {
         &self.suggestions_mode_model
     }
 
-    pub fn inline_terminal_menu_positioner(&self) -> &ModelHandle<InlineMenuPositioner> {
-        &self.inline_terminal_menu_positioner
-    }
-
     pub fn completer_data(&self) -> CompleterData {
         CompleterData::new(
             self.sessions.clone(),
@@ -2523,20 +2372,6 @@ impl Input {
     }
 
     pub fn set_zero_state_hint_text(&mut self, ctx: &mut ViewContext<Self>) {
-        // If the current input suggestions mode has a custom placeholder,
-        // that takes precedence over the default (empty) placeholder.
-        if let Some(placeholder) = self
-            .suggestions_mode_model
-            .as_ref(ctx)
-            .mode()
-            .placeholder_text()
-        {
-            self.editor.update(ctx, |editor, ctx| {
-                editor.set_placeholder_text(placeholder, ctx);
-            });
-            return;
-        }
-
         self.editor.update(ctx, |editor, ctx| {
             editor.clear_placeholder_text(ctx);
             ctx.notify();
@@ -3901,10 +3736,6 @@ impl Input {
                     | InputSuggestionsMode::DynamicWorkflowEnumSuggestions { .. } => {
                         // If in the future we want to replace the selected arguments with suggestion options as we cycle, this is where we do it
                     }
-                    InputSuggestionsMode::InlineHistoryMenu { .. } => {
-                        // Inline history menu selection is handled separately
-                        // This shouldn't be reached since inline history menu doesn't use InputSuggestions
-                    }
                     InputSuggestionsMode::Closed => {
                         log::warn!("Got a InputSuggestionsEvent::Select when the mode was Closed!");
                     }
@@ -4027,10 +3858,6 @@ impl Input {
                 });
                 true
             }
-            InputSuggestionsMode::InlineHistoryMenu { .. } => {
-                // Inline history menu selection is handled separately
-                false
-            }
         }
     }
 
@@ -4066,22 +3893,9 @@ impl Input {
     ) {
         // If the input suggestions view is already closed, don't refocus the input box.
         if !self.suggestions_mode_model.as_ref(ctx).is_closed() {
-            let was_inline_menu_open = self
-                .suggestions_mode_model
-                .as_ref(ctx)
-                .is_inline_menu_open();
-
             self.suggestions_mode_model.update(ctx, |m, ctx| {
                 m.set_mode(InputSuggestionsMode::Closed, ctx);
             });
-
-            // If we're closing an inline menu, trigger autodetection on the buffer contents
-            if was_inline_menu_open {
-                self.run_input_background_jobs(
-                    InputBackgroundJobOptions::default().with_ai_input_detection(),
-                    ctx,
-                );
-            }
 
             if should_focus_input {
                 self.focus_input_box(ctx);
@@ -4210,44 +4024,6 @@ impl Input {
         ctx.notify();
     }
 
-    fn select_previous_inline_history_item(&mut self, ctx: &mut ViewContext<Self>) {
-        if !self
-            .suggestions_mode_model
-            .as_ref(ctx)
-            .is_inline_history_menu()
-        {
-            return;
-        }
-
-        if self.is_cloud_mode_input_v2_composing(ctx) {
-            if let Some(view) = self.cloud_mode_v2_history_menu_view.clone() {
-                view.update(ctx, |view, ctx| view.select_up(ctx));
-            }
-        } else {
-            self.inline_history_menu_view
-                .update(ctx, |view, ctx| view.select_up(ctx));
-        }
-    }
-
-    fn select_next_inline_history_item(&mut self, ctx: &mut ViewContext<Self>) {
-        if !self
-            .suggestions_mode_model
-            .as_ref(ctx)
-            .is_inline_history_menu()
-        {
-            return;
-        }
-
-        if self.is_cloud_mode_input_v2_composing(ctx) {
-            if let Some(view) = self.cloud_mode_v2_history_menu_view.clone() {
-                view.update(ctx, |view, ctx| view.select_down(ctx));
-            }
-        } else {
-            self.inline_history_menu_view
-                .update(ctx, |view, ctx| view.select_down(ctx));
-        }
-    }
-
     fn editor_up(&mut self, ctx: &mut ViewContext<Self>) {
         if self.should_show_auth_secret_ftux(ctx) {
             if let Some(ftux_view) = self.auth_secret_ftux_view().cloned() {
@@ -4280,10 +4056,6 @@ impl Input {
 
         // For some input suggestion modes, the menu handles its own actions.
         let handled = match self.suggestions_mode_model.as_ref(ctx).mode() {
-            InputSuggestionsMode::InlineHistoryMenu { .. } => {
-                ctx.dispatch_typed_action_deferred(InputAction::SelectPreviousInlineHistoryItem);
-                true
-            }
             InputSuggestionsMode::HistoryUp { .. }
             | InputSuggestionsMode::CompletionSuggestions { .. }
             | InputSuggestionsMode::StaticWorkflowEnumSuggestions { .. }
@@ -4366,42 +4138,15 @@ impl Input {
         }
     }
 
-    /// Asks the currently active inline menu whether the buffer should be restored on dismiss
-    /// (defaulting to true for any inline menus that don't have specific behavior requirements for this decision).
-    fn should_restore_buffer_on_inline_menu_dismiss(&self, ctx: &ViewContext<Self>) -> bool {
-        match self.suggestions_mode_model.as_ref(ctx).mode() {
-            _ => true,
-        }
-    }
-
     fn editor_escape(&mut self, ctx: &mut ViewContext<Self>) {
         let vim_mode = self.editor.as_ref(ctx).vim_mode(ctx);
-        let should_escape_vim_before_dismissing = vim_mode == Some(VimMode::Insert)
-            && (self.suggestions_mode_model.as_ref(ctx).is_history_up()
-                || self
-                    .suggestions_mode_model
-                    .as_ref(ctx)
-                    .is_inline_history_menu());
+        let should_escape_vim_before_dismissing =
+            vim_mode == Some(VimMode::Insert) && self.suggestions_mode_model.as_ref(ctx).is_history_up();
 
         if should_escape_vim_before_dismissing {
             self.editor.update(ctx, |editor, editor_ctx| {
                 editor.handle_action(&EditorAction::VimEscape, editor_ctx);
             });
-        } else if self
-            .suggestions_mode_model
-            .as_ref(ctx)
-            .is_inline_menu_open()
-        {
-            if self.should_restore_buffer_on_inline_menu_dismiss(ctx) {
-                self.suggestions_mode_model.update(ctx, |model, ctx| {
-                    model.close_and_restore_buffer(ctx);
-                });
-            } else {
-                self.suggestions_mode_model.update(ctx, |model, ctx| {
-                    model.set_mode(InputSuggestionsMode::Closed, ctx);
-                });
-            }
-            ctx.notify();
         } else if self.suggestions_mode_model.as_ref(ctx).is_visible() {
             self.input_suggestions
                 .update(ctx, |input_suggestions, ctx| {
@@ -4454,12 +4199,7 @@ impl Input {
     fn editor_down(&mut self, ctx: &mut ViewContext<Self>) {
         // For some input suggestion modes, the menu handles its own actions.
         let handled = match self.suggestions_mode_model.as_ref(ctx).mode() {
-            InputSuggestionsMode::HistoryUp { .. }
-            | InputSuggestionsMode::CompletionSuggestions { .. }
-            | InputSuggestionsMode::StaticWorkflowEnumSuggestions { .. }
-            | InputSuggestionsMode::DynamicWorkflowEnumSuggestions { .. }
-            | InputSuggestionsMode::InlineHistoryMenu { .. }
-            | InputSuggestionsMode::Closed => false,
+            InputSuggestionsMode::HistoryUp { .. } | InputSuggestionsMode::CompletionSuggestions { .. } | InputSuggestionsMode::StaticWorkflowEnumSuggestions { .. } | InputSuggestionsMode::DynamicWorkflowEnumSuggestions { .. } | InputSuggestionsMode::Closed => false,
         };
 
         if handled {
@@ -5111,32 +4851,6 @@ impl Input {
                             self.open_completion_suggestions(CompletionsTrigger::AsYouType, ctx);
                         }
                     }
-                    InputSuggestionsMode::InlineHistoryMenu { .. } => {
-                        let mismatched = if self.is_cloud_mode_input_v2_composing(ctx) {
-                            self.cloud_mode_v2_history_menu_view
-                                .as_ref()
-                                .and_then(|view| view.as_ref(ctx).selected_query_text(ctx))
-                                .is_some_and(|selected_text| {
-                                    selected_text != self.editor.as_ref(ctx).buffer_text(ctx)
-                                })
-                        } else {
-                            self.inline_history_menu_view
-                                .as_ref(ctx)
-                                .model()
-                                .as_ref(ctx)
-                                .selected_item()
-                                .and_then(|item| item.buffer_replacement_text())
-                                .is_some_and(|selected_item_text| {
-                                    *selected_item_text != self.editor.as_ref(ctx).buffer_text(ctx)
-                                })
-                        };
-                        if mismatched {
-                            self.suggestions_mode_model.update(ctx, |model, ctx| {
-                                model.set_mode(InputSuggestionsMode::Closed, ctx);
-                            });
-                            ctx.notify();
-                        }
-                    }
                 }
             }
             EditorEvent::BufferReplaced => {
@@ -5210,9 +4924,6 @@ impl Input {
                                     /*should_focus_input=*/ true, ctx,
                                 );
                             }
-                        }
-                        InputSuggestionsMode::InlineHistoryMenu { .. } => {
-                            // Inline history menu handles its own selection state
                         }
                     }
                 }
@@ -6560,19 +6271,6 @@ impl Input {
 
     fn input_shift_tab(&mut self, ctx: &mut ViewContext<Self>) {
         match self.suggestions_mode_model.as_ref(ctx).mode() {
-            // If the inline history menu is open and has multiple tabs,
-            // shift + tab should cycle between them.
-            InputSuggestionsMode::InlineHistoryMenu { .. } => {
-                if self.is_cloud_mode_input_v2_composing(ctx) {
-                    return;
-                }
-                if self
-                    .inline_history_menu_view
-                    .update(ctx, |view, ctx| view.select_next_tab(ctx))
-                {
-                    return;
-                }
-            }
             // If we're in CompletionSuggestions mode, shift tab moves to the previous selection.
             InputSuggestionsMode::CompletionSuggestions { .. } => {
                 self.input_suggestions.update(ctx, |suggestions, ctx| {
@@ -7987,10 +7685,6 @@ impl TypedActionView for Input {
         match action {
             InputAction::FocusInputBox => self.focus_input_box(ctx),
             InputAction::Up => self.editor_up(ctx),
-            InputAction::SelectPreviousInlineHistoryItem => {
-                self.select_previous_inline_history_item(ctx)
-            }
-            InputAction::SelectNextInlineHistoryItem => self.select_next_inline_history_item(ctx),
             InputAction::PageUp => self.editor_page_up(ctx),
             InputAction::PageDown => self.editor_page_down(ctx),
             InputAction::CtrlD => self.ctrl_d(ctx),
@@ -8013,20 +7707,6 @@ impl TypedActionView for Input {
                     }
                 });
             }
-            InputAction::ToggleConversationsMenu => {
-                if self
-                    .suggestions_mode_model
-                    .as_ref(ctx)
-                    .is_conversation_menu()
-                {
-                    self.suggestions_mode_model.update(ctx, |model, ctx| {
-                        model.close_and_restore_buffer(ctx);
-                    });
-                    ctx.notify();
-                } else {
-                    self.open_conversation_menu(ctx);
-                }
-            }
             InputAction::TryHandlePassiveCodeDiff(action) => {
                 ctx.emit(Event::TryHandlePassiveCodeDiff(action.clone()));
             }
@@ -8039,9 +7719,6 @@ impl TypedActionView for Input {
                 InputSettings::handle(ctx).update(ctx, |settings, ctx| {
                     report_if_error!(settings.completions_menu_height.set_value(*height, ctx));
                 });
-            }
-            InputAction::OpenInlineHistoryMenu => {
-                self.open_inline_history_menu(ctx);
             }
         }
     }

@@ -6,7 +6,6 @@ use settings::Setting as _;
 use settings::{RespectUserSyncSetting, SupportedPlatforms, SyncToCloud, define_settings_group};
 use warpui::{AppContext, SingletonEntity};
 
-use crate::terminal::input::inline_menu::InlineMenuType;
 use crate::terminal::session_settings::SessionSettings;
 
 pub const MAX_TIMES_TO_SHOW_AUTOSUGGESTION_HINT: i8 = 2;

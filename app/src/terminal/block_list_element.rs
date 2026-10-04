@@ -70,7 +70,6 @@ use crate::settings::{ DebugSettings, EnforceMinimumContrast, PrivacySettings, T
 use crate::terminal::alt_screen::{should_intercept_mouse, should_intercept_scroll};
 use crate::terminal::block_list_viewport::AutoscrollBehavior;
 use crate::terminal::blockgrid_renderer::BlockGridParams;
-use crate::terminal::input::inline_menu::InlineMenuPositioner;
 use crate::terminal::model::block::{Block, BlockSection, TranscriptScope};
 use crate::terminal::model::blocks::{
     BlockHeight, BlockHeightItem, BlockHeightSummary, BlockList, BlockListPoint, TotalIndex,

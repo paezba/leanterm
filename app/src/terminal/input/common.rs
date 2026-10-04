@@ -284,8 +284,6 @@ pub(super) fn add_input_suggestions_overlays(
                 ),
             );
         }
-        // Inline history menu is rendered separately via inline_history_menu_view
-        InputSuggestionsMode::InlineHistoryMenu { .. } => {}
         InputSuggestionsMode::Closed => {}
     }
 }

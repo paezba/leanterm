@@ -25,7 +25,6 @@ use super::{
     HEIGHT_FUDGE_FACTOR_LINES, SizeInfo, height_in_range_approx, heights_approx_gt,
     heights_approx_gte, heights_approx_lt, heights_approx_lte,
 };
-use crate::terminal::input::inline_menu::InlineMenuPositioner;
 use crate::terminal::model::blocks::RichContentItem;
 use crate::terminal::model::index::Point as IndexPoint;
 

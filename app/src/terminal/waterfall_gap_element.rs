@@ -6,7 +6,6 @@ use warpui::{AppContext, Element, EventContext, ModelHandle, SizeConstraint};
 
 use super::block_list_element::BlockListMenuSource;
 use super::view::TerminalAction;
-use crate::terminal::input::inline_menu::InlineMenuPositioner;
 
 /// An element that renders the input, block_list and "gap" created after a
 /// clear or ctrl-l when in waterfall input mode.
