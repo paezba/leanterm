@@ -1841,7 +1841,6 @@ pub enum ActiveSessionState {
 
 enum SecretTooltip {
     Grid {
-        is_agent_mode: bool,
         tooltip: WithinModel<SecretHandle>,
     },
 }
@@ -7653,22 +7652,6 @@ fn build_onboarding_keybindings(ctx: &AppContext) -> OnboardingKeybindings {
     }
 }
 
-/// Builds the context-menu label for forking an AI conversation from a given query.
-fn fork_label_for_query(query: &str) -> String {
-    if query.is_empty() {
-        "Fork from last query".to_string()
-    } else {
-        let first_line = query.lines().next().unwrap_or(query).trim();
-        let chars: Vec<char> = first_line.chars().take(21).collect();
-        let (truncated, suffix) = if chars.len() > 20 {
-            (chars[..20].iter().collect::<String>(), "…")
-        } else {
-            (chars.iter().collect::<String>(), "")
-        };
-        format!("Fork from \"{truncated}{suffix}\"")
-    }
-}
-
 impl TerminalView {
 
     // Read the current terminal input text from the onboarding tutorial callout
@@ -8329,15 +8312,6 @@ impl TerminalView {
     /// size of the entire terminal (block_list + input OR alt-grid OR shared session viewer loading) as its
     /// argument.
     fn after_terminal_view_layout(&mut self, size: Vector2F, ctx: &mut ViewContext<Self>) {
-        // A pending `jump_to_latest_agent_message` enters the agent view, which
-        // mounts the target block over this layout. Now that layout is done the
-        // block exists, so scroll to it — once. Doing it here (after layout, after
-        // the agent view's own entry scroll) means a single shot lands without any
-        // retry loop. Each agent turn is one block, so this lands on its top.
-        if let Some(exchange_id) = self.pending_agent_scroll_target.take() {
-            self.scroll_to_exchange(exchange_id, ctx);
-        }
-
         let size_update = SizeUpdateBuilder::after_layout(*self.size_info, size).build(self, ctx);
         self.resize_internal(size_update, ctx);
 
@@ -8522,44 +8496,11 @@ impl TerminalView {
             )
         };
 
-        let is_cli_agent_paste =
-            !should_paste_in_input && !middle_click && self.has_active_cli_agent_session(ctx);
-
-        // If we're pasting into a CLI coding agent (e.g. Claude Code) that has its own native
-        // handling for pasted file paths and images, skip shell-escaping and let the agent
-        // see https://github.com/anthropics/claude-code/issues/18590.
-        let shell_family = if is_cli_agent_paste {
-            None
-        } else {
-            Some(self.shell_family(ctx))
-        };
+        let shell_family = Some(self.shell_family(ctx));
         let mut copied = if middle_click {
             TerminalView::middle_click_paste_content(shell_family, ctx)
         } else {
-            let clipboard_content = ctx.clipboard().read();
-
-            if is_cli_agent_paste && clipboard_content.has_image_data() {
-                if !cfg!(windows) {
-                    self.write_user_bytes_to_pty(vec![escape_sequences::C0::SYN], ctx);
-                    return;
-                }
-
-                // On Windows, Claude Code uses Alt+V for native image paste.
-                let is_claude = CLIAgentSessionsModel::as_ref(ctx)
-                    .session(self.view_id)
-                    .is_some_and(|s| s.agent == CLIAgent::Claude);
-                if is_claude {
-                    self.write_user_bytes_to_pty(vec![escape_sequences::C0::ESC, b'v'], ctx);
-                    return;
-                }
-
-                // For all other agents on Windows, fall through to the normal paste path. When
-                // bracketed paste is enabled (true for TUI-based CLI agents), the empty-text paste
-                // sends \x1b[200~\x1b[201~ to the PTY. The agent interprets this as a "paste
-                // happened" signal and reads the Windows clipboard directly for image data.
-            }
-
-            clipboard_content_with_escaped_paths(clipboard_content, shell_family, false)
+            clipboard_content_with_escaped_paths(ctx.clipboard().read(), shell_family, false)
         };
 
         if should_paste_in_input {
@@ -8594,27 +8535,6 @@ impl TerminalView {
     }
 
     fn copy(&mut self, ctx: &mut ViewContext<Self>) {
-        // First check if there's selected text in the CLI subagent views
-        for subagent_view in self.cli_subagent_views.values() {
-            if let Some(selected_text) = subagent_view.as_ref(ctx).selected_text(ctx) {
-                ctx.clipboard()
-                    .write(ClipboardContent::plain_text(selected_text));
-                return;
-            }
-        }
-
-        // Then check if there's selected text in the cloud mode error screen
-        let error_selected_text = self
-            .ambient_agent_view_model
-            .as_ref()
-            .map(|model| model.as_ref(ctx).ui_state.error_selected_text.clone());
-        if let Some(error_selected_text) = error_selected_text
-            && let Some(text) = error_selected_text.read().clone().filter(|t| !t.is_empty())
-        {
-            ctx.clipboard().write(ClipboardContent::plain_text(text));
-            return;
-        }
-
         let semantic_selection = SemanticSelection::as_ref(ctx);
         if let Some(selected) = self.model.lock().selection_to_string(
             semantic_selection,
@@ -8666,18 +8586,6 @@ impl TerminalView {
         if !self.selected_blocks.is_empty() {
             self.copy_blocks(BlockEntity::FilteredOutput, ctx);
         }
-    }
-
-    /// Returns the rich-content link currently hovered inside the AI block view whose view id is
-    /// `rich_content_view_id`, if any. Used to surface a link-specific right-click context menu.
-    fn hovered_rich_content_link_for_view(
-        &self,
-        rich_content_view_id: EntityId,
-        ctx: &AppContext,
-    ) -> Option<RichContentLink> {
-        self.ai_block_handle_by_view_id(rich_content_view_id)?
-            .as_ref(ctx)
-            .hovered_rich_content_link()
     }
 
     fn context_menu_items(
@@ -8793,7 +8701,7 @@ impl TerminalView {
                 None,
                 true,
             ) => {
-                let mut fields = vec![
+                vec![
                     MenuItemFields::new("Copy")
                         .with_on_select_action(TerminalAction::ContextMenu(
                             ContextMenuAction::CopySelectedText,
@@ -8808,8 +8716,7 @@ impl TerminalView {
                             ContextMenuAction::InsertSelectedText,
                         ))
                         .into_item(),
-                ];
-                fields
+                ]
             }
             (
                 BlockListMenuSource::BlockOverflowButton { .. }
@@ -8864,8 +8771,6 @@ impl TerminalView {
                 // currently, we don't support share for multi selections
                 let is_share_disabled =
                     !is_single_selection || (is_active_block_selected && is_active_block_running);
-
-                let is_ask_ai_disabled = !is_single_selection;
 
                 let is_copy_commands_disabled =
                     is_single_selection && tail_block.command_to_string().trim().is_empty();
@@ -9068,48 +8973,6 @@ impl TerminalView {
                         .into_item(),
                 ]);
 
-                // Add debugging link for command blocks run by the agent
-                if is_single_selection
-                    && let Some(metadata) = tail_block.agent_interaction_metadata()
-                {
-                    let conversation_id = metadata.conversation_id();
-
-                    // Try to find the exchange ID using the requested command action ID if available,
-                    // otherwise use the subagent task ID to get the latest exchange from that task
-                    let exchange_id =
-                        if let Some(action_id) = metadata.requested_command_action_id() {
-                            BlocklistAIHistoryModel::as_ref(ctx)
-                                .conversation(conversation_id)
-                                .and_then(|convo| convo.exchange_id_for_action(action_id))
-                        } else if let Some(subagent_task_id) = metadata.subagent_task_id() {
-                            BlocklistAIHistoryModel::as_ref(ctx)
-                                .conversation(conversation_id)
-                                .and_then(|convo| convo.get_task(subagent_task_id))
-                                .and_then(|task| task.last_exchange())
-                                .map(|exchange| exchange.id)
-                        } else {
-                            None
-                        };
-
-                    if let Some(exchange_id) = exchange_id {
-                        let debugging_items = self.create_copy_debugging_menu_item(
-                            exchange_id,
-                            *conversation_id,
-                            ctx,
-                        );
-                        if !debugging_items.is_empty() {
-                            items.push(MenuItem::Separator);
-                            for (button_text, action) in debugging_items {
-                                items.push(
-                                    MenuItemFields::new(button_text)
-                                        .with_on_select_action(TerminalAction::ContextMenu(action))
-                                        .into_item(),
-                                );
-                            }
-                        }
-                    }
-                }
-
                 items
             }
             (
@@ -9137,101 +9000,6 @@ impl TerminalView {
             }
             _ => vec![],
         };
-
-        // Add AI block copying actions for AI block right-click, but only when there's no text selection
-        // When there's text selection (RichContentTextRightClick), the generic "Copy" menu item for copying selected text is already handled above
-        if let BlockListMenuSource::RichContentBlockRightClick {
-            rich_content_view_id,
-            ..
-        } = menu_source
-        {
-            let hovered_link = self.hovered_rich_content_link_for_view(*rich_content_view_id, ctx);
-            for rich_content in self.rich_content_views.iter() {
-                if let Some(ai_metadata) = rich_content.ai_block_metadata() {
-                    // Find the corresponding AIBlock that has the same entity ID.
-                    if ai_metadata.ai_block_handle.id() == *rich_content_view_id {
-                        // Add the common copying actions
-                        items.extend(self.ai_block_copying_menu_items(
-                            *rich_content_view_id,
-                            ai_metadata.conversation_id,
-                            hovered_link.clone(),
-                            &model,
-                            ctx,
-                        ));
-
-                        // Add fork option for conversation management
-                        if !cfg!(target_family = "wasm") {
-                            let fork_label = fork_label_for_query(
-                                &ai_metadata
-                                    .ai_block_handle
-                                    .as_ref(ctx)
-                                    .get_preceding_user_query(ctx),
-                            );
-                            items.push(
-                                MenuItemFields::new(fork_label)
-                                    .with_on_select_action(TerminalAction::ContextMenu(
-                                        ContextMenuAction::ForkAIConversationFromBlock {
-                                            ai_block_view_id: *rich_content_view_id,
-                                            exchange_id: ai_metadata.exchange_id,
-                                            conversation_id: ai_metadata.conversation_id,
-                                        },
-                                    ))
-                                    .into_item(),
-                            );
-
-                            if ChannelState::channel().is_dogfood() {
-                                items.push(
-                                    MenuItemFields::new("Fork from here (dev only)")
-                                        .with_on_select_action(TerminalAction::ContextMenu(
-                                            ContextMenuAction::ForkAIConversationFromExactExchange {
-                                                ai_block_view_id: *rich_content_view_id,
-                                                exchange_id: ai_metadata.exchange_id,
-                                                conversation_id: ai_metadata.conversation_id,
-                                            },
-                                        ))
-                                        .into_item(),
-                                );
-                            }
-                        }
-
-                        // We can't revert restored blocks since we don't restore the full diff
-                        if FeatureFlag::RevertToCheckpoints.is_enabled()
-                            && !ai_metadata.ai_block_handle.as_ref(ctx).is_restored()
-                        {
-                            items.push(
-                                MenuItemFields::new("Rewind to before here")
-                                    .with_on_select_action(TerminalAction::RewindAIConversation {
-                                        ai_block_view_id: *rich_content_view_id,
-                                        exchange_id: ai_metadata.exchange_id,
-                                        conversation_id: ai_metadata.conversation_id,
-                                        entrypoint: AgentModeRewindEntrypoint::ContextMenu,
-                                    })
-                                    .into_item(),
-                            );
-                        }
-
-                        let debugging_items = self.create_copy_debugging_menu_item(
-                            ai_metadata.exchange_id,
-                            ai_metadata.conversation_id,
-                            ctx,
-                        );
-                        if !debugging_items.is_empty() {
-                            if !items.is_empty() {
-                                items.push(MenuItem::Separator);
-                            }
-                            for (button_text, action) in debugging_items {
-                                items.push(
-                                    MenuItemFields::new(button_text)
-                                        .with_on_select_action(TerminalAction::ContextMenu(action))
-                                        .into_item(),
-                                );
-                            }
-                        }
-                        break;
-                    }
-                }
-            }
-        }
 
         if matches!(
             menu_source,
@@ -9444,7 +9212,6 @@ impl TerminalView {
         self.close_context_menu(ctx, false);
         self.close_block_filter_editor(ctx);
         self.close_find_bar(ctx);
-        self.close_environment_setup_mode_selector(ctx);
 
         self.input.update(ctx, |input, ctx| {
             input.close_overlays(true, ctx);
@@ -9459,40 +9226,12 @@ impl TerminalView {
             }))
             .into_item();
 
-        let has_cli_agent_session = CLIAgentSessionsModel::as_ref(ctx)
-            .session(self.view_id)
-            .is_some();
-        let is_agent_view_active = self
-            .agent_view_controller
-            .as_ref(ctx)
-            .agent_view_state()
-            .is_active();
-        let edit_menu_item = if has_cli_agent_session {
-            FeatureFlag::AgentToolbarEditor.is_enabled().then(|| {
-                MenuItemFields::new("Edit CLI agent toolbelt")
-                    .with_on_select_action(TerminalAction::ContextMenu(
-                        ContextMenuAction::EditCLIAgentToolbar,
-                    ))
-                    .into_item()
-            })
-        } else if is_agent_view_active {
-            FeatureFlag::AgentToolbarEditor.is_enabled().then(|| {
-                MenuItemFields::new("Edit agent toolbelt")
-                    .with_on_select_action(TerminalAction::ContextMenu(
-                        ContextMenuAction::EditAgentToolbar,
-                    ))
-                    .into_item()
-            })
-        } else {
-            Some(
-                MenuItemFields::new("Edit prompt")
-                    .with_on_select_action(TerminalAction::ContextMenu(
-                        ContextMenuAction::EditPrompt,
-                    ))
-                    .with_disabled(self.model.lock().shared_session_status().is_active_viewer())
-                    .into_item(),
-            )
-        };
+        let edit_menu_item = Some(
+            MenuItemFields::new("Edit prompt")
+                .with_on_select_action(TerminalAction::ContextMenu(ContextMenuAction::EditPrompt))
+                .with_disabled(self.model.lock().shared_session_status().is_active_viewer())
+                .into_item(),
+        );
 
         if *SessionSettings::as_ref(ctx).honor_ps1 {
             let mut items = vec![copy_prompt];
@@ -9908,11 +9647,6 @@ impl TerminalView {
         selection_type: SelectionType,
         ctx: &mut ViewContext<Self>,
     ) {
-        // Clear any active text selections in CLI subagent views, since a new selection
-        // is starting on the alt screen (which can be visible simultaneously).
-        for subagent_view in self.cli_subagent_views.values() {
-            subagent_view.update(ctx, |view, ctx| view.clear_all_selections(ctx));
-        }
         self.model.lock().alt_screen_mut().clear_selection();
         self.model
             .lock()
@@ -9957,14 +9691,8 @@ impl TerminalView {
                 self.model
                     .lock()
                     .selection_to_string(semantic_selection, false, ctx)
-                    // It doesn't make sense to allow empty text as AI context.
                     .filter(|text| !text.is_empty())
             };
-
-            // The text selection changed, so clear any previously attached context text.
-            self.ai_context_model.update(ctx, |context_model, ctx| {
-                context_model.set_pending_context_selected_text(None, false, ctx);
-            });
 
             // A text selection might be a byproduct of a block selection.
             // If there's no renderable text selection, we should clear the text selection.
@@ -9972,8 +9700,7 @@ impl TerminalView {
                 self.clear_selected_text(ctx);
             } else {
                 self.maybe_copy_selection_to_clipboard(ctx);
-                // Text and block selections are mutually exclusive context sources.
-                // When the user makes a non-empty text selection, clear any block selections.
+                // Text and block selections are mutually exclusive.
                 self.clear_selected_blocks(ctx);
             }
 
@@ -9983,9 +9710,9 @@ impl TerminalView {
         }
     }
 
-    // Additionally handles side effects of changing block selections (i.e. CMD + F results,
-    // Agent Mode context, etc.). The field `self.selected_blocks` should only be mutated as part of
-    // a `change_block_selections` or `change_block_selections_to_match_ai_context` invocation.
+    // Additionally handles side effects of changing block selections (i.e. CMD + F results).
+    // The field `self.selected_blocks` should only be mutated as part of a
+    // `change_block_selections` invocation.
     fn change_block_selections<F>(&mut self, change_selection: F, ctx: &mut ViewContext<Self>)
     where
         F: FnOnce(&mut SelectedBlocks),
@@ -9993,28 +9720,13 @@ impl TerminalView {
         change_selection(&mut self.selected_blocks);
         self.update_find_selection(ctx);
 
-        // In AI mode, selected blocks also serve as context. When we change the block
-        // selections, we must also update the context
-        self.sync_pending_context_block_ids(ctx);
         ctx.emit(Event::SelectedBlocksChanged);
     }
 
     // Additionally handles side effects of changing block selections (i.e. CMD + F results, etc.),
     // but without re-syncing Agent Mode context. The field `self.selected_blocks` should only be
-    // mutated as part of a `change_block_selections` or `change_block_selections_to_match_ai_context`
+    // mutated as part of a `change_block_selections` or `change_block_selections`
     // invocation.
-    fn change_block_selections_to_match_ai_context<F>(
-        &mut self,
-        change_selection: F,
-        ctx: &mut ViewContext<Self>,
-    ) where
-        F: FnOnce(&mut SelectedBlocks),
-    {
-        change_selection(&mut self.selected_blocks);
-        self.update_find_selection(ctx);
-
-        ctx.emit(Event::SelectedBlocksChanged);
-    }
 
     pub fn integration_test_change_block_selection_to_single(
         &mut self,
@@ -10084,19 +9796,7 @@ impl TerminalView {
                     // Clear the current block selection upon clicking on a rich content block
                     self.clear_selected_blocks(ctx);
 
-                    // Since rich content blocks cannot be selected, `redetermine_focus` has no way
-                    // of knowing whether the user just clicked on a rich content block. To allow
-                    // users to attach blocks as context and submit queries quickly, we only divert
-                    // the focus away from the input box when we're not in Agent Mode.
-                    if !self.ai_input_model.as_ref(ctx).is_ai_input_enabled() {
-                        self.focus_terminal(ctx);
-                    }
-                    // As part of Code Mode V2, we're introducing left and right panels which might be focused
-                    // but we want to allow users to click to refocus to a terminal session
-                    // so if the terminal isn't focused and a user clicks into the terminal, we want to force focusing the input
-                    else if !ctx.is_self_or_child_focused() {
-                        self.focus_input_box(ctx);
-                    }
+                    self.focus_terminal(ctx);
                 }
             }
             BlockSelectAction::MouseUp {
@@ -10166,24 +9866,15 @@ impl TerminalView {
                             self.reset_selection_to_single_block(*block_index, ctx);
                         }
 
-                        if !self.ai_input_model.as_ref(ctx).is_ai_input_enabled() {
-                            send_telemetry_from_ctx!(
-                                TelemetryEvent::BlockSelection(BlockSelectionDetails {
-                                    cardinality: self.selected_blocks.cardinality(),
-                                    delta: BlockSelectionDelta::New,
-                                    is_cmd_down: *is_cmd_down,
-                                    is_shift_down: *is_shift_down
-                                }),
-                                ctx
-                            );
-                        } else if !self.selected_blocks.is_empty() {
-                            send_telemetry_from_ctx!(
-                                TelemetryEvent::AgentModeAttachedBlockContext {
-                                    method: AgentModeAttachContextMethod::Mouse
-                                },
-                                ctx
-                            );
-                        }
+                        send_telemetry_from_ctx!(
+                            TelemetryEvent::BlockSelection(BlockSelectionDetails {
+                                cardinality: self.selected_blocks.cardinality(),
+                                delta: BlockSelectionDelta::New,
+                                is_cmd_down: *is_cmd_down,
+                                is_shift_down: *is_shift_down
+                            }),
+                            ctx
+                        );
                         self.tips_completed.update(ctx, |tips, ctx| {
                             mark_feature_used_and_write_to_user_defaults(
                                 Tip::Hint(TipHint::BlockSelect),
@@ -10263,10 +9954,8 @@ impl TerminalView {
             let model = self.model.lock();
             model.secret_at_point(position).map(|(handle, _)| handle)
         };
-        let is_in_agent_mode_block = self.is_position_in_agent_mode_conversation(position);
         if let Some(handle) = handle {
             self.open_secret_tool_tip = Some(SecretTooltip::Grid {
-                is_agent_mode: is_in_agent_mode_block,
                 tooltip: position.replace_inner(handle),
             });
             self.focus_terminal(ctx);

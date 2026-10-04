@@ -72,7 +72,7 @@ use crate::util::bindings::CustomAction;
 #[cfg(feature = "local_fs")]
 use crate::util::link_detection::{DetectedLinkType, detect_file_paths, get_word_range_at_offset};
 use crate::util::tooltips::{
-    TooltipLink, TooltipRedaction, render_tooltip, should_show_open_in_warp_link,
+    TooltipLink, render_tooltip, should_show_open_in_warp_link,
 };
 use crate::view_components::DismissibleToast;
 use crate::workspace::WorkspaceAction;
@@ -2558,7 +2558,7 @@ impl RichTextEditorView {
             });
         }
 
-        let tooltip_content = render_tooltip(links, TooltipRedaction::NoRedaction, appearance, ctx);
+        let tooltip_content = render_tooltip(links, appearance);
 
         let hoverable = Hoverable::new(Default::default(), move |_| tooltip_content)
             .with_cursor(Cursor::PointingHand)
