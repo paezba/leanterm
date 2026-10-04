@@ -656,15 +656,6 @@ impl HistoryUpMode {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum InputEmptyStateChangeReason {
-    /// The buffer transitioned between empty and non-empty due to a regular edit.
-    Edited,
-    /// The buffer was cleared because a user-executed command completed and we reinitialized the
-    /// buffer for the next command.
-    UserCommandCompleted,
-}
-
 pub enum Event {
     AutosuggestionAccepted,
     ClearSelectedBlock,
@@ -678,11 +669,6 @@ pub enum Event {
     UnhandledModifierKeyOnEditor(Arc<String>),
     ClearSelectionsWhenShellMode,
     InputStateChanged(InputState),
-    /// Emitted when the input text transitions between empty and non-empty states
-    InputEmptyStateChanged {
-        is_empty: bool,
-        reason: InputEmptyStateChangeReason,
-    },
     Escape,
     /// note: Terminal Inputs should only emit the variant
     /// SyncInputType::InputEditorContentsChanged.
@@ -693,7 +679,6 @@ pub enum Event {
         // The number of chars cleared from the buffer, if the ctrl-c triggered a buffer clear.
         cleared_buffer_len: usize,
     },
-    Enter,
     ExecuteCommand(Box<ExecuteCommandEvent>),
     EmacsBindingUsed,
     /// The input editor was locally edited and
@@ -708,8 +693,6 @@ pub enum Event {
     },
     InputFocusedFromMiddleClick,
     EditorFocused,
-    UnhandledCmdEnter,
-    CtrlEnter,
     SignupAnonymousUser {
         entrypoint: AnonymousUserSignupEntrypoint,
     },
@@ -1288,12 +1271,6 @@ pub struct Input {
 
 
 
-    /// Cached flag indicating whether the editor buffer is empty, used to track changes between
-    /// empty and non-empty states.
-    ///
-    /// If simply looking for if the editor contents empty, check the editor view directly instead
-    /// of using this flag.
-    is_editor_empty_on_last_edit: bool,
 
     /// Weak handle to this input view for drop target data
     weak_view_handle: WeakViewHandle<Input>,
@@ -1871,8 +1848,7 @@ impl Input {
         let completions_menu_width = *input_settings.completions_menu_width.value();
         let completions_menu_height = *input_settings.completions_menu_height.value();
 
-        let is_editor_empty = editor.as_ref(ctx).is_empty(ctx);
-        let mut input = Self {
+        let input = Self {
             input_suggestions,
             suggestions_mode_model,
             completions_menu_resizable_width: resizable_state_handle(completions_menu_width),
@@ -1911,7 +1887,6 @@ impl Input {
             last_user_block_completed: None,
             hoverable_handle: Default::default(),
             terminal_view_id,
-            is_editor_empty_on_last_edit: is_editor_empty,
             weak_view_handle: ctx.handle(),
             input_contents_before_prompt_chip_command: None,
             pending_shell_widget_handoff: None,
@@ -4350,15 +4325,6 @@ impl Input {
                     ctx.notify();
                 }
 
-                let is_editor_empty = self.editor.as_ref(ctx).is_empty(ctx);
-                if is_editor_empty != self.is_editor_empty_on_last_edit {
-                    self.is_editor_empty_on_last_edit = is_editor_empty;
-                    ctx.emit(Event::InputEmptyStateChanged {
-                        is_empty: is_editor_empty,
-                        reason: InputEmptyStateChangeReason::Edited,
-                    });
-                }
-
                 let mut short_circuit_highlighting = false;
                 let mut check_alias_expansion = false;
 
@@ -4667,7 +4633,6 @@ impl Input {
             }
             EditorEvent::Enter => self.input_enter(ctx),
             EditorEvent::CmdEnter => self.input_cmd_enter(ctx),
-            EditorEvent::CtrlEnter => self.input_ctrl_enter(ctx),
             EditorEvent::Escape => self.editor_escape(ctx),
             EditorEvent::CtrlC { cleared_buffer_len } => {
                 self.close_input_suggestions(/*should_focus_input=*/ true, ctx);
@@ -6248,7 +6213,6 @@ impl Input {
     /// is an active and long running command; in such a state, the enter keypress should be
     /// handled by the ongoing process corresponding to the active/long running command.
     pub(crate) fn input_enter(&mut self, ctx: &mut ViewContext<Self>) {
-        ctx.emit(Event::Enter);
 
         if self.should_insert_newline_on_enter(ctx) {
             self.editor.update(ctx, |editor, ctx| {
@@ -6318,12 +6282,6 @@ impl Input {
         }
     }
 
-    /// Submits the rich-input buffer on Ctrl+Enter when `submit_on_ctrl_enter` is enabled;
-    /// otherwise emits [`Event::CtrlEnter`]. Exposed `pub(crate)` for unit tests.
-    pub(crate) fn input_ctrl_enter(&mut self, ctx: &mut ViewContext<Self>) {
-        ctx.emit(Event::CtrlEnter);
-    }
-
     fn input_cmd_enter(&mut self, ctx: &mut ViewContext<Self>) {
         let mode = self.suggestions_mode_model.as_ref(ctx).mode().clone();
         match &mode {
@@ -6341,7 +6299,7 @@ impl Input {
                 let editor_model = self.editor.read(ctx, |view, ctx| view.snapshot_model(ctx));
                 self.get_enum_suggestions_async(command.clone(), editor_model, ctx);
             }
-            _ => ctx.emit(Event::UnhandledCmdEnter),
+            _ => {}
         }
     }
 
@@ -6511,19 +6469,6 @@ impl Input {
                                     | (_, None, None) => {}
                                 }
                             }
-                        });
-                        self.is_editor_empty_on_last_edit = false;
-                    } else {
-                        // This is the one place where buffer contents can change without an `Edit`
-                        // -- this is because the buffer semantically isn't being edited, a new one is
-                        // being constructed. We can guarantee in this case that the buffer was previously
-                        // non-empty and should emit this event, because this code path is executed upon block
-                        // completion in response to an executed command, though this guarantee is not explicitly
-                        // enforced by the code.
-                        self.is_editor_empty_on_last_edit = true;
-                        ctx.emit(Event::InputEmptyStateChanged {
-                            is_empty: true,
-                            reason: InputEmptyStateChangeReason::UserCommandCompleted,
                         });
                     }
                 }

@@ -287,7 +287,7 @@ use crate::terminal::general_settings::GeneralSettings;
 use crate::terminal::grid_size_util::grid_cell_dimensions;
 use crate::terminal::input::decorations::InputBackgroundJobOptions;
 use crate::terminal::input::{
-    CommandExecutionSource, InputAction, InputEmptyStateChangeReason, InputState, MenuPositioning,
+    CommandExecutionSource, InputAction, InputState, MenuPositioning,
     MenuPositioningProvider, ShellWidgetApplyMode,
 };
 use crate::terminal::ligature_settings::{LigatureSettings, should_use_ligature_rendering};
@@ -3599,24 +3599,6 @@ impl TerminalView {
             }
             Err(err) => log::warn!("GitRepoModels subscribe failed: {err}"),
         }
-    }
-
-    pub fn attach_path_as_context(&mut self, path: &Path, ctx: &mut ViewContext<Self>) {
-        let content = path.to_string_lossy().to_string();
-
-        // If a CLI agent is running, route the context to rich input when it is
-        // open, otherwise fall back to writing directly to the PTY.
-        if self
-            .try_send_text_to_cli_agent_or_rich_input(content.clone(), ctx)
-            .is_some()
-        {
-            return;
-        }
-
-        self.input.update(ctx, |input, ctx| {
-            input.append_to_buffer(content.as_str(), ctx);
-            ctx.notify();
-        });
     }
 
     /// Returns true if the window is wide enough to auto-open side panels.
