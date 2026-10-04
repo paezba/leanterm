@@ -7497,40 +7497,6 @@ impl Workspace {
         }
     }
 
-    /// Install the Oz CLI by creating a symlink in /usr/local/bin
-    #[cfg(target_os = "macos")]
-    fn install_oz(&mut self, ctx: &mut ViewContext<Self>) {
-        ctx.spawn(async { cli_install::install_oz() }, |view, result, ctx| {
-            let command_name = ChannelState::channel().cli_command_name();
-            let message = format!("Installed the Oz CLI globally. You can now run '{command_name}' from any terminal outside of Warp.");
-            let toast = DismissibleToast::success(message).with_link(
-                ToastLink::new("Learn more".to_string())
-                    .with_href("https://docs.warp.dev/reference/cli".to_string()),
-            );
-            view.handle_cli_command_result(result, toast, "Failed to install Oz command", ctx);
-        });
-    }
-
-    /// Uninstall the Oz CLI by removing the symlink from /usr/local/bin
-    #[cfg(target_os = "macos")]
-    fn uninstall_oz(&mut self, ctx: &mut ViewContext<Self>) {
-        ctx.spawn(
-            async { cli_install::uninstall_oz() },
-            |view, result, ctx| {
-                let toast = DismissibleToast::success(
-                    "Removed the global Oz CLI installation — it still works inside Warp."
-                        .to_string(),
-                );
-                view.handle_cli_command_result(
-                    result,
-                    toast,
-                    "Failed to uninstall Oz command",
-                    ctx,
-                );
-            },
-        );
-    }
-
     /// Install the Warp Control CLI by creating a symlink in /usr/local/bin
     #[cfg(target_os = "macos")]
     fn install_warpctrl(&mut self, ctx: &mut ViewContext<Self>) {
@@ -18791,10 +18757,6 @@ impl TypedActionView for Workspace {
             #[cfg(target_family = "wasm")]
             OpenLinkOnDesktop(url) => self.open_link_on_desktop(url, ctx),
             DumpDebugInfo => self.dump_debug_info(ctx),
-            #[cfg(target_os = "macos")]
-            InstallOz => self.install_oz(ctx),
-            #[cfg(target_os = "macos")]
-            UninstallOz => self.uninstall_oz(ctx),
             #[cfg(target_os = "macos")]
             InstallWarpctrl => self.install_warpctrl(ctx),
             #[cfg(target_os = "macos")]
