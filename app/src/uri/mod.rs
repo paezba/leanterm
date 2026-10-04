@@ -1244,44 +1244,7 @@ fn active_terminal_view_id_in_window(window_id: WindowId, ctx: &AppContext) -> O
     })
 }
 
-fn find_cloud_mode_terminal_in_workspace(
-    workspace: &Workspace,
-    ctx: &AppContext,
-) -> Option<EntityId> {
-    let mut fallback_ambient_terminal_id = None;
 
-    for pane_group_handle in workspace.tab_views() {
-        let pane_group = pane_group_handle.as_ref(ctx);
-        let ambient_terminal_id =
-            pane_group
-                .terminal_views(ctx)
-                .into_iter()
-                .find_map(|terminal_view| {
-                    terminal_view
-                        .as_ref(ctx)
-                        .ambient_agent_view_model()
-                        .is_some()
-                        .then_some(terminal_view.id())
-                });
-
-        let Some(ambient_terminal_id) = ambient_terminal_id else {
-            continue;
-        };
-
-        let has_environment_management_pane = pane_group
-            .pane_ids()
-            .any(|pane_id| pane_id.is_environment_management_pane());
-        if has_environment_management_pane {
-            return Some(ambient_terminal_id);
-        }
-
-        if fallback_ambient_terminal_id.is_none() {
-            fallback_ambient_terminal_id = Some(ambient_terminal_id);
-        }
-    }
-
-    fallback_ambient_terminal_id
-}
 /// Helper function to dispatch an action to an existing window
 /// or create new window if none exist.
 fn dispatch_action_in_new_or_existing_window<T: 'static>(
@@ -1311,10 +1274,7 @@ fn dispatch_action_in_new_or_existing_window<T: 'static>(
 
 fn settings_section_for_simple_subpage(subpage: &str) -> Option<SettingsSection> {
     match subpage {
-        "billing_and_usage" => Some(SettingsSection::BillingAndUsage),
-        "platform" => Some(SettingsSection::WarpCloudAgentAPIKeys),
         "appearance" => Some(SettingsSection::Appearance),
-        "warp_agent" => Some(SettingsSection::WarpAgent),
         _ => None,
     }
 }

@@ -53,12 +53,6 @@ enum PtyWrite {
         /// The bytes to be written.
         bytes: Cow<'static, [u8]>,
     },
-    AgentInput {
-        /// The bytes to be written.
-        bytes: Cow<'static, [u8]>,
-        /// The `mode` for the agent's write.
-        mode: AIAgentPtyWriteMode,
-    },
     RunNativeShellCompletions {
         command: String,
         shell_type: ShellType,
@@ -493,11 +487,9 @@ impl<T: EventLoopSender> PtyController<T> {
 
             // Explicitly start the block now that the command is executed.
             let outcome = match source {
-                CommandExecutionSource::SharedSession {
-                    participant_id,
-                    ai_metadata,
-                    ..
-                } => model.start_command_execution_for_shared_session(participant_id, ai_metadata),
+                CommandExecutionSource::SharedSession { participant_id, .. } => {
+                    model.start_command_execution_for_shared_session(participant_id)
+                }
                 CommandExecutionSource::User | CommandExecutionSource::QueuedCommand => {
                     model.start_command_execution()
                 }
@@ -567,22 +559,6 @@ impl<T: EventLoopSender> PtyController<T> {
         }
     }
 
-    /// Writes agent input to the PTY.
-    pub fn write_agent_bytes<B: Into<Cow<'static, [u8]>>>(
-        &mut self,
-        bytes: B,
-        mode: &AIAgentPtyWriteMode,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        self.send_write_to_event_loop(
-            PtyWrite::AgentInput {
-                bytes: bytes.into(),
-                mode: *mode,
-            },
-            ctx,
-        );
-    }
-
     /// Writes user input to the PTY.
     ///
     /// This should only be called for non-command input (e.g. input that should be passed through
@@ -626,11 +602,6 @@ impl<T: EventLoopSender> PtyController<T> {
                 on_write_fn,
                 Some(shell_type),
             ),
-            PtyWrite::AgentInput { bytes, mode } => {
-                let decorated_bytes =
-                    mode.decorate_bytes(bytes.into_owned(), self.is_bracketed_paste_enabled);
-                (decorated_bytes.into(), false, None, None)
-            }
             PtyWrite::Bytes { bytes } => (bytes, false, None, None),
             PtyWrite::RunNativeShellCompletions {
                 command,
