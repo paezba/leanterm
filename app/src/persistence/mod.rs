@@ -294,7 +294,6 @@ pub struct PersistedData {
     pub experiments: Vec<ServerExperiment>,
     pub workspace_metadata: Vec<CodeWorkspaceMetadata>,
     pub workspace_language_servers: HashMap<PathBuf, HashMap<LSPServerType, EnablementState>>,
-    pub projects: Vec<Project>,
     pub ignored_suggestions: Vec<(String, SuggestionType)>,
 }
 
@@ -415,12 +414,6 @@ pub enum ModelEvent {
     },
     DeleteWorkspaceMetadata {
         repo_path: PathBuf,
-    },
-    UpsertProject {
-        project: Project,
-    },
-    DeleteProject {
-        path: String,
     },
     AddIgnoredSuggestion {
         suggestion: String,

@@ -46,7 +46,7 @@ pub(crate) use team_workspace_settings::TeamContextForOperationResolver;
 #[cfg(test)]
 pub(crate) use team_workspace_settings::TeamlessScopeForTest;
 #[cfg(not(target_family = "wasm"))]
-pub(crate) use team_workspace_settings::{GeminiEnterpriseBackgroundHost, HeadlessTeamScope};
+pub(crate) use team_workspace_settings::{ HeadlessTeamScope};
 pub use team_workspace_settings::{
     ResolvedTeamScope, TeamContext, TeamContextForOperation, TeamContextResolver, TeamScope,
 };
@@ -132,10 +132,6 @@ pub struct UserWorkspaces {
     /// filtered out of `workspaces` — this is the only place their purchase
     /// policy survives.
     user_purchase_policy: Option<PurchaseAddOnCreditsPolicy>,
-    /// The model catalog to fall back to when no current workspace exists: before login, or
-    /// for a logged-in user whose only workspace is the server's placeholder, which is
-    /// filtered out of `workspaces`.
-    workspaceless_models_by_feature: Option<ModelsByFeature>,
     team_client: Arc<dyn TeamClient>,
     workspace_client: Arc<dyn WorkspaceClient>,
 }
@@ -149,9 +145,6 @@ pub struct WorkspacesMetadataResponse {
     pub joinable_teams: Vec<DiscoverableTeam>,
     /// The list of experiments applicable to the user.
     pub experiments: Option<Vec<ServerExperiment>>,
-    /// The server-authoritative AI credit availability decision, piggybacked
-    /// on the metadata query so every refresh keeps the shared state fresh.
-    pub ai_credit_availability: Option<AICreditAvailability>,
     /// The user-level add-on credits purchase policy; the teamless-purchase
     /// fallback (see [`UserWorkspaces::purchase_policy`]).
     pub user_purchase_policy: Option<PurchaseAddOnCreditsPolicy>,
@@ -195,7 +188,6 @@ impl UserWorkspaces {
             window_team_uids: Default::default(),
             joinable_teams: Default::default(),
             user_purchase_policy: None,
-            workspaceless_models_by_feature: None,
             team_client,
             workspace_client,
         }
@@ -234,43 +226,16 @@ impl UserWorkspaces {
             },
         );
 
-        ctx.subscribe_to_model(&AISettings::handle(ctx), |_, _, ai_settings_event, ctx| {
-            if let AISettingsChangedEvent::IsAnyAIEnabled { .. } = ai_settings_event {
-                ctx.emit(UserWorkspacesEvent::CodebaseContextEnablementChanged);
-            }
-        });
 
-        let mut me = Self {
+        Self {
             current_workspace_uid: current_workspace_uid.into(),
             workspaces: cached_workspaces.into(),
             window_team_uids: Default::default(),
             joinable_teams: Default::default(),
             user_purchase_policy: None,
-            workspaceless_models_by_feature: None,
             team_client,
             workspace_client,
-        };
-
-        // One-release migration: moving feature_model_choices off of `LLMPreferences` to `Workspace`.
-        // This means that on the first time the user opens a version of warp without a
-        // Workspace.feature_model_choice saved in their sqlite db, we can fall back to reading feature
-        // model choices from the old LLMPreferences cache.
-        // TODO: delete once it's safe to assume every client has fetched at least once since
-        // this migration shipped.
-        if me
-            .current_workspace()
-            .is_some_and(|workspace| workspace.feature_model_choice == ModelsByFeature::default())
-            && let Some(legacy_catalog) = migrate_legacy_feature_model_choices_cache(ctx)
-            && let Some(workspace) = me.current_workspace_mut()
-        {
-            workspace.feature_model_choice = legacy_catalog;
         }
-
-        me
-    }
-
-    pub(crate) fn set_workspaceless_models_by_feature(&mut self, models: ModelsByFeature) {
-        self.workspaceless_models_by_feature = Some(models);
     }
 
     pub fn upgrade_link(user_id: UserUid) -> String {
@@ -878,11 +843,6 @@ impl UserWorkspaces {
                     });
                 }
 
-                if let Some(availability) = response.metadata.ai_credit_availability {
-                    AIRequestUsageModel::handle(ctx).update(ctx, |usage_model, ctx| {
-                        usage_model.apply_server_availability(Ok(availability), ctx);
-                    });
-                }
 
                 let workspaces = response.metadata.workspaces;
                 let joinable_teams = response.metadata.joinable_teams;
@@ -1631,18 +1591,6 @@ impl UserWorkspaces {
             .unwrap_or(false)
     }
 
-    /// Returns whether codebase context is enabled across all of the user's teams.
-    pub fn is_codebase_context_enabled(&self, app: &AppContext) -> bool {
-        let ai_globally_enabled = AISettings::as_ref(app).is_any_ai_enabled(app);
-        match self.teams_allow_codebase_context() {
-            AdminEnablementSetting::Enable => ai_globally_enabled,
-            AdminEnablementSetting::Disable => false,
-            AdminEnablementSetting::RespectUserSetting => {
-                ai_globally_enabled && *CodeSettings::as_ref(app).codebase_context_enabled.value()
-            }
-        }
-    }
-
     pub fn teams_allow_codebase_context(&self) -> AdminEnablementSetting {
         let mut team_settings = self
             .workspaces
@@ -1703,18 +1651,6 @@ impl UserWorkspaces {
             .map(|policy| policy.is_enabled)
             .unwrap_or(true);
         FeatureFlag::CreatingSharedSessions.set_enabled(is_session_sharing_enabled_via_tier_policy);
-    }
-}
-
-#[cfg(test)]
-fn split_test_list(values: Option<Vec<String>>) -> SplitListSetting<String> {
-    match values {
-        Some(values) => SplitListSetting {
-            team_entries: values.clone(),
-            values,
-            ..Default::default()
-        },
-        None => Default::default(),
     }
 }
 
@@ -1796,95 +1732,6 @@ impl UserWorkspaces {
         }
     }
 
-    /// Sets the sandboxed-agent command denylist on [`Self::setup_test_workspace`]'s team, the
-    /// team [`Self::sandboxed_agent_execute_commands_denylist_for_scope`] reads for a scope on
-    /// it.
-    pub fn update_team_sandboxed_agent_denylist<F>(&mut self, f: F, ctx: &mut ModelContext<Self>)
-    where
-        F: FnOnce(&mut SplitListSetting<String>),
-    {
-        self.update_current_workspace(
-            |workspace| {
-                f(&mut workspace
-                    .teams
-                    .first_mut()
-                    .expect("test workspace should have a team")
-                    .settings
-                    .sandboxed_agent
-                    .execute_commands_denylist);
-            },
-            ctx,
-        );
-    }
-
-    pub fn update_ai_autonomy_settings<F>(&mut self, f: F, ctx: &mut ModelContext<Self>)
-    where
-        F: FnOnce(&mut AiAutonomySettings),
-    {
-        self.update_current_workspace(
-            |workspace| {
-                f(&mut workspace.settings.ai_autonomy_settings);
-                let settings = &workspace.settings.ai_autonomy_settings;
-                let team_settings = &mut workspace
-                    .teams
-                    .first_mut()
-                    .expect("test workspace should have a team")
-                    .settings
-                    .ai_autonomy;
-                team_settings.apply_code_diffs.value = settings.apply_code_diffs_setting;
-                team_settings.read_files.value = settings.read_files_setting;
-                team_settings.execute_commands.value = settings.execute_commands_setting;
-                team_settings.write_to_pty.value = settings.write_to_pty_setting;
-                team_settings.computer_use.value = settings.computer_use_setting;
-                team_settings.read_files_allowlist =
-                    split_test_list(settings.read_files_allowlist.as_ref().map(|items| {
-                        items
-                            .iter()
-                            .map(|path| path.display().to_string())
-                            .collect()
-                    }));
-                team_settings.execute_commands_allowlist = split_test_list(
-                    settings
-                        .execute_commands_allowlist
-                        .as_ref()
-                        .map(|items| items.iter().map(ToString::to_string).collect()),
-                );
-                team_settings.execute_commands_denylist = split_test_list(
-                    settings
-                        .execute_commands_denylist
-                        .as_ref()
-                        .map(|items| items.iter().map(ToString::to_string).collect()),
-                );
-            },
-            ctx,
-        );
-    }
-}
-
-/// Reads the legacy, pre-team-keyed model catalog cache (`MODELS_BY_FEATURE_CACHE_KEY`), for
-/// the one-release migration in [`UserWorkspaces::new`]. Understands both real shapes an older
-/// client could have written: the (more recent) single `ModelsByFeature`, and (older still) a
-/// bare `AvailableLLMs`, which becomes the `agent_mode` field.
-fn migrate_legacy_feature_model_choices_cache(app: &mut AppContext) -> Option<ModelsByFeature> {
-    let value = app
-        .private_user_preferences()
-        .read_value(MODELS_BY_FEATURE_CACHE_KEY)
-        .ok()
-        .flatten()?;
-
-    match serde_json::from_str::<ModelsByFeature>(&value) {
-        Ok(models) => Some(models),
-        Err(e1) => match serde_json::from_str::<AvailableLLMs>(&value) {
-            Ok(agent_mode) => Some(ModelsByFeature {
-                agent_mode,
-                ..Default::default()
-            }),
-            Err(e2) => {
-                log::warn!("Failed to deserialize legacy cached LLMs: {e1}\n{e2}");
-                None
-            }
-        },
-    }
 }
 
 impl Entity for UserWorkspaces {

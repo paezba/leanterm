@@ -753,14 +753,8 @@ impl SettingsPageMeta for KeybindingsView {
         // `from_editable_lens` materializes any dynamic description resolver
         // before caching, so the dedup below (which compares descriptions)
         // sees concrete strings.
-        let is_lean_terminal = FeatureFlag::LeanTerminal.is_enabled();
-        let lenses: Vec<_> = ctx
-            .editable_bindings()
-            .filter(|lens| !is_lean_terminal || lens.group != Some(BindingGroup::WarpAi.as_str()))
-            .collect();
         self.bindings = Some(
-            lenses
-                .into_iter()
+            ctx.editable_bindings()
                 .map(|lens| CommandBinding::from_editable_lens(lens, ctx))
                 .sorted_by(|a, b| {
                     // Sort by description then name so that we can deduplicate bindings by name.

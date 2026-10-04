@@ -374,10 +374,7 @@ impl RemoteDiffStateManager {
                 // Client-only event — should not occur on the server side.
                 log::warn!("Unexpected ConnectionLost event on server-side model key={key:?}");
             }
-            DiffStateModelEvent::BranchesReceived(_)
-            | DiffStateModelEvent::GitOpCompleted(_)
-            | DiffStateModelEvent::CommitMessageGenerated(_)
-            | DiffStateModelEvent::BranchCommittedFilesReceived(_) => {
+            DiffStateModelEvent::BranchesReceived(_) | DiffStateModelEvent::GitOpCompleted(_) | DiffStateModelEvent::BranchCommittedFilesReceived(_) => {
                 // Client-only events don't go through this tracker.
             }
         }

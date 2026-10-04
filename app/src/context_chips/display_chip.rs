@@ -344,18 +344,12 @@ pub struct DisplayChip {
     display_chip_kind: DisplayChipKind,
     next_chip_kind: Option<ContextChipKind>,
     on_click_values: Vec<String>,
-    quota_reset_popup: ViewHandle<FeaturePopup>,
     session_context: Option<SessionContext>,
     menu_positioning_provider: Arc<dyn MenuPositioningProvider>,
-    agent_view_controller: ModelHandle<AgentViewController>,
     is_shared_session_viewer: bool,
     is_in_agent_view: bool,
-    /// Optional because `DisplayChip` sometimes should be disabled, depending on if it is in an ambient agent view.
-    ambient_agent_view_model: Option<ModelHandle<AmbientAgentViewModel>>,
     /// Cached display string for the code review keybinding.
     code_review_keybinding: Option<String>,
-    /// The terminal view this chip belongs to, used to check CLI agent session state.
-    terminal_view_id: EntityId,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -622,9 +616,6 @@ pub enum DisplayChipKind {
         popup_open: bool,
         popup: ViewHandle<crate::context_chips::node_version_popup::NodeVersionPopupView>,
     },
-    AgentPlanAndTodoList {
-        plan_and_todo_list: ViewHandle<PlanAndTodoListView>,
-    },
     GitBranch {
         menu_open: bool,
         menu: ViewHandle<DisplayChipMenu>,
@@ -647,14 +638,7 @@ impl DisplayChipKind {
             DisplayChipKind::NodeVersion { popup_open, .. } => *popup_open,
             DisplayChipKind::GitBranch { menu_open, .. }
             | DisplayChipKind::GitBranchStatus { menu_open, .. } => *menu_open,
-            DisplayChipKind::GithubPullRequest
-            | DisplayChipKind::GitDiffStats { .. }
-            | DisplayChipKind::Text
-            | DisplayChipKind::Ssh
-            | DisplayChipKind::Subshell
-            | DisplayChipKind::VirtualEnvironment
-            | DisplayChipKind::CondaEnvironment
-            | DisplayChipKind::AgentPlanAndTodoList { .. } => false,
+            DisplayChipKind::GithubPullRequest | DisplayChipKind::GitDiffStats { .. } | DisplayChipKind::Text | DisplayChipKind::Ssh | DisplayChipKind::Subshell | DisplayChipKind::VirtualEnvironment | DisplayChipKind::CondaEnvironment => false,
         }
     }
 }
@@ -683,17 +667,11 @@ pub struct MenuItem {
 /// Configuration for creating a DisplayChip
 #[derive(Clone)]
 pub struct DisplayChipConfig {
-    pub ai_input_model: ModelHandle<BlocklistAIInputModel>,
-    pub ai_context_model: ModelHandle<BlocklistAIContextModel>,
-    pub terminal_view_id: EntityId,
     pub menu_positioning_provider: Arc<dyn MenuPositioningProvider>,
     pub session_context: Option<SessionContext>,
     pub current_repo_path: Option<PathBuf>,
     pub model_events: ModelHandle<ModelEventDispatcher>,
     pub is_shared_session_viewer: bool,
-    pub agent_view_controller: ModelHandle<AgentViewController>,
-    /// Optional because `DisplayChip` sometimes should be disabled, depending on if it is in an ambient agent view.
-    pub ambient_agent_view_model: Option<ModelHandle<AmbientAgentViewModel>>,
 }
 
 #[derive(Debug, Clone)]
@@ -879,40 +857,8 @@ impl DisplayChip {
         is_in_agent_view: bool,
         ctx: &mut ViewContext<Self>,
     ) -> Self {
-        // Re-render this chip whenever Agent Mode state changes so UDI font/color updates
-        // immediately on enter/exit.
-        ctx.subscribe_to_model(&config.agent_view_controller, |_me, _model, _event, ctx| {
-            ctx.notify();
-        });
 
         let display_chip_kind = match chip_result.kind {
-            ContextChipKind::AgentPlanAndTodoList => {
-                let context_model = config.ai_context_model.clone();
-                let view_id = config.terminal_view_id;
-                let plan_and_todo_list = ctx.add_typed_action_view(|ctx| {
-                    PlanAndTodoListView::new(
-                        context_model,
-                        config.menu_positioning_provider.clone(),
-                        view_id,
-                        is_in_agent_view,
-                        ctx,
-                    )
-                });
-
-                ctx.subscribe_to_view(&plan_and_todo_list, |_me, _, event, ctx| match event {
-                    PlanAndTodoListEvent::OpenAIDocument {
-                        document_id,
-                        document_version,
-                    } => {
-                        ctx.emit(PromptDisplayChipEvent::OpenAIDocument {
-                            document_id: *document_id,
-                            document_version: *document_version,
-                        });
-                    }
-                });
-
-                DisplayChipKind::AgentPlanAndTodoList { plan_and_todo_list }
-            }
             ContextChipKind::ShellGitBranch => DisplayChipKind::GitBranch {
                 menu_open: false,
                 menu: Self::git_branch_menu(&chip_result.on_click_values, ctx),
@@ -1069,18 +1015,6 @@ impl DisplayChip {
                         me.close_node_version_popup(ctx);
                         ctx.focus_self();
                     }
-                    NodeVersionPopupEvent::InstallNvm => {
-                        ctx.emit(PromptDisplayChipEvent::RunAgentQuery(if cfg!(windows) {
-                            // nvm-windows has documented issues when installed alongside an existing Node.js installation.
-                            // https://github.com/coreybutler/nvm-windows?tab=readme-ov-file#star-star-uninstall-any-pre-existing-node-installations-star-star
-                            // Prompt the agent to remove this first.
-                            "Uninstall existing Node.js installation and install nvm for me"
-                                .to_string()
-                        } else {
-                            "Install nvm for me".to_string()
-                        }));
-                        me.close_node_version_popup(ctx);
-                    }
                     NodeVersionPopupEvent::InstallLatestNodeVersion => {
                         ctx.emit(PromptDisplayChipEvent::TryExecuteCommand(
                             PromptChipShellCommand::NvmInstallLatestNode,
@@ -1097,37 +1031,9 @@ impl DisplayChip {
             _ => DisplayChipKind::Text,
         };
 
-        let quota_reset_popup = ctx.add_typed_action_view(|_| {
-            FeaturePopup::alert_icon(NewFeaturePopupLabel::FromString(
-                "Monthly AI credits reset!".to_string(),
-            ))
-        });
 
-        ctx.subscribe_to_view(&quota_reset_popup, |_, _, event, ctx| match event {
-            NewFeaturePopupEvent::Dismissed => {
-                AISettings::handle(ctx).update(ctx, |ai_settings, ctx| {
-                    ai_settings.mark_quota_banner_as_dismissed(ctx);
-                    ctx.notify();
-                });
-                ctx.notify();
-            }
-        });
 
-        ctx.subscribe_to_model(&AISettings::handle(ctx), |_, _, event, ctx| {
-            if matches!(
-                event,
-                AISettingsChangedEvent::AIRequestQuotaInfoSetting { .. }
-            ) {
-                ctx.notify();
-            }
-        });
 
-        // Subscribe to ambient agent model changes to re-render when the state changes
-        if let Some(ref ambient_agent_model) = config.ambient_agent_view_model {
-            ctx.subscribe_to_model(ambient_agent_model, |_, _, _, ctx| {
-                ctx.notify();
-            });
-        }
 
         // Cache the code review keybinding and subscribe to changes.
         let code_review_keybinding =
@@ -1159,24 +1065,12 @@ impl DisplayChip {
             display_chip_kind,
             next_chip_kind,
             on_click_values: chip_result.on_click_values,
-            quota_reset_popup,
             session_context: config.session_context,
             menu_positioning_provider: config.menu_positioning_provider,
             is_shared_session_viewer: config.is_shared_session_viewer,
-            agent_view_controller: config.agent_view_controller.clone(),
             is_in_agent_view,
-            ambient_agent_view_model: config.ambient_agent_view_model,
             code_review_keybinding,
-            terminal_view_id: config.terminal_view_id,
         }
-    }
-
-    /// Returns `true` when a CLI agent session is active for this chip's terminal,
-    /// meaning interactive behaviors (menus, hover, click) should be suppressed.
-    fn is_cli_agent_session_active(&self, app: &AppContext) -> bool {
-        CLIAgentSessionsModel::as_ref(app)
-            .session(self.terminal_view_id)
-            .is_some()
     }
 
     fn close_node_version_popup(&mut self, ctx: &mut ViewContext<'_, DisplayChip>) {
@@ -1252,15 +1146,7 @@ impl DisplayChip {
                     return true;
                 }
             }
-            DisplayChipKind::GitDiffStats { .. }
-            | DisplayChipKind::Text
-            | DisplayChipKind::Ssh
-            | DisplayChipKind::Subshell
-            | DisplayChipKind::VirtualEnvironment
-            | DisplayChipKind::CondaEnvironment
-            | DisplayChipKind::NodeVersion { .. }
-            | DisplayChipKind::AgentPlanAndTodoList { .. }
-            | DisplayChipKind::GithubPullRequest => {}
+            DisplayChipKind::GitDiffStats { .. } | DisplayChipKind::Text | DisplayChipKind::Ssh | DisplayChipKind::Subshell | DisplayChipKind::VirtualEnvironment | DisplayChipKind::CondaEnvironment | DisplayChipKind::NodeVersion { .. } | DisplayChipKind::GithubPullRequest => {}
         }
         false
     }
@@ -1358,9 +1244,6 @@ impl DisplayChip {
 
     pub fn should_render(&self, app: &AppContext) -> bool {
         match &self.display_chip_kind {
-            DisplayChipKind::AgentPlanAndTodoList { plan_and_todo_list } => {
-                plan_and_todo_list.as_ref(app).should_render(app)
-            }
             _ => true,
         }
     }
@@ -1379,7 +1262,7 @@ impl DisplayChip {
         };
 
         let is_interactive =
-            !self.is_shared_session_viewer && !self.is_cli_agent_session_active(app);
+            !self.is_shared_session_viewer;
         let is_in_agent_view = self.is_in_agent_view;
         let chip_text = self.text.clone();
         let hover = Hoverable::new(self.mouse_state.clone(), move |state| {
@@ -1505,7 +1388,7 @@ impl DisplayChip {
         };
         let font_size = udi_font_size(appearance);
         let is_interactive =
-            !self.is_shared_session_viewer && !self.is_cli_agent_session_active(app);
+            !self.is_shared_session_viewer;
         let fallback_branch = self.text.clone();
         let tracking_status = tracking_status
             .clone()
@@ -1762,25 +1645,9 @@ impl DisplayChip {
         let appearance = Appearance::as_ref(app);
         let theme = appearance.theme();
 
-        // Check if we're in an ambient agent conversation.
-        // If so, the directory chip should be non-interactive.
-        let is_in_active_ambient_agent = self
-            .ambient_agent_view_model
-            .as_ref()
-            .map(|model| {
-                let m = model.as_ref(app);
-                m.is_ambient_agent() && !m.is_configuring_ambient_agent()
-            })
-            .unwrap_or(false);
-
         let mut stack = Stack::new();
 
-        // Menu is only allowed when the caller requests it and we're not in an active ambient
-        // agent session or CLI agent session.
-        let is_cli_agent_active = self.is_cli_agent_session_active(app);
-        let allow_show_menu = show_menu && !is_in_active_ambient_agent && !is_cli_agent_active;
-
-        let button = if allow_show_menu {
+        let button = if show_menu {
             let chip_text = self.text.clone();
             let font_color = if self.is_in_agent_view {
                 agent_view_chip_color(appearance)
@@ -1819,18 +1686,8 @@ impl DisplayChip {
             .with_cursor(Cursor::PointingHand)
             .finish()
         } else {
-            // Non-interactive chip (either show_menu is false or in active ambient agent)
             let font_color = if self.is_in_agent_view {
-                // Use disabled text color when in active ambient agent
-                if is_in_active_ambient_agent {
-                    theme
-                        .disabled_text_color(blended_colors::neutral_1(theme).into())
-                        .into_solid()
-                } else {
-                    // In agent view but the chip is non-interactive for reasons other than an active
-                    // ambient agent session. Keep the normal agent-view subtext styling (not disabled).
-                    agent_view_chip_color(appearance)
-                }
+                agent_view_chip_color(appearance)
             } else {
                 theme.ansi_fg_cyan()
             };
@@ -1848,7 +1705,7 @@ impl DisplayChip {
                 let chip_element = render_udi_chip(config, appearance);
                 let mut stack = Stack::new().with_child(chip_element);
 
-                if state.is_hovered() && !is_cli_agent_active {
+                if state.is_hovered() {
                     let tool_tip = appearance
                         .ui_builder()
                         .tool_tip("Working directory".to_string())
@@ -2022,9 +1879,6 @@ impl DisplayChip {
                 Some(self.node_version_chip(popup, *popup_open, app))
             }
             DisplayChipKind::CondaEnvironment => Some(self.conda_environment_chip(app)),
-            DisplayChipKind::AgentPlanAndTodoList { plan_and_todo_list } => {
-                Some(ChildView::new(plan_and_todo_list).finish())
-            }
             DisplayChipKind::GitBranch { menu_open, menu } => {
                 Some(self.git_branch_chip(*menu_open, menu, app))
             }
@@ -2113,14 +1967,8 @@ pub enum PromptDisplayChipEvent {
         open: bool,
     },
     OpenCodeReview,
-    OpenConversationHistory,
     OpenCommandPaletteFiles,
     TryExecuteCommand(PromptChipShellCommand),
-    RunAgentQuery(String),
-    OpenAIDocument {
-        document_id: AIDocumentId,
-        document_version: AIDocumentVersion,
-    },
 }
 
 impl TypedActionView for DisplayChip {
@@ -2148,27 +1996,13 @@ impl TypedActionView for DisplayChip {
                     });
                     ctx.notify();
                 }
-                DisplayChipKind::Ssh
-                | DisplayChipKind::Subshell
-                | DisplayChipKind::VirtualEnvironment
-                | DisplayChipKind::CondaEnvironment
-                | DisplayChipKind::AgentPlanAndTodoList { .. }
-                | DisplayChipKind::Text
-                | DisplayChipKind::GithubPullRequest
-                | DisplayChipKind::GitDiffStats { .. } => {}
+                DisplayChipKind::Ssh | DisplayChipKind::Subshell | DisplayChipKind::VirtualEnvironment | DisplayChipKind::CondaEnvironment | DisplayChipKind::Text | DisplayChipKind::GithubPullRequest | DisplayChipKind::GitDiffStats { .. } => {}
                 DisplayChipKind::NodeVersion { popup_open, .. } => {
                     *popup_open = false;
                     ctx.notify();
                 }
             },
             DisplayChipAction::ToggleMenu => {
-                // All ToggleMenu consumers (WorkingDirectory, GitBranch,
-                // GitBranchStatus, NodeVersion) route through shell commands
-                // (cd, git checkout, nvm use) that don't work in CLI agent
-                // context, so we suppress all of them.
-                if self.is_cli_agent_session_active(ctx) {
-                    return;
-                }
                 match &mut self.display_chip_kind {
                     DisplayChipKind::GitBranch { menu, menu_open }
                     | DisplayChipKind::GitBranchStatus {

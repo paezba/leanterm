@@ -40,7 +40,6 @@ mod global_resource_handles;
 mod gpu_state;
 mod input_classifier;
 mod interval_timer;
-mod linear;
 #[cfg(feature = "local_fs")]
 mod local_control;
 #[cfg(any(target_os = "macos", target_os = "windows"))]
@@ -58,7 +57,6 @@ mod prefix;
 mod preview_config_migration;
 mod pricing;
 mod profiling;
-mod projects;
 mod prompt;
 mod quit_warning;
 mod referral_theme_status;
@@ -249,7 +247,6 @@ use crate::notification::NotificationContext;
 use crate::palette::PaletteMode;
 use crate::persistence::PersistenceWriter;
 use crate::persistence::model::AgentConversationData;
-use crate::projects::ProjectManagementModel;
 use crate::root_view::{
     OpenFromRestoredArg, OpenPath, quake_mode_window_id, quake_mode_window_is_open,
 };
@@ -1569,7 +1566,6 @@ pub(crate) fn initialize_app(
         experiments,
         persisted_workspaces,
         workspace_language_servers,
-        persisted_projects,
         persisted_ignored_suggestions,
     ) = sqlite_data
         .map(|sqlite_data| {
@@ -1585,7 +1581,6 @@ pub(crate) fn initialize_app(
                 sqlite_data.experiments,
                 sqlite_data.workspace_metadata,
                 sqlite_data.workspace_language_servers,
-                sqlite_data.projects,
                 sqlite_data.ignored_suggestions,
             )
         })
@@ -1846,10 +1841,6 @@ pub(crate) fn initialize_app(
     }
 
     ctx.add_singleton_model(|_| GitRepoModels::new());
-
-    ctx.add_singleton_model(|ctx| {
-        ProjectManagementModel::new(persisted_projects, persistence_writer.sender(), ctx)
-    });
 
     ctx.add_singleton_model(move |_| History::new(command_history));
 

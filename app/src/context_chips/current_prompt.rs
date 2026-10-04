@@ -158,8 +158,6 @@ pub struct CurrentPrompt {
     sessions: ModelHandle<Sessions>,
     prompt_chip_logger: PromptChipLogger,
     update_tx: async_channel::Sender<()>,
-    agent_view_controller: Option<WeakModelHandle<AgentViewController>>,
-    terminal_view_id: Option<EntityId>,
 
     /// When set, branch, branch status, and diff stats are populated from
     /// `GitRepoStatusModel` filesystem events.
@@ -186,13 +184,11 @@ struct PromptContext {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 struct ActiveChipSurfaces {
     prompt: bool,
-    agent_footer: bool,
-    cli_agent_footer: bool,
 }
 
 impl ActiveChipSurfaces {
     fn any(self) -> bool {
-        self.prompt || self.agent_footer || self.cli_agent_footer
+        self.prompt
     }
 }
 
@@ -265,8 +261,6 @@ impl CurrentPrompt {
             latest_context: None,
             prompt_chip_logger: PromptChipLogger::default(),
             update_tx,
-            agent_view_controller: None,
-            terminal_view_id: None,
             same_line_prompt_enabled: prompt.as_ref(ctx).same_line_prompt_enabled(),
             separator: prompt.as_ref(ctx).separator(),
             git_repo_status: None,
@@ -280,33 +274,8 @@ impl CurrentPrompt {
     pub fn subscribe_to_input_editor(
         &mut self,
         editor: ViewHandle<EditorView>,
-        agent_view_controller: ModelHandle<AgentViewController>,
-        terminal_view_id: EntityId,
         ctx: &mut ModelContext<Self>,
     ) {
-        self.agent_view_controller = Some(agent_view_controller.downgrade());
-        self.terminal_view_id = Some(terminal_view_id);
-
-        ctx.subscribe_to_model(&agent_view_controller, |me, _, _, ctx| {
-            me.update_states_with_new_context(ctx);
-        });
-
-        ctx.subscribe_to_model(
-            &CLIAgentSessionsModel::handle(ctx),
-            move |me, _, event, ctx| {
-                if event.terminal_view_id() == terminal_view_id {
-                    me.update_states_with_new_context(ctx);
-                }
-            },
-        );
-        ctx.subscribe_to_model(&AISettings::handle(ctx), |me, _, event, ctx| {
-            if matches!(
-                event,
-                AISettingsChangedEvent::ShouldRenderCLIAgentToolbar { .. }
-            ) {
-                me.update_states_with_new_context(ctx);
-            }
-        });
         // A WeakViewHandle is used here to avoid leaking the terminal model
         let weak_editor_handle = editor.downgrade();
         ctx.subscribe_to_view(&editor, move |me, _, _, ctx| {
@@ -1119,24 +1088,7 @@ impl CurrentPrompt {
     fn active_surfaces(&self, ctx: &AppContext) -> ActiveChipSurfaces {
         let prompt = !*SessionSettings::as_ref(ctx).honor_ps1
             || InputSettings::as_ref(ctx).is_universal_developer_input_enabled(ctx);
-        let agent_footer = FeatureFlag::AgentView.is_enabled()
-            && self
-                .agent_view_controller
-                .as_ref()
-                .and_then(|controller| controller.upgrade(ctx))
-                .is_some_and(|controller| controller.as_ref(ctx).is_active());
-        let cli_agent_footer = self.terminal_view_id.is_some_and(|terminal_view_id| {
-            *AISettings::as_ref(ctx).should_render_cli_agent_footer
-                && CLIAgentSessionsModel::as_ref(ctx)
-                    .session(terminal_view_id)
-                    .is_some_and(|session| session.agent.supports_cli_agent_footer())
-        });
-
-        ActiveChipSurfaces {
-            prompt,
-            agent_footer,
-            cli_agent_footer,
-        }
+        ActiveChipSurfaces { prompt }
     }
 
     fn chips_to_run_for_surfaces(
@@ -1144,37 +1096,11 @@ impl CurrentPrompt {
         surfaces: ActiveChipSurfaces,
         ctx: &AppContext,
     ) -> Vec<ContextChipKind> {
-        let mut chips = if surfaces.prompt {
+        if surfaces.prompt {
             self.configured_chips(ctx)
         } else {
             Vec::new()
-        };
-
-        let mut extend_unique = |new_chips: Vec<ContextChipKind>| {
-            for chip_kind in new_chips {
-                if !chips.contains(&chip_kind) {
-                    chips.push(chip_kind);
-                }
-            }
-        };
-
-        if surfaces.agent_footer {
-            extend_unique(
-                SessionSettings::as_ref(ctx)
-                    .agent_footer_chip_selection
-                    .all_chips(),
-            );
         }
-
-        if surfaces.cli_agent_footer {
-            extend_unique(
-                SessionSettings::as_ref(ctx)
-                    .cli_agent_footer_chip_selection
-                    .all_chips(),
-            );
-        }
-
-        chips
     }
     /// Chips whose values we should actively maintain in state.
     fn chips_to_run(&self, ctx: &AppContext) -> Vec<ContextChipKind> {
@@ -1424,7 +1350,7 @@ impl CurrentPrompt {
                     .states
                     .get(&chip_kind)
                     .is_some_and(|state| state.last_computed_value.is_some());
-                if has_value && chip_kind.is_copyable() {
+                if has_value {
                     if let Some(chip) = chip_kind.to_chip() {
                         Some(
                             MenuItemFields::new(format!("Copy {}", chip.title()))

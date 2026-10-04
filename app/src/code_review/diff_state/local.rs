@@ -1277,7 +1277,6 @@ impl LocalDiffStateModel {
         message: String,
         include_unstaged: bool,
         branch: String,
-        autogenerate_pr_content: bool,
         ctx: &mut ModelContext<Self>,
     ) {
         let Some(repo_path) = self.active_repository_path(ctx) else {
@@ -1286,11 +1285,6 @@ impl LocalDiffStateModel {
             ));
             return;
         };
-        // AI title/body generation runs only for the create-PR stage when the
-        // caller asked for it (mirrors the daemon's gating).
-        let ai_client = (matches!(mode, CommitChainMode::CommitAndCreatePr)
-            && autogenerate_pr_content)
-            .then(|| ServerApiProvider::handle(ctx).as_ref(ctx).get_ai_client());
         let path_future = Self::interactive_path_future(ctx);
         ctx.spawn(
             async move {
@@ -1301,7 +1295,6 @@ impl LocalDiffStateModel {
                     &message,
                     include_unstaged,
                     &branch,
-                    ai_client.as_deref(),
                     path_env.as_deref(),
                 )
                 .await
@@ -1360,7 +1353,6 @@ impl LocalDiffStateModel {
     pub fn create_pr(
         &self,
         branch: String,
-        autogenerate_content: bool,
         ctx: &mut ModelContext<Self>,
     ) {
         let Some(repo_path) = self.active_repository_path(ctx) else {
@@ -1369,56 +1361,16 @@ impl LocalDiffStateModel {
             )));
             return;
         };
-        let ai_client = autogenerate_content
-            .then(|| ServerApiProvider::handle(ctx).as_ref(ctx).get_ai_client());
         let path_future = Self::interactive_path_future(ctx);
         ctx.spawn(
             async move {
                 let path_env = path_future.await;
-                git_actions::create_pr(
-                    &repo_path,
-                    &branch,
-                    ai_client.as_deref(),
-                    path_env.as_deref(),
-                )
-                .await
+                git_actions::create_pr(&repo_path, &branch, path_env.as_deref()).await
             },
             |_me, result, ctx| {
                 ctx.emit(DiffStateModelEvent::GitOpCompleted(GitOpResult::PrCreated(
                     result.map_err(|e| e.to_string()),
                 )));
-            },
-        );
-    }
-
-    /// Generates an AI commit message for the working tree and emits `CommitMessageGenerated`.
-    pub fn generate_commit_message(
-        &self,
-        include_unstaged: bool,
-        branch_name: String,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        let Some(repo_path) = self.active_repository_path(ctx) else {
-            ctx.emit(DiffStateModelEvent::CommitMessageGenerated(Err(
-                "no active repository".to_string(),
-            )));
-            return;
-        };
-        let ai_client = ServerApiProvider::handle(ctx).as_ref(ctx).get_ai_client();
-        ctx.spawn(
-            async move {
-                git_actions::generate_commit_message(
-                    &repo_path,
-                    &branch_name,
-                    include_unstaged,
-                    ai_client.as_ref(),
-                )
-                .await
-            },
-            |_me, result, ctx| {
-                ctx.emit(DiffStateModelEvent::CommitMessageGenerated(
-                    result.map_err(|e| e.to_string()),
-                ));
             },
         );
     }

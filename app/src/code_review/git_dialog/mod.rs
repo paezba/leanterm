@@ -106,21 +106,6 @@ fn show_toast(msg: impl Into<String>, ctx: &mut ViewContext<GitDialog>) {
     });
 }
 
-/// Whether the git-operations AI autogen flow should send an AI request.
-///
-/// Folds the parent feature flag, the user's dedicated per-feature AI toggle
-/// (which itself requires active AI / auth / remote-session org policy to
-/// allow AI), and the current team's Git Operations AI tier policy.
-///
-/// When this returns `false`, call sites skip AI entirely: commit.rs opens
-/// with the manual-type placeholder and pr.rs goes straight to
-/// `gh pr create --fill`.
-fn should_send_git_ops_ai_request(app: &AppContext) -> bool {
-    FeatureFlag::GitOperationsInCodeReview.is_enabled()
-        && AISettings::as_ref(app).is_git_operations_autogen_enabled(app)
-        && UserWorkspaces::as_ref(app).is_git_operations_ai_enabled()
-}
-
 /// Maps a raw git error string to a user-friendly toast message. Known
 /// failure modes get dedicated copy; anything else falls back to a generic
 /// message (the raw error is always logged separately at the call site).
@@ -510,7 +495,6 @@ impl GitDialog {
         // Open-time AI commit-message autogen runs for both backends; the model
         // generates it (local in-process, remote on the daemon) and the result
         // returns via the diff-state subscription wired up just above.
-        commit::maybe_start_commit_message_autogen(&this, ctx);
         // Remote repos source the Changes box from synced metadata (the local
         // path loads it from the working tree in `commit::new_state`).
         commit::refresh_remote_file_changes(&mut this, ctx);
@@ -627,10 +611,6 @@ impl GitDialog {
         // Commit-message autogen arrives at dialog open (before any op is
         // initiated), so it's handled outside the `loading` gate the
         // op-completion events use below.
-        if let DiffStateModelEvent::CommitMessageGenerated(result) = event {
-            commit::apply_generated_commit_message(self, result.clone(), ctx);
-            return;
-        }
         // Commit mode (remote) sources its Changes box from synced metadata, so
         // refresh it whenever metadata lands. Arrives independently of any
         // in-flight op, so it's handled outside the `loading` gate below.

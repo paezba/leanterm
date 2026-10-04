@@ -44,7 +44,7 @@ fn create_modal(app: &mut App) -> ViewHandle<WorkflowModal> {
     initialize_app(app);
     let (_, modal_view) = app.add_window(WindowStyle::NotStealFocus, |ctx| {
         let server_api = ServerApiProvider::as_ref(ctx).get();
-        WorkflowModal::new(server_api.clone(), ctx)
+        WorkflowModal::new(ctx)
     });
 
     modal_view

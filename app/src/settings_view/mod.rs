@@ -556,7 +556,6 @@ pub mod flags {
     pub const SHOW_BASE_MODEL_PICKER_IN_PROMPT_FLAG: &str = "Show_Base_Model_Picker_In_Prompt";
     pub const DEBUG_SHOW_MEMORY_STATS_FLAG: &str = "Debug_Memory_Statistics";
     pub const ALLOW_NATIVE_WAYLAND: &str = "Allow_Native_Wayland";
-    pub const IS_ANY_AI_ENABLED: &str = "IsAnyAIEnabled";
     pub const IS_ACTIVE_AI_ENABLED: &str = "IsActiveAIEnabled";
     pub const IS_VOICE_INPUT_ENABLED: &str = "IsVoiceInputEnabled";
     pub const IS_BLOCK_AI_SUMMARIES_ENABLED: &str = "IsBlockAISummariesEnabled";
@@ -655,12 +654,6 @@ pub fn init_actions_from_parent_view<T: Action + Clone>(
     if FeatureFlag::DebugMode.is_enabled() {
         ToggleSettingActionPair::add_toggle_setting_action_pairs_as_bindings(
             vec![
-                ToggleSettingActionPair::new(
-                    "recording mode",
-                    WorkspaceAction::ToggleRecordingMode,
-                    &id!("Workspace"),
-                    flags::RECORDING_MODE_FLAG,
-                ),
                 ToggleSettingActionPair::new(
                     "in-band generators for new sessions",
                     WorkspaceAction::ToggleInBandGenerators,
@@ -2245,7 +2238,6 @@ impl View for SettingsView {
             footer_kind,
             appearance,
             self.settings_file_error.as_ref(),
-            AISettings::as_ref(app).is_any_ai_enabled(app),
             &self.footer_mouse_states,
         );
 

@@ -1263,52 +1263,6 @@ impl SyncQueue {
                                 )
                                 .await
                             }
-                            JsonObjectType::AIFact => {
-                                CloudAIFactModel::send_create_request(
-                                    object_client_clone,
-                                    create_request,
-                                )
-                                .await
-                            }
-                            JsonObjectType::AIExecutionProfile => {
-                                CloudAIExecutionProfileModel::send_create_request(
-                                    object_client_clone,
-                                    create_request,
-                                )
-                                .await
-                            }
-                            JsonObjectType::MCPServer => {
-                                CloudMCPServerModel::send_create_request(
-                                    object_client_clone,
-                                    create_request,
-                                )
-                                .await
-                            }
-                            JsonObjectType::TemplatableMCPServer => {
-                                CloudTemplatableMCPServerModel::send_create_request(
-                                    object_client_clone,
-                                    create_request,
-                                )
-                                .await
-                            }
-                            JsonObjectType::CloudEnvironment => {
-                                CloudAmbientAgentEnvironmentModel::send_create_request(
-                                    object_client_clone,
-                                    create_request,
-                                )
-                                .await
-                            }
-                            JsonObjectType::ScheduledAmbientAgent => {
-                                CloudScheduledAmbientAgentModel::send_create_request(
-                                    object_client_clone,
-                                    create_request,
-                                )
-                                .await
-                            }
-                            // CloudAgentConfig is not created from the client
-                            JsonObjectType::CloudAgentConfig => Err(anyhow::anyhow!(
-                                "CloudAgentConfig creation not supported from client"
-                            )),
                         },
                     }
                 }

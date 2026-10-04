@@ -676,12 +676,6 @@ fn handle_model_event(event: ModelEvent, connection: &mut SqliteConnection) -> a
             delete_workspace_metadata(connection, &repo_path)
                 .context("error deleting workspace metadata")
         }
-        ModelEvent::UpsertProject { project } => {
-            save_project(connection, project).context("error upserting project")
-        }
-        ModelEvent::DeleteProject { path } => {
-            delete_project(connection, &path).context("error deleting project")
-        }
         ModelEvent::UpsertWorkspace { workspace } => {
             save_workspace(connection, *workspace).context("error upserting workspace")
         }
@@ -1420,36 +1414,6 @@ fn delete_workspace_metadata(conn: &mut SqliteConnection, index_path: &Path) -> 
     Ok(())
 }
 
-fn save_project(conn: &mut SqliteConnection, project: Project) -> Result<()> {
-    use schema::projects::dsl::*;
-
-    diesel::insert_into(projects)
-        .values(project.clone())
-        .on_conflict(path)
-        .do_update()
-        .set(&project)
-        .execute(conn)?;
-
-    Ok(())
-}
-
-fn get_all_projects(conn: &mut SqliteConnection) -> Result<Vec<Project>, diesel::result::Error> {
-    use schema::projects::dsl::*;
-
-    Ok(projects
-        .load_iter::<Project, DefaultLoadingMode>(conn)?
-        .filter_map(|item| item.ok())
-        .collect_vec())
-}
-
-fn delete_project(conn: &mut SqliteConnection, project_path: &str) -> Result<()> {
-    use schema::projects::dsl::*;
-
-    diesel::delete(projects.filter(path.eq(project_path))).execute(conn)?;
-
-    Ok(())
-}
-
 fn get_all_ignored_suggestions(
     conn: &mut SqliteConnection,
 ) -> Result<Vec<(String, SuggestionType)>, diesel::result::Error> {
@@ -1518,7 +1482,7 @@ fn save_workspace(conn: &mut SqliteConnection, workspace: WorkspaceMetadata) -> 
         name: workspace.name,
         server_uid: workspace.uid.into(),
         is_selected: true,
-        feature_model_choice_json: serde_json::to_string(&workspace.feature_model_choice).ok(),
+        feature_model_choice_json: None,
     };
 
     diesel::insert_into(workspaces)
@@ -1537,7 +1501,7 @@ fn save_workspace(conn: &mut SqliteConnection, workspace: WorkspaceMetadata) -> 
             name: team.name,
             server_uid: team.uid.into(),
             billing_metadata_json: serde_json::to_string(&team.billing_metadata).ok(),
-            feature_model_choice_json: serde_json::to_string(&team.feature_model_choice).ok(),
+            feature_model_choice_json: None,
         };
         diesel::insert_into(teams)
             .values(&new_team)
@@ -1621,7 +1585,7 @@ fn save_workspaces(
             is_selected: current_workspace_uid
                 .map(|current_uid| workspace.uid == current_uid)
                 .unwrap_or(false),
-            feature_model_choice_json: serde_json::to_string(&workspace.feature_model_choice).ok(),
+            feature_model_choice_json: None,
         })
         .collect();
     diesel::insert_or_ignore_into(workspaces)
@@ -1640,8 +1604,7 @@ fn save_workspaces(
                     server_uid: team.uid.into(),
                     name: team.name.clone(),
                     billing_metadata_json: serde_json::to_string(&team.billing_metadata).ok(),
-                    feature_model_choice_json: serde_json::to_string(&team.feature_model_choice)
-                        .ok(),
+                    feature_model_choice_json: None,
                 })
                 .collect::<Vec<NewTeam>>()
         })
@@ -1996,12 +1959,6 @@ fn box_persisted_generic_string_object(
         PersistedGenericStringObject::Preference(object) => Box::new(object),
         PersistedGenericStringObject::EnvVarCollection(object) => Box::new(object),
         PersistedGenericStringObject::WorkflowEnum(object) => Box::new(object),
-        PersistedGenericStringObject::AIFact(object) => Box::new(object),
-        PersistedGenericStringObject::MCPServer(object) => Box::new(object),
-        PersistedGenericStringObject::TemplatableMCPServer(object) => Box::new(object),
-        PersistedGenericStringObject::AIExecutionProfile(object) => Box::new(object),
-        PersistedGenericStringObject::CloudEnvironment(object) => Box::new(object),
-        PersistedGenericStringObject::ScheduledAmbientAgent(object) => Box::new(object),
     }
 }
 
@@ -2032,7 +1989,6 @@ fn read_sqlite_data(
             experiments: Default::default(),
             workspace_metadata: get_all_workspace_metadata(conn)?,
             workspace_language_servers: Default::default(),
-            projects: Default::default(),
             ignored_suggestions: Default::default(),
         });
     }
@@ -2311,18 +2267,12 @@ fn read_sqlite_data(
 
             let members = members_by_team_id.get(&team.id).cloned();
 
-            let feature_model_choice = team
-                .feature_model_choice_json
-                .as_ref()
-                .and_then(|json| serde_json::from_str(json).ok());
-
             TeamMetadata::from_local_cache(
                 ServerId::from_string_lossy(team.server_uid),
                 team.name,
                 team_settings,
                 billing_metadata,
                 members,
-                feature_model_choice,
             )
         })
         .collect();
@@ -2350,15 +2300,10 @@ fn read_sqlite_data(
                     })
                     .cloned()
                     .collect();
-                let feature_model_choice = workspace
-                    .feature_model_choice_json
-                    .as_ref()
-                    .and_then(|json| serde_json::from_str(json).ok());
                 WorkspaceMetadata::from_local_cache(
                     workspace.server_uid.into(),
                     workspace.name,
                     Some(teams_for_workspace),
-                    feature_model_choice,
                 )
             })
         })
@@ -2417,7 +2362,6 @@ fn read_sqlite_data(
 
     let workspace_metadata = get_all_workspace_metadata(conn)?;
     let workspace_language_servers = get_all_workspace_language_servers_by_workspace(conn)?;
-    let projects = get_all_projects(conn)?;
     let ignored_suggestions = get_all_ignored_suggestions(conn)?;
 
     Ok(PersistedData {
@@ -2432,7 +2376,6 @@ fn read_sqlite_data(
         experiments: server_experiments,
         workspace_metadata,
         workspace_language_servers,
-        projects,
         ignored_suggestions,
     })
 }

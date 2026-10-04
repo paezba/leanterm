@@ -122,7 +122,6 @@ fn team_with_members(members: Vec<TeamMember>, multi_admin_enabled: bool) -> Tea
         },
         stripe_customer_id: None,
         settings: Default::default(),
-        feature_model_choice: Default::default(),
         is_eligible_for_discovery: false,
         has_billing_history: false,
         visibility: Default::default(),
