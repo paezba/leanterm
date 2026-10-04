@@ -3395,9 +3395,6 @@ impl Workspace {
                 // Generic session link: ambient-ness (if any) is discovered at SessionJoined.
                 self.add_tab_for_joining_shared_session(session_id, false, ctx);
             }
-            NewWorkspaceSource::FromCloudConversationId { conversation_id } => {
-                self.open_cloud_conversation_from_server_token(conversation_id, ctx);
-            }
             NewWorkspaceSource::AgentSession {
                 options,
                 initial_query,
@@ -3544,12 +3541,10 @@ impl Workspace {
             | NewWorkspaceSource::NotebookFromFilePath { .. } => should_default_open,
             #[cfg(not(target_family = "wasm"))]
             NewWorkspaceSource::SharedSessionAsViewer { .. }
-            | NewWorkspaceSource::FromCloudConversationId { .. }
             | NewWorkspaceSource::NotebookById { .. }
             | NewWorkspaceSource::WorkflowById { .. } => should_default_open,
             #[cfg(target_family = "wasm")]
             NewWorkspaceSource::SharedSessionAsViewer { .. }
-            | NewWorkspaceSource::FromCloudConversationId { .. }
             | NewWorkspaceSource::NotebookById { .. }
             | NewWorkspaceSource::WorkflowById { .. } => {
                 // Web opens these as single-purpose views without exposed multi-tab UI, so keep
@@ -12696,11 +12691,6 @@ impl Workspace {
             .code_view_paths(ctx)
             .filter_map(|(id, cwd)| cwd.map(|c| (id, c)))
             .collect();
-        let code_diff_paths: Vec<(EntityId, LocalOrRemotePath)> = pane_group
-            .as_ref(ctx)
-            .code_diff_view_paths(ctx)
-            .filter_map(|(id, cwd)| cwd.map(|c| (id, c)))
-            .collect();
         let notebook_paths: Vec<(EntityId, LocalOrRemotePath)> = pane_group
             .as_ref(ctx)
             .file_notebook_paths(ctx)
@@ -12709,7 +12699,6 @@ impl Workspace {
         let local_paths: Vec<(EntityId, LocalOrRemotePath)> = code_paths
             .into_iter()
             .chain(notebook_paths)
-            .chain(code_diff_paths)
             .collect();
 
         // Get the focused terminal ID to prioritize it in the repo_to_terminal map

@@ -134,25 +134,6 @@ fn offer_variant_for_account_class(account_class: FtueAccountClass) -> Option<Of
     }
 }
 
-/// Whether the team selected in `ctx`'s window imposes any AI autonomy policy, which is
-/// what decides whether onboarding offers the user an autonomy choice at all.
-fn team_enforces_autonomy(ctx: &ViewContext<RootView>) -> bool {
-    let user_workspaces = UserWorkspaces::as_ref(ctx);
-    let scope = user_workspaces.team_context(&ctx.handle(), ctx);
-    user_workspaces
-        .ai_autonomy_settings(&scope)
-        .has_any_overrides()
-}
-
-/// Lets app-level models react to this window's workspace becoming visible, e.g. to surface
-/// one-time modals that were deferred while auth or onboarding covered it.
-fn notify_workspace_shown(ctx: &mut ViewContext<RootView>) {
-    let window_id = ctx.window_id();
-    OneTimeModalModel::handle(ctx).update(ctx, |model, ctx| {
-        model.on_workspace_shown(window_id, ctx);
-    });
-}
-
 #[derive(Debug, Clone)]
 enum WindowState {
     /// Quake mode window is open and visible on the screen.
@@ -410,18 +391,6 @@ pub fn init(app: &mut AppContext) {
         .with_group(bindings::BindingGroup::Navigation.as_str())
         .with_context_predicate(id!("RootView"))
         .with_linux_or_windows_key_binding("f11"),
-        // Debug binding for onboarding state
-        EditableBinding::new(
-            "root_view:enter_onboarding_state",
-            "[Debug] Enter Onboarding State",
-            RootViewAction::DebugEnterOnboardingState,
-        )
-        .with_group(bindings::BindingGroup::Settings.as_str())
-        .with_context_predicate(id!("RootView"))
-        .with_key_binding("shift-f12")
-        .with_enabled(|| {
-            FeatureFlag::AgentOnboarding.is_enabled() && ChannelState::enable_debug_features()
-        }),
     ])
 }
 
@@ -1339,9 +1308,6 @@ pub enum NewWorkspaceSource {
     SharedSessionAsViewer {
         session_id: SessionId,
     },
-    FromCloudConversationId {
-        conversation_id: ServerConversationToken,
-    },
     NotebookFromFilePath {
         file_path: Option<PathBuf>,
     },
@@ -1425,7 +1391,6 @@ impl NewWorkspaceSource {
             Self::FromTemplate { .. }
             | Self::Session { .. }
             | Self::SharedSessionAsViewer { .. }
-            | Self::FromCloudConversationId { .. }
             | Self::NotebookFromFilePath { .. }
             | Self::NotebookById { .. }
             | Self::WorkflowById { .. }
@@ -1452,7 +1417,6 @@ impl NewWorkspaceSource {
         matches!(
             self,
             NewWorkspaceSource::SharedSessionAsViewer { .. }
-                | NewWorkspaceSource::FromCloudConversationId { .. }
         )
     }
 }
@@ -1485,14 +1449,6 @@ pub(crate) fn has_completed_local_onboarding(ctx: &AppContext) -> bool {
         .unwrap_or_default()
         .and_then(|s| serde_json::from_str::<bool>(&s).ok())
         .unwrap_or(false)
-}
-
-/// Persists the local onboarding-completed flag so we don't show onboarding again.
-fn mark_local_onboarding_completed(ctx: &AppContext) {
-    let _ = ctx.private_user_preferences().write_value(
-        HAS_COMPLETED_ONBOARDING_KEY,
-        serde_json::to_string(&true).expect("bool serializes to JSON"),
-    );
 }
 
 /// Whether auth and onboarding have completed and we should render the `Workspace`.
@@ -1661,16 +1617,6 @@ impl RootView {
             }
         });
 
-        // Ensure the onboarding view has focus after all views are created.
-        // The auth_view's internal editor may have grabbed focus during construction;
-        // this overrides that so keyboard input (Enter, arrow keys) routes to onboarding.
-        if let AuthOnboardingState::Onboarding {
-            onboarding_view, ..
-        } = &root_view.auth_onboarding_state
-        {
-            ctx.focus(onboarding_view);
-        }
-
         // For users who bypass onboarding (already logged in, or onboarding flags not active),
         // start autoupdate polling immediately. For new users in onboarding, this is a no-op;
         // polling will be started once onboarding completes.
@@ -1785,33 +1731,6 @@ impl RootView {
             state.toggle_fullscreen(window_id, ctx);
         });
         true
-    }
-
-    /// Debug method to enter the onboarding state.
-    fn debug_enter_onboarding_state(&mut self, _: &(), ctx: &mut ViewContext<Self>) -> bool {
-        if !ChannelState::enable_debug_features() {
-            log::warn!("Attempted to enter onboarding state in release build");
-            return false;
-        }
-
-        if !FeatureFlag::AgentOnboarding.is_enabled() {
-            log::warn!("Attempted to enter onboarding state without AgentOnboarding enabled");
-            return false;
-        }
-
-        self.auth_onboarding_state.try_open_onboarding_slides(ctx);
-
-        ctx.emit(RootViewEvent::AuthOnboardingStateChanged);
-        ctx.notify();
-        true
-    }
-
-    fn onboarding_theme_kind(theme_name: &str) -> Option<ThemeKind> {
-        WarpThemeConfig::new()
-            .theme_items()
-            .find_map(|(kind, theme)| {
-                (theme.name().as_deref() == Some(theme_name)).then(|| kind.clone())
-            })
     }
 
     fn minimize_window(&mut self, _: &(), ctx: &mut ViewContext<Self>) -> bool {
@@ -2138,16 +2057,6 @@ impl RootView {
                 &WorkspaceAction::ShowSettingsPage(*section),
             );
             ctx.windows().show_window_and_focus_app(window_id);
-            return true;
-        }
-
-        // A checkout confirmation that predates the unified success hand-off
-        // still returns the user through the Billing & Usage deeplink. Landing
-        // it mid-onboarding would interrupt the flow, so onboarding takes it as
-        // the purchase succeeding and moves on instead.
-        if *section == SettingsSection::BillingAndUsage
-            && self.notify_onboarding_checkout_succeeded(ctx)
-        {
             return true;
         }
 
@@ -2548,7 +2457,6 @@ pub enum RootViewAction {
     ToggleQuakeModeWindow,
     ShowOrHideNonQuakeModeWindows,
     ToggleFullscreen,
-    DebugEnterOnboardingState,
 }
 
 impl TypedActionView for RootView {
@@ -2569,9 +2477,6 @@ impl TypedActionView for RootView {
                     state.toggle_fullscreen(window_id, ctx);
                 });
             }
-            RootViewAction::DebugEnterOnboardingState => {
-                self.debug_enter_onboarding_state(&(), ctx);
-            }
         }
     }
 }
@@ -2591,25 +2496,6 @@ impl WorkspaceArgs {
 
 impl AuthOnboardingState {
     fn complete_auth_and_create_workspace(&mut self, ctx: &mut ViewContext<RootView>) {
-        // Check if we should show onboarding (only for users who are not yet onboarded).
-        // The server-side `is_onboarded` flag is synced separately by
-        // `RootView::sync_local_onboarding_to_server`, which runs on every `AuthComplete`
-        // before we get here.
-        let auth_state = AuthStateProvider::as_ref(ctx).get();
-        let is_onboarded = auth_state.is_onboarded().unwrap_or(true);
-        let is_anonymous = auth_state.is_user_anonymous().unwrap_or(false);
-
-        let has_completed_local_onboarding = has_completed_local_onboarding(ctx);
-
-        if !is_onboarded
-            && !is_anonymous
-            && !has_completed_local_onboarding
-            && FeatureFlag::AgentOnboarding.is_enabled()
-        {
-            self.try_open_onboarding_slides(ctx);
-        }
-
-        // If we didn't transition to Onboarding, set the Terminal state.
         match self {
             &mut AuthOnboardingState::Auth(ref args)
             | &mut AuthOnboardingState::ConfirmIncomingAuth(ref args) => {
@@ -2619,46 +2505,12 @@ impl AuthOnboardingState {
             _ => {}
         };
         ctx.emit(RootViewEvent::AuthOnboardingStateChanged);
-        if matches!(self, AuthOnboardingState::Terminal(_)) {
-            notify_workspace_shown(ctx);
-        }
-    }
-
-    fn try_open_onboarding_slides(&mut self, ctx: &mut ViewContext<RootView>) {
-        let target = match self {
-            AuthOnboardingState::Auth(args) | AuthOnboardingState::ConfirmIncomingAuth(args) => {
-                if args.workspace_setting.is_content_deep_link() {
-                    return;
-                }
-                AuthOnboardingTarget::Workspace(args.clone())
-            }
-            AuthOnboardingState::Terminal(workspace) => {
-                if workspace.as_ref(ctx).opened_from_content_deep_link() {
-                    return;
-                }
-                AuthOnboardingTarget::Terminal(workspace.clone())
-            }
-            _ => {
-                // Onboarding slides can only be opened from Auth or Terminal states
-                return;
-            }
-        };
-
-        let onboarding_view = RootView::create_agent_onboarding_view(ctx);
-        onboarding_view.update(ctx, |view, ctx| {
-            view.start_onboarding(ctx);
-        });
-        *self = AuthOnboardingState::Onboarding {
-            onboarding_view,
-            target,
-        };
     }
 
     fn complete_sso_link(&mut self, ctx: &mut ViewContext<RootView>) {
         if let AuthOnboardingState::NeedsSsoLink(needs_sso_link_mode) = self {
             *self = AuthOnboardingState::Terminal(needs_sso_link_mode.to_workspace(ctx));
             ctx.emit(RootViewEvent::AuthOnboardingStateChanged);
-            notify_workspace_shown(ctx);
         }
     }
 

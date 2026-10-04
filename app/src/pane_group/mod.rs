@@ -1747,15 +1747,6 @@ impl PaneGroup {
         }
     }
 
-    pub fn close_all_ai_document_panes(&mut self, ctx: &mut ViewContext<Self>) {
-        let pane_ids: Vec<_> = self
-            .visible_ai_document_panes(ctx)
-            .into_iter()
-            .map(|(pane_id, _)| pane_id)
-            .collect();
-        self.close_panes(pane_ids, ctx);
-    }
-
     /// Whether the focused pane is a code pane whose active tab should show
     /// the unsaved-changes indicator. Auto-save-aware: changes auto-save can
     /// persist are excluded, but unsaveable changes (untitled buffers,
@@ -2025,9 +2016,7 @@ impl PaneGroup {
                 };
 
                 terminal_view.update(ctx, |view, ctx| {
-                    let share_source = SharedSessionSource::user(
-                        view.active_conversation_task_id(ctx).map(|t| t.to_string()),
-                    );
+                    let share_source = SharedSessionSource::user(None);
                     view.attempt_to_share_session(
                         *scrollback_type,
                         Some(*source),
@@ -3260,22 +3249,6 @@ impl PaneGroup {
         }
     }
 
-    /// Revert a temporary-replacement swap and clear the orchestration
-    /// split-off marker on the replacement's view, so a later reveal
-    /// renders pills rather than breadcrumbs.
-    fn revert_swap_clearing_split_off(
-        &mut self,
-        replacement_id: PaneId,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        if let Some(terminal_view) = self.terminal_view_from_pane_id(replacement_id, ctx) {
-            terminal_view.update(ctx, |view, ctx| {
-                view.clear_orchestration_split_off(ctx);
-            });
-        }
-        self.panes.revert_temporary_replacement(replacement_id);
-    }
-
     /// Reveal `pane_id` if it's currently the original of an active swap,
     /// then focus it. Used by cross-tab navigation paths that may resolve
     /// to a swapped-out pane; without the reveal, focus would land on an
@@ -3283,17 +3256,8 @@ impl PaneGroup {
     /// neither in the tree nor swap-hidden.
     pub fn reveal_and_focus_pane(&mut self, pane_id: PaneId, ctx: &mut ViewContext<Self>) {
         if let Some(replacement_id) = self.panes.replacement_pane_for_original(pane_id) {
-            self.revert_swap_clearing_split_off(replacement_id, ctx);
+            self.panes.revert_temporary_replacement(replacement_id);
             self.handle_pane_count_change(ctx);
-            // The visible content of this slot changed; refresh agent-view
-            // back-button labels on both sides.
-            for refresh_pane_id in [pane_id, replacement_id] {
-                if let Some(terminal_view) = self.terminal_view_from_pane_id(refresh_pane_id, ctx) {
-                    terminal_view.update(ctx, |view, ctx| {
-                        view.update_agent_view_back_button_state(ctx);
-                    });
-                }
-            }
             ctx.emit(Event::TerminalViewStateChanged);
             ctx.emit(Event::AppStateChanged);
         } else if !self.panes.is_pane_in_tree(pane_id) {
@@ -3490,9 +3454,6 @@ impl PaneGroup {
             PaneEvent::FocusActiveSession => self.focus_active_session(ctx),
             PaneEvent::AppStateChanged => {
                 ctx.emit(Event::AppStateChanged);
-            }
-            PaneEvent::NewPaneInAIMode { initial_query } => {
-                self.add_terminal_pane_in_agent_mode(initial_query.as_deref(), None, ctx)
             }
             PaneEvent::ClearHoveredTabIndex => ctx.emit(Event::ClearHoveredTabIndex),
             #[cfg(feature = "local_fs")]
@@ -4820,94 +4781,6 @@ impl PaneGroup {
             .map(|session| session.terminal_view(ctx))
     }
 
-    /// Connects an existing ambient pane to `session_id` so the user lands on a live, writable
-    /// terminal rather than a stale read-only view of the run.
-    ///
-    /// Returns `false` when this pane cannot host a live session — a read-only conversation
-    /// transcript viewer, or any pane whose terminal manager is not a shared-session viewer.
-    /// Callers **must** treat `false` as "reuse is not possible" and open a fresh pane instead;
-    /// reporting success leaves the user focused on a pane with no input box.
-    pub fn attach_execution_session_to_ambient_pane(
-        &mut self,
-        pane_id: PaneId,
-        session_id: SessionId,
-        ctx: &mut ViewContext<Self>,
-    ) -> bool {
-        let Some(terminal_view) = self.terminal_view_from_pane_id(pane_id, ctx) else {
-            log::warn!(
-                "attach_execution_session: no terminal view for \
-                 pane_id={pane_id:?}"
-            );
-            return false;
-        };
-
-        // A conversation transcript viewer renders a snapshot of an ended conversation and can
-        // never be turned into a writable session, so refuse it instead of focusing a dead pane.
-        if terminal_view
-            .as_ref(ctx)
-            .model
-            .lock()
-            .is_conversation_transcript_viewer()
-        {
-            log::warn!(
-                "Tried to attach execution session to conversation transcript viewer pane {pane_id:?}"
-            );
-            return false;
-        }
-
-        // The pane may have been left in a finished/read-only state (ended-conversation tombstone,
-        // `FinishedViewer` status, non-editable input) by an earlier end-of-session transition.
-        // Only cleared once a join is actually underway: a caller that gets `false` opens a fresh
-        // pane instead, and this one would otherwise be left looking writable while attached to
-        // nothing.
-        if let Some(ambient_agent_view_model) = terminal_view
-            .as_ref(ctx)
-            .ambient_agent_view_model()
-            .cloned()
-        {
-            ambient_agent_view_model.update(ctx, |model, ctx| {
-                model.attach_execution_session(session_id, ctx);
-            });
-            terminal_view.update(ctx, |view, ctx| {
-                view.prepare_for_live_session_reattach(ctx);
-            });
-            return true;
-        }
-
-        let Some(terminal_manager) = self
-            .terminal_session_by_id(pane_id)
-            .map(|session| session.terminal_manager(ctx))
-        else {
-            log::warn!(
-                "attach_execution_session: no terminal manager for \
-                 pane_id={pane_id:?}"
-            );
-            return false;
-        };
-
-        let mut attached = false;
-        terminal_manager.update(ctx, |terminal_manager, ctx| {
-            let Some(manager) = terminal_manager
-                .as_any_mut()
-                .downcast_mut::<shared_session::viewer::TerminalManager>()
-            else {
-                log::warn!(
-                    "attach_execution_session: non-viewer \
-                     terminal manager for pane_id={pane_id:?}"
-                );
-                return;
-            };
-            attached = manager.attach_execution_session(session_id, ctx);
-        });
-
-        if attached {
-            terminal_view.update(ctx, |view, ctx| {
-                view.prepare_for_live_session_reattach(ctx);
-            });
-        }
-        attached
-    }
-
     /// Given a pane ID, retrieve its backing code view, if the pane is a code pane.
     pub fn code_view_from_pane_id(
         &self,
@@ -5204,17 +5077,6 @@ impl PaneGroup {
                 .as_ref(ctx)
                 .tab_at(code_view.as_ref(ctx).active_tab_index())
                 .and_then(|tab| tab.location().cloned());
-            (id, location)
-        })
-    }
-
-    pub fn code_diff_view_paths<'a>(
-        &'a self,
-        ctx: &'a AppContext,
-    ) -> impl Iterator<Item = (EntityId, Option<LocalOrRemotePath>)> + 'a {
-        self.code_diff_views(ctx).into_iter().map(move |diff_view| {
-            let id = diff_view.id();
-            let location = diff_view.as_ref(ctx).primary_file_location(ctx);
             (id, location)
         })
     }
