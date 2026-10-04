@@ -88,31 +88,22 @@ pub fn should_render_prompt_on_same_line(
 
     let should_render_ps1 = should_render_ps1_prompt(terminal_model, app);
 
-    if FeatureFlag::AgentView.is_enabled() {
-        should_render_ps1
-    } else {
-        let session_settings = SessionSettings::as_ref(app);
-        should_render_ps1
-            || session_settings
-                .saved_prompt
-                .value()
-                .same_line_prompt_enabled()
-    }
+    let session_settings = SessionSettings::as_ref(app);
+    should_render_ps1
+        || session_settings
+            .saved_prompt
+            .value()
+            .same_line_prompt_enabled()
 }
 
-/// Returns `true` if the shell or AI prompt should be rendered using the editors
+/// Returns `true` if the shell prompt should be rendered using the editors
 /// `EditorDecoratorElements` API.
-///
-/// The AI prompt is unconditionally rendered above the input.
 pub fn should_render_prompt_using_editor_decorator_elements(
     is_universal_developer_input: bool,
-    ai_input_model: &ModelHandle<BlocklistAIInputModel>,
     model: &TerminalModel,
     app: &AppContext,
 ) -> bool {
     should_render_prompt_on_same_line(is_universal_developer_input, model, app)
-        && (!ai_input_model.as_ref(app).is_ai_input_enabled()
-            || FeatureFlag::AgentView.is_enabled())
 }
 
 pub(in crate::terminal) struct PromptAndPadding {
@@ -172,8 +163,6 @@ pub struct PromptRenderHelper {
     prompt_view: ViewHandle<PromptDisplay>,
     prompt_selection_state_handle: SelectionHandle,
     input_render_state_model_handle: ModelHandle<InputRenderStateModel>,
-
-    ai_input_model: ModelHandle<BlocklistAIInputModel>,
 }
 
 #[derive(Clone, Copy)]
@@ -198,7 +187,6 @@ impl PromptRenderHelper {
         prompt_selection_state_handle: SelectionHandle,
         parent_view_id: EntityId,
         input_render_state_model_handle: ModelHandle<InputRenderStateModel>,
-        ai_input_model: ModelHandle<BlocklistAIInputModel>,
     ) -> Self {
         Self {
             sessions,
@@ -206,7 +194,6 @@ impl PromptRenderHelper {
             prompt_selection_state_handle,
             prompt_parent_view_id: parent_view_id,
             input_render_state_model_handle,
-            ai_input_model,
         }
     }
 
@@ -409,7 +396,6 @@ impl PromptRenderHelper {
             should_render_prompt_on_same_line(is_universal_input, model, app);
         let padding_right = if should_render_prompt_using_editor_decorator_elements(
             is_universal_input,
-            &self.ai_input_model,
             model,
             app,
         ) {
@@ -592,7 +578,6 @@ impl PromptRenderHelper {
         let should_render_prompt_using_editor_decorator_elements =
             should_render_prompt_using_editor_decorator_elements(
                 is_universal_input,
-                &self.ai_input_model,
                 terminal_model,
                 app,
             );
@@ -660,59 +645,6 @@ impl PromptRenderHelper {
             )
             .finish(),
         )
-    }
-
-    pub(in crate::terminal) fn render_universal_developer_input_prompt(
-        &self,
-        model: &TerminalModel,
-        appearance: &Appearance,
-        app: &AppContext,
-    ) -> Box<dyn Element> {
-        let element = {
-            if model.block_list().is_bootstrapped() {
-                PromptAndPaddingElement::ContextChips(self.prompt_view.clone())
-            } else {
-                PromptAndPaddingElement::Text(Box::new(
-                    self.bootstrapping_shell_text(model, appearance, app),
-                ))
-            }
-        };
-
-        let view_id = self.prompt_parent_view_id;
-        let position_id = format!("{}_{}", PromptSide::Left, view_id);
-        let size_info = app.model(&self.input_render_state_model_handle).size_info();
-        let terminal_spacing = TerminalSettings::as_ref(app)
-            .terminal_input_spacing(appearance.line_height_ratio(), app);
-
-        let prompt_with_padding_container = Container::new(element.render())
-            .with_padding_top({
-                (terminal_spacing.block_padding.padding_top * size_info.cell_height_px().as_f32()
-                    - get_input_box_top_border_width())
-                    * spacing::UDI_PROMPT_TOP_PADDING_FACTOR
-            })
-            .finish();
-
-        SavePosition::new(
-            EventHandler::new(prompt_with_padding_container)
-                .on_right_mouse_down(move |ctx, app, position, modifiers| {
-                    if should_right_click_paste(modifiers.shift, app) {
-                        ctx.dispatch_typed_action(TerminalAction::Paste);
-                        return DispatchEventResult::StopPropagation;
-                    }
-                    let position_id = format!("prompt_area_{view_id}");
-                    let Some(prompt_rect) = ctx.element_position_by_id(position_id) else {
-                        return DispatchEventResult::PropagateToParent;
-                    };
-                    let offset_position = position - prompt_rect.origin();
-                    ctx.dispatch_typed_action(TerminalAction::PromptContextMenu {
-                        position_offset_from_prompt: offset_position,
-                    });
-                    DispatchEventResult::StopPropagation
-                })
-                .finish(),
-            &position_id,
-        )
-        .finish()
     }
 
     pub(in crate::terminal) fn render_prompt_areas(

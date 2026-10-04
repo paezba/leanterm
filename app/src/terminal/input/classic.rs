@@ -37,7 +37,6 @@ impl Input {
         let should_render_prompt_using_editor_decorator_elements =
             should_render_prompt_using_editor_decorator_elements(
                 false,
-                &self.ai_input_model,
                 &model,
                 app,
             );
@@ -101,50 +100,15 @@ impl Input {
         );
         let mut column = Flex::column();
 
-        if matches!(input_mode, InputMode::PinnedToBottom | InputMode::Waterfall)
-            && let Some(banner) =
-                self.render_input_banner(appearance, app, input_mode, is_compact_mode)
-        {
-            column.add_child(banner);
-        }
-
         column.add_children([prompt_top_padding_row.finish(), prompt_row.finish()]);
-
-        let ai_input_model = self.ai_input_model.as_ref(app);
-
-        if FeatureFlag::ImageAsContext.is_enabled()
-            && matches!(ai_input_model.input_type(), InputType::AI)
-            && !FeatureFlag::AgentView.is_enabled()
-            && let Some(images) = self.render_attachment_chips(appearance)
-        {
-            column.add_child(
-                Container::new(images)
-                    .with_padding_bottom(spacing::CLASSIC_PROMPT_ATTACH_IMAGES_BOTTOM_PADDING)
-                    .finish(),
-            );
-        }
 
         column.add_child(self.render_input_box(show_vim_status, appearance, app));
 
-        if !(matches!(input_mode, InputMode::PinnedToTop)
-            && self
-                .suggestions_mode_model
-                .as_ref(app)
-                .is_inline_menu_open())
-        {
-            column.add_child(
-                Container::new(Flex::row().finish())
-                    .with_margin_bottom(4.)
-                    .finish(),
-            );
-        }
-
-        if matches!(input_mode, InputMode::PinnedToTop)
-            && let Some(banner) =
-                self.render_input_banner(appearance, app, input_mode, is_compact_mode)
-        {
-            column.add_child(banner);
-        }
+        column.add_child(
+            Container::new(Flex::row().finish())
+                .with_margin_bottom(4.)
+                .finish(),
+        );
 
         let subshell_flag = self.get_subshell_flag_render_state(&model, is_compact_mode, app);
 
@@ -181,8 +145,7 @@ impl Input {
             );
         }
 
-        if !FeatureFlag::AgentView.is_enabled()
-            && let Some(vim_state) = vim_state.as_ref()
+        if let Some(vim_state) = vim_state.as_ref()
             && show_vim_status
         {
             add_vim_status_to_stack(
