@@ -118,12 +118,6 @@ pub enum LeftPanelEvent {
         target: FileTarget,
         line_col: Option<LineAndColumnArg>,
     },
-    NewConversationInNewTab,
-    ShowDeleteConfirmationDialog {
-        conversation_id: AIConversationId,
-        conversation_title: String,
-        terminal_view_id: Option<warpui::EntityId>,
-    },
     SignInRequested,
 }
 

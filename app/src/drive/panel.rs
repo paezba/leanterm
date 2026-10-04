@@ -71,8 +71,6 @@ pub enum DrivePanelEvent {
     OpenSearch,
     OpenSharedObjectsCreationDeniedModal(DriveObjectType, ServerId),
     OpenTeamSettingsPage,
-    OpenAIFactCollection,
-    OpenMCPServerCollection,
     OpenImportModal {
         owner: Owner,
         initial_folder_id: Option<SyncId>,
@@ -86,7 +84,6 @@ pub enum DrivePanelEvent {
     OpenEnvVarCollection(EnvVarCollectionSource),
     OpenWorkflowInPane(WorkflowOpenSource, WorkflowViewMode),
     FocusWarpDrive,
-    AttachPlanAsContext(AIDocumentId),
 }
 
 impl DrivePanel {
