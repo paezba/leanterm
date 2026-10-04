@@ -325,8 +325,8 @@ impl TerminalManager<TerminalView> {
                     .replica_id(ctx);
                 let universal_developer_input_context = UniversalDeveloperInputContext::default();
 
-                let team_uid = ResolvedTeamScope::from_scope(
-                    &UserWorkspaces::as_ref(ctx).team_context_for_window(window_id),
+                let team_uid = crate::workspaces::user_workspaces::ResolvedTeamScope::from_scope(
+                    &crate::workspaces::user_workspaces::UserWorkspaces::as_ref(ctx).team_context_for_window(window_id),
                 )
                 .team_uid();
                 let network = ctx.add_model(|ctx| {
