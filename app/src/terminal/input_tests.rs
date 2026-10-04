@@ -15,12 +15,11 @@ use unindent::Unindent;
 #[cfg(feature = "voice_input")]
 use voice_input::VoiceInputToggledFrom;
 use warp_completer::completer::{
-    EngineFileType, Match, MatchStrategy, MatchedSuggestion, PathSeparators, Priority, Suggestion,
+    Match, MatchStrategy, MatchedSuggestion, Priority, Suggestion,
     SuggestionResults, SuggestionType,
 };
 use warp_completer::meta::Span;
 use warpui::platform::WindowStyle;
-use warpui::text::SelectionType;
 use warpui::{App, UpdateView, WindowId};
 use watcher::HomeDirectoryWatcher;
 use workflows::workflow::{Argument, ArgumentType, Workflow};
@@ -63,12 +62,8 @@ use crate::terminal::local_shell::LocalShellState;
 use crate::terminal::local_tty::shell::ShellStarter;
 use crate::terminal::model::ansi::{Handler, PromptMetadata};
 use crate::terminal::model::block::{BlockId, SerializedBlock};
-use crate::terminal::model::blocks::{BlockListPoint, insert_block};
-use crate::terminal::model::grid::Dimensions as _;
-use crate::terminal::model::index::Side;
 use crate::terminal::model::session::command_executor::{CommandExecutor, ExecuteCommandOptions};
 use crate::terminal::model::session::{BootstrapSessionType, SessionInfo};
-use crate::terminal::model::terminal_model::BlockIndex;
 use crate::terminal::model_events::ModelEvent;
 use crate::terminal::resizable_data::ResizableData;
 use crate::terminal::shared_session::permissions_manager::SessionPermissionsManager;

@@ -1,14 +1,10 @@
 use onboarding::AgentOnboardingView;
-use session_sharing_protocol::common::SessionId;
 use warpui::elements::Empty;
-use warpui::platform::WindowStyle;
 use warpui::{
     App, AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewHandle,
 };
 
-use super::{ AuthOnboardingTarget, NewWorkspaceSource, RootView, WorkspaceArgs,
-};
-use crate::GlobalResourceHandles;
+use super::RootView;
 use crate::auth::AuthStateProvider;
 use crate::auth::auth_manager::AuthManager;
 use crate::auth::login_slide::LoginSlideView;

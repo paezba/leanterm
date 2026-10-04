@@ -1,36 +1,10 @@
 use std::time::Duration;
 
-use regex::Regex;
-use settings::{PrivatePreferences, PublicPreferences};
-use warp_graphql::billing::{
-    PurchaseAddOnCreditsPolicy as GqlPurchaseAddOnCreditsPolicy, Tier as GqlTier,
-};
-use warp_graphql::queries::get_workspaces_metadata_for_user::{
-    User as GqlUser, UserProfile as GqlUserProfile, UserPurchasePolicyBillingMetadata,
-    UserPurchasePolicyTier,
-};
-use warp_graphql::workspace::Workspace as GqlWorkspace;
 use warpui::elements::Empty;
-use warpui::platform::WindowStyle;
-use warpui::{AddSingletonModel, App, Element, TypedActionView, View, ViewHandle, WindowId};
-use warpui_extras::user_preferences;
+use warpui::{AddSingletonModel, App, Element, TypedActionView, View};
 
 use super::*;
-use crate::auth::AuthManager;
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::CloudObject;
-use crate::network::NetworkStatus;
-use crate::server::cloud_objects::update_manager::UpdateManager;
-use crate::server::server_api::ServerApiProvider;
-use crate::server::server_api::team::{MockTeamClient, TeamClient};
-use crate::server::sync_queue::SyncQueue;
-use crate::server::telemetry::context_provider::AppTelemetryContextProvider;
-use crate::settings::{ CodeSettings,
-};
-use crate::system::SystemStats;
-use crate::workspaces::team::{DiscoverableWorkspace, Team};
-use crate::workspaces::team_tester::TeamTesterStatus;
-use crate::workspaces::update_manager::TeamUpdateManager;
+use crate::server::server_api::team::MockTeamClient;
 use crate::workspaces::user_workspaces::UserWorkspaces;
 use crate::workspaces::workspace::Workspace;
 

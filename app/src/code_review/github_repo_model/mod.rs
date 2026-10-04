@@ -8,8 +8,6 @@ pub use local::LocalGitHubRepoModel;
 mod remote;
 pub use remote::RemoteGitHubRepoModel;
 
-#[cfg(all(test, feature = "local_fs"))]
-use crate::code_review::git_repo_model::GitRepoStatusModel;
 use crate::util::git::{PrInfo, RepositoryInfo};
 
 #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]

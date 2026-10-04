@@ -1,10 +1,8 @@
 
-use base64::engine::general_purpose::STANDARD as BASE64;
 use chrono::Local;
 use warp_core::command::ExitCode;
 
 use super::*;
-use crate::terminal::model::ansi::{CompletionMetadata, Handler};
 use crate::terminal::model::block::BlockId;
 use crate::terminal::model::bootstrap::BootstrapStage;
 

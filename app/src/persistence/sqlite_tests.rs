@@ -1,19 +1,11 @@
 use std::ffi::OsStr;
 use std::path::PathBuf;
 
-use ai::workspace::WorkspaceMetadata;
-use chrono::Utc;
 
 use super::{
     app_database_file_path, database_file_path_for_scope,
-    decode_path, encode_path,
-};
-use crate::app_state::{
-    LeafContents, LeafSnapshot, PaneNodeSnapshot, TabSnapshot, TerminalPaneSnapshot, WindowSnapshot,
 };
 use crate::persistence::PersistenceScope;
-use crate::tab::SelectedTabColor;
-use crate::terminal::ShellLaunchData;
 
 #[test]
 fn app_scope_database_path_matches_app_database_path() {

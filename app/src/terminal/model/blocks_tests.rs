@@ -6,7 +6,6 @@ use warpui::units::IntoLines;
 
 use super::*;
 use crate::settings::TerminalSpacing;
-use crate::terminal::event::Event;
 use crate::terminal::model::ansi::Handler;
 use crate::terminal::model::test_utils::TestBlockListBuilder;
 use crate::terminal::model::test_utils;

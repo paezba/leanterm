@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::iter::once;
 
 use pathfinder_geometry::rect::RectF;
@@ -19,7 +19,7 @@ use crate::context_chips::display_chip::GitLineChanges;
 use crate::pane_group::{PaneId, TerminalPaneId};
 use crate::safe_triangle::SafeTriangle;
 use crate::tab::{ShortcutModifierKind, reveals_shortcut_hints};
-use crate::workspace::tab_group::{TabGroup, TabGroupId};
+use crate::workspace::tab_group::TabGroupId;
 use crate::workspace::tab_settings::VerticalTabsDisplayGranularity;
 
 

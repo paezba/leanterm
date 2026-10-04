@@ -15,10 +15,6 @@ use crate::workspace::view::tests::{
 };
 #[cfg(not(target_family = "wasm"))]
 use crate::workspaces::team::DiscoveryOptions;
-use crate::workspaces::team::TeamMember;
-use crate::workspaces::workspace::{
-    MultiAdminPolicy, Tier,
-};
 
 #[cfg(not(target_family = "wasm"))]
 #[test]

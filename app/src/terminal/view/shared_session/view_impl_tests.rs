@@ -1,16 +1,11 @@
 
-use chrono::Utc;
 use pathfinder_geometry::vector::vec2f;
-use warpui::platform::WindowStyle;
-use warpui::{App, ViewHandle};
+use warpui::App;
 
 use super::*;
-use crate::cloud_object::{Owner, ServerPermissions};
 use crate::context_chips::prompt_type::PromptType;
-use crate::terminal::TerminalView;
 use crate::terminal::view::shared_session::test_utils::terminal_view_for_viewer;
 use crate::terminal::view::{ TerminalAction,};
-use crate::test_util::terminal::initialize_app_for_terminal_view;
 use crate::FeatureFlag;
 
 #[test]

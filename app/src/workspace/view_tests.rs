@@ -53,8 +53,6 @@ use crate::terminal::shared_session::{
 };
 use crate::test_util::settings::initialize_settings_for_tests;
 use crate::undo_close::UndoCloseSettings;
-#[cfg(feature = "local_fs")]
-use crate::user_config::tab_configs_dir;
 #[cfg(windows)]
 use crate::util::traffic_lights::windows::RendererState;
 use crate::warp_managed_paths_watcher::WarpManagedPathsWatcher;

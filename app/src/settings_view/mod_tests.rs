@@ -1,5 +1,5 @@
 use settings_page::{
-    FilteredPageType, MatchData, PageType, SettingsWidget, search_terms_match,
+    MatchData, SettingsWidget, search_terms_match,
 };
 use warpui::elements::Empty;
 use warpui::{

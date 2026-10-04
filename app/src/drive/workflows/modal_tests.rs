@@ -14,7 +14,6 @@ use crate::server::server_api::team::MockTeamClient;
 use crate::server::server_api::workspace::MockWorkspaceClient;
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
 use crate::test_util::settings::initialize_settings_for_tests;
-use crate::workflows::workflow::Argument;
 
 fn initialize_app(app: &mut App) {
     initialize_settings_for_tests(app);
