@@ -219,15 +219,6 @@ define_settings_group!(InputSettings,
             toml_path: "terminal.input.show_terminal_input_message_bar",
             description: "Whether the terminal input message bar is shown.",
         },
-        // Per-menu custom content heights set by drag-to-resize. Not user-visible.
-        inline_menu_custom_content_heights: InlineMenuCustomContentHeights {
-            type: HashMap<InlineMenuType, f32>,
-            default: HashMap::default(),
-            supported_platforms: SupportedPlatforms::ALL,
-            sync_to_cloud: SyncToCloud::Never,
-            surface: settings::SettingSurfaces::GUI,
-            private: true,
-        },
     ]
 );
 

@@ -58,7 +58,6 @@ pub struct SessionConfigModal {
     autogenerate_worktree_branch_name: bool,
     /// When `false`, the session type pill row is hidden and the session type
     /// defaults to Terminal behind the scenes (used when Oz is disabled).
-    show_session_type_row: bool,
     session_pill_mouse_states: Vec<MouseStateHandle>,
     directory_button_mouse_state: MouseStateHandle,
     worktree_checkbox_mouse_state: MouseStateHandle,
@@ -72,7 +71,7 @@ pub struct SessionConfigModal {
 impl SessionConfigModal {
     pub fn new(ctx: &mut ViewContext<Self>) -> Self {
         let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/"));
-        let session_types = session_config_rendering::visible_session_types(true);
+        let session_types = session_config_rendering::visible_session_types();
 
         let close_button = ctx.add_view(|ctx| {
             ActionButton::new("", NakedTheme)
@@ -108,7 +107,6 @@ impl SessionConfigModal {
             is_git_repo: false,
             enable_worktree: false,
             autogenerate_worktree_branch_name: false,
-            show_session_type_row: true,
             session_pill_mouse_states: pill_mouse_states,
             directory_button_mouse_state: MouseStateHandle::default(),
             worktree_checkbox_mouse_state: MouseStateHandle::default(),
@@ -118,22 +116,6 @@ impl SessionConfigModal {
             close_button,
             submit_button,
         }
-    }
-
-    /// Reconfigures the visible session types based on whether Oz is available.
-    /// Resets the selection to index 0 (the first available type).
-    /// When Oz is disabled, hides the session type row entirely and defaults
-    /// to Terminal behind the scenes.
-    pub fn configure(&mut self, show_oz: bool) {
-        self.show_session_type_row = show_oz;
-        self.session_types = session_config_rendering::visible_session_types(show_oz);
-        self.selected_session_type_index = 0;
-        self.session_pill_mouse_states = self
-            .session_types
-            .iter()
-            .map(|_| MouseStateHandle::default())
-            .collect();
-        self.is_git_repo = is_git_repo(&self.selected_directory);
     }
 
     fn selected_session_type(&self) -> SessionType {
@@ -172,15 +154,9 @@ impl SessionConfigModal {
         .with_weight(Weight::Semibold)
         .finish();
 
-        let subtitle_text = if self.show_session_type_row {
-            "Set up a reusable starting point for your tabs. \
-             Pick a repo, choose a session type, and optionally attach a worktree. \
-             Use it whenever you want to open a new tab with this setup."
-        } else {
-            "Set up a reusable starting point for your tabs. \
+        let subtitle_text = "Set up a reusable starting point for your tabs. \
              Pick a repo, optionally attach a worktree, and \
-             use it whenever you want to open a new tab with this setup."
-        };
+             use it whenever you want to open a new tab with this setup.";
         let subtitle =
             FormattedTextElement::from_str(subtitle_text, appearance.ui_font_family(), 14.)
                 .with_color(blended_colors::text_sub(theme, theme.background()))
@@ -268,14 +244,6 @@ impl View for SessionConfigModal {
         let mut form = Flex::column()
             .with_cross_axis_alignment(CrossAxisAlignment::Stretch)
             .with_child(self.render_header(appearance));
-
-        if self.show_session_type_row {
-            form.add_child(
-                Container::new(self.render_session_type_section(appearance))
-                    .with_margin_top(SECTION_GAP)
-                    .finish(),
-            );
-        }
 
         form.add_child(
             Container::new(self.render_directory_section(appearance))

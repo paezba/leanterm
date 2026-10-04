@@ -370,7 +370,7 @@ use crate::window_settings::{WindowSettings, WindowSettingsChangedEvent, ZoomLev
 use crate::workflows::manager::{WorkflowManager, WorkflowOpenSource};
 use crate::workflows::workflow::Workflow;
 use crate::workflows::{
-    AIWorkflowOrigin, CloudWorkflow, WorkflowSelectionSource, WorkflowSource, WorkflowType,
+    CloudWorkflow, WorkflowSelectionSource, WorkflowSource, WorkflowType,
     WorkflowViewMode,
 };
 use crate::workspace::action::CommandSearchOptions;
@@ -2143,15 +2143,6 @@ impl Workspace {
     }
 
     pub(crate) fn show_session_config_modal(&mut self, ctx: &mut ViewContext<Self>) {
-        // Configure the modal to hide Oz when AI is disabled.
-        let show_oz = false;
-        self.session_config_modal.view.update(ctx, |modal, ctx| {
-            modal.body().update(ctx, |body, ctx| {
-                body.configure(show_oz);
-                ctx.notify();
-            });
-        });
-
         self.session_config_modal.open();
         self.current_workspace_state.is_session_config_modal_open = true;
         self.pending_session_config_tab_config_chip = self.pending_onboarding_intention.is_some();

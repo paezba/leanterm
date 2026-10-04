@@ -136,12 +136,9 @@ fn create_block<'a>(
         user: block.shell_host.as_ref().map(|host| host.user.as_str()),
         host: block.shell_host.as_ref().map(|host| host.hostname.as_str()),
         prompt_snapshot: block.prompt_snapshot.as_ref(),
-        ai_metadata: block.ai_metadata.as_ref(),
+        ai_metadata: None,
         is_local: Some(is_local),
-        agent_view_visibility: block
-            .agent_view_visibility
-            .as_ref()
-            .and_then(|v| serde_json::to_string(v).ok()),
+        agent_view_visibility: None,
     }
 }
 

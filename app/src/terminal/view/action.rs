@@ -419,11 +419,7 @@ impl fmt::Debug for TerminalAction {
             OpenGridLink(_) => f.write_str("OpenGridLink"),
             OpenRichContentLink(_) => f.write_str("OpenRichContentLink"),
             ToggleGridSecret { show_secret, .. } => write!(f, "ToggleGridSecret {show_secret:?}"),
-            ToggleRichContentSecret { show_secret, .. } => {
-                write!(f, "ToggleRichContentSecret {show_secret:?}")
-            }
             CopyGridSecret(_) => f.write_str("CopyGridSecret"),
-            CopyRichContentSecret(_) => f.write_str("CopyRichContentSecret"),
             ShowInFileExplorer(_) => f.write_str("ShowInFileExplorer"),
             OpenFileInWarp(_) => f.write_str("OpenFileInWarp"),
             #[cfg(feature = "local_fs")]

@@ -188,8 +188,7 @@ pub struct HoaOnboardingFlow {
 
 impl HoaOnboardingFlow {
     pub fn new(ctx: &mut ViewContext<Self>) -> Self {
-        let show_oz = false;
-        let session_types = session_config_rendering::visible_session_types(show_oz);
+        let session_types = session_config_rendering::visible_session_types();
         let pill_mouse_states: Vec<_> = session_types
             .iter()
             .map(|_| MouseStateHandle::default())

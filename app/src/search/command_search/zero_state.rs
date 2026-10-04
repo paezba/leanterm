@@ -41,12 +41,6 @@ pub struct CommandSearchZeroStateView {
 
 impl CommandSearchZeroStateView {
     pub fn new(ctx: &mut ViewContext<Self>) -> Self {
-        ctx.subscribe_to_model(&AISettings::handle(ctx), |_, _, event, ctx| {
-            if let AISettingsChangedEvent::IsAnyAIEnabled { .. } = event {
-                ctx.notify();
-            }
-        });
-
         ctx.subscribe_to_model(&WarpDriveSettings::handle(ctx), |_, _, event, ctx| {
             if let WarpDriveSettingsChangedEvent::EnableWarpDrive { .. } = event {
                 ctx.notify();

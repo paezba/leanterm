@@ -387,6 +387,17 @@ impl DriveIndexAction {
                 cloud_object_type_and_id: None,
                 initial_folder_id,
             },
+            (
+                _,
+                DriveObjectType::Notebook { .. }
+                | DriveObjectType::EnvVarCollection
+                | DriveObjectType::Workflow
+                | DriveObjectType::AgentModeWorkflow,
+            ) => DriveIndexAction::CreateObject {
+                object_type,
+                space,
+                initial_folder_id,
+            },
         }
     }
 

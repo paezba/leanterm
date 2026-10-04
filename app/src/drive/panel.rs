@@ -551,14 +551,6 @@ impl DrivePanel {
         ctx.notify();
     }
 
-    pub fn open_ai_fact_collection_pane(&mut self, ctx: &mut ViewContext<Self>) {
-        ctx.emit(DrivePanelEvent::OpenAIFactCollection);
-    }
-
-    pub fn open_mcp_server_collection_pane(&mut self, ctx: &mut ViewContext<Self>) {
-        ctx.emit(DrivePanelEvent::OpenMCPServerCollection);
-    }
-
     /// Recomputes and initializes the section states for the WD Index. This is needed after
     /// we directly change anything about the state of the index (such as folders being open/closed).
     ///

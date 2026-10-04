@@ -1981,35 +1981,7 @@ impl Iterator for ViewportIter<'_> {
                 }
             }
 
-            match item {
-                BlockHeightItem::RichContent(RichContentItem {
-                    agent_view_conversation_id: fullscreen_agent_view_conversation_id,
-                    ..
-                }) => match self.transcript_scope {
-                    TranscriptScope::Unfiltered => return next,
-                    TranscriptScope::Conversation(conversation_id) => {
-                        // If currently in a fullscreen agent view, only return this item if its
-                        // conversation id matches that of the active agent view.
-                        if fullscreen_agent_view_conversation_id
-                            .is_some_and(|id| id == *conversation_id)
-                        {
-                            return next;
-                        }
-                    }
-                    TranscriptScope::Terminal => {
-                        // If not in a fullscreen agent view, return the item only if it 'belongs'
-                        // to the terminal mode (represented as no `ai_conversation_id`).
-                        if fullscreen_agent_view_conversation_id.is_none() {
-                            return next;
-                        }
-                    }
-                },
-                _ => {
-                    if !FeatureFlag::AgentView.is_enabled() || block_height.as_f64() > 0. {
-                        return next;
-                    }
-                }
-            }
+            return next;
         }
     }
 }

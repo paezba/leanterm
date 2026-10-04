@@ -250,7 +250,6 @@ struct StartupConfig {
     input_replica_id: ReplicaId,
     universal_developer_input_context: UniversalDeveloperInputContext,
     lifetime: Lifetime,
-    selected_model_id: String,
     share_with_team_uid: Option<crate::server::ids::ServerId>,
 }
 
@@ -502,11 +501,6 @@ impl Network {
                 num_cols: size_info.columns(),
             }
         };
-        let selected_model_id: String = crate::ai::llms::LLMPreferences::as_ref(ctx)
-            .get_active_base_model_for_team_uid(team_uid, ctx, Some(terminal_view_id))
-            .id
-            .clone()
-            .into();
         let startup_retry = StartupRetryState::new(startup_max_attempts(&source));
         let startup_config = StartupConfig {
             scrollback: scrollback.clone(),
@@ -515,7 +509,6 @@ impl Network {
             input_replica_id,
             universal_developer_input_context: universal_developer_input_context.clone(),
             lifetime,
-            selected_model_id,
             share_with_team_uid: team_uid,
         };
 
@@ -952,15 +945,12 @@ impl Network {
                         init_block_id: config.init_block_id.into(),
                         input_replica_id: config.input_replica_id.into(),
                         telemetry_context: Some(TelemetryContext(telemetry_context().as_value())),
-                        universal_developer_input_context: Some(UniversalDeveloperInputContext {
-                            selected_model: Some(SelectedAgentModel::new(config.selected_model_id)),
-                            ..universal_developer_input_context
-                        }),
+                        universal_developer_input_context: Some(universal_developer_input_context),
                         lifetime: config.lifetime,
                         source_type: network.source.source_type.clone(),
                         source_task_id: network.source.source_task_id.clone(),
                         feature_support: FeatureSupport {
-                            supports_agent_view: FeatureFlag::AgentView.is_enabled(),
+                            supports_agent_view: false,
                             supports_full_role: true,
                             supports_full_role_for_real: true,
                         },
@@ -1238,7 +1228,7 @@ impl Network {
                                 latest_block_id: latest_block_id.into(),
                                 selection: network.cached_latest_state.selection.clone(),
                                 feature_support: FeatureSupport {
-                                    supports_agent_view: FeatureFlag::AgentView.is_enabled(),
+                                    supports_agent_view: false,
                                     supports_full_role: true,
                                     supports_full_role_for_real: true,
                                 },
