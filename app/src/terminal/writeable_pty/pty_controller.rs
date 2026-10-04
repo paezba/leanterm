@@ -493,9 +493,6 @@ impl<T: EventLoopSender> PtyController<T> {
 
             // Explicitly start the block now that the command is executed.
             let outcome = match source {
-                CommandExecutionSource::AI { metadata } => {
-                    model.start_command_execution_with_ai_metadata(metadata)
-                }
                 CommandExecutionSource::SharedSession {
                     participant_id,
                     ai_metadata,
