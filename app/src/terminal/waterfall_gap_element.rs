@@ -58,7 +58,6 @@ pub struct WaterfallGapElement {
     origin: Option<warpui::elements::Point>,
     size: Option<Vector2F>,
 
-    inline_menu_positioner: ModelHandle<InlineMenuPositioner>,
 }
 
 impl WaterfallGapElement {
@@ -71,7 +70,6 @@ impl WaterfallGapElement {
         line_height_px: Pixels,
         scroll_top_px: Pixels,
         pane_height_px: Pixels,
-        inline_menu_positioner: ModelHandle<InlineMenuPositioner>,
     ) -> Self {
         Self {
             block_list_element,
@@ -86,7 +84,6 @@ impl WaterfallGapElement {
             child_max_z_index: None,
             scroll_top_px,
             pane_height_px,
-            inline_menu_positioner,
         }
     }
 
@@ -146,22 +143,12 @@ impl Element for WaterfallGapElement {
         let input_size = self.input_element.layout(constraint, ctx, app);
         self.laid_out_input_size_px = Some(input_size);
 
-        // See the doc comments on `blocklist_top_inset_when_in_waterfall_mode` method for context.
-        //
-        // Basically, when the inline menu is open, the visible height of the blocklist should be
-        // reduced by the height of the inline menu.
-        let blocklist_inset_accounting_for_inline_menu = self
-            .inline_menu_positioner
-            .as_ref(app)
-            .blocklist_top_inset_when_in_waterfall_mode(app);
-
         // Calculate the height after the scroll position of the blocklist without
         // the gap - this is the height the block list element would like to take
         // up in the viewport.
         let visible_block_list_height_px = self.block_list_height_px
             - self.scroll_top_px
-            - self.gap_size_px.y().into_pixels()
-            - blocklist_inset_accounting_for_inline_menu.unwrap_or_default();
+            - self.gap_size_px.y().into_pixels();
 
         // Calculate the max height it could take up, which is a function of the pane height
         // and input size.
@@ -272,19 +259,7 @@ impl ScrollableElement for WaterfallGapElement {
         // height of the inline menu, which effectively 'slides' the blocklist upwards, keeping the
         // input position fixed.
         //
-        // This 'scrolling'/'slide' effect is applied at _paint_ time - the height of the inline
-        // menu is _not_ factored into the total blocklist height. However, the height of the menu
-        // _is_ factored into the laid out input size. Thus, when calculating the total scrollable
-        // distance (total_size), we need to subtract the inline menu height (which is fixed).
-        //
-        // Basically, for the purposes of scroll logic, we "pretend" that the inline menu is not
-        // there, and things work as intended.
-        let total_size = self.block_list_height_px + self.laid_out_input_size_px?.y().into_pixels()
-            - self
-                .inline_menu_positioner
-                .as_ref(app)
-                .blocklist_top_inset_when_in_waterfall_mode(app)
-                .unwrap_or_default();
+        let total_size = self.block_list_height_px + self.laid_out_input_size_px?.y().into_pixels();
         Some(ScrollData {
             scroll_start: self.scroll_top_px,
             visible_px: self.size?.y().into_pixels(),

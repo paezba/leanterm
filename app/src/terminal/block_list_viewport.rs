@@ -428,8 +428,6 @@ pub struct ViewportState<'a> {
 
     /// Autoscroll behavior for rich content blocks.
     rich_block_autoscroll_behavior: AutoscrollBehavior,
-
-    inline_menu_positioner: ModelHandle<InlineMenuPositioner>,
 }
 
 impl<'a> ViewportState<'a> {
@@ -445,7 +443,6 @@ impl<'a> ViewportState<'a> {
         blocklist_element_size: Vector2F,
         input_size: Vector2F,
         rich_block_autoscroll_behavior: AutoscrollBehavior,
-        inline_menu_positioner: ModelHandle<InlineMenuPositioner>,
     ) -> Self {
         Self {
             block_list,
@@ -458,7 +455,6 @@ impl<'a> ViewportState<'a> {
             blocklist_element_size,
             input_size,
             rich_block_autoscroll_behavior,
-            inline_menu_positioner,
         }
     }
 
@@ -609,22 +605,6 @@ impl<'a> ViewportState<'a> {
             if content_element_lines > total_block_height {
                 adjustment += (content_element_lines - total_block_height)
                     .to_pixels(self.size_info.cell_height_px());
-            }
-        }
-
-        if self.block_list.active_gap().is_some() && !self.is_input_rendered_at_bottom_of_pane(app)
-        {
-            // Apply a paint-time translation to the blocklist that accounts for inline menu
-            // visibility/positioning, effectively "sliding" the blocklist contents upwards to
-            // preserve the current input position.
-            //
-            // See doc comments on blocklist_top_inset_when_in_waterfall_mode for context.
-            if let Some(blocklist_inset) = self
-                .inline_menu_positioner
-                .as_ref(app)
-                .blocklist_top_inset_when_in_waterfall_mode(app)
-            {
-                adjustment -= blocklist_inset;
             }
         }
 
@@ -1220,24 +1200,14 @@ impl<'a> ViewportState<'a> {
                     .summary()
                     .height
                     .to_pixels(self.size_info.cell_height_px());
-                let (gap_height_px, blocklist_inset_px) =
-                    if let Some(gap) = self.block_list.active_gap() {
-                        (
-                            Some(gap.height().to_pixels(self.size_info.cell_height_px())),
-                            // See doc comment on `blocklist_top_inset_when_in_waterfall_mode`
-                            // for context.
-                            self.inline_menu_positioner
-                                .as_ref(app)
-                                .blocklist_top_inset_when_in_waterfall_mode(app),
-                        )
-                    } else {
-                        (None, None)
-                    };
+                let gap_height_px = self
+                    .block_list
+                    .active_gap()
+                    .map(|gap| gap.height().to_pixels(self.size_info.cell_height_px()));
                 let total_block_height_without_gap_px =
                     total_block_height_px - gap_height_px.unwrap_or_default();
                 let visible_block_height_px = total_block_height_without_gap_px
-                    - current_scroll_top_px
-                    - blocklist_inset_px.unwrap_or_default();
+                    - current_scroll_top_px;
                 let input_height_px = Pixels::new(self.input_size.y());
                 let max_blocklist_element_height =
                     self.size_info.pane_height_px() - input_height_px;

@@ -741,7 +741,6 @@ pub struct BlockListElement {
     #[cfg(feature = "voice_input")]
     voice_input_toggle_key_code: Option<KeyCode>,
 
-    inline_menu_positioner: ModelHandle<InlineMenuPositioner>,
 }
 
 #[derive(Debug)]
@@ -885,7 +884,6 @@ impl BlockListElement {
         block_banner: Option<Box<dyn Element>>,
         shared_session_banners: SharedSessionBanners,
         input_size_at_last_frame: Vector2F,
-        inline_menu_positioner: ModelHandle<InlineMenuPositioner>,
         cursor_hint_text_element: Option<Box<dyn Element>>,
     ) -> Self {
         let highlighted_url = terminal_view_render_context
@@ -969,7 +967,6 @@ impl BlockListElement {
             block_footer_elements: HashMap::new(),
             cursor_hint_text_element,
             cli_subagent_views,
-            inline_menu_positioner,
             #[cfg(feature = "voice_input")]
             voice_input_toggle_key_code: None,
         }
@@ -1021,12 +1018,7 @@ impl BlockListElement {
             self.size
                 .expect("Cannot construct ViewportState prior to element layout."),
             self.input_size_at_last_frame,
-            if self.ai_render_context.borrow().has_active_conversation() {
-                AutoscrollBehavior::WhenScrolledToEnd
-            } else {
-                AutoscrollBehavior::Always
-            },
-            self.inline_menu_positioner.clone(),
+            AutoscrollBehavior::Always,
         )
     }
 
@@ -3172,12 +3164,7 @@ impl Element for BlockListElement {
                     self.horizontal_clipped_scroll_state.clone(),
                     constraint.max,
                     self.input_size_at_last_frame,
-                    if self.ai_render_context.borrow().has_active_conversation() {
-                        AutoscrollBehavior::WhenScrolledToEnd
-                    } else {
-                        AutoscrollBehavior::Always
-                    },
-                    self.inline_menu_positioner.clone(),
+                    AutoscrollBehavior::Always,
                 )
             };
         }
