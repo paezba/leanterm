@@ -10057,51 +10057,6 @@ impl TypedActionView for Input {
                 };
                 self.select_slash_command(command, SlashCommandTrigger::keybinding(), ctx);
             }
-            InputAction::StartNewAgentConversation { origin } => {
-                // Block starting a new conversation if the agent is in control of a long-running command
-                if !self
-                    .ai_context_model
-                    .as_ref(ctx)
-                    .can_start_new_conversation()
-                {
-                    let window_id = ctx.window_id();
-                    ToastStack::handle(ctx).update(ctx, |toast_stack, ctx| {
-                        toast_stack.add_ephemeral_toast(
-                            DismissibleToast::error(
-                                "Cannot start a new conversation while agent is monitoring a command.".to_string()
-                            ),
-                            window_id,
-                            ctx,
-                        );
-                    });
-                    return;
-                }
-
-                if FeatureFlag::AgentView.is_enabled() {
-                    if let AgentViewEntryOrigin::Keybinding(keystroke) = origin {
-                        let should_start_new_conversation =
-                            self.agent_view_controller.update(ctx, |controller, ctx| {
-                                controller.should_start_new_conversation_for_keystroke(
-                                    keystroke.clone(),
-                                    ctx,
-                                )
-                            });
-                        if !should_start_new_conversation {
-                            return;
-                        }
-                    }
-                    ctx.emit(Event::EnterAgentView {
-                        initial_prompt: None,
-                        conversation_id: None,
-                        origin: origin.clone(),
-                    });
-                } else if self.should_show_universal_developer_input(ctx) {
-                    // Clear follow-up state (start a fresh conversation)
-                    self.ai_context_model.update(ctx, |ai_context_model, ctx| {
-                        ctx,
-                    );
-                }
-            }
             InputAction::OpenInlineHistoryMenu => {
                 self.open_inline_history_menu(ctx);
             }
