@@ -10219,12 +10219,6 @@ impl TerminalView {
         position: Vector2F,
         ctx: &mut ViewContext<Self>,
     ) {
-        // Clear any active text selections in CLI subagent views, since a new selection
-        // is starting on the underlying block list.
-        for subagent_view in self.cli_subagent_views.values() {
-            subagent_view.update(ctx, |view, ctx| view.clear_all_selections(ctx));
-        }
-
         self.block_text_selection_start_position = Some(position);
 
         self.model
@@ -10237,59 +10231,6 @@ impl TerminalView {
             ctx.notify();
             return;
         }
-
-        let is_inverted_blocklist = self.is_inverted_blocklist(ctx);
-        let terminal_model = self.model.lock();
-        let block_list = terminal_model.block_list();
-        let mut block_cursor = block_list
-            .block_heights()
-            .cursor::<BlockHeight, BlockHeightSummary>();
-        block_cursor.seek(&BlockHeight::from(0.), SeekBias::Right);
-
-        let selection_start_total_index = {
-            let mut click_cursor = block_list
-                .block_heights()
-                .cursor::<BlockHeight, BlockHeightSummary>();
-            click_cursor.seek(&BlockHeight::from(point.row), SeekBias::Right);
-            click_cursor.start().total_count
-        };
-
-        // Loop over each item in the block list. If it's an AI block which doesn't include the point
-        // where the user clicked, begin a selection at either the maximum (bottom right) or minimum
-        // (top left) point in the block. This is needed to support selections across command blocks
-        // and AI blocks since SelectableArea can't start selections outside of its bounds on its own.
-        if let Some(active_window_id) = ctx.windows().active_window() {
-            while let Some(block_height_item) = block_cursor.item() {
-                if let BlockHeightItem::RichContent(RichContentItem { view_id, .. }) =
-                    block_height_item
-                    && let Some(ai_block) = ctx.view_with_id::<AIBlock>(active_window_id, *view_id)
-                {
-                    let x_pos = match selection_type {
-                        SelectionType::Rect => Some(position.x()),
-                        _ => None,
-                    };
-
-                    let ai_block_view = ctx.view(&ai_block);
-                    let ai_block_total_index = block_cursor.start().total_count;
-
-                    if (ai_block_total_index < selection_start_total_index
-                        && !is_inverted_blocklist)
-                        || (ai_block_total_index > selection_start_total_index
-                            && is_inverted_blocklist)
-                    {
-                        ai_block_view.start_selection_at_max_point(selection_type, x_pos);
-                    } else if (ai_block_total_index > selection_start_total_index
-                        && !is_inverted_blocklist)
-                        || (ai_block_total_index < selection_start_total_index
-                            && is_inverted_blocklist)
-                    {
-                        ai_block_view.start_selection_at_min_point(selection_type, x_pos);
-                    }
-                }
-
-                block_cursor.next();
-            }
-        };
 
         ctx.notify();
     }
@@ -10363,41 +10304,7 @@ impl TerminalView {
     }
 
     fn clear_buffer(&mut self, ctx: &mut ViewContext<Self>) {
-        let agent_view_state = self.agent_view_controller.as_ref(ctx).agent_view_state();
-        let is_fullscreen_agent_view = agent_view_state.is_fullscreen();
-        let is_ambient_agent = self.is_ambient_agent_session(ctx);
-
-        // When in the modal agent view, "clear buffer" has special semantics.
-        // Try to clear it specially, but if it wasn't successful, then clear normally.
-        if is_fullscreen_agent_view && !is_ambient_agent && self.try_clear_buffer_in_agent_view(ctx)
-        {
-            ctx.notify();
-            return;
-        }
-
-        // Don't clear the buffer if the agent is monitoring a long running command
-        let is_agent_monitoring = self
-            .model
-            .lock()
-            .block_list()
-            .active_block()
-            .is_agent_monitoring();
-        let is_agent_driving_command = self
-            .model
-            .lock()
-            .block_list()
-            .active_block()
-            .is_agent_driving_command();
-
-        if is_agent_monitoring || is_agent_driving_command {
-            return;
-        }
-
         self.clear_selected_blocks(ctx);
-
-        self.ai_context_model.update(ctx, |context_model, ctx| {
-            context_model.reset_context_to_default(ctx);
-        });
 
         // Focus the appropriate part of the terminal view (possibly a
         // long-running block, possibly the input field) depending on its
@@ -10414,17 +10321,7 @@ impl TerminalView {
         self.block_list_mouse_states.filter_mouse_states.clear();
         self.bookmarked_blocks.clear();
 
-        // Clean up the active AI block if there is one. This MUST be done before
-        // clearing the rich content views.
-        if let Some(ai_block_handle) = self.active_ai_block(ctx) {
-            ai_block_handle.update(ctx, |ai_block, ctx| {
-                ai_block.cleanup_block(ctx);
-            });
-        }
-
         self.rich_content_views.clear();
-
-        self.update_input_prompt_suggestions_banner_state(ctx);
 
         // Clear screen will remove all blocks except the started block so insert
         // the label mouse state here to make sure this is handled.
@@ -10446,13 +10343,11 @@ impl TerminalView {
             self.set_current_state(TerminalViewState::Normal, ctx);
         }
 
-        self.abort_prompt_and_code_suggestions(ctx);
         self.input.update(ctx, |input, ctx| {
             input
                 .editor()
                 .update(ctx, |editor, ctx| editor.clear_autosuggestion(ctx))
         });
-        self.clear_prompt_suggestions(ctx);
 
         // Note: we set this here since clear_screen at the TerminalModel and BlockList levels is
         // called much more often (on every new session/block it seems), and we only want to track explicit
@@ -10470,12 +10365,6 @@ impl TerminalView {
             self.warpify_state
                 .add_subshell_separator(info, self.model.clone(), ctx);
         }
-
-        // When we clear the blocklist, the user can't see past AI exchanges anymore, so these conversations should no longer
-        // appear active for the terminal view anymore.
-        BlocklistAIHistoryModel::handle(ctx).update(ctx, |ai_history_model, ctx| {
-            ai_history_model.clear_conversations_for_terminal_surface(self.view_id, ctx)
-        });
 
         // No more restored blocks, since we just cleared the buffer
         log::info!("Clearing buffer.  resetting any_session_contains_restored_remote_blocks");
@@ -10560,41 +10449,6 @@ impl TerminalView {
         let model = self.model.lock();
         let block_list = model.block_list();
 
-        let ai_history_model = BlocklistAIHistoryModel::as_ref(app);
-
-        // Check if the active block is a rich content block.
-        if let Some(ai_block_handle) = self.active_ai_block(app) {
-            let ai_block = ai_block_handle.as_ref(app);
-            if let Some(prompt) = ai_history_model
-                .conversation(&ai_block.conversation_id())
-                .and_then(|conversation| conversation.latest_user_query())
-            {
-                return CommandContext::RunningAIBlock {
-                    prompt: prompt.to_owned(),
-                };
-            }
-        }
-
-        // Check if the last non-hidden block is a rich content block.
-        let block_index = block_list.last_non_hidden_block_by_index();
-        if let Some((_, content)) =
-            block_list.last_non_hidden_rich_content_block_after_block(block_index)
-            && let Some(rich_content) = self.rich_content_views.last()
-            && rich_content.view_id() == content.view_id
-            && let Some(ai_metadata) = rich_content.ai_block_metadata()
-        {
-            let ai_block = ai_metadata.ai_block_handle.as_ref(app);
-            if let Some(prompt) = ai_history_model
-                .conversation(&ai_block.conversation_id())
-                .and_then(|conversation| conversation.latest_user_query())
-            {
-                return CommandContext::LastRunAIBlock {
-                    prompt: prompt.to_owned(),
-                };
-            }
-        }
-
-        // Fall back to existing command context logic for terminal blocks
         let active_block = block_list.active_block();
         let last_block = block_list.last_non_hidden_block();
 
@@ -10999,14 +10853,11 @@ impl TerminalView {
             ctx.notify();
         });
 
-        // In AI input mode, block selection is used to attach blocks as context. To allow users to
-        // submit queries quickly, we don't want to divert the focus away from the input box.
-        //
-        // In shell mode, selecting a block should focus the terminal so blocklist navigation keeps
-        // working, unless the user has opted to preserve input focus on block selection.
+        // Selecting a block should focus the terminal so blocklist navigation keeps working,
+        // unless the user has opted to preserve input focus on block selection.
         let preserve_input_focus =
             *BlockListSettings::as_ref(ctx).preserve_input_focus_on_block_selection;
-        if !self.ai_input_model.as_ref(ctx).is_ai_input_enabled() && !preserve_input_focus {
+        if !preserve_input_focus {
             self.focus_terminal(ctx);
         }
 
@@ -11023,11 +10874,6 @@ impl TerminalView {
     fn select_less_recent_block(&mut self, is_shift_down: bool, ctx: &mut ViewContext<Self>) {
         if self.is_context_menu_open() {
             self.close_context_menu(ctx, true);
-        }
-
-        if !is_shift_down && self.should_use_agent_transcript_navigation(ctx) {
-            self.navigate_agent_transcript(AgentTranscriptNavigationDirection::Previous, ctx);
-            return;
         }
 
         if let Some(selected_block_index) = self.selected_blocks.tail() {
@@ -11083,11 +10929,6 @@ impl TerminalView {
     ) {
         if self.is_context_menu_open() {
             self.close_context_menu(ctx, true);
-        }
-
-        if !is_shift_down && self.should_use_agent_transcript_navigation(ctx) {
-            self.navigate_agent_transcript(AgentTranscriptNavigationDirection::Next, ctx);
-            return;
         }
 
         let input_mode = *InputModeSettings::as_ref(ctx).input_mode.value();
@@ -11213,9 +11054,6 @@ impl TerminalView {
         block_index: BlockIndex,
         ctx: &mut ViewContext<Self>,
     ) {
-        self.agent_transcript_selection =
-            Some(AgentTranscriptNavigableItem::ShellBlock(block_index));
-        self.sync_agent_transcript_navigation_target(ctx);
         self.change_block_selections(
             |selected_blocks| {
                 selected_blocks.reset_to_single(block_index);
@@ -11226,8 +11064,6 @@ impl TerminalView {
     }
 
     fn clear_selected_blocks(&mut self, ctx: &mut ViewContext<Self>) {
-        self.agent_transcript_selection = None;
-        self.sync_agent_transcript_navigation_target(ctx);
         self.change_block_selections(
             |selected_blocks| {
                 selected_blocks.reset();
@@ -11302,29 +11138,10 @@ impl TerminalView {
             self.model.lock().block_list_mut().clear_selection();
         }
 
-        // Clear all selected text within CLI subagent views,
-        // except for the view with a matching view ID.
-        for subagent_view in self.cli_subagent_views.values() {
-            if exempt_rich_content_view_id.is_some_and(|view_id| subagent_view.id() == view_id) {
-                continue;
-            }
-            subagent_view.update(ctx, |view, ctx| view.clear_all_selections(ctx));
-        }
-
         // Clear all selected text within rich content block view sub-hierarchies,
         // except for the rich content block with a matching view ID.
         for rich_content in self.rich_content_views.iter() {
             match rich_content.metadata() {
-                Some(RichContentMetadata::AIBlock(ai_metadata)) => {
-                    if exempt_rich_content_view_id
-                        .is_some_and(|view_id| ai_metadata.ai_block_handle.id() == view_id)
-                    {
-                        continue;
-                    }
-                    ai_metadata
-                        .ai_block_handle
-                        .update(ctx, |ai_block, ctx| ai_block.clear_all_selections(ctx));
-                }
                 Some(RichContentMetadata::EnvVarCollectionBlock {
                     env_var_collection_block_handle,
                     ..
@@ -11360,17 +11177,8 @@ impl TerminalView {
     }
 
     fn clear_selections_when_shell_mode(&mut self, ctx: &mut ViewContext<Self>) {
-        // Don't clear selected blocks or text in AI mode because those are context blocks.
-        //
-        // When `FeatureFlag::AgentView` is enabled, blocks are attachable as AI context in terminal
-        // mode. Selections are preserved so they can be attached to the query when entering the
-        // agent view.
-        if !self.ai_input_model.as_ref(ctx).is_ai_input_enabled()
-            && !FeatureFlag::AgentView.is_enabled()
-        {
-            self.clear_selected_blocks(ctx);
-            self.clear_selected_text(ctx);
-        }
+        self.clear_selected_blocks(ctx);
+        self.clear_selected_text(ctx);
 
         self.focus_input_box(ctx);
         ctx.notify();
@@ -11387,32 +11195,13 @@ impl TerminalView {
         &mut self,
         ctx: &mut ViewContext<Self>,
     ) {
-        // Don't clear selected blocks or text in AI mode because those are context blocks.
-        //
-        // When `FeatureFlag::AgentView` is enabled, blocks are attachable as AI context in terminal
-        // mode. Selections are preserved so they can be attached to the query when entering the
-        // agent view.
-        if !self.ai_input_model.as_ref(ctx).is_ai_input_enabled()
-            && !FeatureFlag::AgentView.is_enabled()
-        {
-            self.clear_selected_blocks(ctx);
-            self.clear_selected_text(ctx);
-        }
+        self.clear_selected_blocks(ctx);
+        self.clear_selected_text(ctx);
         ctx.notify();
     }
 
     fn focus_input_box(&mut self, ctx: &mut ViewContext<Self>) {
-        // Only clear selected blocks and text if we're not in AI mode since in AI mode we don't want to clear
-        // the selected blocks or text (context) when we focus the input.
-        //
-        // When `FeatureFlag::AgentView` is enabled, blocks are attachable as AI context in terminal
-        // mode. Selections are preserved so they can be attached to the query when entering the
-        // agent view.
-        if !self.ai_render_context.borrow().is_ai_input_enabled
-            && !FeatureFlag::AgentView.is_enabled()
-        {
-            self.clear_selected_blocks(ctx);
-        }
+        self.clear_selected_blocks(ctx);
 
         self.update_find_selection(ctx);
         ctx.focus(&self.input);
@@ -11435,21 +11224,10 @@ impl TerminalView {
         &self,
         ctx: &AppContext,
     ) -> Option<&ViewHandle<EnvVarCollectionBlock>> {
-        if FeatureFlag::AgentView.is_enabled() {
-            let visible_conversation_id = self
-                .agent_view_controller
-                .as_ref(ctx)
-                .agent_view_state()
-                .active_conversation_id();
-            let last_visible_block = self
-                .rich_content_views
-                .iter()
-                .rev()
-                .find(|rc| rc.agent_view_conversation_id() == visible_conversation_id)?;
-
+        self.rich_content_views.iter().find_map(|rich_content| {
             if let Some(RichContentMetadata::EnvVarCollectionBlock {
                 env_var_collection_block_handle,
-            }) = last_visible_block.metadata()
+            }) = rich_content.metadata()
             {
                 return (!env_var_collection_block_handle
                     .as_ref(ctx)
@@ -11457,20 +11235,7 @@ impl TerminalView {
                 .then_some(env_var_collection_block_handle);
             }
             None
-        } else {
-            self.rich_content_views.iter().find_map(|rich_content| {
-                if let Some(RichContentMetadata::EnvVarCollectionBlock {
-                    env_var_collection_block_handle,
-                }) = rich_content.metadata()
-                {
-                    return (!env_var_collection_block_handle
-                        .as_ref(ctx)
-                        .is_block_completed())
-                    .then_some(env_var_collection_block_handle);
-                }
-                None
-            })
-        }
+        })
     }
 
     /// Examines the local state of the [`TerminalView`] and chooses where best to assign focus.
@@ -11506,12 +11271,6 @@ impl TerminalView {
             return;
         }
 
-        // If the onboarding callout is active, it should win focus so that its displayed
-        // keybindings (enter/delete) actually work.
-        if self.focus_onboarding_callout_if_active(ctx) {
-            return;
-        }
-
         self.last_focus_ts = Some(Local::now().naive_local());
 
         let is_input_visible = {
@@ -11526,25 +11285,20 @@ impl TerminalView {
             let has_bootstrapped = model.block_list().is_bootstrapping_precmd_done();
 
             let has_active_user_terminal_command = block_list.active_block().is_active_and_long_running()
-                && !block_list.active_block().is_agent_in_control()
                 // The only case where terminal can take focus _while_ input is visible is
                 // pre-bootstrap, for example when oh-my-zsh prompts you to update -- at this point
                 // the input is visible but you should still be able to click into the block for the
                 // oh-my-zsh prompt and send input directly to the pty.
                 && (!is_input_visible || !has_bootstrapped);
 
-            let is_shell_mode = !self.ai_input_model.as_ref(ctx).is_ai_input_enabled();
             let are_blocks_selected = !self.selected_blocks.is_empty();
             let is_text_selected = model
                 .selection_to_string(semantic_selection, false, ctx)
                 .filter(|text| !text.is_empty())
                 .is_some();
 
-            // Leave the input box focused when selecting blocks or text as context in AI input
-            // mode so users can quickly submit queries.
-            //
-            // In shell mode, selected blocks/text should focus the terminal so blocklist
-            // navigation continues to work, unless the user has opted to preserve input focus.
+            // Selected blocks/text should focus the terminal so blocklist navigation continues
+            // to work, unless the user has opted to preserve input focus.
             let preserve_input_focus =
                 *BlockListSettings::as_ref(ctx).preserve_input_focus_on_block_selection;
             let selection_holds_focus = match selection_focus_policy {
@@ -11553,26 +11307,14 @@ impl TerminalView {
                     self.is_selecting || self.mouse_down_block_index.is_some()
                 }
             };
-            let has_block_or_text_selection_in_shell_mode = is_shell_mode
-                && !preserve_input_focus
+            let has_block_or_text_selection = !preserve_input_focus
                 && (are_blocks_selected || is_text_selected)
                 && selection_holds_focus;
 
-            has_active_user_terminal_command || has_block_or_text_selection_in_shell_mode
-        };
-        let blocked_cli_subagent_view = {
-            let model = self.model.lock();
-            let active_block = model.block_list().active_block();
-            if active_block.is_agent_blocked() {
-                self.cli_subagent_views.get(active_block.id())
-            } else {
-                None
-            }
+            has_active_user_terminal_command || has_block_or_text_selection
         };
 
-        if let Some(blocked_cli_subagent_view) = blocked_cli_subagent_view {
-            ctx.focus(blocked_cli_subagent_view);
-        } else if should_focus_terminal {
+        if should_focus_terminal {
             self.focus_terminal(ctx);
         } else {
             match self.active_ssh_remote_server_choice_block() {
@@ -11580,19 +11322,7 @@ impl TerminalView {
                     ctx.focus(&ssh_choice_view);
                 }
                 _ => {
-                    if let (Some(active_ai_block_view_handle), false) =
-                        (self.active_ai_block(ctx), is_input_visible)
-                    {
-                        ctx.focus(active_ai_block_view_handle);
-                    } else if self.has_active_init_project(ctx) && self.is_last_block_init_step(ctx)
-                    {
-                        self.try_focus_active_init_step(ctx);
-                    } else if let Some(active_init_environment_block_handle) =
-                        self.active_init_environment_block(ctx)
-                    {
-                        active_init_environment_block_handle
-                            .update(ctx, |block, ctx| block.try_steal_focus(ctx));
-                    } else if let Some(env_var_collection_block_handle) =
+                    if let Some(env_var_collection_block_handle) =
                         self.active_env_var_collection_block(ctx)
                     {
                         ctx.focus(env_var_collection_block_handle);
@@ -12680,11 +12410,6 @@ impl TerminalView {
         }
 
         self.maybe_copy_selection_to_clipboard(ctx);
-
-        // The text selection changed, so clear any previously attached context text.
-        self.ai_context_model.update(ctx, |context_model, ctx| {
-            context_model.set_pending_context_selected_text(None, false, ctx);
-        });
 
         ctx.notify();
     }
