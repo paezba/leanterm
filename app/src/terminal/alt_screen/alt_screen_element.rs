@@ -13,11 +13,10 @@ use warpui::event::{DispatchedEvent, InBoundsExt, KeyState, ModifiersState};
 use warpui::fonts::Properties;
 use warpui::geometry::rect::RectF;
 use warpui::geometry::vector::Vector2F;
-use warpui::platform::keyboard::KeyCode;
 use warpui::text::SelectionType;
 use warpui::units::{IntoLines, IntoPixels, Lines, Pixels};
 use warpui::{
-    AfterLayoutContext, AppContext, ClipBounds, Element, EntityId, Event, EventContext,
+    AfterLayoutContext, AppContext, Element, EntityId, Event, EventContext,
     LayoutContext, ModelHandle, PaintContext, SizeConstraint, end_trace, record_trace_event,
     start_trace,
 };
@@ -597,7 +596,7 @@ impl Element for AltScreenElement {
         constraint.max
     }
 
-    fn after_layout(&mut self, ctx: &mut AfterLayoutContext, app: &AppContext) {
+    fn after_layout(&mut self, _ctx: &mut AfterLayoutContext, _app: &AppContext) {
         let size = self.size.expect("Size should be set in `layout()`");
         self.visible_lines = Some(size.y().into_pixels().to_lines(self.line_height()).floor());
         self.max_scroll_top = Some(self.total_lines() - self.visible_lines.unwrap());

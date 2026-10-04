@@ -22,7 +22,6 @@ use super::shell::ShellType;
 use super::{SizeInfo, TerminalModel, prompt, should_right_click_paste};
 use crate::appearance::Appearance;
 use crate::context_chips::display::PromptDisplay;
-use crate::context_chips::spacing;
 use crate::features::FeatureFlag;
 use crate::settings::{FontSettings, InputSettings};
 use crate::terminal::blockgrid_element::BlockGridElement;

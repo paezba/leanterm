@@ -6,7 +6,6 @@ use warpui::{AppContext, SingletonEntity, WindowId};
 
 use super::WorkflowSearchItem;
 use crate::cloud_object::model::persistence::CloudModel;
-use crate::search::QueryFilter;
 use crate::search::async_snapshot_data_source::AsyncSnapshotDataSource;
 use crate::search::command_search::searcher::CommandSearchItemAction;
 use crate::search::data_source::{Query, QueryResult};

@@ -13,7 +13,7 @@ use warp_core::user_preferences::GetUserPreferences;
 use warp_errors::report_error;
 use warpui::r#async::{SpawnedFutureHandle, Timer};
 use warpui::{
-    AppContext, Entity, EntityId, ModelAsRef, ModelContext, ModelHandle, SingletonEntity,
+    AppContext, Entity, ModelAsRef, ModelContext, ModelHandle, SingletonEntity,
     ViewHandle, WeakModelHandle,
 };
 
@@ -29,7 +29,6 @@ use crate::code_review::git_repo_model::{GitRepoStatusEvent, GitRepoStatusModel}
 use crate::code_review::github_repo_model::{GitHubRepoEvent, GitHubRepoModel};
 use crate::context_chips::display_chip::GitLineChanges;
 use crate::editor::EditorView;
-use crate::features::FeatureFlag;
 use crate::menu::{MenuItem, MenuItemFields};
 use crate::terminal::event::BlockType;
 use crate::terminal::model::block::{Block, BlockMetadata};

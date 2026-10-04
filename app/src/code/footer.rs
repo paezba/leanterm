@@ -37,10 +37,8 @@ use crate::persisted_workspace::{
     LSPEnablementResultForFile, LspRepoStatus, PersistedWorkspace,
 };
 use crate::code::lsp_telemetry::{LspControlActionType, LspEnablementSource, LspTelemetryEvent};
-#[cfg(feature = "local_fs")]
-use crate::user_config::is_tab_config_toml;
 use crate::view_components::action_button::{
-    ActionButton, ButtonSize, NakedTheme, PaneHeaderTheme,
+    ActionButton, ButtonSize, NakedTheme,
 };
 
 const FOOTER_HEIGHT: f32 = 24.;

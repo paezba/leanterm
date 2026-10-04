@@ -55,8 +55,7 @@ use crate::terminal::shared_session::{
     SharedSessionStatus, join_link,
 };
 use crate::terminal::view::{
-    ContextMenuAction, Event, InlineBannerItem, InlineBannerType,
-    RichContentInsertionPosition, SharedSessionBanners, SizeUpdateBuilder, TerminalAction,
+    ContextMenuAction, Event, InlineBannerItem, InlineBannerType, SharedSessionBanners, SizeUpdateBuilder, TerminalAction,
     TerminalView,
 };
 use crate::view_components::{DismissibleToast, ToastFlavor};
@@ -107,31 +106,6 @@ impl TerminalView {
             self.shared_session_source_type(),
             Some(SessionSourceType::AmbientAgent { .. })
         )
-    }
-
-    /// Clears the finished/read-only state a pane accumulates when its shared session ends, so it
-    /// can host a live session again. Idempotent.
-    ///
-    /// A failed run whose environment is retained for debugging leaves the pane read-only with an
-    /// ended-conversation tombstone even though its session is still reachable; reattaching must
-    /// produce a writable terminal rather than that ended-run view.
-    pub(crate) fn prepare_for_live_session_reattach(&mut self, ctx: &mut ViewContext<Self>) {
-        {
-            let mut model = self.model.lock();
-            if model.shared_session_status().is_finished_viewer() {
-                // The join performed by the caller moves this to `ViewPending` and then
-                // `ActiveViewer`; clearing it here just lifts `TerminalModel::is_read_only`.
-                model.set_shared_session_status(SharedSessionStatus::NotShared);
-            }
-        }
-
-        self.input().update(ctx, |input, ctx| {
-            input.editor().update(ctx, |editor, ctx| {
-                editor.set_interaction_state(InteractionState::Editable, ctx);
-            });
-        });
-        self.update_pane_configuration(ctx);
-        ctx.notify();
     }
 
     pub(super) fn handle_viewer_role_change_menu_event(
@@ -444,7 +418,7 @@ impl TerminalView {
         scrollback_type: SharedSessionScrollbackType,
         action_source: Option<SharedSessionActionSource>,
         source: SharedSessionSource,
-        bypass_conversation_guard: bool,
+        _bypass_conversation_guard: bool,
         ctx: &mut ViewContext<Self>,
     ) {
         // We should only be attempting to share a session
@@ -1659,21 +1633,6 @@ impl TerminalView {
     #[cfg(not(target_arch = "wasm32"))]
     pub(crate) fn restore_pty_to_sharer_size(&mut self, ctx: &mut ViewContext<Self>) {
         self.active_viewer_driven_size = None;
-        self.refresh_size(ctx);
-    }
-
-    /// Forces a fresh viewer-size report to the sharer by clearing the dedup cache and
-    /// refreshing size. No-op when not an active viewer or when viewer-driven sizing is
-    /// not eligible. Used when a new process (e.g. the harness CLI starting for a non-oz
-    /// Cloud Mode run) needs the sharer to resize its PTY so the new process picks up
-    /// correct terminal dimensions at startup.
-    pub(in crate::terminal::view) fn force_report_viewer_terminal_size(
-        &mut self,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        if let Some(viewer) = self.shared_session_viewer_mut() {
-            viewer.last_reported_natural_size = None;
-        }
         self.refresh_size(ctx);
     }
 

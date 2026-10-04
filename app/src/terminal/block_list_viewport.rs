@@ -5,10 +5,9 @@ use std::sync::MutexGuard;
 use pathfinder_geometry::vector::Vector2F;
 use serde::{Deserialize, Serialize};
 use sum_tree::{Cursor, SeekBias};
-use warp_core::features::FeatureFlag;
 use warpui::elements::ClippedScrollStateHandle;
 use warpui::units::{IntoLines, IntoPixels, Lines, Pixels};
-use warpui::{AppContext, ModelHandle};
+use warpui::AppContext;
 
 use super::block_list_element::{
     GridType, SnackbarHeader, SnackbarHeaderState, SnackbarPoint, VisibleItem,
@@ -25,7 +24,6 @@ use super::{
     HEIGHT_FUDGE_FACTOR_LINES, SizeInfo, height_in_range_approx, heights_approx_gt,
     heights_approx_gte, heights_approx_lt, heights_approx_lte,
 };
-use crate::terminal::model::blocks::RichContentItem;
 use crate::terminal::model::index::Point as IndexPoint;
 
 /// Wraps a scroll position for the purposes of centralizing update logic.
@@ -569,7 +567,7 @@ impl<'a> ViewportState<'a> {
 
     /// Returns where the first block starts relative to the grid origin in pixels
     /// If there is no top block, returns a zero offset
-    pub fn offset_to_top_of_first_block(&self, app: &AppContext) -> Pixels {
+    pub fn offset_to_top_of_first_block(&self, _app: &AppContext) -> Pixels {
         let total_block_height = self.block_list.block_heights().summary().height;
 
         let top_of_current_block = if let Some(visible_items) = &self.visible_items {
@@ -1190,7 +1188,7 @@ impl<'a> ViewportState<'a> {
     }
 
     // Returns whether the input is rendered exactly at the bottom of its pane.
-    fn is_input_rendered_at_bottom_of_pane(&self, app: &AppContext) -> bool {
+    fn is_input_rendered_at_bottom_of_pane(&self, _app: &AppContext) -> bool {
         match self.input_mode {
             InputMode::Waterfall => {
                 let current_scroll_top_px = self.scroll_top_in_pixels();

@@ -328,16 +328,6 @@ impl AvailableShell {
         }
     }
 
-    pub(crate) fn new_docker_sandbox_shell(sbx_path: PathBuf, base_image: Option<String>) -> Self {
-        Self {
-            id: None,
-            state: Arc::new(Config::DockerSandbox {
-                sbx_path,
-                base_image,
-            }),
-        }
-    }
-
     pub fn is_docker_sandbox(&self) -> bool {
         matches!(self.state.as_ref(), Config::DockerSandbox { .. })
     }

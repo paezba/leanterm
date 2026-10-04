@@ -165,10 +165,6 @@ impl AlertConfig {
         Self::new(message, AlertFlavor::Success)
     }
 
-    pub fn warning(message: String) -> Self {
-        Self::new(message, AlertFlavor::Warning)
-    }
-
     pub fn with_main_axis_size(mut self, main_axis_size: MainAxisSize) -> Self {
         self.main_axis_size = Some(main_axis_size);
         self

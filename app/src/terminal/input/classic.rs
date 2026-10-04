@@ -1,7 +1,7 @@
 use pathfinder_geometry::vector::vec2f;
 use settings::Setting;
 use warpui::elements::{
-    Border, ChildAnchor, ChildView, Clipped, Container, DropTarget, Element, Empty, Flex,
+    Border, ChildAnchor, Container, DropTarget, Element, Empty, Flex,
     Hoverable, OffsetPositioning, ParentAnchor, ParentElement, ParentOffsetBounds, SavePosition,
     Stack,
 };
@@ -9,10 +9,7 @@ use warpui::{AppContext, SingletonEntity};
 
 use super::{Input, SubshellRenderState, should_render_prompt_using_editor_decorator_elements};
 use crate::appearance::Appearance;
-use crate::context_chips::spacing;
-use crate::features::FeatureFlag;
 use crate::settings::{AppEditorSettings, InputModeSettings};
-use crate::terminal::block_list_settings::BlockListSettings;
 use crate::terminal::block_list_viewport::InputMode;
 use crate::terminal::input::common::{
     add_command_xray_overlay, add_input_suggestions_overlays, add_vim_status_to_stack,
@@ -92,7 +89,7 @@ impl Input {
         let vim_state = self.editor.as_ref(app).vim_state(app);
         let app_editor_settings = AppEditorSettings::as_ref(app);
         let show_vim_status = vim_state.is_some() && *app_editor_settings.vim_status_bar.value();
-        let input_mode = *InputModeSettings::as_ref(app).input_mode.value();
+        let _input_mode = *InputModeSettings::as_ref(app).input_mode.value();
 
         let is_compact_mode = matches!(
             TerminalSettings::as_ref(app).spacing_mode.value(),

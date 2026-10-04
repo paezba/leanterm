@@ -1,8 +1,8 @@
-use warpui::{SingletonEntity, UpdateView};
+use warpui::UpdateView;
 
-use super::{ AppContext, CONTEXT_MENU_WIDTH, ChannelState, ClipboardContent, ContextMenuAction,
-    ContextMenuState, ContextMenuType, EntityId, FeatureFlag, MenuItem, MenuItemFields, RichContentLink, ShareableObject, TerminalAction, TerminalModel,
-    TerminalView, Tip, TipHint, Vector2F, ViewContext,
+use super::{ CONTEXT_MENU_WIDTH,
+    ContextMenuState, MenuItem, TerminalAction,
+    TerminalView, Tip, TipHint, ViewContext,
     mark_feature_used_and_write_to_user_defaults,
 };
 

@@ -1,8 +1,7 @@
 use crate::terminal::input::MenuPositioning;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Arc;
 
-use dunce::canonicalize;
 use itertools::Itertools;
 use pathfinder_color::ColorU;
 use warp_core::features::FeatureFlag;
@@ -414,11 +413,6 @@ impl RightPanelView {
         }
     }
 
-    pub fn set_agent_management_view_open(&mut self, is_open: bool, ctx: &mut ViewContext<Self>) {
-        self.is_agent_management_view_open = is_open;
-        ctx.notify();
-    }
-
     pub fn set_panel_position(
         &mut self,
         position: super::PanelPosition,
@@ -538,7 +532,7 @@ impl RightPanelView {
         // Subscribe to pane group events so we can recompute terminal
         // availability when terminal state changes (e.g. command
         // starts/finishes).
-        ctx.subscribe_to_view(&pane_group, |me, _, event, ctx| {
+        ctx.subscribe_to_view(&pane_group, |_me, _, event, _ctx| {
             if matches!(event, PaneGroupEvent::TerminalViewStateChanged) {
             }
         });
@@ -1130,7 +1124,7 @@ impl RightPanelView {
             ctx.notify();
         });
 
-        ctx.subscribe_to_view(&code_review_view, |me, code_review, event, ctx| {
+        ctx.subscribe_to_view(&code_review_view, |me, _code_review, event, ctx| {
             match event {
                 CodeReviewViewEvent::ReviewSubmitted => {
                     if me.is_maximized(ctx) {

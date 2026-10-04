@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use crate::terminal::ShellHost;
 
 use chrono::{DateTime, Local, TimeZone as _};

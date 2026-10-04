@@ -15,7 +15,6 @@ use warp_core::context_flag::ContextFlag;
 use warp_core::telemetry::TelemetryEvent as _;
 use warp_core::ui::Icon as WarpIcon;
 use warp_core::ui::color::blend::Blend;
-use warp_core::ui::color::coloru_with_opacity;
 use warp_core::ui::theme::color::internal_colors;
 use warp_core::ui::theme::{AnsiColorIdentifier, Fill as WarpThemeFill, WarpTheme};
 use warpui::elements::{
@@ -38,7 +37,6 @@ use warpui::{AppContext, EntityId, SingletonEntity, ViewHandle, WindowId};
 
 use super::{render_group_member_icon_collage, select_unique_pane_kinds};
 use crate::appearance::Appearance;
-use crate::cloud_object::CloudObjectLookup as _;
 use crate::cloud_object::model::generic_string_model::StringModel;
 use crate::code::editor::{add_color, remove_color};
 use crate::code::icon_from_file_path;
@@ -1379,7 +1377,7 @@ fn render_control_bar(
 fn render_detail_kind_badge_icon(
     props: &PaneProps<'_>,
     appearance: &Appearance,
-    app: &AppContext,
+    _app: &AppContext,
 ) -> Box<dyn Element> {
     let theme = appearance.theme();
     let sub_text = theme.sub_text_color(theme.background());
@@ -3227,7 +3225,7 @@ fn resolve_icon_with_status_variant(
     typed: &TypedPane<'_>,
     title: &str,
     appearance: &Appearance,
-    app: &AppContext,
+    _app: &AppContext,
 ) -> IconWithStatusVariant {
     let theme = appearance.theme();
     let main_text = theme.main_text_color(theme.background());
@@ -3356,7 +3354,7 @@ fn render_row_title_line(
     title: Box<dyn Element>,
     shows_synced_inputs: bool,
     shortcut_hint: Option<Box<dyn Element>>,
-    theme: &WarpTheme,
+    _theme: &WarpTheme,
 ) -> Box<dyn Element> {
     if !shows_synced_inputs && shortcut_hint.is_none() {
         return title;
@@ -3502,7 +3500,7 @@ enum TypedPane<'a> {
 }
 
 impl TypedPane<'_> {
-    fn summary_pane_kind(&self, title: &str, app: &AppContext) -> SummaryPaneKind {
+    fn summary_pane_kind(&self, title: &str, _app: &AppContext) -> SummaryPaneKind {
         match self {
             TypedPane::Terminal(_) => SummaryPaneKind::Terminal,
             TypedPane::Code(_) => SummaryPaneKind::Code {
@@ -6809,7 +6807,7 @@ fn render_compact_pane_row(props: PaneProps<'_>, app: &AppContext) -> Box<dyn El
     let main_text_color = theme.main_text_color(theme.background());
     let sub_text_color = theme.sub_text_color(theme.background());
     let font_family = appearance.ui_font_family();
-    let has_indicator = props.typed.badge(app).is_some();
+    let _has_indicator = props.typed.badge(app).is_some();
 
     let icon = render_pane_icon_with_status(
         resolve_icon_with_status_variant(&props.typed, &props.title, appearance, app),

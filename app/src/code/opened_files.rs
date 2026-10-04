@@ -17,10 +17,6 @@ impl OpenedFilesInRepo {
         self.0.get(relative_path)
     }
 
-    #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
-    pub fn iter(&self) -> impl Iterator<Item = (&String, &Instant)> {
-        self.0.iter()
-    }
 }
 
 /// Model that tracks files that have been opened, organized by repository.

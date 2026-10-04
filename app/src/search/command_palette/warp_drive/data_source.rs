@@ -409,11 +409,6 @@ trait WarpDriveSearcher {
         app: &AppContext,
     ) -> anyhow::Result<Vec<EnvVarCollectionSearchItem>>;
 
-    fn search_plans(
-        &self,
-        query: &str,
-        app: &AppContext,
-    ) -> anyhow::Result<Vec<NotebookSearchItem>>;
 }
 
 #[derive(Default)]
@@ -551,26 +546,6 @@ impl WarpDriveSearcher for FuzzyWarpDriveSearcher {
         app: &AppContext,
     ) -> anyhow::Result<Vec<NotebookSearchItem>> {
         let cloud_notebooks = CloudModel::as_ref(app).get_all_active_notebooks();
-        Ok(cloud_notebooks
-            .filter_map(|cloud_notebook| {
-                FuzzyMatchNotebookResult::try_match(query, cloud_notebook, app).map(
-                    |match_result| NotebookSearchItem {
-                        match_result,
-                        cloud_notebook: cloud_notebook.clone(),
-                    },
-                )
-            })
-            .collect())
-    }
-
-    fn search_plans(
-        &self,
-        query: &str,
-        app: &AppContext,
-    ) -> anyhow::Result<Vec<NotebookSearchItem>> {
-        let cloud_notebooks = CloudModel::as_ref(app)
-            .get_all_active_notebooks()
-            .filter(|notebook| notebook.model().ai_document_id.is_some());
         Ok(cloud_notebooks
             .filter_map(|cloud_notebook| {
                 FuzzyMatchNotebookResult::try_match(query, cloud_notebook, app).map(
@@ -1060,14 +1035,6 @@ mod full_text_searcher {
             app: &AppContext,
         ) -> anyhow::Result<Vec<NotebookSearchItem>> {
             self.search_notebooks_with_filter(query, false, app)
-        }
-
-        fn search_plans(
-            &self,
-            query: &str,
-            app: &AppContext,
-        ) -> anyhow::Result<Vec<NotebookSearchItem>> {
-            self.search_notebooks_with_filter(query, true, app)
         }
 
         fn search_workflow(

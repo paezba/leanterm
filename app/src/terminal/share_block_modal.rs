@@ -6,10 +6,8 @@ use parking_lot::FairMutex;
 use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::{Vector2F, vec2f};
 use serde::Serialize;
-use warp_core::features::FeatureFlag;
 use warp_core::ui::theme::Fill;
 use warp_errors::report_error;
-use warpui::r#async::SpawnedFutureHandle;
 use warpui::browser::escape_html_attribute;
 use warpui::clipboard::ClipboardContent;
 use warpui::elements::{
@@ -37,7 +35,7 @@ use super::grid_renderer::CellGlyphCache;
 use super::model::grid::RespectDisplayedOutput;
 use crate::appearance::Appearance;
 use crate::editor::{
-    EditOrigin, EditorView, Event as EditorEvent, SingleLineEditorOptions, TextOptions,
+    EditorView, SingleLineEditorOptions, TextOptions,
 };
 use crate::send_telemetry_from_ctx;
 use crate::server::block::{Block as ServerBlock, DisplaySetting};
@@ -57,7 +55,6 @@ use crate::ui_components::icons::Icon;
 use crate::util::bindings::CustomAction;
 use crate::view_components::ToastFlavor;
 use crate::workspace::WorkspaceAction;
-use crate::workspaces::user_workspaces::UserWorkspaces;
 
 const PADDING: f32 = 30.;
 const INNER_MARGIN: f32 = 20.;

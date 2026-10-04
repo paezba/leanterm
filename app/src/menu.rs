@@ -875,11 +875,6 @@ impl<A: Action + Clone> MenuItemFields<A> {
         self
     }
 
-    pub(crate) fn with_tooltip_position(mut self, position: MenuTooltipPosition) -> Self {
-        self.tooltip_position = position;
-        self
-    }
-
     /// Adds a right-aligned secondary label with custom font properties to this menu item.
     pub fn with_right_side_label(
         mut self,

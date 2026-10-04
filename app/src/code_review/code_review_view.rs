@@ -1,5 +1,5 @@
 use crate::settings::{ CodeSettings};
-use crate::terminal::view::{CliAgentRouting, TerminalAction, TerminalView};
+use crate::terminal::view::{TerminalAction, TerminalView};
 use std::collections::{HashMap, HashSet};
 use std::mem;
 use std::ops::Range;
@@ -7,7 +7,6 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
 
-use ai::project_context::model::ProjectContextModel;
 use indexmap::IndexMap;
 use itertools::Itertools;
 #[cfg(feature = "local_fs")]
@@ -83,7 +82,6 @@ use crate::code::local_code_editor::{
     LocalCodeEditorEvent, LocalCodeEditorView, render_unsaved_circle_with_tooltip,
 };
 use crate::code::view::PendingSaveIntent;
-use crate::code_review::DiffSetScope;
 use crate::code_review::comments::{
     AttachedReviewCommentTarget, CommentId, CurrentHead, DiffBase, ReviewCommentBatch,
     ReviewCommentBatchEvent,
@@ -129,7 +127,6 @@ use crate::util::git::{BranchEntry, PrInfo};
 use crate::util::openable_file_type::FileTarget;
 #[cfg(feature = "local_fs")]
 use crate::util::openable_file_type::resolve_file_target_with_editor_choice;
-use crate::view_components::DismissibleToast;
 use crate::view_components::action_button::{
     ActionButton, ActionButtonTheme, AdjoinedSide, ButtonSize, DangerPrimaryTheme, KeystrokeSource,
     NakedTheme, PaneHeaderTheme, SecondaryTheme, TooltipAlignment,
@@ -2924,7 +2921,7 @@ impl CodeReviewView {
             // populates the editor with content_at_head.
             self.create_code_review_model(file, ctx)
         } else {
-            let self_handle = ctx.handle();
+            let _self_handle = ctx.handle();
             // Join host-aware: for local repos this yields a local absolute
             // PathBuf; for remote repos this yields a `RemotePath` with the
             // same host id as `repo_path`.
@@ -3015,7 +3012,7 @@ impl CodeReviewView {
         if file.file_diff.is_binary {
             None
         } else {
-            let self_handle = ctx.handle();
+            let _self_handle = ctx.handle();
             let code_editor_view = ctx.add_typed_action_view(|ctx| {
                 let mut editor_view = CodeEditorView::new(
                     None,
@@ -3551,24 +3548,6 @@ impl CodeReviewView {
         ctx.notify();
     }
 
-    /// Opens the comment list tray to display comments.
-    pub(crate) fn expand_comment_list(&mut self, ctx: &mut ViewContext<Self>) {
-        self.comment_list_view.update(ctx, |comment_list, ctx| {
-            comment_list.expand(ctx);
-        });
-    }
-    /// Opens the comment list tray and scrolls to the given comment.
-    pub(crate) fn expand_comment_list_and_scroll_to_comment(
-        &mut self,
-        comment_id: CommentId,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        self.comment_list_view.update(ctx, |comment_list, ctx| {
-            comment_list.expand(ctx);
-            comment_list.scroll_to_comment(comment_id, ctx);
-        });
-    }
-
     fn render_placeholder_header(appearance: &Appearance) -> Box<dyn Element> {
         let theme = appearance.theme();
 
@@ -3946,7 +3925,7 @@ impl CodeReviewView {
     fn render_no_changes_state(
         &self,
         appearance: &Appearance,
-        app: &AppContext,
+        _app: &AppContext,
     ) -> Box<dyn Element> {
         let theme = appearance.theme();
 
@@ -3955,7 +3934,7 @@ impl CodeReviewView {
             .with_cross_axis_alignment(CrossAxisAlignment::Center)
             .with_main_axis_size(MainAxisSize::Max);
 
-        let mut zero_state_column = Flex::column()
+        let zero_state_column = Flex::column()
             .with_main_axis_alignment(MainAxisAlignment::Center)
             .with_cross_axis_alignment(CrossAxisAlignment::Center)
             .with_child(
@@ -4987,15 +4966,6 @@ impl CodeReviewView {
         format!("diff_removed_{}", ctx.view_id())
     }
 
-    #[cfg(feature = "local_fs")]
-    fn attach_diff_not_allowed_toast_id(&self, ctx: &mut ViewContext<Self>) -> String {
-        format!("attach_diff_not_allowed_{}", ctx.view_id())
-    }
-
-    fn attach_context_not_allowed_toast_id(&self, ctx: &mut ViewContext<Self>) -> String {
-        format!("attach_context_not_allowed_{}", ctx.view_id())
-    }
-
     fn render_stats_fallback(appearance: &Appearance) -> Box<dyn Element> {
         Container::new(
             Text::new("0", appearance.ui_font_family(), appearance.ui_font_size())
@@ -5426,121 +5396,6 @@ impl CodeReviewView {
 
     pub fn has_unsaved_changes(&self, ctx: &AppContext) -> bool {
         !self.get_unsaved_file_paths(ctx).is_empty()
-    }
-
-    /// Configures the code review view to display and scroll to a specific imported comment.
-    /// Sets the diff base, expands the comment list, and queues a jump to the comment location.
-    pub(crate) fn navigate_to_imported_comment(
-        &mut self,
-        comment_id: CommentId,
-        diff_mode: DiffMode,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        self.set_diff_base(diff_mode, ctx);
-        self.expand_comment_list_and_scroll_to_comment(comment_id, ctx);
-        self.pending_jump_to_comment = Some(comment_id);
-    }
-
-    pub(crate) fn set_diff_base(&mut self, diff_mode: DiffMode, ctx: &mut ViewContext<Self>) {
-        let preferred_session = self.preferred_review_session(ctx);
-        self.diff_state_model.update(ctx, |diff_state_model, ctx| {
-            diff_state_model.set_diff_mode_and_fetch_base(diff_mode, preferred_session, ctx);
-        });
-        self.update_diff_selector_selection(ctx);
-        self.invalidate_all(None, None, ctx);
-    }
-
-    /// Extract diff hunk data for the given file and line range
-    fn extract_diff_hunk_data(
-        &self,
-        repo_relative_path: &str,
-        line_range: &Range<warp_editor::render::model::LineCount>,
-    ) -> Option<(DiffHunk, u32, u32)> {
-        if let CodeReviewViewState::Loaded(state) = self.state() {
-            // Find the file state that matches the given file path
-            let file_state = state.file_states.get(repo_relative_path)?;
-
-            let file_diff = &file_state.file_diff;
-
-            // Convert editor line range to 1-indexed, exclusive line numbers
-            let requested_start = line_range.start.as_usize() + 1;
-            let requested_end = line_range.end.as_usize() + 1;
-
-            // Find the diff hunk that contains this line range
-            for hunk in file_diff.hunks.iter() {
-                // Check if this hunk overlaps with the requested line range
-                let hunk_start = hunk.new_start_line;
-                let hunk_end = hunk_start + hunk.lines.len();
-
-                if requested_start <= hunk_end && requested_end >= hunk_start {
-                    // Filter the hunk lines to only include those within the requested range
-                    let mut filtered_lines = Vec::new();
-                    let mut current_line = hunk.new_start_line;
-                    let mut lines_added = 0u32;
-                    let mut lines_removed = 0u32;
-
-                    for line in &hunk.lines {
-                        // For additions and context lines, check if they're in the requested range
-                        let include_line = match line.line_type {
-                            DiffLineType::Add | DiffLineType::Context => {
-                                current_line >= requested_start && current_line < requested_end
-                            }
-                            DiffLineType::Delete => {
-                                // Include deletions if they're relevant to the range.
-                                // CODE-1638: Deletion hunks are anchored to the line after the removed line,
-                                // so allow one extra line past requested_end.
-                                current_line >= requested_start && current_line <= requested_end
-                            }
-                            DiffLineType::HunkHeader => false,
-                        };
-
-                        if include_line {
-                            filtered_lines.push(line.clone());
-                            match line.line_type {
-                                DiffLineType::Add => lines_added += 1,
-                                DiffLineType::Delete => lines_removed += 1,
-                                _ => {}
-                            }
-                        }
-
-                        // Advance line counter for non-deletion lines
-                        if !matches!(line.line_type, DiffLineType::Delete) {
-                            current_line += 1;
-                        }
-                    }
-
-                    // Create a filtered hunk with only the relevant lines
-                    let filtered_hunk = DiffHunk {
-                        old_start_line: hunk.old_start_line,
-                        old_line_count: hunk.old_line_count,
-                        new_start_line: requested_start,
-                        new_line_count: filtered_lines.len(),
-                        lines: filtered_lines,
-                        unified_diff_start: hunk.unified_diff_start,
-                        unified_diff_end: hunk.unified_diff_end,
-                    };
-
-                    return Some((filtered_hunk, lines_added, lines_removed));
-                }
-            }
-        }
-        None
-    }
-
-    /// Format a diff hunk into a standard diff format string
-    fn format_diff_hunk_content(&self, hunk: &DiffHunk) -> String {
-        let mut diff_lines = Vec::new();
-
-        for line in &hunk.lines {
-            match line.line_type {
-                DiffLineType::Add => diff_lines.push(format!("+{}", line.text)),
-                DiffLineType::Delete => diff_lines.push(format!("-{}", line.text)),
-                DiffLineType::Context => diff_lines.push(line.text.clone()),
-                DiffLineType::HunkHeader => continue,
-            }
-        }
-
-        diff_lines.join("\n")
     }
 
     fn save_files(&mut self, paths: &[String], ctx: &mut ViewContext<Self>) {

@@ -21,7 +21,7 @@ use super::{CloudObjectTypeAndId, DriveObjectType};
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::model::view::CloudViewModel;
 use crate::cloud_object::{
-    CloudObjectEventEntrypoint, GenericStringObjectFormat, JsonObjectType, Owner, Space,
+    GenericStringObjectFormat, JsonObjectType, Owner, Space,
 };
 use crate::env_vars::CloudEnvVarCollection;
 use crate::env_vars::manager::EnvVarCollectionSource;
@@ -522,29 +522,6 @@ impl DrivePanel {
         self.index_view.update(ctx, |index_view, ctx| {
             index_view.handle_action(
                 &DriveIndexAction::create_object(cloud_object_type, space, initial_folder_id),
-                ctx,
-            )
-        });
-        ctx.notify();
-    }
-
-    pub fn create_workflow_with_content(
-        &mut self,
-        space: Space,
-        initial_folder_id: Option<SyncId>,
-        content: String,
-        is_for_agent_mode: bool,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        self.save_and_clear_child_view(ctx);
-        self.index_view.update(ctx, |index_view, ctx| {
-            index_view.handle_action(
-                &DriveIndexAction::CreateWorkflowWithContent {
-                    space,
-                    initial_folder_id,
-                    content,
-                    is_for_agent_mode,
-                },
                 ctx,
             )
         });

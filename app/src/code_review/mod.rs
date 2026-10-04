@@ -45,14 +45,6 @@ pub struct CodeReviewPanelArg {
     pub focus_new_pane: bool,
 }
 
-/// Scope for diff set context attachment
-#[derive(Clone, Debug, PartialEq)]
-pub enum DiffSetScope {
-    All,
-    /// A single repo-relative file path in the diff set.
-    File(String),
-}
-
 /// The keystroke that submits in the code review panel. Meant to mirror the keystroke for
 /// [`EditorViewEvent::CmdEnter`].
 pub const CODE_REVIEW_SUBMIT_KEYSTROKE: &str = "cmdorctrl-enter";

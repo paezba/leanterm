@@ -36,7 +36,7 @@ use super::{
 use crate::auth::AuthStateProvider;
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::model::view::CloudViewModel;
-use crate::cloud_object::{CloudObject, Owner, ServerGuestSubject};
+use crate::cloud_object::{CloudObject, Owner};
 use crate::editor::PropagateAndNoOpNavigationKeys;
 use crate::menu::{self, Menu, MenuItem, MenuItemFields};
 use crate::server::cloud_objects::update_manager::{
@@ -417,7 +417,7 @@ impl SharingDialog {
 
     /// The Warp Drive server ID for the target object. `None` if the target is not a Warp Drive
     /// object or AI conversation.
-    fn target_cloud_object_id(&self, app: &AppContext) -> Option<ServerId> {
+    fn target_cloud_object_id(&self, _app: &AppContext) -> Option<ServerId> {
         match self.target.as_ref() {
             Some(ShareableObject::WarpDriveObject(id)) => Some(*id),
             _ => None,

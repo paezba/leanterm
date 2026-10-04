@@ -1,16 +1,7 @@
-use crate::terminal::{ TerminalView};
 use std::cell::Cell;
 use std::rc::Rc;
 
-use input_classifier::InputType;
-use session_sharing_protocol::common::{
-    CLIAgentSessionState, InputMode, InputType as ProtocolInputType, SelectedAgentModel,
-    SelectedConversation, ServerConversationToken, UniversalDeveloperInputContextUpdate,
-};
-use warp_core::features::FeatureFlag;
-use warpui::{AppContext, ModelHandle, SingletonEntity, WeakViewHandle};
 
-use crate::workspaces::user_workspaces::{ResolvedTeamScope, UserWorkspaces};
 
 // ---------------------------------------------------------------------------
 // Echo-suppression for remote session-sharing context updates.
@@ -47,13 +38,6 @@ impl RemoteUpdateGuard {
         Self {
             inner: Rc::new(Cell::new(false)),
         }
-    }
-
-    /// Returns `true` when a context update originated locally and should be
-    /// broadcast to the remote side. Returns `false` when we are in the middle
-    /// of applying a remote update (i.e. the echo should be suppressed).
-    pub(crate) fn should_broadcast(&self) -> bool {
-        !self.inner.get()
     }
 
     /// Returns an RAII token that suppresses outgoing broadcasts until dropped.

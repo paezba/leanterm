@@ -1,4 +1,3 @@
-use crate::server::telemetry::{ TelemetryEvent};
 use crate::terminal::view::{ Event as TerminalViewEvent};
 use std::any::Any;
 use std::cell::RefCell;
@@ -8,24 +7,18 @@ use std::sync::mpsc::SyncSender;
 
 use parking_lot::FairMutex;
 use session_sharing_protocol::common::{
-    ActivePrompt, AgentPromptFailureReason, AgentPromptRequest, CLIAgentSessionState,
-    CommandExecutionFailureReason, ControlAction, ControlActionFailureReason,
-    LongRunningCommandAgentInteraction, ParticipantId, SelectedAgentModel,
-    UniversalDeveloperInputContextUpdate, WriteToPtyFailureReason,
+    ActivePrompt, AgentPromptFailureReason,
+    CommandExecutionFailureReason, WriteToPtyFailureReason,
 };
 #[cfg(not(any(test, feature = "integration_tests")))]
-use session_sharing_protocol::common::{
-    LongRunningCommandAgentInteractionState, SelectedConversation, UniversalDeveloperInputContext,
-};
+use session_sharing_protocol::common::UniversalDeveloperInputContext;
 use session_sharing_protocol::sharer::{
     AddGuestsResponse, FailedToInitializeSessionReason, Lifetime, LinkAccessLevelUpdateResponse,
     QuotaType, RemoveGuestResponse, SessionEndedReason, SessionSourceType,
     TeamAccessLevelUpdateResponse, UpdatePendingUserRoleResponse,
 };
-use warp_core::execution_mode::AppExecutionMode;
-use warp_core::send_telemetry_from_ctx;
 use warp_errors::report_error;
-use warpui::{AppContext, ModelHandle, SingletonEntity, ViewContext, ViewHandle, WindowId};
+use warpui::{AppContext, ModelHandle, SingletonEntity, ViewHandle, WindowId};
 
 use super::terminal_manager::{TerminalManager, TerminalSurfaceInit, TerminalSurfaceResult};
 use crate::NetworkStatus;
@@ -37,7 +30,6 @@ use crate::features::FeatureFlag;
 use crate::network::{NetworkStatusEvent, NetworkStatusKind};
 use crate::pane_group::TerminalViewResources;
 use crate::persistence::ModelEvent;
-use crate::server::server_api::ServerApiProvider;
 use crate::terminal::safe_mode_settings::get_secret_obfuscation_mode;
 use crate::terminal::session_settings::{SessionSettings, SessionSettingsChangedEvent};
 use crate::terminal::shared_session::manager::Manager;
@@ -264,7 +256,7 @@ impl TerminalManager<TerminalView> {
         source: SharedSessionSource,
         model: Arc<FairMutex<TerminalModel>>,
         window_id: WindowId,
-        sharer_remote_update_guard: RemoteUpdateGuard,
+        _sharer_remote_update_guard: RemoteUpdateGuard,
         ctx: &mut AppContext,
     ) {
         let mut session_sharer = shared_session_model.borrow_mut();

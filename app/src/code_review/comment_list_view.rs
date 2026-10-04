@@ -26,7 +26,6 @@ use warpui::elements::{
     Radius, SavePosition, ScrollTarget, ScrollToPositionMode, ScrollbarWidth, Shrinkable, Stack,
     Text,
 };
-use warpui::keymap::Keystroke;
 use warpui::platform::Cursor;
 use warpui::ui_components::button::ButtonVariant;
 use warpui::ui_components::components::UiComponent;
@@ -51,10 +50,9 @@ use crate::menu::{Event, Menu, MenuItem, MenuItemFields};
 use crate::notebooks::editor::view::{EditorViewEvent, RichTextEditorView};
 use crate::send_telemetry_from_ctx;
 use crate::view_components::action_button::{
-    ActionButton, ActionButtonTheme, ButtonSize, KeystrokeSource, NakedTheme, PrimaryTheme,
+    ActionButton, ActionButtonTheme, ButtonSize, NakedTheme,
     SecondaryTheme,
 };
-use crate::workspaces::user_workspaces::UserWorkspaces;
 
 /// Header text for the outdated section when there is exactly one outdated comment.
 const OUTDATED_SECTION_HEADER_SINGULAR: &str = "1 comment will be omitted because it is outdated.";
@@ -818,12 +816,6 @@ impl CommentListView {
         })
         .finish();
         Container::new(cancel_button).with_margin_right(8.).finish()
-    }
-
-    fn has_non_outdated_comments(&self) -> bool {
-        self.comments_by_id
-            .values()
-            .any(|state| !state.card.source().outdated)
     }
 
     fn render_comment(

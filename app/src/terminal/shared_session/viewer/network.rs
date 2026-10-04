@@ -942,34 +942,6 @@ impl Network {
         self.send_message_to_server(UpstreamMessage::ExecuteCommand { buffer_id, command });
     }
 
-    pub fn send_agent_prompt_request(
-        &mut self,
-        server_conversation_token: Option<ServerConversationToken>,
-        prompt: String,
-        attachments: Vec<AgentAttachment>,
-    ) {
-        let request = AgentPromptRequest {
-            id: AgentPromptRequestId::new(),
-            server_conversation_token,
-            prompt,
-            attachments,
-            // Viewer-typed prompts carry only text and attachments; warp-server fills this in for
-            // the follow-ups it injects.
-            user_query_b64: None,
-        };
-        self.send_message_to_server(UpstreamMessage::SendAgentPrompt(request));
-    }
-
-    pub fn send_cancel_control_action(
-        &mut self,
-        server_conversation_token: ServerConversationToken,
-    ) {
-        let action = ControlAction::CancelConversation {
-            server_conversation_token,
-        };
-        self.send_message_to_server(UpstreamMessage::SendControlAction(action));
-    }
-
     pub fn send_link_permission_update(&mut self, role: Option<Role>) {
         self.send_message_to_server(UpstreamMessage::UpdateLinkAccessLevel { role });
     }
@@ -1040,23 +1012,6 @@ impl Network {
     pub fn send_cancel_role_request(&mut self, role_request_id: RoleRequestId) {
         let message = UpstreamMessage::CancelRoleRequest(role_request_id);
         self.send_message_to_server(message);
-    }
-
-    pub fn send_universal_developer_input_context_update(
-        &mut self,
-        update: UniversalDeveloperInputContextUpdate,
-    ) {
-        // Skip update if nothing would change
-        if let Some(ref cached) = self.cached_latest_state.universal_developer_input_context
-            && !update.changes_cached_context(cached)
-        {
-            return;
-        }
-
-        self.apply_context_update_to_cache(update.clone());
-        self.send_message_to_server(UpstreamMessage::UpdateUniversalDeveloperInputContext(
-            update,
-        ));
     }
 
     /// Merges an update into the cached context.
@@ -1156,21 +1111,6 @@ pub fn write_to_pty_failure_reason_string(reason: &WriteToPtyFailureReason) -> S
             "Insufficient permissions. Please request edit access.".to_owned()
         }
         _ => "Failed to make edit. Please try again.".to_owned(),
-    }
-}
-
-/// Converts AgentPromptFailureReason to a user-facing string
-pub fn agent_prompt_failure_reason_string(reason: &AgentPromptFailureReason) -> String {
-    match reason {
-        AgentPromptFailureReason::InsufficientPermissions => {
-            "Insufficient permissions. Please request edit access.".to_owned()
-        }
-        AgentPromptFailureReason::InvalidConversation => {
-            "Invalid conversation. Please try again.".to_owned()
-        }
-        AgentPromptFailureReason::CommandInProgress => {
-            "A long running command is currently in progress. Please wait for it to complete before sending an agent prompt.".to_owned()
-        }
     }
 }
 

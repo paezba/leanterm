@@ -24,7 +24,6 @@ pub use login_failure_notification::LoginFailureReason;
 use url::Url;
 pub use user_uid::UserUid;
 use warp_core::channel::ChannelState;
-use warp_core::features::FeatureFlag;
 use warp_core::user_preferences::GetUserPreferences as _;
 use warp_errors::{report_error, report_if_error};
 use warpui::modals::{AlertDialogWithCallbacks, ModalButton};
@@ -46,7 +45,7 @@ use crate::settings::{ CRASH_REPORTING_ENABLED_DEFAULTS_KEY, CloudPreferencesSet
 use crate::terminal::general_settings::GeneralSettings;
 use crate::terminal::shared_session::manager::Manager as SharedSessionManager;
 use crate::workflows::manager::WorkflowManager;
-use crate::workspace::{OneTimeModalModel, Workspace, WorkspaceAction};
+use crate::workspace::{Workspace, WorkspaceAction};
 use crate::workspaces::update_manager::TeamUpdateManager;
 use crate::{
     GlobalResourceHandlesProvider, focus_running_window_and_show_native_modal, persistence,

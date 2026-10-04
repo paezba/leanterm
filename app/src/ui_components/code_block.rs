@@ -34,11 +34,6 @@ pub struct CodeSnippetButtonHandles {
 
 impl CodeSnippetButtonHandles {
     // Resets the hover state of all buttons that trigger a focus change.
-    pub fn reset_hover_state_on_focus_change(&self) {
-        if let Ok(mut state) = self.open_button.lock() {
-            state.reset_hover_state();
-        }
-    }
 }
 
 pub type HandleCode = Box<dyn FnMut(String, &mut EventContext)>;
@@ -98,18 +93,6 @@ pub struct CodeBlockOptions {
     pub footer_element: Option<Box<dyn Element>>,
     pub mouse_handles: Option<CodeSnippetButtonHandles>,
     pub file_path: Option<String>,
-}
-
-pub fn render_code_block_with_warp_text(
-    options: CodeBlockOptions,
-    view: &ViewHandle<CodeEditorView>,
-    app: &AppContext,
-    source: Option<CodeSource>,
-) -> Box<dyn Element> {
-    let code = view.as_ref(app).text(app);
-    let code_element = ChildView::new(view).finish();
-
-    render_code_block_internal(code.as_str(), code_element, options, app, source, true)
 }
 
 pub fn render_code_block_plain(

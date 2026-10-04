@@ -21,28 +21,20 @@ use std::sync::mpsc::SyncSender;
 use std::sync::{Arc, OnceLock};
 use std::thread::JoinHandle;
 
-use ai::project_context::model::ProjectRulePath;
 use ai::workspace::WorkspaceMetadata as CodeWorkspaceMetadata;
 use chrono::{DateTime, Local, Utc};
 use instant::Instant;
 use lsp::supported_servers::LSPServerType;
-#[cfg(any(feature = "local_fs", feature = "integration_tests"))]
-pub use sqlite::database_file_path_for_current_scope;
 // Only re-exported for integration tests (via `integration_testing::persistence`);
 // in-crate code should resolve paths through `database_file_path_for_current_scope`.
 #[cfg(any(feature = "local_fs", feature = "integration_tests"))]
 #[cfg_attr(not(feature = "integration_tests"), expect(unused_imports))]
 pub use sqlite::database_file_path_for_scope;
-#[cfg(any(feature = "local_fs", feature = "integration_tests"))]
-pub use sqlite::establish_ro_connection;
-use uuid::Uuid;
 use warp_core::command::ExitCode;
 use warp_errors::report_error;
 use warp_graphql::scalars::time::ServerTimestamp;
-use warp_multi_agent_api as api;
 use warpui::{AppContext, Entity, SingletonEntity};
 
-use self::model::{AgentConversation, AgentConversationData, Project};
 use crate::persisted_workspace::EnablementState;
 use crate::app_state::AppState;
 use crate::auth::auth_manager::PersistedCurrentUserInformation;
@@ -85,16 +77,6 @@ pub enum PersistenceScope {
 /// this process is running.
 static CURRENT_SCOPE: OnceLock<PersistenceScope> = OnceLock::new();
 
-/// Returns the scope [`initialize`] was called with, defaulting to
-/// [`PersistenceScope::App`] when persistence has not been initialized (e.g.
-/// tests that construct models directly).
-pub fn current_scope() -> PersistenceScope {
-    CURRENT_SCOPE
-        .get()
-        .cloned()
-        .unwrap_or(PersistenceScope::App)
-}
-
 /// Which subsets of [`PersistedData`] a launch mode actually consumes.
 ///
 /// Loading everything unconditionally is expensive (GUI session-restore
@@ -136,24 +118,6 @@ impl PersistedDataScope {
     fn gui_only_data(self) -> bool {
         matches!(self, PersistedDataScope::Full)
     }
-}
-
-/// A conversation whose `summary` column had to be derived from its task
-/// snapshot at read time (rows written before the column existed, or rows
-/// whose stored summary failed to parse). Sent to the SQLite writer thread
-/// so the derivation happens only once per row.
-#[derive(Debug)]
-pub struct ConversationSummaryBackfill {
-    pub conversation_id: String,
-    /// Serialized [`model::AgentConversationSummary`].
-    pub summary_json: String,
-    /// The `summary` column value observed at read time (`None` or invalid
-    /// JSON). The backfill only applies while the column still holds this
-    /// value, so it never overwrites a newer write.
-    pub previous_summary: Option<String>,
-    /// The row's pre-backfill `last_modified_at`, restored after the
-    /// update trigger bumps it.
-    pub last_modified_at: chrono::NaiveDateTime,
 }
 
 /// Initializes the persistence "subsystem".

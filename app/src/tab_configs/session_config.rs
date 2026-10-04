@@ -78,7 +78,7 @@ fn config_name(directory: &Path, enable_worktree: bool) -> String {
 /// that can be either rendered directly (via `render_tab_config`) or
 /// serialized to disk (via `write_tab_config`).
 pub fn build_tab_config(
-    session_type: &SessionType,
+    _session_type: &SessionType,
     directory: &Path,
     enable_worktree: bool,
     autogenerate_worktree_branch_name: bool,

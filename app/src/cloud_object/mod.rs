@@ -536,12 +536,6 @@ pub trait CloudModelType: Debug + Clone + Send + Sync {
         false
     }
 }
-/// Provides app-local typed lookup helpers for generic cloud object aliases.
-pub trait CloudObjectLookup: Sized + Clone {
-    fn get_all(app: &AppContext) -> Vec<Self>;
-
-    fn get_by_id<'a>(sync_id: &'a SyncId, app: &'a AppContext) -> Option<&'a Self>;
-}
 
 impl<K, M> CloudObjectLookup for GenericCloudObject<K, M>
 where
@@ -558,16 +552,6 @@ where
     fn get_by_id<'a>(sync_id: &'a SyncId, app: &'a AppContext) -> Option<&'a Self> {
         CloudModel::as_ref(app).get_object_of_type::<K, M>(sync_id)
     }
-}
-
-/// Marks string model payloads that can be looked up by UUID.
-pub trait CloudObjectUuid {
-    fn uuid(&self) -> uuid::Uuid;
-}
-
-/// Provides app-local UUID lookups for cloud objects whose payload exposes a UUID.
-pub trait CloudObjectUuidLookup: Sized {
-    fn get_by_uuid<'a>(uuid: &'a uuid::Uuid, app: &'a AppContext) -> Option<&'a Self>;
 }
 
 impl<T, S> CloudObjectUuidLookup
@@ -894,10 +878,6 @@ pub trait CloudObjectMetadataExt {
     /// Returns None if the revision and last_editor are None.
     fn semantic_editing_history(&self, app: &AppContext) -> Option<String>;
 
-    /// Returns a semantic summary of the object's creator. For example, "Alice" or "joan@warp.dev".
-    #[cfg_attr(target_family = "wasm", expect(dead_code))]
-    fn semantic_creator(&self, app: &AppContext) -> Option<String>;
-
     /// Returns semantic summary of countdown of days until permadeletion.
     /// Ex: "27 days until permanent deletion"
     fn semantic_permadeletion_countdown(&self, app: &AppContext) -> Option<String>;
@@ -927,14 +907,6 @@ impl CloudObjectMetadataExt for CloudObjectMetadata {
         };
 
         Some(full_string)
-    }
-
-    fn semantic_creator(&self, app: &AppContext) -> Option<String> {
-        // Todo(Jack): add creation ts.
-        let user_profiles = UserProfiles::as_ref(app);
-        self.creator_uid
-            .as_ref()
-            .and_then(|uid| user_profiles.displayable_identifier_for_uid(UserUid::new(uid)))
     }
 
     fn semantic_permadeletion_countdown(&self, app: &AppContext) -> Option<String> {
@@ -1047,4 +1019,21 @@ impl From<Owner> for WorkflowSource {
             Owner::Team { team_uid } => Self::Team { team_uid },
         }
     }
+}
+
+/// Marks string model payloads that can be looked up by UUID.
+pub trait CloudObjectUuid {
+    fn uuid(&self) -> uuid::Uuid;
+}
+
+/// Provides app-local UUID lookups for cloud objects whose payload exposes a UUID.
+pub trait CloudObjectUuidLookup: Sized {
+    fn get_by_uuid<'a>(uuid: &'a uuid::Uuid, app: &'a AppContext) -> Option<&'a Self>;
+}
+
+/// Provides app-local typed lookup helpers for generic cloud object aliases.
+pub trait CloudObjectLookup: Sized + Clone {
+    fn get_all(app: &AppContext) -> Vec<Self>;
+
+    fn get_by_id<'a>(sync_id: &'a SyncId, app: &'a AppContext) -> Option<&'a Self>;
 }

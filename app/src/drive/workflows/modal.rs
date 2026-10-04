@@ -1,6 +1,5 @@
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
 
 use itertools::Itertools;
 use pathfinder_geometry::vector::vec2f;
@@ -18,7 +17,7 @@ use warpui::elements::{
 use warpui::fonts::{FamilyId, Weight};
 use warpui::platform::Cursor;
 use warpui::presenter::ChildView;
-use warpui::ui_components::button::{ButtonVariant, TextAndIcon, TextAndIconAlignment};
+use warpui::ui_components::button::ButtonVariant;
 use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
 use warpui::{
     AppContext, Element, Entity, FocusContext, SingletonEntity, TypedActionView, UpdateView, View,
@@ -32,7 +31,6 @@ use super::workflow_arg_selector::{
 };
 use super::workflow_arg_type_helpers::{self, ArgumentEditorRowIndex};
 use crate::appearance::Appearance;
-use crate::auth::UserUid;
 use crate::cloud_object::breadcrumbs::{ContainingObject, ContainingObjectKind};
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::{CloudObject, CloudObjectEventEntrypoint, ObjectType, Owner, Revision};
@@ -47,7 +45,7 @@ use crate::editor::{
 use crate::menu::{Event, Menu, MenuItem, MenuItemFields};
 use crate::network::NetworkStatus;
 use crate::server::cloud_objects::update_manager::UpdateManager;
-use crate::server::ids::{ClientId, ServerId, SyncId};
+use crate::server::ids::{ClientId, SyncId};
 use crate::themes::theme::AnsiColorIdentifier;
 use crate::ui_components::blended_colors;
 use crate::ui_components::breadcrumb::{self, BreadcrumbState};
@@ -1538,7 +1536,7 @@ impl WorkflowModal {
         .finish()
     }
 
-    fn render_footer(&self, appearance: &Appearance, app: &AppContext) -> Box<dyn Element> {
+    fn render_footer(&self, appearance: &Appearance, _app: &AppContext) -> Box<dyn Element> {
         let default_button_styles = UiComponentStyles {
             font_size: Some(BUTTON_FONT_SIZE),
             font_family_id: Some(appearance.ui_font_family()),
@@ -1557,7 +1555,7 @@ impl WorkflowModal {
             ..Default::default()
         };
 
-        let hovered_and_clicked_styles = UiComponentStyles {
+        let _hovered_and_clicked_styles = UiComponentStyles {
             background: Some(appearance.theme().surface_3().into()),
             ..default_button_styles
         };

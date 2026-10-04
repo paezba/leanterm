@@ -218,11 +218,6 @@ impl CloudPreferencesSyncer {
         me
     }
 
-    /// Returns whether initial cloud/local preference reconciliation has completed.
-    pub(crate) fn has_completed_initial_load(&self) -> bool {
-        self.has_completed_initial_load
-    }
-
     #[cfg(test)]
     pub(crate) fn mark_initial_load_completed_for_test(&mut self) {
         self.has_completed_initial_load = true;

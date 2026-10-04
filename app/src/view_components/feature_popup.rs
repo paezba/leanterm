@@ -43,14 +43,6 @@ impl FeaturePopup {
         }
     }
 
-    pub fn alert_icon(label: NewFeaturePopupLabel) -> Self {
-        Self {
-            dismiss_mouse_state: Default::default(),
-            label,
-            badge: FeaturePopupBadge::AlertIcon,
-        }
-    }
-
     fn render_badge(&self, appearance: &Appearance) -> Box<dyn Element> {
         let background = appearance.theme().background();
         match self.badge {

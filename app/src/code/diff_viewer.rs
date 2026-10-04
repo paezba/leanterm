@@ -28,25 +28,6 @@ pub enum DisplayMode {
 }
 
 impl DisplayMode {
-    pub fn with_embedded(max_height: f32) -> Self {
-        DisplayMode::Embedded { max_height }
-    }
-
-    pub fn with_inline_banner(max_height: f32) -> Self {
-        DisplayMode::InlineBanner {
-            max_height,
-            is_expanded: false,
-            is_dismissed: false,
-        }
-    }
-
-    pub fn max_height(&self) -> Option<f32> {
-        match self {
-            DisplayMode::FullPane => None,
-            DisplayMode::Embedded { max_height } => Some(*max_height),
-            DisplayMode::InlineBanner { max_height, .. } => Some(*max_height),
-        }
-    }
 
     pub(crate) fn scroll_wheel_behavior(&self) -> ScrollWheelBehavior {
         match self {
@@ -89,24 +70,6 @@ impl DisplayMode {
         !matches!(self, DisplayMode::InlineBanner { .. })
     }
 
-    pub fn title(&self) -> Option<&str> {
-        match self {
-            DisplayMode::InlineBanner { .. } => Some("Suggested fixes based on your last command:"),
-            _ => None,
-        }
-    }
-
-    pub fn is_full_pane(&self) -> bool {
-        matches!(self, DisplayMode::FullPane)
-    }
-
-    pub fn is_embedded(&self) -> bool {
-        matches!(self, DisplayMode::Embedded { .. })
-    }
-
-    pub fn is_inline_banner(&self) -> bool {
-        matches!(self, DisplayMode::InlineBanner { .. })
-    }
 }
 
 /// A shared trait for views that display an inline diff.
@@ -116,16 +79,6 @@ where
 {
     fn editor(&self) -> &ViewHandle<CodeEditorView>;
     fn diff(&self) -> Option<&DiffType>;
-
-    #[cfg_attr(target_family = "wasm", allow(dead_code))]
-    fn was_edited(&self) -> bool {
-        false
-    }
-
-    #[cfg_attr(target_family = "wasm", allow(dead_code))]
-    fn changed_lines(&self, ctx: &AppContext) -> Vec<Range<usize>> {
-        self.editor().as_ref(ctx).changed_lines(ctx)
-    }
 
     fn set_display_mode(&self, mode: DisplayMode, ctx: &mut ViewContext<Self>) {
         let is_delete = matches!(self.diff(), Some(DiffType::Delete { .. }));
@@ -140,19 +93,4 @@ where
         });
     }
 
-    fn navigate_next_diff_hunk(&self, ctx: &mut ViewContext<Self>) {
-        self.editor()
-            .update(ctx, |editor, ctx| editor.navigate_next_diff_hunk(ctx));
-    }
-
-    fn navigate_previous_diff_hunk(&self, ctx: &mut ViewContext<Self>) {
-        self.editor()
-            .update(ctx, |editor, ctx| editor.navigate_previous_diff_hunk(ctx));
-    }
-
-    fn reject_diff(&mut self, _ctx: &mut ViewContext<Self>) {}
-
-    fn restore_diff_base(&mut self, _ctx: &mut ViewContext<Self>) -> Result<(), String> {
-        Ok(())
-    }
 }

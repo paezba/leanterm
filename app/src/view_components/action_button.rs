@@ -1032,11 +1032,6 @@ impl ActionButtonTheme for DangerPrimaryTheme {
     }
 }
 
-/// "DangerSecondary" buttons have no fill and a colorful border.
-///
-/// [Figma spec](https://www.figma.com/design/chk9pwt35jTJhf9KnHmZyE/Components?node-id=3628-14344&t=c27DwGHWevMlisVN-0)
-pub struct DangerSecondaryTheme;
-
 impl ActionButtonTheme for DangerSecondaryTheme {
     fn background(&self, hovered: bool, appearance: &Appearance) -> Option<Fill> {
         if hovered {
@@ -1549,3 +1544,8 @@ impl ButtonSize {
         }
     }
 }
+
+/// "DangerSecondary" buttons have no fill and a colorful border.
+///
+/// [Figma spec](https://www.figma.com/design/chk9pwt35jTJhf9KnHmZyE/Components?node-id=3628-14344&t=c27DwGHWevMlisVN-0)
+pub struct DangerSecondaryTheme;

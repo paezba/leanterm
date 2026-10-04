@@ -1035,7 +1035,7 @@ impl BlockList {
 
                     // Read rich content selected text in the intermediate rich content blocks.
                     while current_row >= selection_start_cursor.start().height {
-                        if let Some(BlockHeightItem::RichContent(item)) =
+                        if let Some(BlockHeightItem::RichContent(_item)) =
                             selection_start_cursor.item()
                         {
                         }
@@ -1052,7 +1052,7 @@ impl BlockList {
 
                 // Read AI block selected text in the trailing AI blocks.
                 while bottom_row >= selection_start_cursor.start().height {
-                    if let Some(BlockHeightItem::RichContent(item)) = selection_start_cursor.item()
+                    if let Some(BlockHeightItem::RichContent(_item)) = selection_start_cursor.item()
                     {
                     }
                     selection_start_cursor.next();

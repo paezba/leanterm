@@ -2,9 +2,8 @@ use crate::workspaces::workspace::{
     AiOverages, BonusGrantsPurchased, ByoApiKeyPolicy, ByoEndpointPolicy, CodebaseContextPolicy,
     EnterpriseCreditsAutoReloadPolicy, EnterprisePayAsYouGoPolicy, ManagedByokByoePolicy,
     MultiAdminPolicy, NativeWorkspacesPolicy, PurchaseAddOnCreditsPolicy,
-    UsageBasedPricingSettings, WorkspaceUid,
+    UsageBasedPricingSettings,
 };
-use std::path::PathBuf;
 
 use anyhow::{Result, anyhow, bail};
 use regex::Regex;
@@ -12,7 +11,6 @@ use warp_errors::report_error;
 use warp_graphql::billing::{
     AiAutonomyPolicy as GqlAiAutonomyPolicy, AmbientAgentsPolicy as GqlAmbientAgentsPolicy,
     BillingCycleUsageHistory as GqlBillingCycleUsageHistory, BillingMetadata as GqlBillingMetadata,
-    BonusGrant as GqlBonusGrant, BonusGrantScope as GqlBonusGrantScope,
     ByoApiKeyPolicy as GqlByoApiKeyPolicy, ByoEndpointPolicy as GqlByoEndpointPolicy,
     CodebaseContextPolicy as GqlCodebaseContextPolicy, CustomerType as GqlCustomerType,
     DelinquencyStatus as GqlDelinquencyStatus,
@@ -31,7 +29,6 @@ use warp_graphql::billing::{
     UsageVisibilityGranularity as GqlUsageVisibilityGranularity,
     UsageVisibilityPolicy as GqlUsageVisibilityPolicy, WarpAiPolicy as GqlWarpAiPolicy,
 };
-use warp_graphql::queries::get_conversation_usage as gql_usage;
 use warp_graphql::queries::get_workspaces_metadata_for_user::User as GqlUser;
 use warp_graphql::subscriptions::get_warp_drive_updates::WarpDriveUpdate;
 use warp_graphql::user::{
@@ -40,21 +37,15 @@ use warp_graphql::user::{
 };
 use warp_graphql::workspace::{
     AddonCreditsSettings as GqlAddonCreditsSettings,
-    AdminEnablementSetting as GqlAdminEnablementSetting, AiAutonomyValue as GqlAiAutonomyValue,
-    AiPermissionsSettings as GqlAiPermissionsSettings,
-    ByoEndpointMetadata as GqlByoEndpointMetadata,
-    ByoEndpointModelMetadata as GqlByoEndpointModelMetadata,
-    ByoFirstPartyKey as GqlByoFirstPartyKey,
-    ComputerUseAutonomyValue as GqlComputerUseAutonomyValue, EmailInvite as GqlEmailInvite,
-    FeatureModelChoice, HostEnablementSetting as GqlHostEnablementSetting,
+    AdminEnablementSetting as GqlAdminEnablementSetting,
+    AiPermissionsSettings as GqlAiPermissionsSettings, EmailInvite as GqlEmailInvite,
     InviteLinkDomainRestriction as GqlInviteLinkDomainRestriction,
     MembershipRole as GqlMembershipRole, StringListSettingInfo as GqlStringListSettingInfo,
-    Team as GqlTeam, TeamByoSettings as GqlTeamByoSettings, TeamMember as GqlTeamMember,
+    Team as GqlTeam, TeamMember as GqlTeamMember,
     TeamSettings as GqlTeamSettings, TeamVisibility as GqlTeamVisibility,
     UgcCollectionEnablementSetting as GqlUgcCollectionEnablementSetting, Workspace as GqlWorkspace,
     WorkspaceMember as GqlWorkspaceMember, WorkspaceMemberUsageInfo as GqlWorkspaceMemberUsageInfo,
     WorkspaceSettings as GqlWorkspaceSettings,
-    WriteToPtyAutonomyValue as GqlWriteToPtyAutonomyValue,
 };
 
 use super::team::{
@@ -778,16 +769,6 @@ impl From<GqlWorkspaceSettings> for WorkspaceSettings {
                     .into(),
             },
         }
-    }
-}
-
-/// Converts a GraphQL `StringListSettingInfo` into the app list setting,
-/// preserving the workspace/team split entries alongside the merged values.
-fn split_string_list(info: GqlStringListSettingInfo) -> SplitListSetting<String> {
-    SplitListSetting {
-        values: info.values,
-        workspace_entries: info.workspace_entries,
-        team_entries: info.team_entries,
     }
 }
 

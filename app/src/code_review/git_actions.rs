@@ -60,7 +60,7 @@ pub async fn run_push(
 /// Creates a PR for `branch` with `gh pr create --fill`.
 pub async fn create_pr(
     repo_path: &Path,
-    branch: &str,
+    _branch: &str,
     path_env: Option<&str>,
 ) -> anyhow::Result<PrInfo> {
     git::create_pr(repo_path, None, None, path_env).await

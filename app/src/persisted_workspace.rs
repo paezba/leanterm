@@ -1,13 +1,8 @@
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 use std::sync::mpsc::SyncSender;
 
-use ai::index::full_source_code_embedding::manager::{
-    CodebaseIndexManager, CodebaseIndexManagerEvent,
-};
-use ai::project_context::model::{ProjectContextModel, ProjectContextModelEvent};
-use ai::workspace::{WorkspaceMetadata, WorkspaceMetadataEvent};
+use ai::workspace::WorkspaceMetadata;
 use anyhow::Context;
 use chrono::Utc;
 use itertools::Itertools;
@@ -19,15 +14,12 @@ use lsp::supported_servers::LSPServerType;
 use lsp::{LspManagerModel, LspServerConfig};
 #[cfg(feature = "local_fs")]
 use repo_metadata::RepoMetadataModel;
-#[cfg(feature = "local_fs")]
-use repo_metadata::repositories::{DetectedRepositories, DetectedRepositoriesEvent};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "local_fs")]
 use warp_core::channel::ChannelState;
-use warp_core::features::FeatureFlag;
 use warp_errors::report_if_error;
 #[cfg(feature = "local_fs")]
-use warp_util::{local_or_remote_path::LocalOrRemotePath, standardized_path::StandardizedPath};
+use warp_util::standardized_path::StandardizedPath;
 #[cfg(feature = "local_fs")]
 use warpui::windowing::WindowManager;
 use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
@@ -41,11 +33,9 @@ use crate::persistence::ModelEvent;
 use crate::send_telemetry_from_ctx;
 #[cfg(feature = "local_fs")]
 use crate::server::server_api::ServerApiProvider;
-use crate::settings::CodeSettings;
 use crate::terminal::TerminalView;
 #[cfg(feature = "local_fs")]
 use crate::terminal::local_shell::LocalShellState;
-use crate::workspaces::user_workspaces::{UserWorkspaces, UserWorkspacesEvent};
 #[cfg(feature = "local_fs")]
 use crate::{view_components::DismissibleToast, workspace::ToastStack};
 
@@ -392,29 +382,6 @@ impl PersistedWorkspace {
         })
     }
 
-    /// Returns LSP servers for a given workspace path.
-    ///
-    /// When `include_suggested` is `false`, only persisted entries (`Yes`/`No`)
-    /// are returned.  When `true`, in-memory `Suggested` entries are included as
-    /// well (useful for showing available-for-download servers in the UI).
-    pub fn all_lsp_servers(
-        &self,
-        path: &Path,
-        include_suggested: bool,
-    ) -> Option<impl Iterator<Item = (LSPServerType, EnablementState)> + use<'_>> {
-        let root = self.root_for_workspace(path)?;
-
-        self.workspaces.get(root).map(move |workspace| {
-            workspace
-                .language_servers
-                .iter()
-                .filter(move |(_, state)| {
-                    include_suggested || **state != EnablementState::Suggested
-                })
-                .map(|(server_type, state)| (*server_type, *state))
-        })
-    }
-
     /// Asynchronously detects which LSP server types are relevant for the given workspaces
     /// by calling `should_suggest_for_repo` on each `LSPServerType`. Results are stored
     /// as `Suggested` entries in the workspaces map and emitted via `AvailableServersDetected`.
@@ -513,23 +480,6 @@ impl PersistedWorkspace {
                 }
             },
         );
-    }
-
-    /// Returns the total count of LSP servers across all workspaces.
-    ///
-    /// When `include_suggested` is `false`, only persisted entries (`Yes`/`No`)
-    /// are counted.  When `true`, in-memory `Suggested` entries are counted too.
-    pub fn total_lsp_server_count(&self, include_suggested: bool) -> usize {
-        self.workspaces
-            .values()
-            .map(|workspace| {
-                workspace
-                    .language_servers
-                    .values()
-                    .filter(|state| include_suggested || **state != EnablementState::Suggested)
-                    .count()
-            })
-            .sum()
     }
 
     /// Explicitly registers a directory as a workspace, as if the user had navigated there.
@@ -964,23 +914,4 @@ impl PersistedWorkspace {
             }
         }
     }
-}
-
-#[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
-pub fn all_working_directories(app: &AppContext) -> HashSet<PathBuf> {
-    let mut working_directories = HashSet::new();
-    for window_id in app.window_ids() {
-        for terminal_view in app
-            .views_of_type::<TerminalView>(window_id)
-            .into_iter()
-            .flatten()
-            .map(|handle| handle.as_ref(app))
-        {
-            let working_directory = terminal_view.pwd();
-            if let Some(dir) = working_directory {
-                working_directories.insert(dir.into());
-            }
-        }
-    }
-    working_directories
 }

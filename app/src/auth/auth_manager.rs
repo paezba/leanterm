@@ -28,7 +28,6 @@ use super::credentials::{Credentials, FirebaseToken, LoginToken};
 use super::user::User;
 use super::user_properties::UserProperties;
 use super::{AuthStateProvider, UserUid};
-use crate::persisted_workspace::PersistedWorkspace;
 use crate::autoupdate::AutoupdateState;
 use crate::persistence::ModelEvent;
 use crate::server::cloud_objects::update_manager::UpdateManager;
@@ -89,46 +88,6 @@ pub enum AuthManagerEvent {
 pub type LoginGatedFeature = &'static str;
 
 type URLConstructorCallback = Box<dyn FnOnce(Option<&str>) -> String>;
-const DEVICE_CODE_REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
-const DEVICE_CODE_REQUEST_ATTEMPTS: usize = 2;
-
-async fn request_device_code_with_timeout<F, Fut>(
-    mut request: F,
-    timeout: Duration,
-    attempts: usize,
-) -> StdResult<oauth2::StandardDeviceAuthorizationResponse, UserAuthenticationError>
-where
-    F: FnMut() -> Fut,
-    Fut: Future<
-        Output = StdResult<oauth2::StandardDeviceAuthorizationResponse, UserAuthenticationError>,
-    >,
-{
-    assert!(
-        attempts > 0,
-        "device code request requires at least one attempt"
-    );
-
-    for attempt in 1..=attempts {
-        let request = request();
-        let timeout = Timer::after(timeout);
-        futures::pin_mut!(request);
-        futures::pin_mut!(timeout);
-
-        match futures::future::select(request, timeout).await {
-            Either::Left((result, _)) => return result,
-            Either::Right(_) if attempt < attempts => {
-                log::info!(
-                    "Device authorization code request timed out; retrying ({attempt}/{attempts})"
-                );
-            }
-            Either::Right(_) => {
-                return Err(UserAuthenticationError::DeviceCodeRequestTimedOut { attempts });
-            }
-        }
-    }
-
-    unreachable!("attempt count is asserted to be nonzero")
-}
 
 /// AuthManager is a singleton model which manages the currently logged-in user's state.
 /// If you need to access the state, use `AuthStateProvider`.
@@ -335,67 +294,6 @@ impl AuthManager {
             },
             Self::on_user_fetched,
         );
-    }
-
-    /// Authenticate asynchronously using the OAuth2 device authorization flow.
-    ///
-    /// This is only used by the Warp CLI if running on a device that does not have the Warp app installed.
-    #[cfg_attr(target_family = "wasm", allow(dead_code))]
-    pub fn authorize_device(&self, ctx: &mut ModelContext<Self>) {
-        // Clear any stale user state so old credentials don't interfere
-        // with the fresh device auth flow.
-        self.auth_state.set_credentials(None);
-
-        let auth_client = self.auth_client.clone();
-        // Request a device code the user can enter in their browser.
-        ctx.spawn(
-            async move {
-                request_device_code_with_timeout(
-                    || auth_client.request_device_code(),
-                    DEVICE_CODE_REQUEST_TIMEOUT,
-                    DEVICE_CODE_REQUEST_ATTEMPTS,
-                )
-                .await
-            },
-            Self::on_device_code_received,
-        );
-    }
-
-    #[cfg_attr(target_family = "wasm", allow(dead_code))]
-    fn on_device_code_received(
-        &mut self,
-        result: Result<oauth2::StandardDeviceAuthorizationResponse, UserAuthenticationError>,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        match result {
-            Ok(details) => {
-                // Emit the device authorization details so that they can be shown to the user.
-                ctx.emit(AuthManagerEvent::ReceivedDeviceAuthorizationCode {
-                    verification_url: details.verification_uri().to_string(),
-                    verification_url_complete: details
-                        .verification_uri_complete()
-                        .map(|complete| complete.secret().to_string()),
-                    user_code: details.user_code().secret().to_string(),
-                });
-
-                let auth_client = self.auth_client.clone();
-                ctx.spawn(
-                    async move {
-                        // Wait for the user to approve the device authorization request.
-                        let token = auth_client
-                            .exchange_device_access_token(&details, Duration::from_secs(600))
-                            .await?;
-
-                        // Exchange the custom access token for Firebase auth tokens and fetch the user.
-                        auth_client
-                            .fetch_user(LoginToken::Firebase(token), false)
-                            .await
-                    },
-                    Self::on_user_fetched,
-                );
-            }
-            Err(err) => ctx.emit(AuthManagerEvent::AuthFailed(err)),
-        }
     }
 
     /// Callback for handling a successful fetch of a user from warp-server and Firebase.
@@ -858,18 +756,6 @@ impl AuthManager {
         let state = self.generate_auth_state();
         format!(
             "{}/login/remote?scheme={}&state={}",
-            ChannelState::server_root_url(),
-            ChannelState::url_scheme(),
-            state,
-        )
-    }
-
-    /// The upgrade confirmation page will kick the user back to the app with a refresh token
-    /// if we send a `state` query param to /upgrade
-    pub fn upgrade_url(&mut self) -> String {
-        let state = self.generate_auth_state();
-        format!(
-            "{}/upgrade?scheme={}&state={}",
             ChannelState::server_root_url(),
             ChannelState::url_scheme(),
             state,

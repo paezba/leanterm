@@ -58,8 +58,7 @@ use crate::banner::BannerState;
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::model::view::{CloudViewModel, CloudViewModelEvent, UpdateTimestamp};
 use crate::cloud_object::{
-    CloudObject, CloudObjectEventEntrypoint, CloudObjectLocation, CloudObjectSyncStatus,
-    GenericCloudObject, GenericStringObjectFormat, JsonObjectType, NumInFlightRequests, ObjectType,
+    CloudObject, CloudObjectEventEntrypoint, CloudObjectLocation, CloudObjectSyncStatus, GenericStringObjectFormat, JsonObjectType, NumInFlightRequests, ObjectType,
     Space,
 };
 use crate::drive::panel::DrivePanelAction;
@@ -68,11 +67,10 @@ use crate::env_vars::CloudEnvVarCollection;
 use crate::features::FeatureFlag;
 use crate::menu::{Event, Menu, MenuItem, MenuItemFields};
 use crate::network::NetworkStatus;
-use crate::notebooks::CloudNotebookModel;
 use crate::server::cloud_objects::update_manager::{
     FetchSingleObjectOption, InitiatedBy, UpdateManager,
 };
-use crate::server::ids::{ClientId, ObjectUid, ServerId, SyncId};
+use crate::server::ids::{ObjectUid, ServerId, SyncId};
 use crate::server::sync_queue::SyncQueue;
 use crate::server::telemetry::{
     AnonymousUserSignupEntrypoint, SharingDialogSource, TelemetryEvent,

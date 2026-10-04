@@ -169,18 +169,6 @@ impl SessionConfigModal {
             .finish()
     }
 
-    fn render_session_type_section(&self, appearance: &Appearance) -> Box<dyn Element> {
-        session_config_rendering::render_session_type_pills(
-            &self.session_types,
-            self.selected_session_type_index,
-            &self.session_pill_mouse_states,
-            |i, ctx, _| {
-                ctx.dispatch_typed_action(SessionConfigModalAction::SelectSessionType(i));
-            },
-            appearance,
-        )
-    }
-
     fn render_directory_section(&self, appearance: &Appearance) -> Box<dyn Element> {
         session_config_rendering::render_directory_picker(
             &self.selected_directory,

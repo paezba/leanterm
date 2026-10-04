@@ -3,7 +3,7 @@ mod serialized_block;
 use pathfinder_color::ColorU;
 use secret_redaction::redact_secrets;
 use std::borrow::Cow;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::io;
 use std::iter::DoubleEndedIterator;
 use std::num::NonZeroUsize;
@@ -18,7 +18,6 @@ use instant::Instant;
 use pathfinder_geometry::vector::Vector2F;
 pub use serialized_block::*;
 use warp_core::command::ExitCode;
-use warp_core::features::FeatureFlag;
 use warp_errors::report_error;
 use warp_terminal::model::grid::Dimensions as _;
 use warp_terminal::model::{KeyboardModes, KeyboardModesApplyBehavior};
@@ -850,10 +849,6 @@ impl Block {
         self.output_grid.set_trim_trailing_blank_rows(trim);
     }
 
-    pub(in crate::terminal) fn enable_full_grid_clear_behavior(&mut self) {
-        self.output_grid.enable_full_grid_clear_behavior();
-    }
-
     pub fn set_restored_block_was_local(&mut self, was_local: bool) {
         debug_assert!(
             self.bootstrap_stage == BootstrapStage::RestoreBlocks,
@@ -1126,7 +1121,7 @@ impl Block {
     }
 
     /// If true, this block is hidden and has a height of 0.
-    pub fn should_hide_block(&self, transcript_scope: &TranscriptScope) -> bool {
+    pub fn should_hide_block(&self, _transcript_scope: &TranscriptScope) -> bool {
         if self.hidden {
             return true;
         }

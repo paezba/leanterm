@@ -11,7 +11,6 @@ use warp_core::settings::macros::define_settings_group;
 use warp_core::settings::{RespectUserSyncSetting, SupportedPlatforms, SyncToCloud};
 pub use working_directory_config::*;
 
-use crate::context_chips::ContextChipKind;
 use crate::context_chips::prompt::PromptSelection;
 
 lazy_static! {

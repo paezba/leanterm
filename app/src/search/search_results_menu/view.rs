@@ -6,7 +6,6 @@ use warpui::elements::{
     ConstrainedBox, Container, Empty, Flex, ParentElement, SavePosition, ScrollStateHandle,
     Scrollable, ScrollableElement, ScrollbarWidth, Text, UniformList, UniformListState,
 };
-use warpui::ui_components::components::{UiComponent, UiComponentStyles};
 use warpui::{
     Action, AppContext, Element, Entity, ModelHandle, SingletonEntity, View, ViewContext,
     ViewHandle, WeakViewHandle,
@@ -19,9 +18,6 @@ use crate::search::mixer::SearchMixer;
 use crate::search::search_bar::{
     CreateQueryResultRendererFn, SearchBar, SearchBarEvent, SearchBarState, SearchResultOrdering,
 };
-
-const HEADER_HORIZONTAL_PADDING: f32 = 16.;
-const HEADER_VERTICAL_PADDING: f32 = 4.;
 
 #[derive(Clone, Copy)]
 pub struct SearchResultsMenuConfig {
@@ -283,7 +279,7 @@ impl<T: Action + Clone> SearchResultsMenuView<T> {
         let selected_index = state.selected_index();
         let query_result_renderers = state.query_result_renderers();
 
-        let appearance = Appearance::as_ref(app);
+        let _appearance = Appearance::as_ref(app);
 
         let mut column = Flex::column();
 

@@ -6,9 +6,7 @@ use std::sync::mpsc::SyncSender;
 use std::sync::{Arc, Once};
 use std::{fs, thread};
 
-use ai::project_context::model::ProjectRulePath;
 use anyhow::{Context, Result, anyhow, bail};
-use chrono::Utc;
 use cloud_object_models::folder::persistence as folder_persistence;
 use cloud_object_models::folder::persistence::upsert_folders;
 use cloud_object_models::json_model::persistence::{
@@ -39,9 +37,6 @@ use lsp::supported_servers::LSPServerType;
 use num_traits::FromPrimitive;
 use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::Vector2F;
-use persistence::model::AMBIENT_AGENT_PANE_KIND;
-use uuid::Uuid;
-use warp_core::features::FeatureFlag;
 use warp_errors::{report_error, report_if_error};
 use warpui::platform::FullscreenState;
 use warpui::windowing::{MIN_WINDOW_HEIGHT, MIN_WINDOW_WIDTH};
@@ -50,11 +45,11 @@ use warpui::{AppContext, SingletonEntity};
 use super::block_list::{ delete_blocks, save_block,
 };
 use super::model::{
-    self, AI_DOCUMENT_PANE_KIND, AI_FACT_PANE_KIND, ActiveMCPServer, CODE_PANE_KIND,
-    CurrentUserInformation, ENV_VAR_COLLECTION_PANE_KIND, EXECUTION_PROFILE_EDITOR_PANE_KIND,
-    MCP_SERVER_PANE_KIND, MCPEnvironmentVariables, NOTEBOOK_PANE_KIND, NewActiveMCPServer, NewApp,
+    self, CODE_PANE_KIND,
+    CurrentUserInformation, ENV_VAR_COLLECTION_PANE_KIND,
+    MCP_SERVER_PANE_KIND, NOTEBOOK_PANE_KIND, NewApp,
     NewCommand, NewServerExperiment, NewTab, NewTabGroup, NewTeam, NewWindow, NewWorkspace,
-    NewWorkspaceMetadata, NewWorkspaceTeam, Project, SETTINGS_PANE_KIND, TERMINAL_PANE_KIND, Tab,
+    NewWorkspaceMetadata, NewWorkspaceTeam, SETTINGS_PANE_KIND, TERMINAL_PANE_KIND, Tab,
     TabGroup, WORKFLOW_PANE_KIND, Window, WorkspaceMetadata as WorkspaceMetadataModel,
 };
 use super::{
@@ -83,8 +78,7 @@ use crate::persistence::block_list::{
     get_all_restored_blocks,
 };
 use crate::persistence::model::{
-    CODE_REVIEW_PANE_KIND, GET_STARTED_PANE_KIND, NewPersistedObjectAction, NewTeamSettings,
-    ProjectRules, UserProfile,
+    CODE_REVIEW_PANE_KIND, NewPersistedObjectAction, NewTeamSettings, UserProfile,
 };
 use crate::server::experiments::ServerExperiment;
 use crate::server::ids::{ClientId, HashableId, ServerId, SyncId};
@@ -128,7 +122,7 @@ pub fn initialize(
     let database_path = database_file_path_for_scope(&scope);
     match init_db(&scope) {
         Ok(mut conn) => {
-            let mut persisted_data = read_persisted_data(&mut conn, ctx, data_scope);
+            let persisted_data = read_persisted_data(&mut conn, ctx, data_scope);
 
             let writer_handles = match start_writer(conn, database_path.clone()) {
                 Ok(writer_handles) => Some(writer_handles),
@@ -169,12 +163,6 @@ fn read_persisted_data(
             None
         }
     }
-}
-
-/// Returns a read-only connection to the sqlite database.
-/// We want only one write connection to exist and use event processing to write any data needed.
-pub fn establish_ro_connection(database_url: &str) -> Result<SqliteConnection> {
-    establish_connection(database_url, true)
 }
 
 fn establish_connection(database_url: &str, read_only: bool) -> Result<SqliteConnection> {
@@ -429,16 +417,6 @@ pub fn database_file_path_for_scope(scope: &PersistenceScope) -> PathBuf {
             remote_server_daemon_database_file_path(identity_key)
         }
     }
-}
-
-/// The database file path for the scope this process's persistence was
-/// initialized with (see [`super::current_scope`]).
-///
-/// Ad-hoc read-only connections should use this instead of hardcoding
-/// [`PersistenceScope::App`], so that a TUI process never reads the GUI's
-/// database.
-pub fn database_file_path_for_current_scope() -> PathBuf {
-    database_file_path_for_scope(&super::current_scope())
 }
 
 fn app_database_file_path() -> PathBuf {

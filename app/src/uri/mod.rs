@@ -15,8 +15,6 @@ use anyhow::{Result, anyhow, ensure};
 use itertools::Itertools;
 use session_sharing_protocol::common::SessionId;
 use url::Url;
-#[cfg(not(target_family = "wasm"))]
-use warp_errors::report_error;
 use warp_util::path::LineAndColumnArg;
 use warpui::notification::UserNotification;
 use warpui::platform::TerminationMode;
@@ -28,8 +26,7 @@ use crate::drive::{OpenWarpDriveObjectArgs, OpenWarpDriveObjectSettings};
 use crate::features::FeatureFlag;
 use crate::launch_configs::launch_config::LaunchConfig;
 use crate::root_view::{
-    NewWorkspaceSource, OpenLaunchConfigArg, open_new_window_get_handles,
-    open_new_with_workspace_source,
+    OpenLaunchConfigArg, open_new_window_get_handles,
 };
 use crate::server::ids::ServerId;
 use crate::server::telemetry::{LaunchConfigUiLocation, TelemetryEvent};
@@ -67,18 +64,6 @@ pub enum OpenSettingsArgs {
         page: SettingsSection,
         widget_id: &'static str,
     },
-}
-
-/// Query parameter the web checkout confirmation page appends to the desktop
-/// hand-off to report that the purchase went through. It is the shared
-/// convention across every product the web can sell (a subscription plan or a
-/// one-time credit pack), so the client has a single success signal to react to.
-pub const CHECKOUT_SUCCESSFUL_PARAM: &str = "checkoutSuccessful";
-
-/// Whether an incoming deeplink reports a completed web checkout.
-pub fn url_reports_checkout_success(url: &Url) -> bool {
-    url.query_pairs()
-        .any(|(key, value)| key == CHECKOUT_SUCCESSFUL_PARAM && value == "true")
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -1203,47 +1188,6 @@ fn open_window_with_action(active_window_id: Option<WindowId>, action: &str, ctx
         // Need to send a callback once window is fully open.
     }
 }
-
-fn find_workspace_for_terminal_view(
-    terminal_view_id: EntityId,
-    ctx: &mut AppContext,
-) -> Option<(WindowId, ViewHandle<Workspace>)> {
-    for window_id in ctx.window_ids() {
-        let Some(workspaces) = ctx.views_of_type::<Workspace>(window_id) else {
-            continue;
-        };
-        for workspace in workspaces {
-            let contains_terminal = workspace
-                .as_ref(ctx)
-                .list_tab_pane_groups(ctx)
-                .iter()
-                .any(|group| group.terminal_ids.contains(&terminal_view_id));
-            if contains_terminal {
-                return Some((window_id, workspace));
-            }
-        }
-    }
-
-    None
-}
-
-fn active_terminal_view_id_in_window(window_id: WindowId, ctx: &AppContext) -> Option<EntityId> {
-    let workspaces = ctx.views_of_type::<Workspace>(window_id)?;
-    let workspace = workspaces.first()?;
-    workspace.read(ctx, |workspace, w_ctx| {
-        let pane_group = workspace.active_tab_pane_group().as_ref(w_ctx);
-        pane_group
-            .active_session_view(w_ctx)
-            .map(|terminal_view| terminal_view.id())
-            .or_else(|| {
-                pane_group
-                    .terminal_views(w_ctx)
-                    .first()
-                    .map(|view| view.id())
-            })
-    })
-}
-
 
 /// Helper function to dispatch an action to an existing window
 /// or create new window if none exist.

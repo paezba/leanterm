@@ -1,15 +1,12 @@
 use crate::terminal::model::block::SerializedBlockListItem;
 use crate::settings::{ PaneSettings};
 use std::any::Any;
-use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::ffi::OsString;
 use std::path::PathBuf;
-use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::mpsc::SyncSender;
 
-use instant::Instant;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use markdown_parser::FormattedTextFragment;
@@ -21,21 +18,17 @@ use session_sharing_protocol::common::{
     ParticipantId, Role, RoleRequestId, RoleRequestRejectedReason, RoleRequestResponse, SessionId,
 };
 use settings::Setting as _;
-use tree::DEFAULT_FLEX_VALUE;
 use typed_path::TypedPath;
 use url::Url;
 use uuid::Uuid;
-use warp_cli::agent::Harness;
 use warp_core::command::ExitCode;
 use warp_core::context_flag::ContextFlag;
 use warp_errors::report_if_error;
 use warp_terminal::focus_env::add_session_focus_env_vars;
-use warp_terminal::shell::{ShellName, ShellType};
 #[cfg(feature = "local_fs")]
 use warp_util::path::LineAndColumnArg;
 use warp_util::path::convert_wsl_to_windows_host_path;
 use warp_util::remote_path::RemotePath;
-use warpui::r#async::SpawnedFutureHandle;
 use warpui::elements::{
     ChildView, Clipped, CrossAxisAlignment, DispatchEventResult, Element, EventHandler, Flex,
     MainAxisSize, ParentElement, Shrinkable, Stack,
@@ -45,7 +38,7 @@ use warpui::notification::NotificationSendError;
 use warpui::windowing::WindowManager;
 use warpui::{
     AppContext, Entity, EntityId, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
-    ViewHandle, WeakViewHandle, WindowId,
+    ViewHandle, WindowId,
 };
 
 #[cfg(feature = "local_fs")]
@@ -67,8 +60,6 @@ use crate::code::buffer_location::LocalOrRemotePath;
 #[cfg(feature = "local_fs")]
 use crate::code::editor_management::CodeSource;
 use crate::code::view::{CodeView, CodeViewAction};
-use crate::code_review::comments::{AttachedReviewComment, PendingImportedReviewComment};
-use crate::code_review::diff_state::DiffMode;
 use crate::drive::items::WarpDriveItemId;
 use crate::drive::{CloudObjectTypeAndId, OpenWarpDriveObjectArgs};
 use crate::env_vars::EnvVarCollectionType;
@@ -119,7 +110,7 @@ use crate::terminal::view::{
     LeftPanelTargetView, SyncEvent, TerminalViewState,
 };
 use crate::terminal::{
-    MockTerminalManager, ShareBlockModal, ShareBlockModalEvent, ShellLaunchData, ShellLaunchState,
+    ShareBlockModal, ShareBlockModalEvent, ShellLaunchData,
     TerminalManager, TerminalModel, TerminalView,
 };
 use crate::undo_close::{UndoCloseStack, UndoCloseStackEvent};
@@ -133,9 +124,8 @@ use crate::workflows::workflow::Workflow;
 use crate::workflows::{WorkflowSelectionSource, WorkflowSource, WorkflowType};
 use crate::workspace::tab_group::TabGroupId;
 use crate::workspace::{
-    self, CommandSearchOptions, PaneViewLocator, TabBarLocation, WorkspaceAction,
+    self, CommandSearchOptions, PaneViewLocator, TabBarLocation,
 };
-use crate::workspaces::user_workspaces::{ResolvedTeamScope, UserWorkspaces};
 use crate::{cmd_or_ctrl_shift, send_telemetry_from_ctx};
 
 pub mod focus_state;
@@ -1358,7 +1348,7 @@ impl PaneGroup {
         view_size: Vector2F,
         model_event_sender: Option<SyncSender<ModelEvent>>,
         #[cfg_attr(not(feature = "local_fs"), allow(unused_variables, clippy::ptr_arg))]
-        deferred_panes: &mut Vec<(PaneId, LeafSnapshot)>,
+        _deferred_panes: &mut Vec<(PaneId, LeafSnapshot)>,
     ) -> anyhow::Result<(PaneData, InitialFocus)> {
         let custom_vertical_tabs_title = leaf.custom_vertical_tabs_title.clone();
         let result = match leaf.contents {
@@ -1565,12 +1555,12 @@ impl PaneGroup {
     #[cfg_attr(not(feature = "local_fs"), allow(unused_variables, unused_mut))]
     fn process_deferred_panes(
         deferred_panes: Vec<(PaneId, LeafSnapshot)>,
-        mut result: (PaneData, InitialFocus),
-        pane_contents: &mut HashMap<PaneId, Box<dyn AnyPaneContent>>,
-        ctx: &mut ViewContext<Self>,
+        result: (PaneData, InitialFocus),
+        _pane_contents: &mut HashMap<PaneId, Box<dyn AnyPaneContent>>,
+        _ctx: &mut ViewContext<Self>,
     ) -> (PaneData, InitialFocus) {
-        for (placeholder_id, leaf) in deferred_panes {
-            let custom_vertical_tabs_title = leaf.custom_vertical_tabs_title.clone();
+        for (_placeholder_id, leaf) in deferred_panes {
+            let _custom_vertical_tabs_title = leaf.custom_vertical_tabs_title.clone();
             match leaf.contents {
                 _ => {
                     // Ignore other pane types in deferred processing
@@ -1737,12 +1727,6 @@ impl PaneGroup {
     ) -> impl Iterator<Item = (PaneId, ViewHandle<FileNotebookView>)> + 'a {
         self.panes_of::<FilePane>()
             .map(move |pane| (pane.id(), pane.file_view(app)))
-    }
-
-    fn close_panes(&mut self, pane_ids: Vec<PaneId>, ctx: &mut ViewContext<Self>) {
-        for pane_id in pane_ids {
-            self.close_pane(pane_id, ctx);
-        }
     }
 
     /// Whether the focused pane is a code pane whose active tab should show
@@ -4857,21 +4841,6 @@ impl PaneGroup {
         true
     }
 
-    fn focus_pane_preserving_maximized_state(
-        &mut self,
-        id: PaneId,
-        focus_pane_contents: bool,
-        ctx: &mut ViewContext<Self>,
-    ) -> bool {
-        let was_maximized = self.is_focused_pane_maximized(ctx);
-        let focused = self.focus_pane(id, focus_pane_contents, ctx);
-        if focused && was_maximized {
-            self.focus_state.update(ctx, |focus_state, ctx| {
-                focus_state.set_focused_pane_maximized(true, ctx);
-            });
-        }
-        focused
-    }
     fn focus_pane_and_record_in_history(
         &mut self,
         id: PaneId,

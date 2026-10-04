@@ -30,7 +30,7 @@ use session_sharing_protocol::common::{
     WriteToPtyFailureReason, WriteToPtyRequestId,
 };
 #[cfg(not(any(test, feature = "integration_tests")))]
-use session_sharing_protocol::common::{SelectedAgentModel, TelemetryContext};
+use session_sharing_protocol::common::TelemetryContext;
 #[cfg(not(any(test, feature = "integration_tests")))]
 use session_sharing_protocol::sharer::InitPayload;
 use session_sharing_protocol::sharer::{
@@ -40,7 +40,6 @@ use session_sharing_protocol::sharer::{
     SessionTerminatedReason, TeamAccessLevelUpdateResponse, UpdatePendingUserRoleResponse,
     UpstreamMessage,
 };
-use warp_core::features::FeatureFlag;
 use warp_errors::report_error;
 use warp_server_client::iap::IapManager;
 use warpui::r#async::{FutureExt as _, Spawnable, SpawnableOutput, Timer};
@@ -480,7 +479,7 @@ impl Network {
         active_prompt: ActivePrompt,
         selection: Selection,
         input_replica_id: ReplicaId,
-        terminal_view_id: warpui::EntityId,
+        _terminal_view_id: warpui::EntityId,
         team_uid: Option<crate::server::ids::ServerId>,
         universal_developer_input_context: UniversalDeveloperInputContext,
         lifetime: Lifetime,
@@ -800,20 +799,6 @@ impl Network {
         self.send_message_to_server(message);
     }
 
-    pub fn send_control_action_rejection(
-        &mut self,
-        participant_id: ParticipantId,
-        request_id: ControlActionRequestId,
-        reason: ControlActionFailureReason,
-    ) {
-        let message = UpstreamMessage::RejectControlActionRequest {
-            participant_id,
-            request_id,
-            reason,
-        };
-        self.send_message_to_server(message);
-    }
-
     pub fn send_link_permission_update(&mut self, role: Option<Role>) {
         let message = UpstreamMessage::UpdateLinkAccessLevel { role };
         self.send_message_to_server(message);
@@ -822,27 +807,6 @@ impl Network {
     pub fn send_team_permission_update(&mut self, role: Option<Role>, team_uid: String) {
         let message = UpstreamMessage::UpdateTeamAccessLevel { team_uid, role };
         self.send_message_to_server(message);
-    }
-
-    pub fn send_universal_developer_input_context_update(
-        &mut self,
-        update: UniversalDeveloperInputContextUpdate,
-    ) {
-        // Skip update if nothing would change
-        if let Some(ref cached) = self.cached_latest_state.universal_developer_input_context
-            && !update.changes_cached_context(cached)
-        {
-            return;
-        }
-
-        sharer_info!(
-            self,
-            "sending universal developer input context update: {update:?}"
-        );
-        self.apply_context_update_to_cache(update.clone());
-        self.send_message_to_server(UpstreamMessage::UpdateUniversalDeveloperInputContext(
-            update,
-        ));
     }
 
     /// Merges an update into the cached context.

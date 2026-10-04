@@ -2,13 +2,10 @@
 //! read is for.
 
 use std::rc::Rc;
-use std::sync::OnceLock;
 
-use regex::Regex;
 use settings::Setting;
 #[cfg(not(target_family = "wasm"))]
 use warp_cli::scope::{ObjectScope, TeamSelection};
-use warp_core::features::FeatureFlag;
 use warpui::{AppContext, Entity, SingletonEntity, ViewContext, WeakViewHandle, WindowId};
 
 #[cfg(not(target_family = "wasm"))]
@@ -16,12 +13,9 @@ use super::SoleTeamError;
 use super::UserWorkspaces;
 #[cfg(any(test, feature = "test-util"))]
 use crate::ai::llms::LLMInfo;
-use crate::auth::AuthStateProvider;
 use crate::server::ids::ServerId;
 use crate::workspaces::team::Team;
-use crate::workspaces::workspace::{
-    AdminEnablementSetting, Workspace,
-};
+use crate::workspaces::workspace::Workspace;
 
 mod sealed {
     pub trait Sealed {}
@@ -76,19 +70,6 @@ impl TeamScope for TeamContext<'_> {
     fn team_uid(&self) -> Option<ServerId> {
         self.team_uid.copied()
     }
-}
-
-/// The team a headless invocation acts as, resolved without a window.
-///
-/// It has two minting roots. [`UserWorkspaces::team_scope_for_cli`] resolves the command-line
-/// selection against the user's memberships and rejects a team they are not on.
-/// [`Self::from_task_scope`] takes the server's record of which team owns a task and performs no
-/// membership check: a service-account worker resuming a run may belong to none of the task's
-/// teams, and the server has already decided the task's ownership.
-#[cfg(not(target_family = "wasm"))]
-pub enum HeadlessTeamScope {
-    Personal,
-    Team(ServerId),
 }
 
 #[cfg(not(target_family = "wasm"))]
@@ -146,25 +127,6 @@ impl TeamScope for TeamlessScopeForTest {
 /// Resolves a [`TeamContext`] on demand from a view captured up front. See
 /// [`UserWorkspaces::team_context_resolver`].
 pub type TeamContextResolver = Rc<dyn for<'a> Fn(&'a AppContext) -> TeamContext<'a>>;
-pub(crate) type TeamContextForOperationResolver =
-    Rc<dyn Fn(&AppContext) -> TeamContextForOperation>;
-
-#[cfg(not(target_family = "wasm"))]
-#[derive(Debug, thiserror::Error)]
-#[error("you are not on team {team_uid}")]
-pub struct NotATeamMemberError {
-    pub team_uid: ServerId,
-}
-#[cfg(not(target_family = "wasm"))]
-#[derive(Debug, thiserror::Error)]
-pub(crate) enum TeamScopeForCliError {
-    #[error("Invalid --team '{team_uid}': {message}")]
-    InvalidTeamUid { team_uid: String, message: String },
-    #[error(transparent)]
-    NoSoleTeam(#[from] SoleTeamError),
-    #[error(transparent)]
-    NotAMember(#[from] NotATeamMemberError),
-}
 
 impl UserWorkspaces {
     /// Captures the team selected in `ctx`'s window as an operation's
@@ -195,67 +157,10 @@ impl UserWorkspaces {
         TeamContext { team_uid }
     }
 
-    /// The scope a headless CLI invocation reads team policy through.
-    #[cfg(not(target_family = "wasm"))]
-    pub(crate) fn team_scope_for_cli(
-        &self,
-        team_selection: &TeamSelection,
-    ) -> Result<HeadlessTeamScope, TeamScopeForCliError> {
-        let team_uid = match &team_selection.team {
-            None => match self.sole_team_uid() {
-                Ok(team_uid) => Some(team_uid),
-                Err(SoleTeamError::NoTeam) => None,
-                Err(error @ SoleTeamError::MoreThanOneTeam { .. }) => {
-                    return Err(error.into());
-                }
-            },
-            Some(None) => Some(self.sole_team_uid()?),
-            Some(Some(team_uid)) => Some(ServerId::try_from(team_uid.as_str()).map_err(|err| {
-                TeamScopeForCliError::InvalidTeamUid {
-                    team_uid: team_uid.to_string(),
-                    message: err.to_string(),
-                }
-            })?),
-        };
-        if let Some(team_uid) = team_uid
-            && !self.is_member_of_team(team_uid)
-        {
-            return Err(NotATeamMemberError { team_uid }.into());
-        }
-        Ok(match team_uid {
-            Some(team_uid) => HeadlessTeamScope::Team(team_uid),
-            None => HeadlessTeamScope::Personal,
-        })
-    }
-
-    #[cfg(not(target_family = "wasm"))]
-    pub(crate) fn team_scope_for_cli_object(
-        &self,
-        object_scope: &ObjectScope,
-    ) -> Result<HeadlessTeamScope, TeamScopeForCliError> {
-        if object_scope.personal {
-            Ok(HeadlessTeamScope::Personal)
-        } else {
-            self.team_scope_for_cli(&object_scope.team_selection)
-        }
-    }
-
-    pub(crate) fn team_context_for_view<T: Entity>(&self, ctx: &ViewContext<T>) -> TeamContext<'_> {
-        self.team_context_for_window_id(ctx.window_id())
-    }
-
     /// Captures `view` as a reusable source of [`TeamContext`], for consumers that cannot name
     /// a view at the boundaries where they need one.
     pub fn team_context_resolver<T: Entity>(view: WeakViewHandle<T>) -> TeamContextResolver {
         Rc::new(move |app| Self::as_ref(app).team_context(&view, app))
-    }
-
-    pub(crate) fn team_context_for_operation_resolver(
-        resolver: TeamContextResolver,
-    ) -> TeamContextForOperationResolver {
-        Rc::new(move |app| TeamContextForOperation {
-            team_uid: resolver(app).team_uid(),
-        })
     }
 
     /// A resolver for tests that build a model without a window to resolve against.
@@ -358,12 +263,17 @@ impl UserWorkspaces {
         )
     }
 
-    /// Every team the user belongs to, across all of their workspaces.
-    #[cfg(not(target_family = "wasm"))]
-    fn all_teams(&self) -> impl Iterator<Item = &Team> {
-        self.workspaces
-            .iter()
-            .flat_map(|workspace| workspace.teams.iter())
-    }
+}
 
+/// The team a headless invocation acts as, resolved without a window.
+///
+/// It has two minting roots. [`UserWorkspaces::team_scope_for_cli`] resolves the command-line
+/// selection against the user's memberships and rejects a team they are not on.
+/// [`Self::from_task_scope`] takes the server's record of which team owns a task and performs no
+/// membership check: a service-account worker resuming a run may belong to none of the task's
+/// teams, and the server has already decided the task's ownership.
+#[cfg(not(target_family = "wasm"))]
+pub enum HeadlessTeamScope {
+    Personal,
+    Team(ServerId),
 }

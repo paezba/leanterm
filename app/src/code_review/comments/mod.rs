@@ -12,6 +12,4 @@ pub(crate) use comment::{
     DiffBase, LineDiffContent,
 };
 pub(crate) use flatten::attach_pending_imported_comments;
-pub(crate) use pending_imported::{
-    PendingImportedReviewComment, PendingImportedReviewCommentTarget,
-};
+pub(crate) use pending_imported::PendingImportedReviewComment;

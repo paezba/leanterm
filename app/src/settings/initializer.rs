@@ -1,5 +1,3 @@
-use crate::settings::input::InputBoxType;
-use crate::terminal::session_settings::SessionSettings;
 use std::sync::Arc;
 
 use warp_core::features::FeatureFlag;

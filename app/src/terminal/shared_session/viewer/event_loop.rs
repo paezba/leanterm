@@ -9,7 +9,6 @@ use session_sharing_protocol::common::{
 };
 use warpui::{Entity, ModelContext, SingletonEntity, WeakViewHandle};
 
-use crate::features::FeatureFlag;
 use crate::terminal::event_listener::ChannelEventListener;
 use crate::terminal::model::ansi::{self};
 use crate::terminal::shared_session::{SharedSessionStatus, decode_scrollback};
