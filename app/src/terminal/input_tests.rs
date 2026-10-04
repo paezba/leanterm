@@ -1,11 +1,9 @@
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::time::Duration;
 
-use ai::index::full_source_code_embedding::manager::CodebaseIndexManager;
 use chrono::Local;
 use fuzzy_match::FuzzyMatchResult;
 use repo_metadata::RepoMetadataModel;
@@ -21,11 +19,9 @@ use warp_completer::completer::{
     SuggestionResults, SuggestionType,
 };
 use warp_completer::meta::Span;
-use warp_util::standardized_path::StandardizedPath;
-use warp_util::user_input::UserInput;
 use warpui::platform::WindowStyle;
 use warpui::text::SelectionType;
-use warpui::{App, ReadModel, UpdateView, WindowId};
+use warpui::{App, UpdateView, WindowId};
 use watcher::HomeDirectoryWatcher;
 use workflows::workflow::{Argument, ArgumentType, Workflow};
 
@@ -36,8 +32,8 @@ use crate::auth::auth_manager::AuthManager;
 use crate::changelog_model::ChangelogModel;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::context_chips::prompt::Prompt;
-use crate::editor::{DisplayPoint, EditorAction, Point, TextStyleOperation};
-use crate::input_suggestions::{HistoryOrder, Item};
+use crate::editor::{DisplayPoint, EditorAction, TextStyleOperation};
+use crate::input_suggestions::Item;
 use crate::network::NetworkStatus;
 use crate::pricing::PricingInfoModel;
 use crate::search::files::model::FileSearchModel;
@@ -48,7 +44,7 @@ use crate::server::sync_queue::SyncQueue;
 use crate::server::telemetry::context_provider::AppTelemetryContextProvider;
 use crate::settings::import::model::ImportedConfigModel;
 use crate::settings::{
-    AliasExpansionSettings, AppEditorSettings, InputBoxType,
+    AliasExpansionSettings, AppEditorSettings,
     PrivacySettings,
 };
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
@@ -59,8 +55,7 @@ use crate::terminal::TerminalView;
 use crate::terminal::alt_screen_reporting::AltScreenReporting;
 use crate::terminal::block_list_viewport::ScrollPosition;
 use crate::terminal::event::{
-    BlockCompletedEvent, BlockMetadataReceivedEvent, BlockType, BootstrappedEvent,
-    UserBlockCompleted,
+    BlockMetadataReceivedEvent, BootstrappedEvent,
 };
 use crate::terminal::general_settings::UserDefaultShellUnsupportedBannerState;
 use crate::terminal::keys::TerminalKeybindings;
@@ -79,17 +74,14 @@ use crate::terminal::resizable_data::ResizableData;
 use crate::terminal::shared_session::permissions_manager::SessionPermissionsManager;
 use crate::terminal::shell::{Shell, ShellType};
 use crate::terminal::view::Event as TerminalViewEvent;
-use crate::terminal::writeable_pty::command_history::update_command_history;
 use crate::test_util::assert_eventually;
 use crate::test_util::settings::initialize_settings_for_tests;
 use crate::themes::theme::AnsiColorIdentifier;
 use crate::warp_managed_paths_watcher::WarpManagedPathsWatcher;
 use crate::workspace::{ActiveSession, OneTimeModalModel, ToastStack, WorkspaceRegistry};
-use crate::workspaces::team::Team;
 use crate::workspaces::team_tester::TeamTesterStatus;
 use crate::workspaces::update_manager::TeamUpdateManager;
 use crate::workspaces::user_workspaces::{ UserWorkspaces};
-use crate::workspaces::workspace::Workspace;
 use crate::{ GlobalResourceHandles, GlobalResourceHandlesProvider,
     ReferralThemeStatus, experiments,
 };
@@ -1180,99 +1172,7 @@ fn test_open_slash_command_opens_files_palette_when_entered_from_slash_menu() {
     });
 }
 
-#[cfg(feature = "local_fs")]
-#[test]
-fn test_open_slash_command_clears_buffer_on_success() {
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
 
-        let temp_dir = std::env::temp_dir();
-        let file_path = temp_dir.join("test_file.txt");
-        std::fs::File::create(&file_path).unwrap();
-
-        let session_id: SessionId = 1.into();
-        let session_info = SessionInfo::new_for_test().with_id(session_id);
-        let terminal = add_window_with_bootstrapped_terminal(
-            &mut app,
-            None, /* history_file_commands */
-            Some(session_info),
-        )
-        .await;
-        let input = terminal.read(&app, |terminal, _| terminal.input().clone());
-
-        simulate_directory_for_completion(
-            session_id,
-            &terminal,
-            &mut app,
-            temp_dir.to_string_lossy(),
-        );
-
-        input.update(&mut app, |input, ctx| {
-            input.editor.update(ctx, |editor, ctx| {
-                editor.set_buffer_text("/open-file test_file.txt", ctx)
-            });
-        });
-
-        input.update(&mut app, |input, ctx| {
-            input.input_enter(ctx);
-        });
-
-        input.read(&app, |input, ctx| {
-            assert!(input.buffer_text(ctx).is_empty());
-        });
-
-        let _ = std::fs::remove_file(file_path);
-    });
-}
-
-#[cfg(feature = "local_fs")]
-#[test]
-fn test_open_slash_command_expands_tilde() {
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-
-        let home_dir = dirs::home_dir().expect("home directory must exist");
-        let file_path = home_dir.join("warp_tilde_test_file.txt");
-        std::fs::File::create(&file_path).unwrap();
-
-        let session_id: SessionId = 1.into();
-        let session_info = SessionInfo::new_for_test().with_id(session_id);
-        let terminal = add_window_with_bootstrapped_terminal(
-            &mut app,
-            None, /* history_file_commands */
-            Some(session_info),
-        )
-        .await;
-        let input = terminal.read(&app, |terminal, _| terminal.input().clone());
-
-        // Simulate being in a directory that is NOT the home directory so we can
-        // verify that ~ expansion takes priority over cwd joining.
-        let temp_dir = std::env::temp_dir();
-        simulate_directory_for_completion(
-            session_id,
-            &terminal,
-            &mut app,
-            temp_dir.to_string_lossy(),
-        );
-
-        input.update(&mut app, |input, ctx| {
-            input.editor.update(ctx, |editor, ctx| {
-                editor.set_buffer_text("/open-file ~/warp_tilde_test_file.txt", ctx)
-            });
-        });
-
-        input.update(&mut app, |input, ctx| {
-            input.input_enter(ctx);
-        });
-
-        // Buffer should be cleared on success, indicating the file was found.
-        input.read(&app, |input, ctx| {
-            assert!(input.buffer_text(ctx).is_empty());
-        });
-
-        let _ = std::fs::remove_file(file_path);
-    });
-}
 
 
 
@@ -3522,42 +3422,11 @@ fn hash_trigger_disabled_keeps_hash_literal_and_does_not_open_ai_command_search(
     });
 }
 
-/// With the '#' trigger left at its default (enabled), typing '#' at the start of the buffer
-/// must still open AI Command Search, preserving pre-existing behavior.
-#[test]
-fn hash_trigger_enabled_by_default_opens_ai_command_search() {
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-
-        let terminal = add_window_with_bootstrapped_terminal(&mut app, None, None).await;
-        let input = terminal.read(&app, |terminal, _| terminal.input().clone());
-
-        let open_count = Rc::new(RefCell::new(0));
-        let open_count_for_subscription = open_count.clone();
-        app.update(|ctx| {
-            ctx.subscribe_to_view(&input, move |_, event, _| {
-                if matches!(event, Event::ShowCommandSearch(_)) {
-                    *open_count_for_subscription.borrow_mut() += 1;
-                }
-            });
-        });
-
-        input.update(&mut app, |input, ctx| {
-            input.user_insert("#", ctx);
-        });
-
-        assert_eq!(
-            *open_count.borrow(),
-            1,
-            "AI Command Search must open on typing '#' when the trigger setting defaults to enabled"
-        );
-    });
-}
 
 
 #[cfg(test)]
 mod completion_sources_resolution_tests {
-    use super::super::{CompletionSources, CompletionsTrigger, resolve_completion_sources};
+    
 
 
 

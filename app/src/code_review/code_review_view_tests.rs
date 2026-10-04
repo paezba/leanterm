@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use ai::agent::action::InsertReviewComment;
 use chrono::Local;
 use lsp::LspManagerModel;
 use repo_metadata::repositories::DetectedRepositories;
@@ -24,7 +23,7 @@ use crate::code::local_code_editor::LocalCodeEditorView;
 use crate::code_review::GlobalCodeReviewModel;
 use crate::code_review::comments::{
     AttachedReviewComment, AttachedReviewCommentTarget, CommentId, CommentOrigin,
-    ImportedCommentDetails, LineDiffContent, PendingImportedReviewComment, attach_pending_imported_comments,
+    ImportedCommentDetails, LineDiffContent,
 };
 use crate::code_review::diff_size_limits::DiffSize;
 use crate::code_review::diff_state::{DiffStateModel, FileDiff, GitFileStatus};

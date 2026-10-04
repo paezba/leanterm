@@ -14,7 +14,7 @@ use crate::server::server_api::team::MockTeamClient;
 use crate::server::server_api::workspace::MockWorkspaceClient;
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
 use crate::test_util::settings::initialize_settings_for_tests;
-use crate::workflows::workflow::{Argument, Workflow};
+use crate::workflows::workflow::Argument;
 
 fn initialize_app(app: &mut App) {
     initialize_settings_for_tests(app);
@@ -43,7 +43,7 @@ fn initialize_app(app: &mut App) {
 fn create_modal(app: &mut App) -> ViewHandle<WorkflowModal> {
     initialize_app(app);
     let (_, modal_view) = app.add_window(WindowStyle::NotStealFocus, |ctx| {
-        let server_api = ServerApiProvider::as_ref(ctx).get();
+        let _server_api = ServerApiProvider::as_ref(ctx).get();
         WorkflowModal::new(ctx)
     });
 

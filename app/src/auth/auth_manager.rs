@@ -1,4 +1,3 @@
-use std::future::Future;
 use std::result::Result as StdResult;
 use std::sync::Arc;
 

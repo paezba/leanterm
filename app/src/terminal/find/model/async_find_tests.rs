@@ -1,27 +1,15 @@
 //! Tests for async find functionality.
 
-use std::collections::HashMap;
 use std::sync::Arc;
 
-use parking_lot::FairMutex;
-use warpui::{App, EntityId};
 
 use super::{
-    AbsoluteMatch, AsyncFindConfig, AsyncFindController, AsyncFindStatus, BlockFindResults,
-    FindTaskMessage, is_query_refinement,
+    AbsoluteMatch, AsyncFindConfig, AsyncFindStatus, BlockFindResults, is_query_refinement,
 };
 use crate::terminal::block_list_element::GridType;
-use crate::terminal::find::model::block_list::run_find_on_block_list;
-use crate::terminal::find::model::{FindOptions, TerminalFindModel};
-use crate::terminal::find::{BlockListMatch, RichContentMatchId};
-use crate::terminal::model::TerminalModel;
-use crate::terminal::model::blocks::TotalIndex;
+use crate::terminal::find::model::FindOptions;
 use crate::terminal::model::grid::grid_handler::AbsolutePoint;
-use crate::terminal::model::index::Point;
 use crate::terminal::model::terminal_model::{BlockIndex, BlockSortDirection};
-use crate::test_util::assert_eventually;
-use crate::test_util::settings::initialize_settings_for_tests;
-use crate::view_components::find::FindDirection;
 
 /// Helper to create an AbsoluteMatch at a given row with default column span.
 fn make_match(row: u64) -> AbsoluteMatch {

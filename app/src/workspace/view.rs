@@ -38,7 +38,6 @@ use std::time::Duration;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use ::settings::{Setting, ToggleableSetting};
-use ai::index::full_source_code_embedding::manager::CodebaseIndexManager;
 #[cfg(not(target_family = "wasm"))]
 use anyhow::Context as _;
 #[cfg(target_os = "macos")]
@@ -13234,7 +13233,7 @@ impl Workspace {
                 let (
                     session,
                     pwd_location,
-                    path_if_local,
+                    _path_if_local,
                     is_local,
                     is_wsl_session,
                     session_id,
@@ -13260,7 +13259,6 @@ impl Workspace {
                 });
 
                 let window_id = ctx.window_id();
-                let working_directory_clone = path_if_local.clone();
                 ActiveSession::handle(ctx).update(ctx, |active_session, ctx| {
                     active_session.set_session_state(
                         window_id,
@@ -13269,12 +13267,6 @@ impl Workspace {
                         Some(terminal_handle.id()),
                         ctx,
                     );
-                });
-
-                CodebaseIndexManager::handle(ctx).update(ctx, |manager, _ctx| {
-                    if let Some(working_directory) = working_directory_clone {
-                        manager.handle_active_session_changed(working_directory.as_path());
-                    }
                 });
 
                 let is_remote = matches!(is_local, Some(false));

@@ -1,58 +1,22 @@
 use std::any::Any;
 use std::cell::RefCell;
-use std::collections::HashMap;
-use std::pin::pin;
 use std::rc::Rc;
-use std::str::FromStr;
 use std::sync::Arc;
 
-use chrono::{Local, Utc};
 use parking_lot::FairMutex;
-use session_sharing_protocol::common::CLIAgentSessionState;
-use warp_cli::agent::Harness;
-use warp_terminal::model::escape_sequences::{BRACKETED_PASTE_END, BRACKETED_PASTE_START, C0};
-use warpui::notification::UserNotification;
-use warpui::platform::WindowStyle;
-use warpui::{App, EntityIdSet, Presenter, ReadModel, WindowInvalidation};
+use warpui::App;
 
 use super::*;
-use crate::auth::user::TEST_USER_UID;
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::{CloudObjectMetadata, CloudObjectPermissions};
-use crate::code_review::comments::{
-    AttachedReviewComment, AttachedReviewCommentTarget, CommentOrigin,
-};
-use crate::context_chips::prompt::Prompt;
-use crate::editor::{AutosuggestionLocation, AutosuggestionType, CrdtOperation};
-use crate::features::FeatureFlag;
 use crate::pane_group::focus_state::PaneGroupFocusState;
-use crate::pane_group::pane::PaneStack;
 use crate::pane_group::{BackingView, TerminalPaneId};
-use crate::server::ids::{ClientId, SyncId};
-use crate::server::team_scope::RequestTeamScope;
-use crate::settings::import::model::ImportedConfigModel;
-use crate::settings::{ AppEditorSettings, RightClickBehavior, WarpPromptSeparator};
-use crate::tab::NewSessionMenuItem;
-use crate::terminal::alt_screen::should_intercept_mouse;
-use crate::terminal::block_list_element::{SnackbarPoint, SnackbarTranslationMode};
-use crate::terminal::block_list_viewport::{ClampingMode, ScrollLines};
-use crate::terminal::model::ansi::{self, BootstrappedValue, InitShellValue, PreexecValue};
-use crate::terminal::model::blocks::{TotalIndex, insert_block};
-use crate::terminal::model::grid::Dimensions as _;
-use crate::terminal::model::terminal_model::WithinBlock;
-use crate::terminal::shared_session::shared_handlers::{
-    RemoteUpdateGuard,
-};
-use crate::terminal::shared_session::{SharedSessionSource, SharedSessionStatus};
-use crate::terminal::{ MockTerminalManager, TerminalManager, TerminalModel, should_right_click_paste,
+use crate::settings::AppEditorSettings;
+use crate::terminal::model::ansi::{BootstrappedValue, InitShellValue};
+use crate::terminal::{ MockTerminalManager, TerminalManager, TerminalModel,
 };
 use crate::test_util::terminal::{ initialize_app_for_terminal_view,
 };
 use crate::test_util::{ assert_eventually};
-use crate::view_components::find::FindWithinBlockState;
 use crate::workspace::view::tests::{initialize_app as initialize_workspace_app, mock_workspace};
-use crate::workspace::{ToastStack, WorkspaceAction};
-use crate::workspaces::user_workspaces::TeamlessScopeForTest;
 
 
 

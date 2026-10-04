@@ -1,6 +1,5 @@
 use std::any::Any;
 use std::collections::{HashMap, VecDeque};
-use std::sync::Arc;
 
 use async_trait::async_trait;
 use itertools::Itertools;
@@ -13,38 +12,29 @@ use warp_core::command::ExitCode;
 use warpui::{App, SingletonEntity};
 use warpui_extras::user_preferences;
 
-use super::{ActiveChipSurfaces, ChipUpdateStatus, CurrentPrompt, PromptContext};
-use crate::auth::AuthStateProvider;
-use crate::auth::auth_manager::AuthManager;
+use super::{ChipUpdateStatus, CurrentPrompt, PromptContext};
 #[cfg(feature = "local_fs")]
 use crate::code_review::diff_state::DiffStats;
 #[cfg(feature = "local_fs")]
 use crate::code_review::git_repo_model::{GitRepoStatusModel, GitStatusMetadata};
-#[cfg(feature = "local_fs")]
-use crate::code_review::github_repo_model::GitHubRepoModel;
 use crate::context_chips::context_chip::{Environment, PromptGenerator};
 #[cfg(feature = "local_fs")]
 use crate::context_chips::display_chip::GitBranchTrackingStatus;
 use crate::context_chips::prompt::Prompt;
-use crate::context_chips::{ChipAvailability, ChipDisabledReason, ContextChipKind};
+use crate::context_chips::ContextChipKind;
 use crate::features::FeatureFlag;
 use crate::menu::MenuItem;
-use crate::server::server_api::ServerApiProvider;
-use crate::server::telemetry::context_provider::AppTelemetryContextProvider;
 use crate::settings::WarpPromptSeparator;
 #[cfg(windows)]
 use crate::system::SystemInfo;
 use crate::terminal::model::block::BlockMetadata;
 use crate::terminal::model::session::{
-    CommandExecutor, ExecuteCommandOptions, SessionId, SessionInfo, Sessions,
+    CommandExecutor, ExecuteCommandOptions, SessionId, Sessions,
 };
 use crate::terminal::session_settings::{ SessionSettings,
 };
 use crate::terminal::shell::Shell;
 use crate::terminal::view::PromptPosition;
-use crate::terminal::{ History};
-#[cfg(feature = "local_fs")]
-use crate::util::git::PrInfo;
 
 #[cfg(feature = "local_fs")]
 fn git_status_metadata(branch: &str) -> GitStatusMetadata {

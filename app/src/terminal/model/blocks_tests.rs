@@ -1,6 +1,4 @@
-use crate::terminal::model::block::SerializedBlockListItem;
 use float_cmp::{approx_eq, assert_approx_eq};
-use parking_lot::FairMutex;
 use warp_core::features::FeatureFlag;
 use warpui::App;
 use warpui::elements::DEFAULT_UI_LINE_HEIGHT_RATIO;
@@ -11,7 +9,7 @@ use crate::settings::TerminalSpacing;
 use crate::terminal::event::Event;
 use crate::terminal::model::ansi::Handler;
 use crate::terminal::model::test_utils::TestBlockListBuilder;
-use crate::terminal::model::{TerminalModel, test_utils};
+use crate::terminal::model::test_utils;
 use crate::terminal::view::{InlineBannerItem, InlineBannerType};
 use crate::terminal::{BlockListSettings, SizeUpdateReason};
 

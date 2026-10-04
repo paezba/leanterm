@@ -1,34 +1,17 @@
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::rc::Rc;
 
 use chrono::Utc;
-#[cfg(all(feature = "local_fs", not(target_family = "wasm")))]
-use futures::channel::oneshot;
 use pathfinder_geometry::vector::vec2f;
-use persistence::model::ConversationUsageMetadata;
-use session_sharing_protocol::sharer::SessionSourceType;
-use warp_multi_agent_api::{self as api, client_action as api_client_action};
 use warpui::platform::WindowStyle;
-use warpui::{App, EntityId, TypedActionView, ViewHandle};
+use warpui::{App, ViewHandle};
 
 use super::*;
-use crate::auth::user::TEST_USER_UID;
-use crate::cloud_object::{Owner, Revision, ServerMetadata, ServerPermissions};
+use crate::cloud_object::{Owner, ServerPermissions};
 use crate::context_chips::prompt_type::PromptType;
-use crate::editor::InteractionState;
-use crate::pane_group::{BackingView, PaneConfigurationEvent};
-use crate::server::ids::ServerId;
-#[cfg(all(feature = "local_fs", not(target_family = "wasm")))]
-use crate::server::team_scope::RequestTeamScope;
 use crate::terminal::TerminalView;
-use crate::terminal::model::blocks::{INLINE_BANNER_HEIGHT, ToTotalIndex as _};
 use crate::terminal::view::shared_session::test_utils::terminal_view_for_viewer;
 use crate::terminal::view::{ TerminalAction,};
 use crate::test_util::terminal::initialize_app_for_terminal_view;
-#[cfg(all(feature = "local_fs", not(target_family = "wasm")))]
-use crate::workspaces::user_workspaces::TeamlessScopeForTest;
-use crate::{FeatureFlag, assert_lines_approx_eq};
+use crate::FeatureFlag;
 
 #[test]
 fn test_prompt_context_menu_items_shared_session_viewer_no_edit_prompt() {

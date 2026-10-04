@@ -39,7 +39,7 @@ impl TerminalView {
     pub fn new_for_test_with_cloud_mode(
         tips_model: ModelHandle<TipsCompleted>,
         restored_blocks: Option<&[SerializedBlockListItem]>,
-        is_cloud_mode: bool,
+        _is_cloud_mode: bool,
         ctx: &mut ViewContext<Self>,
     ) -> Self {
         use pathfinder_geometry::vector::vec2f;

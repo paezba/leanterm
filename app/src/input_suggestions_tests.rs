@@ -1,6 +1,4 @@
-use std::collections::HashSet;
 
-use chrono::Local;
 use warp_completer::completer::{
     EngineFileType, Match, MatchStrategy, MatchedSuggestion, Priority, Suggestion,
     SuggestionResults, SuggestionType, TopLevelCommandCaseSensitivity,
@@ -10,10 +8,8 @@ use warp_core::ui::appearance::Appearance;
 use warpui::App;
 use warpui::platform::WindowStyle;
 
-use super::{HistoryInputSuggestion, InputSuggestions, TabCompletionsPreselectOption};
-use crate::input_suggestions::{HistoryOrder, filter_tab_suggestions};
-use crate::terminal::HistoryEntry;
-use crate::terminal::model::session::SessionId;
+use super::{InputSuggestions, TabCompletionsPreselectOption};
+use crate::input_suggestions::filter_tab_suggestions;
 
 fn prefix_matched_suggestion(name: &str) -> MatchedSuggestion {
     let suggestion = Suggestion::with_same_display_and_replacement(

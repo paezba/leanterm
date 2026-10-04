@@ -2,7 +2,6 @@ use futures::executor::block_on;
 use mockito::Server;
 
 use super::*;
-use crate::workspaces::user_workspaces::{ TeamlessScopeForTest};
 
 /// Sends a GET request to a mock endpoint returning `status`/`headers`/`body`, then feeds the
 /// resulting response through [`ServerApi::error_from_response`].

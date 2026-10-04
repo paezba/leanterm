@@ -1,32 +1,18 @@
-use ai::LLMId;
-use onboarding::{
-    AgentOnboardingView, OfferVariant, OnboardingAuthState, OnboardingIntention, SelectedSettings,
-    UICustomizationSettings,
-};
+use onboarding::AgentOnboardingView;
 use session_sharing_protocol::common::SessionId;
-use warp_core::features::FeatureFlag;
-use warp_core::user_preferences::GetUserPreferences as _;
 use warpui::elements::Empty;
 use warpui::platform::WindowStyle;
 use warpui::{
-    App, AppContext, Element, Entity, EntityId, SingletonEntity, TypedActionView, View, ViewHandle,
+    App, AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewHandle,
 };
 
-use super::{ AuthOnboardingState, AuthOnboardingTarget,
-    HAS_COMPLETED_ONBOARDING_KEY, NewWorkspaceSource, RootView, WorkspaceArgs,
-    has_completed_local_onboarding,
+use super::{ AuthOnboardingTarget, NewWorkspaceSource, RootView, WorkspaceArgs,
 };
 use crate::GlobalResourceHandles;
-use crate::appearance::Appearance;
 use crate::auth::AuthStateProvider;
 use crate::auth::auth_manager::AuthManager;
-use crate::auth::login_slide::{LoginSlideSource, LoginSlideView};
+use crate::auth::login_slide::LoginSlideView;
 use crate::server::server_api::ServerApiProvider;
-use crate::settings_view::keybindings::KeybindingChangedNotifier;
-use crate::test_util::settings::initialize_settings_for_tests;
-use crate::themes::onboarding_theme_picker_themes;
-use crate::workspaces::user_workspaces::UserWorkspaces;
-use crate::workspaces::workspace::FtueAccountClass;
 
 fn initialize_app(app: &mut App) {
     app.update(crate::settings::init_and_register_user_preferences);

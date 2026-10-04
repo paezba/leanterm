@@ -1,43 +1,19 @@
 use std::ffi::OsStr;
 use std::path::PathBuf;
-use std::sync::Arc;
 
 use ai::workspace::WorkspaceMetadata;
-use chrono::{Local, Utc};
-use cloud_object_persistence::to_cloud_object_permissions;
-use diesel::connection::SimpleConnection;
-use pathfinder_geometry::rect::RectF;
-use pathfinder_geometry::vector::Vector2F;
-use warp_core::features::FeatureFlag;
-use warp_graphql::scalars::time::ServerTimestamp;
+use chrono::Utc;
 
 use super::{
     app_database_file_path, database_file_path_for_scope,
-    decode_path, deduplicate_events, encode_path,
-    read_sqlite_data, save_app_state, setup_database, start_writer,
+    decode_path, encode_path,
 };
 use crate::app_state::{
-    AppState, CodePaneSnapShot, CodePaneTabSnapshot, LeafContents, LeafSnapshot, PaneNodeSnapshot,
-    TabGroupSnapshot, TabSnapshot, TerminalPaneSnapshot, WindowSnapshot,
+    LeafContents, LeafSnapshot, PaneNodeSnapshot, TabSnapshot, TerminalPaneSnapshot, WindowSnapshot,
 };
-use crate::auth::UserUid;
-use crate::cloud_object::{CloudObjectPermissions, Owner};
-use crate::code::editor_management::CodeSource;
-use crate::notebooks::{CloudNotebook, CloudNotebookModel};
-use crate::persistence::model::ObjectPermissions;
-use crate::persistence::{
-    BlockCompleted, ModelEvent, PersistedDataScope, PersistenceScope, StartedCommandMetadata,
-};
-use crate::server::ids::{ClientId, ServerId};
+use crate::persistence::PersistenceScope;
 use crate::tab::SelectedTabColor;
 use crate::terminal::ShellLaunchData;
-use crate::terminal::model::block::SerializedBlock;
-use crate::terminal::model::session::SessionId;
-use crate::themes::theme::AnsiColorIdentifier;
-use crate::workspace::tab_group::TabGroupId;
-use crate::workspaces::team::{MembershipRole, Team, TeamMember};
-use crate::workspaces::user_profiles::UserProfileWithUID;
-use crate::workspaces::workspace::Workspace;
 
 #[test]
 fn app_scope_database_path_matches_app_database_path() {

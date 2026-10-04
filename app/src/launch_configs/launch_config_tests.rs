@@ -1,12 +1,5 @@
-use std::path::PathBuf;
 
-use super::{CommandTemplate, LaunchConfig, PaneTemplateType, TabTemplate};
-use crate::app_state::{
-    AppState, BranchSnapshot, LeafContents, LeafSnapshot, NotebookPaneSnapshot, PaneFlex,
-    PaneNodeSnapshot, SplitDirection, TabGroupSnapshot, TabSnapshot, TerminalPaneSnapshot,
-    WindowSnapshot,
-};
-use crate::drive::OpenWarpDriveObjectSettings;
+use crate::app_state::TabGroupSnapshot;
 use crate::tab::SelectedTabColor;
 use crate::themes::theme::AnsiColorIdentifier;
 use crate::workspace::tab_group::TabGroupId;

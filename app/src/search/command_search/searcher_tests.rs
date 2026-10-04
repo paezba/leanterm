@@ -19,14 +19,12 @@ use crate::search::command_search::history::{
     history_data_source, history_data_source_for_session,
 };
 use crate::search::command_search::searcher::CommandSearchMixer;
-use crate::search::command_search::workflows::{WorkflowIdentity, WorkflowSearchItem};
 use crate::search::data_source::{Query, QueryResult};
 use crate::search::item::SearchItem;
 use crate::search::mixer::{
     AddAsyncSourceOptions, AsyncDataSource, BoxFuture, DataSourceRunErrorWrapper,
 };
 use crate::search::result_renderer::ItemHighlightState;
-use crate::search::workflows::fuzzy_match::FuzzyMatchWorkflowResult;
 use crate::search::{QueryFilter, SyncDataSource};
 use crate::server::server_api::ServerApiProvider;
 use crate::server::telemetry::context_provider::AppTelemetryContextProvider;
@@ -34,8 +32,6 @@ use crate::terminal::model::session::command_executor::testing::TestCommandExecu
 use crate::terminal::model::session::{Session, SessionId, SessionInfo};
 use crate::terminal::{History, HistoryEntry};
 use crate::test_util::assert_eventually;
-use crate::workflows::workflow::Workflow;
-use crate::workflows::{WorkflowSource, WorkflowType};
 
 #[derive(Clone, Debug)]
 enum TestItemAction {

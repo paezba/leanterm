@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use warp_util::standardized_path::StandardizedPath;
@@ -6,8 +6,7 @@ use warpui::{App, ModelHandle};
 
 use super::super::diff_state_tracker::RemoteDiffStateManager;
 use super::super::proto::{
-    Authenticate, BundledSkillMetadata, HomeSkillMetadata, Initialize, RemoteAgentContextSnapshot,
-    RemoteContextFileProto, RemoteSkillProto, ServerMessage, WriteFileResponse, WriteFileSuccess,
+    Authenticate, BundledSkillMetadata, Initialize, RemoteSkillProto, ServerMessage, WriteFileResponse, WriteFileSuccess,
     remote_skill_proto, server_message, write_file_response,
 };
 use super::super::protocol::RequestId;

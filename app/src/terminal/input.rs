@@ -19,7 +19,6 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use async_channel::Sender;
-use base64::Engine as _;
 use futures::FutureExt as _;
 use futures::stream::AbortHandle;
 use itertools::Itertools;
@@ -49,14 +48,11 @@ use warp_errors::{report_error, report_if_error};
 use warp_util::path::ShellFamily;
 pub use warpui::WindowId;
 use warpui::accessibility::{AccessibilityContent, ActionAccessibilityContent, WarpA11yRole};
-#[cfg(all(feature = "local_fs", not(target_family = "wasm")))]
-use warpui::r#async::FutureExt as _;
 use warpui::r#async::SpawnedFutureHandle;
 use warpui::clipboard::ClipboardContent;
 use warpui::color::ColorU;
 use warpui::elements::{
-    AnchorPair, ChildAnchor, Clipped, ConstrainedBox, Container, DispatchEventResult, DropTargetData, Element, EventHandler, MouseStateHandle, OffsetType, ParentAnchor,
-    ParentElement, ResizableStateHandle,
+    AnchorPair, ChildAnchor, Clipped, ConstrainedBox, Container, DispatchEventResult, DropTargetData, Element, EventHandler, MouseStateHandle, OffsetType, ParentAnchor, ResizableStateHandle,
     SavePosition, SelectionHandle, YAxisAnchor, resizable_state_handle,
 };
 pub use warpui::elements::{ParentElement as _, Stack};
@@ -65,7 +61,6 @@ use warpui::keymap::{BindingDescription, EditableBinding, FixedBinding, Keystrok
 use warpui::platform::OperatingSystem;
 use warpui::presenter::ChildView;
 use warpui::text_layout::TextStyle;
-use warpui::ui_components::components::UiComponent;
 use warpui::units::IntoPixels;
 use warpui::{
     AppContext, Entity, EntityId, FocusContext, ModelAsRef, ModelHandle, SingletonEntity,
@@ -106,7 +101,6 @@ use super::{
 use crate::ASSETS;
 use crate::appearance::{Appearance, AppearanceEvent};
 use crate::channel::{Channel, ChannelState};
-use crate::cloud_object::model::generic_string_model::StringModel;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::model::view::CloudViewModel;
 use crate::cloud_object::{CloudObject, Space};

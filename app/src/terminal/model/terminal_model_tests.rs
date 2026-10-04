@@ -1,29 +1,12 @@
-use std::fs;
-use std::sync::Arc;
 
 use base64::engine::general_purpose::STANDARD as BASE64;
-use chrono::{DateTime, Local};
-use vec1::vec1;
-use warp_completer::completer::MatchedSuggestion;
+use chrono::Local;
 use warp_core::command::ExitCode;
-use warp_core::features::FeatureFlag;
-use warp_terminal::model::ansi::ClearMode;
-use warpui::r#async::executor::Background;
-use warpui::text::{SelectionType, str_to_byte_vec};
 
 use super::*;
-use crate::terminal::color;
-use crate::terminal::event_listener::ChannelEventListener;
-use crate::terminal::model::ObfuscateSecrets;
-use crate::terminal::model::ansi::{CompletionMetadata, Handler, Processor};
+use crate::terminal::model::ansi::{CompletionMetadata, Handler};
 use crate::terminal::model::block::BlockId;
 use crate::terminal::model::bootstrap::BootstrapStage;
-use crate::terminal::model::grid::Dimensions as _;
-use crate::terminal::model::image_map::StoredImageMetadata;
-use crate::terminal::model::index::Side;
-use crate::terminal::model::selection::ExpandedSelectionRange;
-use crate::terminal::model::test_utils::block_size;
-use crate::terminal::shared_session::SharedSessionStatus;
 
 
 fn report_shell_typeahead(model: &mut TerminalModel, text: &str) {

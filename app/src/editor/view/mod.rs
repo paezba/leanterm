@@ -15,7 +15,6 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::Result;
-use base64::Engine as _;
 use element::CommandXRayMouseStateHandle;
 use itertools::{Either, Itertools};
 use model::{
@@ -53,7 +52,7 @@ use warpui::r#async::Timer;
 use warpui::clipboard::ClipboardContent;
 use warpui::elements::{
     CornerRadius, DEFAULT_UI_LINE_HEIGHT_RATIO,
-    Hoverable, MouseStateHandle, ParentElement, Radius,
+    Hoverable, MouseStateHandle, Radius,
 };
 use warpui::fonts::{Cache as FontCache, FamilyId, Properties, Weight};
 use warpui::keymap::{EditableBinding, FixedBinding, Keystroke, PerPlatformKeystroke};
@@ -61,7 +60,7 @@ use warpui::platform::{Cursor, OperatingSystem};
 use warpui::text::TextBuffer;
 use warpui::text::word_boundaries::WordBoundariesPolicy;
 use warpui::text_layout::TextStyle;
-use warpui::ui_components::components::{UiComponent, UiComponentStyles};
+use warpui::ui_components::components::UiComponentStyles;
 use warpui::windowing::WindowManager;
 use warpui::{
     AppContext, BlurContext, CursorInfo, Element, Entity, EntityId, FocusContext, ModelAsRef,

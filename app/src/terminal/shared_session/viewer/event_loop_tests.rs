@@ -1,24 +1,12 @@
-use std::sync::Arc;
 
-use parking_lot::FairMutex;
 use session_sharing_protocol::common::{
-    OrderedTerminalEvent, OrderedTerminalEventType, Scrollback, ScrollbackBlock, WindowSize,
+    OrderedTerminalEvent, OrderedTerminalEventType, Scrollback, ScrollbackBlock,
 };
-use warp_core::command::ExitCode;
-use warp_core::features::FeatureFlag;
 use warpui::platform::WindowStyle;
-use warpui::units::Lines;
-use warpui::{App, SingletonEntity, ViewHandle};
+use warpui::{App, ViewHandle};
 
 use crate::terminal::TerminalView;
-use crate::terminal::event_listener::ChannelEventListener;
-use crate::terminal::model::block::{BlockId, BlockState, SerializedBlock};
-use crate::terminal::shared_session::SharedSessionStatus;
-use crate::terminal::shared_session::shared_handlers::RemoteUpdateGuard;
-use crate::terminal::shared_session::tests::terminal_model_for_viewer;
-use crate::terminal::shared_session::viewer::event_loop::{
-    EventLoop, SharedSessionInitialLoadMode,
-};
+use crate::terminal::model::block::{BlockId, SerializedBlock};
 use crate::test_util::terminal::initialize_app_for_terminal_view;
 
 fn ordered_terminal_event_from_bytes(

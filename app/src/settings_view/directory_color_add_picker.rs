@@ -1,9 +1,6 @@
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
-use ai::index::full_source_code_embedding::manager::{
-    CodebaseIndexManager, CodebaseIndexManagerEvent,
-};
 use settings::Setting;
 use warp_util::path::user_friendly_path;
 use warpui::elements::{
@@ -76,26 +73,6 @@ pub(super) enum DirectoryColorAddPickerEvent {
 
 impl DirectoryColorAddPicker {
     pub(super) fn new(ctx: &mut ViewContext<Self>) -> Self {
-        ctx.subscribe_to_model(&CodebaseIndexManager::handle(ctx), |me, _, event, ctx| {
-            // Refresh for any event that may change the set of indexed codebase paths or
-            // persisted workspaces: new index created, sync state updated (which covers
-            // `index_directory`), indices removed, or index metadata updated (which covers
-            // workspaces persisted via `PersistedWorkspace::handle_index_metadata_event`
-            // without a `WorkspaceAdded` event). Refresh is idempotent thanks to the
-            // cache in `refresh_items`, so the noisier events (`Modified`/`Queried`) are
-            // cheap when nothing relevant has changed.
-            match event {
-                CodebaseIndexManagerEvent::NewIndexCreated { .. }
-                | CodebaseIndexManagerEvent::SyncStateUpdated { .. }
-                | CodebaseIndexManagerEvent::RemoveExpiredIndexMetadata { .. }
-                | CodebaseIndexManagerEvent::IndexMetadataUpdated { .. } => {
-                    me.refresh_items(ctx);
-                }
-                CodebaseIndexManagerEvent::RetrievalRequestCompleted { .. }
-                | CodebaseIndexManagerEvent::RetrievalRequestFailed { .. } => {}
-            }
-        });
-
         ctx.subscribe_to_model(&PersistedWorkspace::handle(ctx), |me, _, event, ctx| {
             if let PersistedWorkspaceEvent::WorkspaceAdded { .. } = event {
                 me.refresh_items(ctx);
@@ -190,10 +167,7 @@ impl DirectoryColorAddPicker {
     }
 
     fn refresh_items(&mut self, ctx: &mut ViewContext<Self>) {
-        let indexed_paths: HashSet<PathBuf> = CodebaseIndexManager::as_ref(ctx)
-            .get_codebase_paths()
-            .cloned()
-            .collect();
+        let indexed_paths: HashSet<PathBuf> = HashSet::new();
         let persisted_paths: HashSet<PathBuf> = PersistedWorkspace::as_ref(ctx)
             .workspaces()
             .map(|ws| ws.path)

@@ -4,18 +4,13 @@ use std::sync::Arc;
 use anyhow::Result;
 use warp_core::features::FeatureFlag;
 use warp_core::settings::{ChangeEventReason, Setting};
-use warp_core::user_preferences::GetUserPreferences;
 use warp_errors::report_error;
 use warpui::{
     AppContext, Entity, ModelContext, SingletonEntity, Tracked, ViewContext, WeakViewHandle,
     WindowId,
 };
 
-#[cfg(test)]
-use super::team::TeamVisibility;
 use super::team::{DiscoverableTeam, DiscoveryOptions, MembershipRole, Team};
-#[cfg(test)]
-use super::workspace::WorkspaceMemberUsageInfo;
 use super::workspace::{
     AdminEnablementSetting, EnterpriseSecretRegex, UgcCollectionEnablementSetting, Workspace,
     WorkspaceUid,
@@ -32,11 +27,6 @@ use crate::server::server_api::workspace::{PurchaseAddonCreditsOutcome, Workspac
 #[cfg(test)]
 use crate::server::server_api::{team::MockTeamClient, workspace::MockWorkspaceClient};
 use crate::settings::{ CodeSettings, CodeSettingsChangedEvent, PrivacySettings,
-};
-#[cfg(test)]
-use crate::workspaces::workspace::{
-    AIAutonomyPolicy, BillingMetadata, CustomerType, SplitListSetting,
-    WorkspaceMember, WorkspaceSettings,
 };
 use crate::workspaces::workspace::{
     AiOverages, PurchaseAddOnCreditsPolicy, UsageBasedPricingSettings,

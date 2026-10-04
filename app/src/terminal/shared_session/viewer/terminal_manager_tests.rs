@@ -10,18 +10,10 @@
 //! `DetachType::Closed`, while deliberately preserving it on
 //! `HiddenForClose` (undo-close grace window) and `Moved`.
 
-use async_broadcast::broadcast;
-use warpui::App;
 
-use super::*;
-use crate::pane_group::PaneConfigurationEvent;
 // Bring the `TerminalManager` trait into scope (named under a different alias
 // since the local `TerminalManager` struct shadows it) so the trait method
 // `on_view_detached` is callable on the struct.
-use crate::terminal::TerminalManager as _;
-use crate::terminal::model::session::Sessions;
-use crate::test_util::terminal::initialize_app_for_terminal_view;
-use crate::workspace::ToastStack;
 
 /// Stub UUID used for the orchestrator's `AmbientAgentTaskId`; opaque to
 /// the manager.

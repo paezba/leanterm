@@ -1,48 +1,27 @@
 use std::convert::Infallible;
 use std::pin::Pin;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::time::Duration;
 
-use async_channel::Sender;
-use byte_unit::Byte;
-use futures::channel::mpsc;
 use futures_util::future::BoxFuture;
-use futures_util::stream::AbortHandle;
-use futures_util::{FutureExt as _, SinkExt as _, StreamExt as _, future, sink, stream};
-use instant::Instant;
-use parking_lot::FairMutex;
+use futures_util::{FutureExt as _, SinkExt as _, StreamExt as _, sink, stream};
 use session_sharing_protocol::common::{
-    ActivePrompt, FeatureSupport, InputOperationId, InputOperationSeqNo, InputUpdate,
-    OrderedTerminalEvent, OrderedTerminalEventType, ParticipantId, Selection, SelectionUpdate,
-    SessionId, UserID,
+    FeatureSupport,
+    OrderedTerminalEvent, OrderedTerminalEventType, Selection, SelectionUpdate, UserID,
 };
 use session_sharing_protocol::sharer::{
     DownstreamMessage, FailedToInitializeSessionReason, QuotaType, ReconnectPayload,
-    ReconnectToken, ReconnectionFailedReason, SessionEndedReason, SessionTerminatedReason,
+    ReconnectToken,
     UpstreamMessage,
 };
-use warp_server_client::iap::IapManager;
 #[cfg(not(target_family = "wasm"))]
 use warpui::r#async::executor::Foreground;
-use warpui::r#async::{FutureExt as _, Timer};
-use warpui::{App, ModelHandle, RetryOption};
-use websocket::{Error as WebsocketError, Message, Sink, Stream, WebsocketMessage as _};
+use warpui::{App, ModelHandle};
+use websocket::{Message, Sink, Stream, WebsocketMessage as _};
 
 use super::{
     AMBIENT_CREATE_SESSION_MAX_ATTEMPTS, ConfirmedReconnection, MAX_PRE_RECONNECT_BYTES,
-    MAX_PRE_RECONNECT_MESSAGES, Network, NetworkEvent, PTY_READS_BATCH_THRESHOLD,
-    PtyBytesBatchStatus, Stage, StartupFailure, StartupRetryState, confirm_reconnection,
-    share_with_team_uid_for_init_payload, startup_max_attempts,
+    MAX_PRE_RECONNECT_MESSAGES, Network, StartupFailure, confirm_reconnection, startup_max_attempts,
 };
-use crate::auth::AuthStateProvider;
-use crate::auth::auth_manager::AuthManager;
-use crate::server::server_api::ServerApiProvider;
-use crate::server::telemetry::context_provider::AppTelemetryContextProvider;
-use crate::terminal::TerminalModel;
-use crate::terminal::shared_session::{
-    MAX_BYTES_SHAREABLE, SELECTION_THROTTLE_PERIOD, SharedSessionSource,
-};
+use crate::terminal::shared_session::SharedSessionSource;
 use crate::test_util::assert_eventually;
 
 fn is_upstream_message_pty_bytes_read(

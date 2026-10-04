@@ -1,37 +1,24 @@
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::Duration;
 
-use ai::index::full_source_code_embedding::manager::CodebaseIndexManager;
 use ai::project_context::model::ProjectContextModel;
-use chrono::Utc;
-use instant::Instant;
-use mockito::Matcher;
 use pathfinder_geometry::rect::RectF;
-use persistence::model::{AgentConversation, ConversationUsageMetadata};
+use persistence::model::AgentConversation;
 #[cfg(feature = "local_fs")]
 use repo_metadata::RepoMetadataModel;
 use repo_metadata::repositories::DetectedRepositories;
 use repo_metadata::watcher::DirectoryWatcher;
-use session_sharing_protocol::common::SessionId;
 use shared_session::permissions_manager::SessionPermissionsManager;
-use uuid::Uuid;
-use warp_core::features::FeatureFlag;
-use warp_server_client::base_client::TEAM_UID_HEADER;
 use warp_server_client::iap::IapManager;
 use warpui::platform::{WindowBounds, WindowStyle};
-use warpui::windowing::WindowManager;
-use warpui::windowing::state::ApplicationStage;
-use warpui::{App, ModelHandle};
+use warpui::App;
 use watcher::HomeDirectoryWatcher;
 
 use super::*;
 use crate::persisted_workspace::PersistedWorkspace;
 use crate::auth::auth_manager::AuthManager;
-use crate::auth::user::TEST_USER_UID;
 use crate::changelog_model::ChangelogModel;
 use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::{Owner, Revision, ServerMetadata, ServerPermissions};
 use crate::context_chips::prompt::Prompt;
 use crate::network::NetworkStatus;
 use crate::notebooks::editor::keys::NotebookKeybindings;
@@ -42,10 +29,8 @@ use crate::resource_center::TipsCompleted;
 use crate::search::files::model::FileSearchModel;
 use crate::server::cloud_objects::listener::Listener;
 use crate::server::cloud_objects::update_manager::UpdateManager;
-use crate::server::ids::ServerId;
 use crate::server::server_api::ServerApiProvider;
 use crate::server::sync_queue::SyncQueue;
-use crate::server::team_scope::RequestTeamScope;
 use crate::server::telemetry::context_provider::AppTelemetryContextProvider;
 use crate::settings::PrivacySettings;
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
@@ -54,27 +39,18 @@ use crate::system::SystemStats;
 use crate::terminal::alt_screen_reporting::AltScreenReporting;
 use crate::terminal::history::History;
 use crate::terminal::keys::TerminalKeybindings;
-use crate::terminal::local_tty::TerminalManager;
 use crate::terminal::local_tty::spawner::PtySpawner;
 use crate::terminal::resizable_data::ResizableData;
-use crate::terminal::shared_session::{
-    IsSharedSessionCreator, SharedSessionActionSource, SharedSessionScrollbackType,
-    SharedSessionSource, SharedSessionStatus,
-};
-use crate::terminal::view::Event as TerminalViewEvent;
-use crate::test_util::assert_eventually;
 use crate::test_util::settings::initialize_settings_for_tests;
 use crate::undo_close::UndoCloseStack;
 use crate::warp_managed_paths_watcher::WarpManagedPathsWatcher;
 use crate::workflows::local_workflows::LocalWorkflows;
 use crate::workspace::sync_inputs::SyncedInputState;
 use crate::workspace::{ActiveSession, OneTimeModalModel, WorkspaceRegistry};
-use crate::workspaces::team::Team;
 use crate::workspaces::team_tester::TeamTesterStatus;
 use crate::workspaces::update_manager::TeamUpdateManager;
 use crate::workspaces::user_profiles::UserProfiles;
 use crate::workspaces::user_workspaces::UserWorkspaces;
-use crate::workspaces::workspace::Workspace;
 use crate::{ GlobalResourceHandles, GlobalResourceHandlesProvider, experiments,
 };
 
@@ -82,7 +58,7 @@ fn initialize_app(app: &mut App) {
     initialize_app_with_history(app, Vec::new());
 }
 
-fn initialize_app_with_history(app: &mut App, conversations: Vec<AgentConversation>) {
+fn initialize_app_with_history(app: &mut App, _conversations: Vec<AgentConversation>) {
     initialize_settings_for_tests(app);
 
     app.add_singleton_model(|_ctx| ServerApiProvider::new_for_test());

@@ -2,8 +2,6 @@
 use std::cell::RefCell;
 #[cfg(not(target_family = "wasm"))]
 use std::rc::Rc;
-#[cfg(not(target_family = "wasm"))]
-use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
 
 #[cfg(not(target_family = "wasm"))]
 use warpui::App;
@@ -18,11 +16,8 @@ use crate::workspace::view::tests::{
 #[cfg(not(target_family = "wasm"))]
 use crate::workspaces::team::DiscoveryOptions;
 use crate::workspaces::team::TeamMember;
-#[cfg(not(target_family = "wasm"))]
-use crate::workspaces::user_workspaces::CreateTeamResponse;
 use crate::workspaces::workspace::{
-    EmailInvite, MultiAdminPolicy, NativeWorkspacesPolicy, Tier, WorkspaceMember,
-    WorkspaceMemberUsageInfo,
+    MultiAdminPolicy, Tier,
 };
 
 fn member(email: &str, role: MembershipRole) -> TeamMember {

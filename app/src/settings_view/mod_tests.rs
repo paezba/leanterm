@@ -1,12 +1,9 @@
-use pathfinder_geometry::vector::vec2f;
 use settings_page::{
-    Category, CategoryHeader, FilteredPageType, MatchData, PageTitle, PageType, SettingsWidget,
-    categories_with_visible_content, search_terms_match,
+    FilteredPageType, MatchData, PageType, SettingsWidget, search_terms_match,
 };
 use warpui::elements::Empty;
-use warpui::platform::WindowStyle;
 use warpui::{
-    App, AppContext, Element, Entity, Presenter, TypedActionView, View, WindowInvalidation,
+    AppContext, Element, Entity, View,
 };
 
 use super::*;

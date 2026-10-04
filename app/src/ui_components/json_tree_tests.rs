@@ -4,9 +4,6 @@
 //! formatting, long-string detection, state management, and value rendering.
 //! They do not exercise the element-construction layer (which requires a
 //! running UI framework).
-use crate::ui_components::json_tree::{
-    JsonTreeState, PathSegment,
-};
 
 // -----------------------------------------------------------------------
 // Annotation labels

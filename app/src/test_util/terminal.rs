@@ -1,4 +1,3 @@
-use ai::index::full_source_code_embedding::manager::CodebaseIndexManager;
 #[cfg(feature = "local_fs")]
 use ai::skills::SKILL_PROVIDER_DEFINITIONS;
 #[cfg(feature = "local_fs")]

@@ -52,7 +52,6 @@ use crate::terminal::{TerminalManager as TerminalManagerTrait, TerminalModel, Te
 use crate::view_components::ToastFlavor;
 #[cfg(not(any(test, feature = "integration_tests")))]
 use crate::workspaces::user_workspaces::TeamScope;
-use crate::workspaces::user_workspaces::{ResolvedTeamScope, UserWorkspaces};
 
 const ACL_UPDATE_FAILURE_RESPONSE: &str = "Something went wrong. Please try again.";
 

@@ -1,11 +1,7 @@
-use std::collections::HashMap;
 use std::io::Write;
 use std::path::Path;
 
 use super::*;
-use crate::launch_configs::launch_config::PaneTemplateType;
-use crate::tab_configs::render_tab_config;
-use crate::tab_configs::tab_config::{TabConfigPaneType, generated_worktree_repo_dir};
 
 #[cfg(feature = "local_fs")]
 #[test]

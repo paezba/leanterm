@@ -3,17 +3,11 @@ use std::iter;
 
 use itertools::Itertools;
 use session_sharing_protocol::common::{
-    ParticipantId, ParticipantInfo, ParticipantList, ProfileData, Role, Selection, Sharer, Viewer,
+    ParticipantId, ParticipantInfo, ParticipantList, ProfileData, Role, Sharer, Viewer,
 };
-use warp_core::command::ExitCode;
 use warpui::App;
 
 use crate::auth::UserUid;
-use crate::terminal::model::ansi::{
-    CommandFinishedValue, CompletionMetadata, Handler, PrecmdValue, PromptMetadata,
-};
-use crate::terminal::model::blocks::BlockList;
-use crate::terminal::model::test_utils::TestBlockListBuilder;
 use crate::terminal::shared_session::presence_manager::{PRESET_COLORS, PresenceManager};
 
 fn viewer_with_uid(uid: &str, is_present: bool) -> Viewer {
