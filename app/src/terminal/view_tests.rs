@@ -4618,8 +4618,8 @@ fn org_command_patterns_classify_a_block_remote_even_when_remote_session_ai_is_p
                 user_workspaces.is_ai_allowed_in_remote_sessions(&scope),
                 "precondition: the team permits AI and only configures patterns"
             );
-            assert!(view.is_block_considered_remote(None, Some("kubectl get pods"), ctx));
-            assert!(!view.is_block_considered_remote(None, Some("ls -la"), ctx));
+            assert!(view.is_block_considered_remote(None, ctx));
+            assert!(!view.is_block_considered_remote(None, ctx));
         });
     })
 }

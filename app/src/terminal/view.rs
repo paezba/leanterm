@@ -2574,7 +2574,6 @@ impl TerminalView {
 
         ctx.subscribe_to_model(&UserWorkspaces::handle(ctx), |me, _, event, ctx| {
             if matches!(event, UserWorkspacesEvent::TeamsChanged) {
-                me.update_focused_terminal_info(ctx);
                 ctx.notify();
             }
         });
@@ -3434,7 +3433,6 @@ impl TerminalView {
             self.toggle_code_review_pane(
                 deferred.git_delta_preference,
                 CodeReviewPaneEntrypoint::Other,
-                None,
                 deferred.focus_new_pane,
                 ctx,
             );
@@ -3477,10 +3475,6 @@ impl TerminalView {
                 });
             }
         });
-        self.ai_context_model.update(ctx, |context_model, _| {
-            context_model.set_github_repo_model(None);
-        });
-
         // TerminalView doesn't currently subscribe to GitHubRepoModel events
         // directly, but keep cleanup paired with the owned handle in case that
         // changes. The prompt's own subscription is removed above while the
@@ -3517,27 +3511,6 @@ impl TerminalView {
 
     /// Returns whether visible prompt/footer chips need git status updates.
     fn needs_git_status_for_chip_ui(&self, ctx: &AppContext) -> bool {
-        // Agent view: subscribe when the configured agent footer includes
-        // git stats or PR info.
-        if self.agent_view_controller.as_ref(ctx).is_active() {
-            return Self::uses_git_status_chips(
-                SessionSettings::as_ref(ctx)
-                    .agent_footer_chip_selection
-                    .all_chips(),
-            );
-        }
-        // CLI-agent footer: subscribe only while a CLI-agent session is active,
-        // so normal terminal panes do not subscribe just because of CLI footer defaults.
-        if self.has_active_cli_agent_session(ctx)
-            && Self::uses_git_status_chips(
-                SessionSettings::as_ref(ctx)
-                    .cli_agent_footer_chip_selection
-                    .all_chips(),
-            )
-        {
-            return true;
-        }
-
         // Terminal prompt path: the Warp prompt is active when honor_ps1 is
         // off, or when UDI overrides PS1. The prompt must include a chip backed
         // by git status.
@@ -3551,26 +3524,11 @@ impl TerminalView {
 
     /// Returns whether this terminal view should subscribe to git status updates.
     fn should_subscribe_to_git_status(&self, ctx: &AppContext) -> bool {
-        self.needs_git_status_for_chip_ui(ctx) || self.needs_git_status_for_agent_context(ctx)
+        self.needs_git_status_for_chip_ui(ctx)
     }
 
     /// Whether the terminal's prompt/footer chips need PR info.
     fn needs_pr_info_for_chip_ui(&self, ctx: &AppContext) -> bool {
-        if self.agent_view_controller.as_ref(ctx).is_active() {
-            return SessionSettings::as_ref(ctx)
-                .agent_footer_chip_selection
-                .all_chips()
-                .contains(&ContextChipKind::GithubPullRequest);
-        }
-        if self.has_active_cli_agent_session(ctx)
-            && SessionSettings::as_ref(ctx)
-                .cli_agent_footer_chip_selection
-                .all_chips()
-                .contains(&ContextChipKind::GithubPullRequest)
-        {
-            return true;
-        }
-
         let is_using_warp_prompt = !*SessionSettings::as_ref(ctx).honor_ps1
             || InputSettings::as_ref(ctx).is_universal_developer_input_enabled(ctx);
         is_using_warp_prompt
@@ -3582,7 +3540,7 @@ impl TerminalView {
 
     /// Whether this terminal needs PR info from the git status model.
     fn needs_pr_info(&self, ctx: &AppContext) -> bool {
-        self.needs_pr_info_for_chip_ui(ctx) || self.needs_pr_info_for_agent_context(ctx)
+        self.needs_pr_info_for_chip_ui(ctx)
     }
 
     fn should_retry_default_pr_chip_validation(ctx: &AppContext) -> bool {
@@ -3608,7 +3566,6 @@ impl TerminalView {
             match result {
                 Ok(handle) => {
                     let weak_for_prompt = handle.downgrade();
-                    let weak_for_context = handle.downgrade();
                     self.github_repo_model = Some(handle);
                     self.current_prompt.update(ctx, |prompt_type, ctx| {
                         if let PromptType::Dynamic { prompt } = prompt_type {
@@ -3616,9 +3573,6 @@ impl TerminalView {
                                 current_prompt.set_github_repo_model(Some(weak_for_prompt), ctx);
                             });
                         }
-                    });
-                    self.ai_context_model.update(ctx, |context_model, _| {
-                        context_model.set_github_repo_model(Some(weak_for_context));
                     });
                 }
                 Err(err) => {
@@ -3739,7 +3693,6 @@ impl TerminalView {
         &mut self,
         delta_pref: GitDeltaPreference,
         entrypoint: CodeReviewPaneEntrypoint,
-        cli_agent: Option<super::CLIAgent>,
         focus_new_pane: bool,
         event_constructor: impl Fn(CodeReviewPanelArg) -> Event,
         ctx: &mut ViewContext<Self>,
@@ -3749,7 +3702,6 @@ impl TerminalView {
             terminal_view: self.view_handle.clone(),
             entrypoint,
             focus_new_pane,
-            cli_agent,
         };
 
         match delta_pref {
@@ -3796,14 +3748,12 @@ impl TerminalView {
         &mut self,
         delta_pref: GitDeltaPreference,
         entrypoint: CodeReviewPaneEntrypoint,
-        cli_agent: Option<super::CLIAgent>,
         focus_new_pane: bool,
         ctx: &mut ViewContext<Self>,
     ) {
         self.toggle_or_open_code_review_pane(
             delta_pref,
             entrypoint,
-            cli_agent,
             focus_new_pane,
             Event::ToggleCodeReviewPane,
             ctx,
@@ -3814,14 +3764,12 @@ impl TerminalView {
         &mut self,
         delta_pref: GitDeltaPreference,
         entrypoint: CodeReviewPaneEntrypoint,
-        cli_agent: Option<super::CLIAgent>,
         focus_new_pane: bool,
         ctx: &mut ViewContext<Self>,
     ) {
         self.toggle_or_open_code_review_pane(
             delta_pref,
             entrypoint,
-            cli_agent,
             focus_new_pane,
             Event::OpenCodeReviewPane,
             ctx,
@@ -3914,7 +3862,7 @@ impl TerminalView {
     pub fn session_is_local<C: ModelAsRef>(&self, session_id: SessionId, ctx: &C) -> bool {
         let forced_non_local = {
             let model = self.model.lock();
-            model.is_shared_session_viewer() || model.is_conversation_transcript_viewer()
+            model.is_shared_session_viewer()
         };
         !forced_non_local
             && self
@@ -4143,10 +4091,6 @@ impl TerminalView {
         operations: Vec<CrdtOperation>,
         ctx: &mut ViewContext<Self>,
     ) {
-        if self.should_suppress_ambient_setup_input_sync(ctx) {
-            return;
-        }
-
         self.input().update(ctx, |input, ctx| {
             input.process_remote_edits(block_id, operations, ctx);
         });
@@ -4187,27 +4131,6 @@ impl TerminalView {
     /// What is published is a fact about the pane, independent of the remote-session AI
     /// permission; that permission is resolved against this pane's team where the decision is
     /// made, so it can be revoked without anything here having to be republished.
-    fn update_focused_terminal_info(&mut self, ctx: &mut ViewContext<Self>) {
-        if !ctx.is_self_or_child_focused() {
-            return;
-        }
-
-        let terminal = self.view_handle.clone();
-        let contains_remote_blocks = self.any_session_contains_remote_blocks;
-        let contains_restored_remote_blocks = self.any_session_contains_restored_remote_blocks;
-        let updated =
-            FocusedTerminalInfo::handle(ctx).update(ctx, |model: &mut FocusedTerminalInfo, ctx| {
-                model.update(
-                    terminal,
-                    contains_remote_blocks,
-                    contains_restored_remote_blocks,
-                    ctx,
-                )
-            });
-        if updated {
-            ctx.notify();
-        }
-    }
 
     fn maybe_report_focus_out(&mut self, ctx: &mut ViewContext<Self>) {
         if self.should_report_focus(ctx) && self.is_focused_and_active {
@@ -4537,9 +4460,7 @@ impl TerminalView {
     pub fn is_long_running_and_user_controlled(&self) -> bool {
         let model = self.model.lock();
         let active_block = model.block_list().active_block();
-        active_block.is_active_and_long_running()
-            && !active_block.is_agent_driving_command()
-            && !model.is_read_only()
+        active_block.is_active_and_long_running() && !model.is_read_only()
     }
 
     pub fn was_ever_visible(&self) -> bool {
@@ -5015,9 +4936,6 @@ impl TerminalView {
             model.block_list_mut().update_active_block_height();
         }
         self.maybe_emit_terminal_view_state_changed_for_long_running_block(ctx);
-        self.use_agent_footer.update(ctx, |footer, ctx| {
-            footer.notify_and_notify_children(ctx);
-        });
 
         // Need to re-render both the alt screen and the blocklist on keypresses.
         ctx.notify();
@@ -5254,14 +5172,6 @@ impl TerminalView {
             model.block_list_mut().set_active_block_banner(None);
         }
 
-        // Also clear the warpify footer so it doesn't linger after warpification
-        // starts, fails, or is cancelled.
-        if FeatureFlag::WarpifyFooter.is_enabled() {
-            self.use_agent_footer.update(ctx, |footer, ctx| {
-                footer.clear_warpify(ctx);
-            });
-        }
-
         match remember_command {
             RememberForWarpification::RememberSubshellCommand(command) => {
                 WarpifySettings::handle(ctx).update(ctx, |warpify, ctx| {
@@ -5287,17 +5197,10 @@ impl TerminalView {
         telemetry_event: TelemetryEvent,
         ctx: &mut ViewContext<Self>,
     ) {
-        if FeatureFlag::WarpifyFooter.is_enabled() {
-            return;
-        }
-
         let mut model = self.model.lock();
 
         // Shared session viewers can't initiate warpification currently.
-        // Don't show the warpify banner when an agent is monitoring the command either.
-        if model.shared_session_status().is_viewer()
-            || model.block_list().active_block().is_agent_monitoring()
-        {
+        if model.shared_session_status().is_viewer() {
             return;
         }
 
@@ -5721,8 +5624,7 @@ impl TerminalView {
         let reset_focus = ctx.is_self_or_child_focused()
             && !self.find_bar.is_self_or_child_focused(ctx)
             && !self.block_filter_editor.is_self_or_child_focused(ctx)
-            && !self.is_any_ai_block_focused(ctx)
-            && !self.is_queued_prompt_inline_editor_focused(ctx);
+;
         if reset_focus {
             self.redetermine_global_focus_with_policy(selection_focus_policy, ctx);
         }
@@ -5804,56 +5706,8 @@ impl TerminalView {
         }
     }
 
-    fn on_user_block_completed(&mut self, block_id: &BlockId, ctx: &mut ViewContext<Self>) {
+    fn on_user_block_completed(&mut self, _block_id: &BlockId, _ctx: &mut ViewContext<Self>) {
         self.model.lock().end_notify_on_ssh_login_complete();
-
-        // If the block that just ended was an agent-requested long running command for which the user took over control,
-        // and the user exited the command, we should resume the conversation.
-        let conversation_id_to_resume = {
-            let model = self.model.lock();
-            let ai_metadata = model
-                .block_list()
-                .block_with_id(block_id)
-                .and_then(|block| block.agent_interaction_metadata());
-
-            match ai_metadata {
-                Some(ai_metadata)
-                    if ai_metadata.requested_command_action_id().is_some()
-                        && ai_metadata
-                            .long_running_control_state()
-                            .is_some_and(|state| state.should_auto_resume()) =>
-                {
-                    Some(*ai_metadata.conversation_id())
-                }
-                _ => None,
-            }
-        };
-
-        if let Some(conversation_id) = conversation_id_to_resume {
-            // Include the context of the block that just completed in the resume context.
-            // This is so that we correctly exit from LRC subagents attached to completed commands.
-            let resume_context = {
-                let terminal_model = self.model.lock();
-                block_context_from_terminal_model(&terminal_model, block_id, false)
-                    .map(Box::new)
-                    .map(AIAgentContext::Block)
-                    .into_iter()
-                    .collect()
-            };
-
-            self.ai_controller.update(ctx, |controller, ctx| {
-                controller.resume_conversation(conversation_id, resume_context, ctx);
-            });
-        }
-
-        // Hide telemetry banner forever after first block user executes.
-        if FeatureFlag::GlobalAIAnalyticsBanner.is_enabled()
-            && !GeneralSettings::as_ref(ctx)
-                .telemetry_banner_dismissed
-                .value()
-        {
-            self.hide_telemetry_banner_permanently(ctx);
-        }
     }
 
     fn active_block_is_considered_remote(&self, app: &AppContext) -> bool {
@@ -5861,7 +5715,6 @@ impl TerminalView {
         let active_block = model.block_list().active_block();
         self.is_block_considered_remote(
             active_block.session_id(),
-            Some(&active_block.command_to_string()),
             app,
         )
     }
@@ -5876,10 +5729,9 @@ impl TerminalView {
     fn is_block_considered_remote(
         &self,
         session_id: Option<SessionId>,
-        command: Option<&str>,
         app: &AppContext,
     ) -> bool {
-        let is_warpified_remote = session_id
+        session_id
             .map(|id| {
                 self.sessions
                     .as_ref(app)
@@ -5887,63 +5739,8 @@ impl TerminalView {
                     .map(|session| !session.is_local())
                     .unwrap_or_default()
             })
-            .unwrap_or_default();
-
-        if is_warpified_remote {
-            return true;
-        }
-
-        // If there's a command present, check it against the remote-session command patterns
-        // configured by the user's organization.
-        let Some(command) = command else {
-            return false;
-        };
-
-        let user_workspaces = UserWorkspaces::as_ref(app);
-        let scope = user_workspaces.team_context(&self.view_handle, app);
-        let remote_session_regex_list = user_workspaces.get_remote_session_regex_list(&scope);
-
-        // Almost nobody has org patterns at all, so there is nothing further to check.
-        if remote_session_regex_list.is_empty() {
-            return false;
-        }
-
-        // First check if the command matches any of the regexes in the list.
-        if remote_session_regex_list
-            .iter()
-            .any(|regex| regex.is_match(command))
-        {
-            return true;
-        }
-
-        // Then check if there's an alias for the top level command that matches the regex.
-        let Some(session_id) = session_id else {
-            return false;
-        };
-        let Some(session) = self.sessions.as_ref(app).get(session_id) else {
-            return false;
-        };
-        let escape_char = session.shell_family().escape_char();
-        let Some(top_level_command) =
-            warp_completer::parsers::simple::top_level_command(command, escape_char)
-        else {
-            return false;
-        };
-        let Some(alias) = session.alias_value(top_level_command.as_str()) else {
-            return false;
-        };
-
-        if remote_session_regex_list
-            .iter()
-            .any(|regex| regex.is_match(alias))
-        {
-            return true;
-        }
-
-        false
+            .unwrap_or_default()
     }
-
-    // Abort any pending prompt or code suggestions, which may now be irrelevant.
 
     /// Apply a block metadata update from either the precmd hook
     /// ([`Event::BlockMetadataReceived`]) or an OSC 7 sequence emitted
@@ -6032,8 +5829,7 @@ impl TerminalView {
                     // via `take()` above, so it would always return `None`
                     // and misclassify every local session as Remote.
                     //
-                    // `session_is_local` keeps the shared-session viewer /
-                    // conversation-transcript guard intact.
+                    // `session_is_local` keeps the shared-session viewer guard intact.
                     let session_id = block_metadata.session_id();
                     let session_type = session_id.map(|sid| {
                         if self.session_is_local(sid, ctx) {
@@ -6109,14 +5905,6 @@ impl TerminalView {
                                     // is known so the active session's working directory catches up.
                                     ctx.emit(Event::AppStateChanged);
 
-                                    if FeatureFlag::AIContextMenuEnabled.is_enabled() {
-                                        me.input.update(ctx, |input, ctx| {
-                                            input
-                                                .check_and_update_ai_context_menu_disabled_state(
-                                                    ctx,
-                                                );
-                                        });
-                                    }
                                     ctx.emit(Event::Pane(PaneEvent::RemoteRepoNavigated {
                                         remote_path: remote_path.clone(),
                                     }));
@@ -6183,18 +5971,7 @@ impl TerminalView {
                                             );
                                         });
 
-                                        if FeatureFlag::AIContextMenuEnabled.is_enabled() {
-                                            me.input.update(ctx, |input, ctx| {
-                                                input
-                                                    .check_and_update_ai_context_menu_disabled_state(
-                                                        ctx,
-                                                    );
-                                            });
-                                        }
-
                                         me.start_lsp_server_in_active_pwd(ctx);
-
-                                        me.update_repo_banner_state(repo_path.clone(), ctx);
                                     }
                                     #[cfg(not(feature = "local_fs"))]
                                     let _ = repo_path;
@@ -6289,24 +6066,6 @@ impl TerminalView {
                 ctx.request_user_attention();
             }
             ModelEvent::Exit { reason } => {
-                if !self.manual_pty_shutdown_requested
-                    && let Some((conversation_id, command)) =
-                        self.maybe_send_agent_exited_shell_telemetry(ctx)
-                {
-                    // The agent's command caused the shell to exit. Finalize the
-                    // conversation as a failure (with a message naming the command)
-                    // before the pane is torn down, so the Oz run reports the
-                    // failure instead of "Cancelled by user" (which the pane-close
-                    // cancellation would otherwise produce).
-                    self.ai_controller.update(ctx, |controller, ctx| {
-                        controller.fail_conversation_due_to_shell_exit(
-                            conversation_id,
-                            command,
-                            ctx,
-                        );
-                    });
-                }
-
                 // If the pty spawn has failed, we've already inserted a banner.
                 if !self.pty_spawn_failed {
                     let shell_detail = self.shell_detail.take().unwrap_or("shell".to_owned());
@@ -6407,22 +6166,6 @@ impl TerminalView {
                     self.on_user_block_completed(&block_completed_event.block_id, ctx);
                 }
 
-                // Clear any stale warpify footer so it doesn't leak into the next command's footer rendering.
-                self.use_agent_footer.update(ctx, |footer, ctx| {
-                    footer.clear_warpify(ctx);
-                });
-                self.hide_use_agent_footer_in_blocklist(ctx);
-                if matches!(block_completed_event.block_type, BlockType::User(_)) {
-                    // Close the rich input editor if it was open (side effects
-                    // like input config restore happen reactively).
-                    // The auto-toggle flag is irrelevant here because the
-                    // session is removed immediately afterwards.
-                    self.close_cli_agent_rich_input(CLIAgentRichInputCloseReason::Other, ctx);
-                    CLIAgentSessionsModel::handle(ctx).update(ctx, |sessions_model, ctx| {
-                        sessions_model.remove_session(self.view_id, ctx);
-                    });
-                }
-
                 let next_block_index = block_completed_event.block_index + BlockIndex::from(1);
 
                 // Don't populate mouse states for In-Band blocks. In-band blocks are hidden to the
@@ -6480,7 +6223,6 @@ impl TerminalView {
                     self.active_block_is_considered_remote(ctx);
                 if self.any_session_contains_remote_blocks != did_any_session_contains_remote_blocks
                 {
-                    self.update_focused_terminal_info(ctx);
                 }
 
                 if *is_for_in_band_command {
@@ -6498,10 +6240,6 @@ impl TerminalView {
                     .block_list_mut()
                     .active_block_mut()
                     .set_prompt_snapshot(prompt_snapshot);
-
-                // Clear any previously active AM query suggestion banners and hidden blocks.
-                self.clear_prompt_suggestions(ctx);
-                self.drop_hidden_passive_ai_blocks(ctx);
 
                 // If the first word of the command is a shell alias, expand it
                 // for subshell/SSH detection. This enables warpification for
@@ -6526,17 +6264,9 @@ impl TerminalView {
                 let command_is_denylisted = warpify_settings
                     .is_denylisted_subshell_command(command)
                     || warpify_settings.is_denylisted_subshell_command(warpify_command);
-                // Never warpify or surface warpification for agent-requested commands.
-                let has_ai_metadata = self
-                    .model
-                    .lock()
-                    .block_list()
-                    .active_block()
-                    .agent_interaction_metadata()
-                    .is_some();
 
                 if is_compatible_subshell_command {
-                    if command_is_denylisted || has_ai_metadata {
+                    if command_is_denylisted {
                         // Don't auto-warpify or surface warpification for these commands.
                     } else if let Some(shell_type) = self.pending_auto_bootstrap_shell_type.take() {
                         // If there is a subshell we're waiting to bootstrap until we receive
@@ -6559,112 +6289,24 @@ impl TerminalView {
                             .add_subshell_banner_abort_handle(ctx.spawn_abortable(
                                 Timer::after(*SUBSHELL_BANNER_DELAY_DURATION),
                                 |view, _, ctx| {
-                                    if FeatureFlag::WarpifyFooter.is_enabled() {
-                                        view.show_warpify_footer(ctx);
-                                    } else {
-                                        view.handle_action(
-                                            &TerminalAction::ShowSubshellBanner(command),
-                                            ctx,
-                                        );
-                                    }
+                                    view.handle_action(
+                                        &TerminalAction::ShowSubshellBanner(command),
+                                        ctx,
+                                    );
                                 },
                                 |_, _| {},
                             ));
                     }
                 } else {
-                    if !has_ai_metadata {
-                        if let Some(ssh_host) =
-                            parse_interactive_ssh_command(warpify_command).map(|cmd| cmd.host)
-                        {
-                            self.warpify_state
-                                .set_pending_ssh_host(warpify_command.to_string(), ssh_host);
-                            self.model.lock().start_notify_on_end_of_ssh_login();
-                            ctx.emit(Event::TerminalViewStateChanged);
-                        } else {
-                            self.warpify_state.clear_pending_ssh_host();
-
-                            ctx.spawn(
-                                Timer::after(Duration::from_millis(
-                                    LONG_RUNNING_COMMAND_DURATION_MS,
-                                )),
-                                move |me, _, ctx| {
-                                    // Detect CLI agent and create session before
-                                    // showing the footer, so the session drives
-                                    // the footer rather than the other way around.
-                                    let detection = {
-                                        let model = me.model.lock();
-                                        me.detect_cli_agent_from_model(&model, ctx)
-                                    };
-                                    let view_id = me.view_id;
-                                    CLIAgentSessionsModel::handle(ctx).update(
-                                        ctx,
-                                        |sessions_model, ctx| match detection {
-                                            Some((agent, ref custom_command_prefix))
-                                                if !sessions_model
-                                                    .session(view_id)
-                                                    .is_some_and(|s| s.agent == agent) =>
-                                            {
-                                                let remote_host =
-                                                    me.active_session_remote_host(ctx);
-                                                let should_auto_toggle_input = agent
-                                                    .supports_cli_agent_footer()
-                                                    && *AISettings::as_ref(ctx)
-                                                        .auto_open_rich_input_on_cli_agent_start;
-                                                sessions_model.set_session(
-                                                    view_id,
-                                                    CLIAgentSession {
-                                                        agent,
-                                                        status: CLIAgentSessionStatus::InProgress,
-                                                        session_context:
-                                                            CLIAgentSessionContext::default(),
-                                                        input_state: CLIAgentInputState::Closed,
-                                                        should_auto_toggle_input,
-                                                        listener: None,
-                                                        plugin_version: None,
-                                                        remote_host,
-                                                        draft_text: None,
-                                                        custom_command_prefix:
-                                                            custom_command_prefix.clone(),
-                                                        received_rich_notification: false,
-                                                    },
-                                                    ctx,
-                                                );
-                                            }
-                                            _ => {}
-                                        },
-                                    );
-
-                                    // Codex and Grok use OSC 9 (and optional rich OSC 777)
-                                    // without requiring a SessionStart sentinel first, so
-                                    // create the listener proactively on command detection.
-                                    if let Some((agent @ (CLIAgent::Codex | CLIAgent::Grok), _)) =
-                                        detection
-                                    {
-                                        me.register_cli_agent_listener_without_session_start_event(
-                                            agent, ctx,
-                                        );
-                                    }
-
-                                    me.maybe_show_use_agent_footer_in_blocklist(ctx);
-                                    me.maybe_auto_open_cli_agent_rich_input(ctx);
-                                    me.input.update(ctx, |input, ctx| {
-                                        input.universal_developer_input_button_bar().update(
-                                            ctx,
-                                            |bar, ctx| {
-                                                bar.update_segmented_control_disabled_state(ctx);
-                                            },
-                                        )
-                                    });
-                                    // Update agent view back button state when command becomes long-running
-                                    if FeatureFlag::AgentView.is_enabled()
-                                        && me.agent_view_controller.as_ref(ctx).is_fullscreen()
-                                    {
-                                        me.update_agent_view_back_button_state(ctx);
-                                        me.update_agent_view_pane_header(ctx);
-                                    }
-                                },
-                            );
-                        }
+                    if let Some(ssh_host) =
+                        parse_interactive_ssh_command(warpify_command).map(|cmd| cmd.host)
+                    {
+                        self.warpify_state
+                            .set_pending_ssh_host(warpify_command.to_string(), ssh_host);
+                        self.model.lock().start_notify_on_end_of_ssh_login();
+                        ctx.emit(Event::TerminalViewStateChanged);
+                    } else {
+                        self.warpify_state.clear_pending_ssh_host();
                     }
 
                     self.maybe_insert_setup_command_blocks(block_id, ctx);
@@ -6723,7 +6365,6 @@ impl TerminalView {
                     if let BlockType::User(user_block_completed) = block_type {
                         let is_universal_developer_input_enabled =
                             InputSettings::as_ref(ctx).is_universal_developer_input_enabled(ctx);
-                        let is_in_agent_view = self.agent_view_controller.as_ref(ctx).is_active();
                         let serialized_block =
                             user_block_completed.serialized_block.get_with(|compute| {
                                 let model = self.model.lock();
@@ -6739,7 +6380,6 @@ impl TerminalView {
                                     .num_output_lines_truncated,
                                 terminal_session_id: serialized_block.session_id,
                                 is_udi_enabled: is_universal_developer_input_enabled,
-                                is_in_agent_view,
                             },
                             ctx
                         );
@@ -6819,30 +6459,7 @@ impl TerminalView {
                             self.pending_command_queue.clear();
                         }
                         ctx.emit(Event::PendingCommandCompleted);
-
-                        // If agent view entry was deferred until setup commands
-                        // finished, enter it now (unless suppressed by onboarding).
-                        if self.enter_agent_view_after_pending_commands {
-                            self.enter_agent_view_after_pending_commands = false;
-                            self.enter_agent_view_for_new_conversation(
-                                None,
-                                AgentViewEntryOrigin::Input {
-                                    was_prompt_autodetected: false,
-                                },
-                                ctx,
-                            );
-                        }
                     }
-                }
-
-                // Advance the queued-prompts queue when a dispatched queued command's block
-                // completes. `on_queued_command_finished` no-ops unless a queued command is in
-                // flight, and the `!was_part_of_agent_interaction` filter keeps agent-executed
-                // command blocks (including LRC snapshots) from advancing the queue.
-                if let BlockType::User(user_block_completed) = block_type
-                    && !user_block_completed.was_part_of_agent_interaction
-                {
-                    self.on_queued_command_finished(ctx);
                 }
 
                 // For the case when the user uses session configuration with a
@@ -6941,30 +6558,13 @@ impl TerminalView {
                         );
                     }
 
-                    // We don't want any suggestion UIs on AI requested blocks.
-                    if !block_completed.was_part_of_agent_interaction {
-                        self.maybe_generate_command_suggestions(block_completed, ctx);
+                    self.maybe_generate_command_suggestions(block_completed, ctx);
 
-                        if self.can_suggest_alias_expansion(ctx) {
-                            self.maybe_suggest_alias_expansion(block_completed, ctx);
-                        }
-
-                        self.maybe_suggest_open_in_warp(block_completed, ctx);
+                    if self.can_suggest_alias_expansion(ctx) {
+                        self.maybe_suggest_alias_expansion(block_completed, ctx);
                     }
 
-                    // Check if the user tried to run an AWS login command but AWS CLI wasn't installed.
-                    // This runs after other suggestion checks and may add its own banner alongside them.
-                    self.maybe_show_aws_cli_not_installed_suggestion(
-                        serialized_block.exit_code,
-                        ctx,
-                    );
-
-                    // Check for environment creation command completion during /init flow
-                    if block_completed.was_part_of_agent_interaction
-                        && self.has_active_init_project(ctx)
-                    {
-                        self.maybe_handle_environment_create_command(block_completed, ctx);
-                    }
+                    self.maybe_suggest_open_in_warp(block_completed, ctx);
 
                     let terminal_view_state = {
                         let model = self.model.lock();
@@ -6975,14 +6575,6 @@ impl TerminalView {
                     };
                     self.did_notify_long_running = false;
                     self.set_current_state(terminal_view_state, ctx);
-
-                    // Update agent view back button state when command completes
-                    if FeatureFlag::AgentView.is_enabled()
-                        && self.agent_view_controller.as_ref(ctx).is_fullscreen()
-                    {
-                        self.update_agent_view_back_button_state(ctx);
-                        self.update_agent_view_pane_header(ctx);
-                    }
 
                     let exit_code_data =
                         &json!({"exit_code": serialized_block.exit_code}).to_string();
@@ -7076,10 +6668,6 @@ impl TerminalView {
                         block: serialized_block.clone(),
                         is_local: !self.is_block_considered_remote(
                             serialized_block.session_id,
-                            Some(block_completed.command.get_with(|compute| {
-                                let model = self.model.lock();
-                                compute(model.block_list())
-                            })),
                             ctx,
                         ),
                     });
@@ -7090,7 +6678,6 @@ impl TerminalView {
                         block: serialized_block.clone(),
                         is_local: !self.is_block_considered_remote(
                             serialized_block.session_id,
-                            None,
                             ctx,
                         ),
                     });
@@ -7101,7 +6688,6 @@ impl TerminalView {
                         block: serialized_block.clone(),
                         is_local: !self.is_block_considered_remote(
                             serialized_block.session_id,
-                            None,
                             ctx,
                         ),
                     });
@@ -7253,13 +6839,6 @@ impl TerminalView {
                     self.close_find_bar(ctx);
                     self.redetermine_global_focus(ctx);
                 }
-
-                // Update agent view back button state when alt screen becomes active/inactive
-                if FeatureFlag::AgentView.is_enabled()
-                    && self.agent_view_controller.as_ref(ctx).is_fullscreen()
-                {
-                    self.update_agent_view_back_button_state(ctx);
-                }
             }
             ModelEvent::DetectedEndOfSshLogin(check_type) => {
                 self.handle_detected_end_of_ssh_login(check_type, ctx);
@@ -7288,17 +6867,6 @@ impl TerminalView {
                             .await
                     },
                     move |me, _, ctx| {
-                        let has_ai_metadata = me
-                            .model
-                            .lock()
-                            .block_list()
-                            .active_block()
-                            .agent_interaction_metadata()
-                            .is_some();
-                        // Never warpify for agent-requested commands.
-                        if has_ai_metadata {
-                            return;
-                        }
                         me.trigger_subshell_bootstrap(Some(shell_type), true, ctx);
                     },
                 );
@@ -7383,25 +6951,6 @@ impl TerminalView {
                 self.execute_pending_command((), ctx);
             }
             ModelEvent::PluggableNotification { title, body } => {
-                // Intercept structured CLI agent notifications (e.g. from Claude Code plugin).
-                // The listener's own subscription handles subsequent events; we just
-                // suppress the raw JSON from becoming a toast/desktop notification.
-                if title.as_deref() == Some(CLI_AGENT_NOTIFICATION_SENTINEL) {
-                    self.handle_cli_agent_notification(title.as_deref(), body, ctx);
-                    return;
-                }
-
-                // Suppress OSC 9 notifications when a Codex listener is active.
-                // The listener's subscription handles these via CodexSessionHandler.
-                if title.is_none() {
-                    let has_codex_listener = CLIAgentSessionsModel::as_ref(ctx)
-                        .session(self.view_id)
-                        .is_some_and(|s| s.agent == CLIAgent::Codex && s.listener.is_some());
-                    if has_codex_listener {
-                        return;
-                    }
-                }
-
                 if self.is_navigated_away_from_window(ctx) {
                     let notification_title =
                         title.clone().unwrap_or_else(|| "Notification".to_string());
@@ -7888,7 +7437,6 @@ impl TerminalView {
         }
         self.any_session_contains_restored_remote_blocks = self.contains_restored_remote_blocks();
         self.any_session_contains_remote_blocks |= self.active_block_is_considered_remote(ctx);
-        self.update_focused_terminal_info(ctx);
 
         if let Some(working_directory) = self.active_session_path_if_local(ctx) {
             CodebaseIndexManager::handle(ctx).update(ctx, |manager, _ctx| {
@@ -11481,7 +11029,6 @@ impl TerminalView {
 
         // Since we just cleared blocks, we can just look at the state of the active block
         self.any_session_contains_remote_blocks = self.active_block_is_considered_remote(ctx);
-        self.update_focused_terminal_info(ctx);
 
         ctx.notify();
 
@@ -17972,7 +17519,6 @@ impl View for TerminalView {
 
             ctx.notify();
         }
-        self.update_focused_terminal_info(ctx);
     }
 
     fn on_blur(&mut self, blur_ctx: &BlurContext, ctx: &mut ViewContext<Self>) {
