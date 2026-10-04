@@ -51,7 +51,6 @@ test = false
 [dependencies]
 addr = "0.15.6"
 ai.workspace = true
-ai_types.workspace = true
 alphanumeric-sort = "1.5.7"
 anyhow.workspace = true
 arrayvec.workspace = true
@@ -83,7 +82,6 @@ cloud_object_models.workspace = true
 cloud_objects.workspace = true
 command = { workspace = true }
 command-corrections.workspace = true
-computer_use.workspace = true
 crc.workspace = true
 content_inspector = "0.2.4"
 concat-idents.workspace = true
@@ -141,7 +139,6 @@ log.workspace = true
 log-panics = { version = "2.1.0", features = ["with-backtrace"] }
 lsp.workspace = true
 warp_logging.workspace = true
-warp_harness_usage.workspace = true
 sentry = { workspace = true, optional = true }
 lz4_flex = "0.11"
 markdown_parser.workspace = true
@@ -265,7 +262,6 @@ rmcp.workspace = true
 warp_isolation_platform.workspace = true
 warp_ripgrep.workspace = true
 warp_managed_secrets.workspace = true
-warp_multi_agent_client.workspace = true
 local_control.workspace = true
 hashbrown.workspace = true
 rustc-hash.workspace = true
@@ -418,7 +414,6 @@ winreg.workspace = true
 [dev-dependencies]
 ai = { workspace = true, features = ["test-util"] }
 async-process.workspace = true
-computer_use = { workspace = true, features = ["test-util"] }
 firebase.workspace = true
 jsonschema = { workspace = true, default-features = false }
 async-executor = "1.5.1"
@@ -754,7 +749,6 @@ agent_mode_evals = [
     "rust-embed/debug-embed",
     "warpui/log_named_telemetry_events",
     "warp_logging/agent_mode_evals",
-    "warp_multi_agent_client/agent_mode_evals",
     "warp_server_client/agent_mode_evals",
 ]
 ambient_agents_command_line = []
