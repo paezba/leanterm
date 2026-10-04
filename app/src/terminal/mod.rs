@@ -31,7 +31,6 @@ mod blockgrid_renderer;
 mod bootstrap;
 pub mod color;
 pub mod dynamic_enum_suggestions;
-pub mod enable_auto_reload_modal;
 pub mod event;
 pub mod event_listener;
 pub mod find;

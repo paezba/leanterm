@@ -14,32 +14,16 @@ use crate::themes::theme::AnsiColorIdentifier;
 use crate::ui_components::icons::Icon;
 
 /// The type of session the user wants to start.
-///
-/// Wraps the existing `CLIAgent` for third-party agents and adds
-/// Terminal and Oz as first-class variants.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SessionType {
     Terminal,
-    Oz,
-    CliAgent(CLIAgent),
 }
 
 impl SessionType {
-    /// The CLI command to auto-run for this session type, if any.
-    /// Returns `None` for Terminal and Oz (Oz uses agent view, not a CLI command).
-    fn command_prefix(&self) -> Option<&'static str> {
-        match self {
-            SessionType::Terminal | SessionType::Oz => None,
-            SessionType::CliAgent(agent) => Some(agent.command_prefix()),
-        }
-    }
-
     /// The icon to display for this session type.
     pub(crate) fn icon(&self) -> Icon {
         match self {
             SessionType::Terminal => Icon::Terminal,
-            SessionType::Oz => Icon::Agent,
-            SessionType::CliAgent(agent) => agent.icon().unwrap_or(Icon::Terminal),
         }
     }
 
@@ -47,11 +31,6 @@ impl SessionType {
     pub(crate) fn pill_label(&self) -> &'static str {
         match self {
             SessionType::Terminal => "Terminal",
-            SessionType::Oz => "Warp Agent",
-            SessionType::CliAgent(CLIAgent::Claude) => "Claude",
-            SessionType::CliAgent(CLIAgent::Codex) => "Codex",
-            SessionType::CliAgent(CLIAgent::Gemini) => "Gemini",
-            SessionType::CliAgent(agent) => agent.display_name(),
         }
     }
 }
@@ -137,22 +116,13 @@ pub fn build_tab_config(
         }
     }
 
-    if let Some(prefix) = session_type.command_prefix() {
-        commands.push(prefix.to_string());
-    }
-
-    let pane_type = match session_type {
-        SessionType::Oz => TabConfigPaneType::Agent,
-        SessionType::Terminal | SessionType::CliAgent(_) => TabConfigPaneType::Terminal,
-    };
-
     TabConfig {
         name: config_name(directory, enable_worktree),
         title,
         color: None,
         panes: vec![TabConfigPaneNode {
             id: "main".to_string(),
-            pane_type: Some(pane_type),
+            pane_type: Some(TabConfigPaneType::Terminal),
             split: None,
             children: None,
             is_focused: None,
@@ -276,23 +246,15 @@ fn snapshot_to_flat_panes(
             *counter += 1;
             let my_id = format!("p{counter}");
 
-            let (directory, pane_type) = match contents {
-                LeafContents::Terminal(terminal) => {
-                    // If the agent view was open in fullscreen, treat as an Agent pane.
-                    let pane_type = if terminal.active_conversation_id.is_some() {
-                        TabConfigPaneType::Agent
-                    } else {
-                        TabConfigPaneType::Terminal
-                    };
-                    (terminal.cwd.clone(), pane_type)
-                }
+            let directory = match contents {
+                LeafContents::Terminal(terminal) => terminal.cwd.clone(),
                 // Non-terminal panes become empty terminal panes to preserve layout.
-                _ => (None, TabConfigPaneType::Terminal),
+                _ => None,
             };
 
             panes.push(TabConfigPaneNode {
                 id: my_id.clone(),
-                pane_type: Some(pane_type),
+                pane_type: Some(TabConfigPaneType::Terminal),
                 split: None,
                 children: None,
                 is_focused: if *is_focused { Some(true) } else { None },
