@@ -140,30 +140,6 @@ pub fn init(app: &mut AppContext) {
             TerminalAction::ControlSequence("\x1b[3~".as_bytes().to_vec()),
             id!("Terminal") & !id!("IMEOpen"),
         ),
-        // Resume conversation keybinding
-        FixedBinding::new_per_platform(
-            PerPlatformKeystroke {
-                mac: "cmd-shift-R",
-                linux_and_windows: "ctrl-alt-r",
-            },
-            TerminalAction::ResumeConversation,
-            id!("Terminal") & !id!("IMEOpen") & id!(CAN_RESUME_CONVERSATION_KEY),
-        ),
-        // Fork from the last known good exchange keybinding
-        FixedBinding::new_per_platform(
-            PerPlatformKeystroke {
-                mac: "cmd-alt-y",
-                linux_and_windows: "ctrl-alt-y",
-            },
-            TerminalAction::ForkConversationFromLastKnownGoodState,
-            id!("Terminal") & !id!("IMEOpen") & id!(CAN_FORK_FROM_LAST_KNOWN_GOOD_STATE_KEY),
-        ),
-        // Toggle AI document pane
-        FixedBinding::new(
-            "cmdorctrl-alt-p",
-            TerminalAction::ToggleAIDocumentPane,
-            id!("Terminal") & !id!("IMEOpen"),
-        ),
         // On the web, we get pastes from system paste events.
         #[cfg(target_family = "wasm")]
         FixedBinding::standard(
@@ -175,31 +151,16 @@ pub fn init(app: &mut AppContext) {
     if cfg!(target_os = "macos") {
         // On MacOS, if the user has the 'Option as meta' setting enabled, the cmd-alt-y binding
         // above will not match.
-        app.register_fixed_bindings([FixedBinding::new(
-            "cmd-meta-y",
-            TerminalAction::ForkConversationFromLastKnownGoodState,
-            id!("Terminal") & !id!("IMEOpen") & id!(CAN_FORK_FROM_LAST_KNOWN_GOOD_STATE_KEY),
-        )]);
     }
 
     // Register binding to toggle plans in agent conversations.
     {
-        app.register_fixed_bindings([FixedBinding::new(
-            "cmdorctrl-alt-p",
-            TerminalAction::ToggleAIDocumentPane,
-            id!("Terminal") & !id!("IMEOpen"),
-        )]);
         if cfg!(target_os = "macos") {
             // On MacOS, if the user has the 'Option as meta' setting enabled, the cmd-alt-p binding
             // above will not match.
             //
             // TODO(zachbai): Consider if, for the purposes of fixed bindings, alt/meta should work
             // fungibly regardless of underlying setting.
-            app.register_fixed_bindings([FixedBinding::new(
-                "cmd-meta-p",
-                TerminalAction::ToggleAIDocumentPane,
-                id!("Terminal") & !id!("IMEOpen"),
-            )]);
         }
     }
 
@@ -246,15 +207,6 @@ pub fn init(app: &mut AppContext) {
                 TerminalAction::Copy,
                 id!("Terminal") & !id!("IMEOpen"),
             ),
-            FixedBinding::new(
-                cmd_or_ctrl_shift("i"),
-                TerminalAction::SetInputModeAgent,
-                id!("Terminal")
-                    & !id!("IMEOpen")
-                    & (!id!(flags::AGENT_VIEW_ENABLED)
-                        | id!(flags::ACTIVE_AGENT_VIEW)
-                        | id!(flags::ACTIVE_INLINE_AGENT_VIEW)),
-            ),
         ]);
     }
 
@@ -293,32 +245,6 @@ pub fn init(app: &mut AppContext) {
     ]);
 
     app.register_editable_bindings([
-        // Ctrl-G: toggle CLI agent rich input.
-        // Three contexts match this binding:
-        // 1. Terminal context when CLI agent footer is visible (opens rich input)
-        // 2. EditorView context when rich input is already open (closes rich input, fix for #9286)
-        // 3. Terminal context when rich input is open (closes rich input regardless
-        //    of focus location or active-block state; fix for #9916)
-        EditableBinding::new(
-            OPEN_CLI_AGENT_RICH_INPUT_KEYBINDING,
-            "Toggle CLI Agent Rich Input",
-            TerminalAction::ToggleCLIAgentRichInput,
-        )
-        .with_key_binding("ctrl-g")
-        .with_context_predicate(
-            // Case 1: Open from terminal during CLI agent session
-            (id!("Terminal")
-                & !id!("IMEOpen")
-                & (id!("LongRunningCommand") | id!("AltScreen"))
-                & id!(flags::CLI_AGENT_FOOTER_ENABLED)
-                & id!(flags::CLI_AGENT_RICH_INPUT_CHIP_ENABLED))
-            // Case 2: Close from focused editor when rich input is open
-            | (id!("EditorView") & !id!("IMEOpen") & id!(flags::CLI_AGENT_RICH_INPUT_OPEN))
-            // Case 3: Close from terminal context when rich input is open (covers
-            // cases where the active block is no longer long-running and focus is
-            // not on the editor — see #9916).
-            | (id!("Terminal") & !id!("IMEOpen") & id!(flags::CLI_AGENT_RICH_INPUT_OPEN)),
-        ),
         EditableBinding::new(
             "terminal:warpify_subshell",
             "Warpify subshell",
@@ -327,26 +253,6 @@ pub fn init(app: &mut AppContext) {
         .with_key_binding("ctrl-i")
         .with_context_predicate(
             id!("Terminal") & !id!("IMEOpen") & id!("LongRunningCommand") & id!("SubshellBanner"),
-        ),
-        EditableBinding::new(
-            ACCEPT_PROMPT_SUGGESTION_KEYBINDING,
-            "Accept Prompt Suggestion",
-            TerminalAction::ResolvePromptSuggestion(PromptSuggestionResolution::Accept {
-                interaction_source: InteractionSource::Keybinding,
-            }),
-        )
-        .with_mac_key_binding(if FeatureFlag::AgentView.is_enabled() {
-            "ctrl-enter"
-        } else {
-            "cmd-enter"
-        })
-        .with_linux_or_windows_key_binding(if FeatureFlag::AgentView.is_enabled() {
-            "alt-shift-enter"
-        } else {
-            "ctrl-shift-enter"
-        })
-        .with_context_predicate(
-            id!("Terminal") & !id!("IMEOpen") & id!(flags::HAS_PENDING_PROMPT_SUGGESTION),
         ),
         EditableBinding::new(
             CANCEL_COMMAND_KEYBINDING,
@@ -759,82 +665,6 @@ pub fn init(app: &mut AppContext) {
     }
 
     app.register_editable_bindings([
-        // UniversalInput callout debug bindings
-        EditableBinding::new(
-            "terminal:agent_onboarding_flow_universal_input_project",
-            "[Debug] Onboarding Callout: WarpInput - Project",
-            TerminalAction::OnboardingFlow(OnboardingVersion::Agent(
-                AgentOnboardingVersion::UniversalInput { has_project: true },
-            )),
-        )
-        .with_enabled(|| {
-            FeatureFlag::AgentOnboarding.is_enabled() && ChannelState::enable_debug_features()
-        })
-        .with_context_predicate(
-            id!("Terminal") & id!(SharedSessionStatus::NotShared.as_keymap_context()),
-        ),
-        EditableBinding::new(
-            "terminal:agent_onboarding_flow_universal_input_no_project",
-            "[Debug] Onboarding Callout: WarpInput - No Project",
-            TerminalAction::OnboardingFlow(OnboardingVersion::Agent(
-                AgentOnboardingVersion::UniversalInput { has_project: false },
-            )),
-        )
-        .with_enabled(|| {
-            FeatureFlag::AgentOnboarding.is_enabled() && ChannelState::enable_debug_features()
-        })
-        .with_context_predicate(
-            id!("Terminal") & id!(SharedSessionStatus::NotShared.as_keymap_context()),
-        ),
-        // AgentModality callout debug bindings
-        EditableBinding::new(
-            "terminal:agent_onboarding_flow_modality_project",
-            "[Debug] Onboarding Callout: Modality - Project",
-            TerminalAction::OnboardingFlow(OnboardingVersion::Agent(
-                AgentOnboardingVersion::AgentModality {
-                    has_project: true,
-                    intention: OnboardingIntention::AgentDrivenDevelopment,
-                },
-            )),
-        )
-        .with_enabled(|| {
-            FeatureFlag::AgentOnboarding.is_enabled() && ChannelState::enable_debug_features()
-        })
-        .with_context_predicate(
-            id!("Terminal") & id!(SharedSessionStatus::NotShared.as_keymap_context()),
-        ),
-        EditableBinding::new(
-            "terminal:agent_onboarding_flow_modality_no_project",
-            "[Debug] Onboarding Callout: Modality - No Project",
-            TerminalAction::OnboardingFlow(OnboardingVersion::Agent(
-                AgentOnboardingVersion::AgentModality {
-                    has_project: false,
-                    intention: OnboardingIntention::AgentDrivenDevelopment,
-                },
-            )),
-        )
-        .with_enabled(|| {
-            FeatureFlag::AgentOnboarding.is_enabled() && ChannelState::enable_debug_features()
-        })
-        .with_context_predicate(
-            id!("Terminal") & id!(SharedSessionStatus::NotShared.as_keymap_context()),
-        ),
-        EditableBinding::new(
-            "terminal:agent_onboarding_flow_modality_terminal",
-            "[Debug] Onboarding Callout: Modality - Terminal",
-            TerminalAction::OnboardingFlow(OnboardingVersion::Agent(
-                AgentOnboardingVersion::AgentModality {
-                    has_project: false,
-                    intention: OnboardingIntention::Terminal,
-                },
-            )),
-        )
-        .with_enabled(|| {
-            FeatureFlag::AgentOnboarding.is_enabled() && ChannelState::enable_debug_features()
-        })
-        .with_context_predicate(
-            id!("Terminal") & id!(SharedSessionStatus::NotShared.as_keymap_context()),
-        ),
     ]);
 
     app.register_editable_bindings([EditableBinding::new(
@@ -890,21 +720,7 @@ pub fn init(app: &mut AppContext) {
     app.register_editable_bindings([
     ]);
 
-    app.register_editable_bindings([EditableBinding::new(
-        "workspace:write_codebase_index",
-        BindingDescription::new("Write current codebase index snapshot"),
-        TerminalAction::WriteCodebaseIndex,
-    )
-    .with_enabled(|| FeatureFlag::CodebaseIndexPersistence.is_enabled())
-    .with_context_predicate(id!("Workspace"))]);
 
-    app.register_editable_bindings([EditableBinding::new(
-        "terminal:load_agent_mode_conversation",
-        "Load agent mode conversation (from debug link in clipboard)",
-        TerminalAction::LoadAgentModeConversation,
-    )
-    .with_enabled(ChannelState::enable_debug_features)
-    .with_context_predicate(id!("Terminal"))]);
 
     app.register_editable_bindings([EditableBinding::new(
         "terminal:toggle_session_recording",
