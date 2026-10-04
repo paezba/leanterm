@@ -5,7 +5,6 @@ use serde::{Deserialize, Serialize};
 use super::workspace::{
     BillingMetadata, EmailInvite, InviteLinkDomainRestriction, TeamSettings, WorkspaceUid,
 };
-use crate::ai::llms::ModelsByFeature;
 use crate::auth::UserUid;
 use crate::server::ids::ServerId;
 

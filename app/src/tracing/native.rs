@@ -70,7 +70,6 @@ use warpui::AppContext;
 use super::Initialization;
 use super::cloud_agent_auth::{self, AuthContext};
 use crate::channel::ChannelState;
-use crate::server::server_api::managed_secrets::AppManagedSecretsClient;
 use crate::tracing::install_no_subscriber;
 
 /// The tag used to mark spans related to cloud agents, which we use to filter out

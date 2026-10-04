@@ -1,19 +1,10 @@
-pub mod ai;
 pub mod auth;
 pub mod block;
 #[cfg(not(target_family = "wasm"))]
 pub(crate) mod download;
-pub mod factory;
-pub mod harness_support;
-pub mod integrations;
-pub mod managed_mcp;
-pub mod managed_secrets;
 pub mod object;
-pub(crate) mod presigned_upload;
 pub mod referral;
 pub mod team;
-#[cfg(feature = "tui")]
-pub mod tui_onboarding;
 pub mod workspace;
 
 use std::ops::Deref;
@@ -22,24 +13,18 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use ::http::header::CONTENT_LENGTH;
-use ai::AIClient;
 use anyhow::{Context, Result, anyhow};
 use auth::AuthClient;
 use block::BlockClient;
 use channel_versions::ChannelVersions;
 use chrono::{DateTime, FixedOffset, Utc};
-use factory::FactoryClient;
 use instant::Instant;
-use managed_mcp::ManagedMcpClient;
-use managed_secrets::AppManagedSecretsClient;
 use object::ObjectClient;
 use parking_lot::Mutex;
 use referral::ReferralsClient;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use team::TeamClient;
-#[cfg(feature = "tui")]
-use tui_onboarding::TuiOnboardingClient;
 use url::Url;
 use warp_core::context_flag::ContextFlag;
 use warp_core::telemetry::TelemetryEvent;
@@ -57,13 +42,6 @@ use warpui::{Entity, ModelContext, SingletonEntity};
 use workspace::WorkspaceClient;
 
 use super::experiments::{ServerExperiment, ServerExperiments};
-use crate::ai::ambient_agents::AmbientAgentTaskId;
-use crate::ai::get_relevant_files::api::{GetRelevantFiles, GetRelevantFilesResponse};
-use crate::ai::predict::generate_ai_input_suggestions::GenerateAIInputSuggestionsRequest;
-use crate::ai::predict::generate_am_query_suggestions::GenerateAMQuerySuggestionsRequest;
-use crate::ai::predict::predict_am_queries::{PredictAMQueriesRequest, PredictAMQueriesResponse};
-use crate::ai::predict::{generate_ai_input_suggestions, generate_am_query_suggestions};
-use crate::ai::voice::transcribe::{TranscribeRequest, TranscribeResponse};
 use crate::auth::auth_manager::AuthManager;
 use crate::auth::auth_state::AuthState;
 use crate::server::team_scope::RequestTeamScope;
@@ -372,64 +350,6 @@ impl ErrorExt for AIApiError {
 }
 register_error!(AIApiError);
 
-#[derive(thiserror::Error, Debug)]
-pub enum TranscribeError {
-    #[error("Request failed due to lack of Voice quota.")]
-    QuotaLimit,
-
-    #[error("Warp is currently overloaded. Please try again later.")]
-    ServerOverloaded,
-
-    #[error("Internal error occurred at transport layer.")]
-    Transport(#[source] reqwest::Error),
-
-    #[error("Failed with status code {0}")]
-    ErrorStatus(http::StatusCode),
-
-    #[error("Failed to deserialize JSON.")]
-    Deserialization(#[source] DeserializationError),
-
-    #[error(transparent)]
-    Other(#[from] anyhow::Error),
-}
-
-impl TranscribeError {
-    fn from_json_error(err: reqwest::Error) -> Self {
-        if err.is_decode() {
-            #[cfg(not(target_family = "wasm"))]
-            {
-                use std::error::Error as _;
-                let mut source = err.source();
-                while let Some(underlying) = source {
-                    if underlying.is::<hyper::Error>() {
-                        return TranscribeError::Transport(err);
-                    }
-                    source = underlying.source();
-                }
-            }
-            return TranscribeError::Deserialization(DeserializationError::Transport(err));
-        }
-        TranscribeError::Transport(err)
-    }
-}
-
-impl ErrorExt for TranscribeError {
-    fn is_actionable(&self) -> bool {
-        match self {
-            TranscribeError::Transport(error) => error.is_actionable(),
-            TranscribeError::ErrorStatus(status) => {
-                !status.is_server_error() && *status != http::StatusCode::TOO_MANY_REQUESTS
-            }
-            TranscribeError::Other(error) => error.is_actionable(),
-            TranscribeError::Deserialization(error) => match error {
-                DeserializationError::Json(_) => true,
-                DeserializationError::Transport(error) => error.is_actionable(),
-            },
-            TranscribeError::QuotaLimit | TranscribeError::ServerOverloaded => false,
-        }
-    }
-}
-register_error!(TranscribeError);
 
 /// An API wrapper struct with methods to requests to warp-server.
 ///
@@ -447,7 +367,6 @@ impl ServerApi {
     fn new(
         auth_state: Arc<AuthState>,
         event_sender: async_channel::Sender<AuthEvent>,
-        agent_source: Option<ai::AgentSource>,
         iap_state: Option<Arc<IapState>>,
         ctx: &mut ModelContext<ServerApiProvider>,
     ) -> Self {
@@ -466,7 +385,6 @@ impl ServerApi {
             Arc::new(client),
             auth_state,
             event_sender,
-            agent_source,
             iap_token_provider,
             telemetry_api,
         )
@@ -476,7 +394,6 @@ impl ServerApi {
         client: Arc<http_client::Client>,
         auth_state: Arc<AuthState>,
         event_sender: async_channel::Sender<AuthEvent>,
-        agent_source: Option<ai::AgentSource>,
         iap_token_provider: Option<Arc<dyn http_client::iap::IapTokenProvider>>,
         telemetry_api: TelemetryApi,
     ) -> Self {
@@ -491,7 +408,7 @@ impl ServerApi {
             client,
             auth_state,
             event_sender,
-            agent_source.map(|source| source.as_str().to_string()),
+            None,
             graphql_routing,
             authenticated_graphql,
             iap_token_provider,
@@ -510,7 +427,7 @@ impl ServerApi {
         let auth_state = Arc::new(AuthState::new_for_test());
         let client = Arc::new(http_client::Client::new_for_test());
 
-        Self::new_with_parts(client, auth_state, tx, None, None, TelemetryApi::new())
+        Self::new_with_parts(client, auth_state, tx, None, TelemetryApi::new())
     }
 
     #[cfg(all(test, feature = "skip_login"))]
@@ -527,59 +444,14 @@ impl ServerApi {
             auth_state,
             event_sender,
             None,
-            None,
             TelemetryApi::new(),
         )
-    }
-
-    /// Sets the ambient agent task ID to be sent with all subsequent requests.
-    pub fn set_ambient_agent_task_id(&self, task_id: Option<AmbientAgentTaskId>) {
-        self.base_client
-            .set_ambient_agent_task_id(task_id.map(|task_id| task_id.to_string()));
     }
 
     /// Returns ambient agent headers to attach to requests.
     async fn ambient_agent_headers(&self) -> Result<Vec<(String, String)>> {
         self.ambient_headers(AmbientHeaderPolicy::inherit_all())
             .await
-    }
-
-    /// Returns ambient agent headers (workload token, cloud-agent ID) scoped to one task,
-    /// without disturbing the client's own inherited ambient-agent-task-ID state.
-    async fn ambient_agent_headers_for_task(
-        &self,
-        task_id: &AmbientAgentTaskId,
-    ) -> Result<Vec<(String, String)>> {
-        self.ambient_headers(AmbientHeaderPolicy::for_task(task_id.to_string()))
-            .await
-    }
-
-    /// Returns task-scoped ambient agent headers for a caller that pins them into a long-lived
-    /// transport instead of resolving them per request.
-    ///
-    /// `must_outlive` is the instant through which the pinned headers have to keep working,
-    /// typically the end of the run. The workload token is attached only when it stays valid
-    /// that long, since warp-server rejects an expired one but tolerates its absence. Pass
-    /// `None` when no such instant is known, which resolves the token the same way an ordinary
-    /// per-request caller would.
-    pub async fn pinned_ambient_agent_headers_for_task(
-        &self,
-        task_id: &AmbientAgentTaskId,
-        must_outlive: Option<DateTime<Utc>>,
-    ) -> Result<Vec<(String, String)>> {
-        let workload_token = match must_outlive {
-            Some(must_outlive) => self
-                .base_client
-                .get_ambient_workload_token_valid_until(must_outlive)
-                .await?
-                .map_or(HeaderOverride::Omit, HeaderOverride::Set),
-            None => HeaderOverride::Inherit,
-        };
-        self.ambient_headers(AmbientHeaderPolicy {
-            workload_token,
-            ..AmbientHeaderPolicy::for_task(task_id.to_string())
-        })
-        .await
     }
 
     pub fn send_graphql_request<'a, QF, O: warp_graphql::client::Operation<QF> + Send + 'a>(
@@ -703,40 +575,6 @@ impl ServerApi {
         }
 
         for (name, value) in self.ambient_agent_headers().await? {
-            request = request.header(name, value);
-        }
-
-        Ok(self.wrap_eventsource_with_iap_detection(request.eventsource()))
-    }
-
-    pub async fn stream_agent_events_for_task(
-        &self,
-        task_id: &AmbientAgentTaskId,
-        run_ids: &[String],
-        since_sequence: i64,
-    ) -> Result<http_client::EventSourceStream> {
-        debug_assert!(!run_ids.is_empty(), "run_ids must not be empty");
-        let auth_token = self
-            .get_or_refresh_access_token()
-            .await
-            .context("Failed to get access token for SSE stream")?;
-
-        let run_ids_param: String = run_ids
-            .iter()
-            .map(|id| format!("run_ids[]={}", urlencoding::encode(id)))
-            .collect::<Vec<_>>()
-            .join("&");
-        let url = format!(
-            "{}/api/v1/agent/events/stream?{run_ids_param}&since={since_sequence}",
-            ChannelState::rtc_http_url()
-        );
-
-        let mut request = self.base_client.http_client().get(&url);
-        if let Some(token) = auth_token.as_bearer_token() {
-            request = request.bearer_auth(token);
-        }
-
-        for (name, value) in self.ambient_agent_headers_for_task(task_id).await? {
             request = request.header(name, value);
         }
 
@@ -1165,192 +1003,6 @@ impl ServerApi {
             .flush_and_persist_events(max_event_count, settings_snapshot)
     }
 
-    /// Hits the /ai/generate_input_suggestions endpoint to get the predicted next action, based on past context.
-    pub async fn generate_ai_input_suggestions(
-        &self,
-        request: &GenerateAIInputSuggestionsRequest,
-        team_scope: RequestTeamScope,
-    ) -> Result<generate_ai_input_suggestions::GenerateAIInputSuggestionsResponseV2, AIApiError>
-    {
-        let auth_token = self.get_or_refresh_access_token().await?;
-
-        let mut request_builder = self.base_client.http_client().post(format!(
-            "{}/ai/generate_input_suggestions",
-            ChannelState::server_root_url()
-        ));
-        if let Some(team_uid) = team_scope.team_uid() {
-            request_builder = request_builder.header(TEAM_UID_HEADER, team_uid.uid());
-        }
-        let response = if let Some(token) = auth_token.as_bearer_token() {
-            request_builder.bearer_auth(token)
-        } else {
-            request_builder
-        }
-        .json(request)
-        .send()
-        .await?
-        .error_for_status_with_body()
-        .await?
-        .json()
-        .await?;
-        Ok(response)
-    }
-
-    pub async fn get_relevant_files(
-        &self,
-        request: &GetRelevantFiles,
-        team_scope: RequestTeamScope,
-    ) -> Result<GetRelevantFilesResponse, AIApiError> {
-        let auth_token = self.get_or_refresh_access_token().await?;
-
-        let mut request_builder = self.base_client.http_client().post(format!(
-            "{}/ai/relevant_files",
-            ChannelState::server_root_url()
-        ));
-        if let Some(token) = auth_token.as_bearer_token() {
-            request_builder = request_builder.bearer_auth(token);
-        }
-        if let Some(team_uid) = team_scope.team_uid() {
-            request_builder = request_builder.header(TEAM_UID_HEADER, team_uid.uid());
-        }
-        let response = request_builder
-            .json(request)
-            .send()
-            .await?
-            .error_for_status_with_body()
-            .await?
-            .json()
-            .await?;
-
-        Ok(response)
-    }
-
-    /// Hits the /ai/generate_am_query_suggestions endpoint to get the predicted next query.
-    pub async fn generate_am_query_suggestions(
-        &self,
-        request: &GenerateAMQuerySuggestionsRequest,
-        team_scope: RequestTeamScope,
-    ) -> Result<generate_am_query_suggestions::GenerateAMQuerySuggestionsResponse, AIApiError> {
-        let auth_token = self.get_or_refresh_access_token().await?;
-
-        cfg_if::cfg_if! {
-            if #[cfg(feature = "agent_mode_evals")] {
-                let url = format!(
-                    "{}/agent-mode-evals/generate_am_query_suggestions",
-                    ChannelState::server_root_url()
-                );
-            } else {
-                let url = format!(
-                    "{}/ai/generate_am_query_suggestions",
-                    ChannelState::server_root_url()
-                );
-            }
-        }
-
-        let mut request_builder = self.base_client.http_client().post(url);
-        if let Some(token) = auth_token.as_bearer_token() {
-            request_builder = request_builder.bearer_auth(token);
-        }
-        if let Some(team_uid) = team_scope.team_uid() {
-            request_builder = request_builder.header(TEAM_UID_HEADER, team_uid.uid());
-        }
-        let response = request_builder
-            .json(request)
-            .send()
-            .await?
-            .error_for_status_with_body()
-            .await?
-            .json()
-            .await?;
-        Ok(response)
-    }
-
-    pub async fn predict_am_queries(
-        &self,
-        request: &PredictAMQueriesRequest,
-        team_scope: RequestTeamScope,
-    ) -> Result<PredictAMQueriesResponse, AIApiError> {
-        let auth_token = self.get_or_refresh_access_token().await?;
-        let mut request_builder = self.base_client.http_client().post(format!(
-            "{}/ai/predict_am_queries",
-            ChannelState::server_root_url()
-        ));
-        if let Some(team_uid) = team_scope.team_uid() {
-            request_builder = request_builder.header(TEAM_UID_HEADER, team_uid.uid());
-        }
-        let response = if let Some(token) = auth_token.as_bearer_token() {
-            request_builder.bearer_auth(token)
-        } else {
-            request_builder
-        }
-        .json(request)
-        .send()
-        .await?
-        .error_for_status_with_body()
-        .await?
-        .json()
-        .await?;
-        Ok(response)
-    }
-
-    /// Hits the /ai/transcribe endpoint to get the transcription for the given audio.
-    pub async fn transcribe(
-        &self,
-        request: &TranscribeRequest,
-        team_scope: RequestTeamScope,
-    ) -> Result<TranscribeResponse, TranscribeError> {
-        let auth_token = self.get_or_refresh_access_token().await?;
-
-        let mut request_builder = self
-            .base_client
-            .http_client()
-            .post(format!("{}/ai/transcribe", ChannelState::server_root_url()));
-        if let Some(team_uid) = team_scope.team_uid() {
-            request_builder = request_builder.header(TEAM_UID_HEADER, team_uid.uid());
-        }
-        let response = if let Some(token) = auth_token.as_bearer_token() {
-            request_builder.bearer_auth(token)
-        } else {
-            request_builder
-        }
-        .json(request)
-        .send()
-        .await;
-
-        match response {
-            Ok(res) => {
-                if res.status().is_success() {
-                    match res.json::<TranscribeResponse>().await {
-                        Ok(output_response) => Ok(output_response),
-                        Err(e) => {
-                            log::warn!("Failed to deserialize response: {e:?}");
-                            Err(TranscribeError::from_json_error(e))
-                        }
-                    }
-                } else if res.status() == http::StatusCode::TOO_MANY_REQUESTS {
-                    if res
-                        .headers()
-                        .get(WARP_ERROR_CODE_HEADER)
-                        .and_then(|v| v.to_str().ok())
-                        == Some(WARP_ERROR_CODE_OUT_OF_CREDITS)
-                    {
-                        Err(TranscribeError::QuotaLimit)
-                    } else {
-                        Err(TranscribeError::ServerOverloaded)
-                    }
-                } else {
-                    let status = res.status();
-                    log::warn!("Non-success status code received: {status}");
-                    Err(TranscribeError::ErrorStatus(status))
-                }
-            }
-            Err(e) => {
-                log::warn!("Error while sending request: {e:?}");
-                Err(TranscribeError::Transport(e))
-            }
-        }
-    }
-
     fn set_server_time(&self, server_time: ServerTime) {
         let mut last_server_time = self.last_server_time.lock();
         *last_server_time = Some(server_time);
@@ -1470,7 +1122,6 @@ impl ServerApiProvider {
     #[cfg_attr(target_family = "wasm", allow(unused_variables))]
     pub fn new(
         auth_state: Arc<AuthState>,
-        agent_source: Option<ai::AgentSource>,
         iap_state: Option<Arc<IapState>>,
         ctx: &mut ModelContext<Self>,
     ) -> Self {
@@ -1479,7 +1130,6 @@ impl ServerApiProvider {
         let server_api = ServerApi::new(
             auth_state.clone(),
             event_sender,
-            agent_source,
             iap_state,
             ctx,
         );
@@ -1573,33 +1223,8 @@ impl ServerApiProvider {
     pub fn get_team_client(&self) -> Arc<dyn TeamClient> {
         self.server_api.clone()
     }
-    #[cfg(feature = "tui")]
-    pub fn get_tui_onboarding_client(&self) -> Arc<dyn TuiOnboardingClient> {
-        self.server_api.clone()
-    }
-
-    pub fn get_ai_client(&self) -> Arc<dyn AIClient> {
-        self.server_api.clone()
-    }
 
     pub fn get_cloud_objects_client(&self) -> Arc<dyn ObjectClient> {
-        self.server_api.clone()
-    }
-
-    pub fn get_integrations_client(&self) -> Arc<dyn integrations::IntegrationsClient> {
-        self.server_api.clone()
-    }
-
-    pub fn get_managed_secrets_client(&self) -> Arc<AppManagedSecretsClient> {
-        self.server_api.clone()
-    }
-
-    #[cfg_attr(target_family = "wasm", expect(dead_code))]
-    pub fn get_managed_mcp_client(&self) -> Arc<dyn ManagedMcpClient> {
-        self.server_api.clone()
-    }
-
-    pub fn get_factory_client(&self) -> Arc<dyn FactoryClient> {
         self.server_api.clone()
     }
 
@@ -1609,10 +1234,6 @@ impl ServerApiProvider {
         self.server_api.owned_http_client()
     }
 
-    #[cfg_attr(target_family = "wasm", expect(dead_code))]
-    pub fn get_harness_support_client(&self) -> Arc<dyn harness_support::HarnessSupportClient> {
-        self.server_api.clone()
-    }
 }
 
 impl Entity for ServerApiProvider {

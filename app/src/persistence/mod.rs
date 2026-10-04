@@ -2,7 +2,6 @@
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "local_fs")] {
-        pub mod agent;
         mod block_list;
         mod sqlite;
         pub mod commands;
@@ -44,9 +43,7 @@ use warp_multi_agent_api as api;
 use warpui::{AppContext, Entity, SingletonEntity};
 
 use self::model::{AgentConversation, AgentConversationData, Project};
-use crate::ai::blocklist::PersistedAIInput;
-use crate::ai::mcp::TemplatableMCPServerInstallation;
-use crate::ai::persisted_workspace::EnablementState;
+use crate::persisted_workspace::EnablementState;
 use crate::app_state::AppState;
 use crate::auth::auth_manager::PersistedCurrentUserInformation;
 use crate::cloud_object::model::actions::ObjectAction;

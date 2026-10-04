@@ -1,12 +1,10 @@
 // Specific slide implementations
 pub mod cta_button;
-pub mod oz_launch;
 
 use std::collections::HashMap;
 
 use markdown_parser::{FormattedText, FormattedTextLine, parse_markdown};
 // Re-export slide types for convenience
-pub use oz_launch::OzLaunchSlide;
 use pathfinder_color::ColorU;
 use warp_core::ui::appearance::Appearance;
 use warp_core::ui::theme::Fill;

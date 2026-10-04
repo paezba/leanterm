@@ -6,7 +6,6 @@ use warp_completer::meta::Span;
 use warpui::AppContext;
 use warpui::{Entity, ViewContext};
 
-use crate::ai::agent::AIAgentPtyWriteMode;
 #[cfg(unix)]
 use crate::terminal::event::AfterBlockCompletedEvent;
 use crate::terminal::model::completions::ShellCompletion;

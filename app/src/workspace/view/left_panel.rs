@@ -21,8 +21,6 @@ use warpui::{
 };
 
 use crate::TelemetryEvent;
-use crate::ai::agent::conversation::AIConversationId;
-use crate::ai::agent_conversations_model::AgentConversationsModel;
 use crate::appearance::Appearance;
 use crate::auth::AuthStateProvider;
 use crate::code::buffer_location::LocalOrRemotePath;

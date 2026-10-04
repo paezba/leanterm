@@ -25,8 +25,6 @@ use warpui::{AppContext, Entity, SingletonEntity, ViewContext, WeakViewHandle, W
 #[cfg(not(target_family = "wasm"))]
 use super::SoleTeamError;
 use super::UserWorkspaces;
-#[cfg(not(target_family = "wasm"))]
-use crate::ai::ambient_agents::task::TaskScope;
 #[cfg(any(test, feature = "test-util"))]
 use crate::ai::llms::LLMInfo;
 use crate::ai::llms::{LLMId, LLMModelHost, LLMProvider, ModelsByFeature};
