@@ -185,7 +185,7 @@ use crate::terminal::input::suggestions_mode_model::{
 use crate::terminal::model::session::shell_quote_arg;
 use crate::terminal::package_installers::command_at_cursor_has_common_package_installer_prefix;
 use crate::terminal::prompt_render_helper::should_render_ps1_prompt;
-use crate::terminal::view::{ CodeDiffAction, file_attach_allowed_for_shared_session,
+use crate::terminal::view::{ CodeDiffAction,
 };
 use crate::ui_components::blended_colors;
 use crate::ui_components::icons::Icon;
