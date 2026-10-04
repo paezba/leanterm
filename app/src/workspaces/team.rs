@@ -87,7 +87,6 @@ pub struct DiscoveryOptions {
 #[derive(PartialEq, Eq, Clone)]
 pub enum TeamDeleteDisabledReason {
     ActivePaidSubscription,
-    RemainingBonusCredits,
     OtherMembers,
 }
 
@@ -96,9 +95,6 @@ impl TeamDeleteDisabledReason {
         match self {
             TeamDeleteDisabledReason::ActivePaidSubscription => {
                 "Your team cannot be deleted with an active subscription."
-            }
-            TeamDeleteDisabledReason::RemainingBonusCredits => {
-                "Your team cannot be deleted with unused add-on credits."
             }
             TeamDeleteDisabledReason::OtherMembers => {
                 "Your team cannot be deleted with other team members."
@@ -178,7 +174,6 @@ impl Team {
     pub fn get_delete_disabled_reason(
         &self,
         current_user_email: &str,
-        remaining_workspace_and_team_credits: i32,
     ) -> Option<TeamDeleteDisabledReason> {
         if self.members.len() > 1
             || self
@@ -190,9 +185,6 @@ impl Team {
         }
         if self.billing_metadata.is_user_on_paid_plan() {
             return Some(TeamDeleteDisabledReason::ActivePaidSubscription);
-        }
-        if remaining_workspace_and_team_credits > 0 {
-            return Some(TeamDeleteDisabledReason::RemainingBonusCredits);
         }
         None // No reason found, team can be deleted
     }

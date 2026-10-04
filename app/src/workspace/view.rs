@@ -14558,16 +14558,6 @@ impl Workspace {
                             ctx.notify();
                         });
                     }
-                    TranslateUsingWarpAI => {
-                        active_input_handle.update(ctx, |input, ctx| {
-                            let content = format!("# {query}");
-                            input.focus_input_box(ctx);
-                            // Mimic the user replacing the editor text, as the replacement
-                            // is done in response to an explicit user action.
-                            input.user_replace_editor_text(content.as_str(), ctx);
-                            ctx.notify();
-                        });
-                    }
                     AcceptEnvVarCollection(env_var_collection) => {
                         self.invoke_environment_variables(
                             (**env_var_collection).clone(),
