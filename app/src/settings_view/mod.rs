@@ -255,9 +255,6 @@ pub enum SettingsViewEvent {
     OpenLspLogs {
         log_path: PathBuf,
     },
-    OpenProjectRulesPane {
-        rule_paths: Vec<PathBuf>,
-    },
 }
 
 /// Different navigation sections within the settings view

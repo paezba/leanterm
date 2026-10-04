@@ -1319,12 +1319,6 @@ pub enum NewWorkspaceSource {
         id: SyncId,
         settings: OpenWarpDriveObjectSettings,
     },
-    AgentSession {
-        options: Box<NewTerminalOptions>,
-        initial_query: Option<String>,
-    },
-    /// Starts the workspace with the Cloud Agent setup tab.
-    AmbientAgent,
     /// Opens a new window pre-scoped to a specific team, chosen via the title-bar team switcher.
     TeamSwitched {
         team_uid: ServerId,
@@ -1388,14 +1382,7 @@ impl NewWorkspaceSource {
             Self::TransferredTab {
                 source_window_id, ..
             } => Some(*source_window_id),
-            Self::FromTemplate { .. }
-            | Self::Session { .. }
-            | Self::SharedSessionAsViewer { .. }
-            | Self::NotebookFromFilePath { .. }
-            | Self::NotebookById { .. }
-            | Self::WorkflowById { .. }
-            | Self::AgentSession { .. }
-            | Self::AmbientAgent => None,
+            Self::FromTemplate { .. } | Self::Session { .. } | Self::SharedSessionAsViewer { .. } | Self::NotebookFromFilePath { .. } | Self::NotebookById { .. } | Self::WorkflowById { .. } => None,
             Self::TeamSwitched { team_uid } => return Some(*team_uid),
             Self::Restored {
                 window_snapshot, ..
