@@ -100,7 +100,6 @@ fn test_create_notebook() {
         let notebook = CloudNotebookModel {
             title: "Shared Notebook".to_string(),
             data: "Hello".to_string(),
-            ai_document_id: None,
             conversation_id: None,
         };
 
@@ -349,14 +348,12 @@ fn test_dequeue_after_transient_failure() {
         let success_notebook = CloudNotebookModel {
             title: "Successful Notebook".to_string(),
             data: "Hello :)".to_string(),
-            ai_document_id: None,
             conversation_id: None,
         };
         let failure_notebook_id = ClientId::default();
         let failure_notebook = CloudNotebookModel {
             title: "Failed Notebook".to_string(),
             data: "Hello :(".to_string(),
-            ai_document_id: None,
             conversation_id: None,
         };
 
@@ -504,13 +501,11 @@ fn test_no_dequeue_after_intransient_failure() {
         let failure_notebook = CloudNotebookModel {
             title: "Failed Notebook".to_string(),
             data: "Hello :(".to_string(),
-            ai_document_id: None,
             conversation_id: None,
         };
         let second_notebook = CloudNotebookModel {
             title: "Second Notebook".to_string(),
             data: "I'd like to be created! But I won't be :(".to_string(),
-            ai_document_id: None,
             conversation_id: None,
         };
         let second_notebook_id = ClientId::default();
@@ -621,7 +616,6 @@ fn test_create_and_update_notebook() {
         let notebook = CloudNotebookModel {
             title: notebook_title.clone(),
             data: notebook_data.clone(),
-            ai_document_id: None,
             conversation_id: None,
         };
 
@@ -683,7 +677,6 @@ fn test_create_and_update_notebook() {
                     model: CloudNotebookModel {
                         title: notebook_title,
                         data: notebook_data,
-                        ai_document_id: None,
                         conversation_id: None,
                     }
                     .into(),
@@ -1100,7 +1093,6 @@ fn test_sync_queue_dependency_failure() {
                     model: CloudNotebookModel {
                         title: notebook_title,
                         data: notebook_data,
-                        ai_document_id: None,
                         conversation_id: None,
                     }
                     .into(),
@@ -1115,7 +1107,6 @@ fn test_sync_queue_dependency_failure() {
                     model: CloudNotebookModel {
                         title: final_notebook_title.clone(),
                         data: String::new(),
-                        ai_document_id: None,
                         conversation_id: None,
                     }
                     .into(),
@@ -1225,7 +1216,6 @@ fn test_sync_queue_dependency_mixed_ids() {
                     model: CloudNotebookModel {
                         title: notebook_title,
                         data: notebook_data,
-                        ai_document_id: None,
                         conversation_id: None,
                     }
                     .into(),
@@ -1283,7 +1273,6 @@ fn test_sync_queue_dependency_mixed_ids() {
                     model: CloudNotebookModel {
                         title: final_notebook_title.clone(),
                         data: String::new(),
-                        ai_document_id: None,
                         conversation_id: None,
                     }
                     .into(),

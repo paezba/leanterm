@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use ai::project_context::model::ProjectContextModel;
 use pathfinder_geometry::rect::RectF;
 use persistence::model::AgentConversation;
 #[cfg(feature = "local_fs")]
@@ -123,7 +122,6 @@ fn initialize_app_with_history(app: &mut App, _conversations: Vec<AgentConversat
     app.update(experiments::init);
     AltScreenReporting::register(app);
     app.add_singleton_model(|ctx| PersistedWorkspace::new(vec![], HashMap::new(), None, ctx));
-    app.add_singleton_model(|_| ProjectContextModel::default());
     app.add_singleton_model(OneTimeModalModel::new);
     app.add_singleton_model(|_| WorkspaceRegistry::new());
     app.add_singleton_model(UndoCloseStack::new);

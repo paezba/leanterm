@@ -122,7 +122,6 @@ fn mock_server_notebook(id: NotebookId, owner: Owner) -> ServerNotebook {
         CloudNotebookModel {
             title: format!("foo{id}"),
             data: format!("bar{id}"),
-            ai_document_id: None,
             conversation_id: None,
         },
         mock_server_metadata(),

@@ -122,8 +122,6 @@ pub mod tab_configs;
 pub mod terminal;
 pub mod themes;
 use crate::settings::{ AccessibilitySettings, ScrollSettings, SelectionSettings};
-use ::ai::index::DEFAULT_SYNC_REQUESTS_PER_MIN;
-use ::ai::index::full_source_code_embedding::SyncTask;
 use crate::persisted_workspace::PersistedWorkspace;
 use auth::auth_manager::AuthManager;
 use auth::auth_state::{AuthState, AuthStateProvider};
@@ -1532,18 +1530,6 @@ pub(crate) fn initialize_app(
     #[cfg(not(target_family = "wasm"))]
     {
         ctx.add_singleton_model(DirectoryWatcher::new);
-        // Register the skill provider directories as force-included paths so
-        // the gitignore-pruning watch descend filter still watches gitignored
-        // skill directories (e.g. `.agents/skills`) for `Repository`
-        // subscribers (LSP, MCP). Registered before any repository begins
-        // watching so it gates descent on the very first registration.
-        DirectoryWatcher::handle(ctx).update(ctx, |watcher, _| {
-            watcher.register_force_included_paths(
-                ::ai::skills::SKILL_PROVIDER_DEFINITIONS
-                    .iter()
-                    .map(|provider| provider.skills_path.clone()),
-            );
-        });
         ctx.add_singleton_model(|_| DetectedRepositories::default());
         if let Some(home_dir) = dirs::home_dir() {
             ctx.add_singleton_model(|ctx| HomeDirectoryWatcher::new(home_dir, ctx));
@@ -1569,19 +1555,6 @@ pub(crate) fn initialize_app(
             } else {
                 RepoMetadataModel::new(ctx)
             };
-            model.register_force_included_paths(
-                ::ai::skills::SKILL_PROVIDER_DEFINITIONS
-                    .iter()
-                    .map(|provider| provider.skills_path.clone()),
-                ctx,
-            );
-            model.set_project_skill_provider_paths(
-                ::ai::skills::SKILL_PROVIDER_DEFINITIONS
-                    .iter()
-                    .map(|provider| provider.skills_path.clone()),
-                ctx,
-            );
-
             // Subscribe to RemoteServerManager push events so that remote repo
             // metadata snapshots and incremental updates populate the remote
             // sub-model and trigger RepoMetadataEvent emissions.
@@ -1731,13 +1704,6 @@ pub(crate) fn initialize_app(
             all_queue_items,
             server_api_provider.as_ref(ctx).get_cloud_objects_client(),
             ctx,
-        )
-    });
-
-    ctx.add_singleton_model(|ctx| {
-        warp_core::sync_queue::SyncQueue::<SyncTask>::new_with_rate_limit(
-            &ctx.background_executor(),
-            Some(DEFAULT_SYNC_REQUESTS_PER_MIN),
         )
     });
 

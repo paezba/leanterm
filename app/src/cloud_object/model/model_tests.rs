@@ -197,7 +197,6 @@ fn mock_server_notebooks() -> Vec<ServerNotebook> {
             CloudNotebookModel {
                 title: "t1".to_string(),
                 data: "d1".to_string(),
-                ai_document_id: None,
                 conversation_id: None,
             },
             mock_server_metadata(),
@@ -208,7 +207,6 @@ fn mock_server_notebooks() -> Vec<ServerNotebook> {
             CloudNotebookModel {
                 title: "t2".to_string(),
                 data: "d2".to_string(),
-                ai_document_id: None,
                 conversation_id: None,
             },
             mock_server_metadata(),
@@ -219,7 +217,6 @@ fn mock_server_notebooks() -> Vec<ServerNotebook> {
             CloudNotebookModel {
                 title: "t3".to_string(),
                 data: "d3".to_string(),
-                ai_document_id: None,
                 conversation_id: None,
             },
             mock_server_metadata(),
@@ -230,7 +227,6 @@ fn mock_server_notebooks() -> Vec<ServerNotebook> {
             CloudNotebookModel {
                 title: "t4".to_string(),
                 data: "d4".to_string(),
-                ai_document_id: None,
                 conversation_id: None,
             },
             mock_server_metadata(),
@@ -275,7 +271,6 @@ fn mock_cloud_notebook(id: SyncId, title: String, folder_id: Option<SyncId>) -> 
         CloudNotebookModel {
             title,
             data: "test".into(),
-            ai_document_id: None,
             conversation_id: None,
         },
         CloudObjectMetadata {
@@ -429,7 +424,6 @@ fn test_update_object_server_id_for_notebook() {
         CloudNotebookModel {
             title: "t1".to_string(),
             data: "d1".to_string(),
-            ai_document_id: None,
             conversation_id: None,
         },
         CloudObjectMetadata {
@@ -1325,7 +1319,6 @@ fn test_update_folder_timestamp_from_child_update() {
                     CloudNotebookModel {
                         title: "Test Notebook".to_string(),
                         data: "test2".into(),
-                        ai_document_id: None,
                         conversation_id: None,
                     },
                     ServerMetadata {
@@ -1456,7 +1449,6 @@ fn test_update_folder_timestamp_from_new_child() {
                     CloudNotebookModel {
                         title: "Test Notebook".to_string(),
                         data: "test".to_string(),
-                        ai_document_id: None,
                         conversation_id: None,
                     },
                     ServerMetadata {
@@ -1580,7 +1572,6 @@ fn test_shared_personal_object() {
             CloudNotebookModel {
                 title: "Shared Notebook".to_string(),
                 data: "Hello".to_string(),
-                ai_document_id: None,
                 conversation_id: None,
             },
             CloudObjectMetadata::new_from_server(mock_server_metadata()),
@@ -1622,7 +1613,6 @@ fn test_unshared_personal_object() {
             CloudNotebookModel {
                 title: "Shared Notebook".to_string(),
                 data: "Hello".to_string(),
-                ai_document_id: None,
                 conversation_id: None,
             },
             CloudObjectMetadata::new_from_server(mock_server_metadata()),
@@ -1667,7 +1657,6 @@ fn test_shared_team_object() {
             CloudNotebookModel {
                 title: "Shared Notebook".to_string(),
                 data: "Hello".to_string(),
-                ai_document_id: None,
                 conversation_id: None,
             },
             CloudObjectMetadata::new_from_server(mock_server_metadata()),
@@ -1710,7 +1699,6 @@ fn test_unshared_team_object() {
             CloudNotebookModel {
                 title: "Shared Notebook".to_string(),
                 data: "Hello".to_string(),
-                ai_document_id: None,
                 conversation_id: None,
             },
             CloudObjectMetadata::new_from_server(mock_server_metadata()),
@@ -1753,7 +1741,6 @@ fn test_shared_object_in_unshared_folder() {
             CloudNotebookModel {
                 title: "Shared Notebook".to_string(),
                 data: "Hello".to_string(),
-                ai_document_id: None,
                 conversation_id: None,
             },
             CloudObjectMetadata::new_from_server(mock_server_metadata()),

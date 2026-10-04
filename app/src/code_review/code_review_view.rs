@@ -57,7 +57,7 @@ use warpui::{
 
 use super::code_review_header::CodeReviewHeader;
 use super::comment_list_view::{ CommentListEvent, CommentListView};
-use super::comments::{AttachedReviewComment, CommentOrigin, attach_pending_imported_comments};
+use super::comments::{AttachedReviewComment, CommentOrigin};
 use super::diff_size_limits::DiffSize;
 use super::git_dialog::{GitDialog, GitDialogEvent, GitDialogKind};
 use super::{GlobalCodeReviewEvent, GlobalCodeReviewModel};
@@ -3492,14 +3492,7 @@ impl CodeReviewView {
             return;
         };
 
-        let mut comments = model.update(ctx, |batch, _| batch.take_comments());
-        let pending_imported = model.update(ctx, |batch, _| {
-            batch.take_pending_imported_comments_for_branch(diff_mode)
-        });
-
-        let newly_imported = attach_pending_imported_comments(pending_imported, &repo_path);
-        let newly_imported_ids: HashSet<CommentId> = newly_imported.iter().map(|c| c.id).collect();
-        comments.extend(newly_imported);
+        let comments = model.update(ctx, |batch, _| batch.take_comments());
 
         if comments.is_empty() {
             return;
@@ -3515,27 +3508,6 @@ impl CodeReviewView {
                 CodeReviewTelemetryEvent::CommentRelocationFailed {
                     is_local: self.repo_is_local(),
                     fallback_count,
-                },
-                ctx
-            );
-        }
-
-        if !newly_imported_ids.is_empty() {
-            let (active_count, outdated_count) = relocated_comments
-                .iter()
-                .filter(|c| newly_imported_ids.contains(&c.id))
-                .fold((0usize, 0usize), |(active, outdated), c| {
-                    if c.outdated {
-                        (active, outdated + 1)
-                    } else {
-                        (active + 1, outdated)
-                    }
-                });
-            send_telemetry_from_ctx!(
-                CodeReviewTelemetryEvent::CommentsAttached {
-                    is_local: self.repo_is_local(),
-                    active_count,
-                    outdated_count,
                 },
                 ctx
             );

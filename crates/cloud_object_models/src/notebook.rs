@@ -1,7 +1,6 @@
 #[cfg(not(target_family = "wasm"))]
 pub mod persistence;
 
-use ai::document::AIDocumentId;
 use cloud_objects::cloud_object::{
     GenericCloudObject, GenericServerObject, ObjectType, ServerObjectModel,
 };
@@ -22,7 +21,6 @@ pub struct SerializedNotebook {
 pub struct CloudNotebookModel {
     pub title: String,
     pub data: String,
-    pub ai_document_id: Option<AIDocumentId>,
     /// This is the server-generated conversation token, not the client-side AIConversationId.
     pub conversation_id: Option<String>,
 }

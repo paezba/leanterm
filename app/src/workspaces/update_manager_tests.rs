@@ -91,6 +91,5 @@ fn initialize_llm_preferences_dependencies(app: &mut App) {
     app.update(|ctx| {
         warpui_extras::secure_storage::register_noop("test", ctx);
     });
-    app.add_singleton_model(ai::api_keys::ApiKeyManager::new);
 }
 

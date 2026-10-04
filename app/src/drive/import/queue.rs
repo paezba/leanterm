@@ -208,7 +208,6 @@ impl ImportQueue {
                             CloudNotebookModel {
                                 title,
                                 data,
-                                ai_document_id: None,
                                 conversation_id: None,
                             },
                             CloudObjectEventEntrypoint::ImportModal,

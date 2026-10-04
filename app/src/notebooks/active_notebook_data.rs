@@ -238,15 +238,6 @@ impl ActiveNotebookData {
         }
     }
 
-    pub fn is_plan(&self, ctx: &AppContext) -> bool {
-        match &self.active_notebook {
-            ActiveNotebook::None => false,
-            ActiveNotebook::CommittedNotebook(id) => CloudModel::as_ref(ctx)
-                .get_notebook(id)
-                .is_some_and(|n| n.model().ai_document_id.is_some()),
-            ActiveNotebook::NewNotebook(notebook) => notebook.model().ai_document_id.is_some(),
-        }
-    }
 
     pub fn active_notebook(&self) -> ActiveNotebook {
         self.active_notebook.clone()

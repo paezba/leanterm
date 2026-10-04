@@ -120,6 +120,5 @@ pub fn initialize_settings_for_tests_with_mode(
 
     app.update(|ctx| {
         // Add settings models that are backed by secure storage, not user preferences.
-        ctx.add_singleton_model(ai::api_keys::ApiKeyManager::new);
     });
 }

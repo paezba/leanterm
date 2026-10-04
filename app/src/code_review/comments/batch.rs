@@ -4,7 +4,7 @@ use warp_editor::render::model::LineCount;
 use warpui::{Entity, ModelContext};
 
 use super::{
-    AttachedReviewComment, AttachedReviewCommentTarget, CommentId, PendingImportedReviewComment,
+    AttachedReviewComment, AttachedReviewCommentTarget, CommentId,
 };
 use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code::editor::EditorReviewComment;
@@ -19,9 +19,8 @@ pub enum ReviewCommentBatchEvent {
 pub struct ReviewCommentBatch {
     /// Comments that are attached to local editors and visible to the user.
     pub comments: Vec<AttachedReviewComment>,
-    /// Imported comments waiting for editors and diffs to load before they can be displayed to the user.
-    /// Comments are grouped by base branch.
-    pending_imported_comments: HashMap<DiffMode, Vec<PendingImportedReviewComment>>,
+
+
 }
 
 impl Entity for ReviewCommentBatch {
@@ -32,7 +31,6 @@ impl ReviewCommentBatch {
     pub fn from_comments(comments: Vec<AttachedReviewComment>) -> Self {
         Self {
             comments,
-            pending_imported_comments: HashMap::new(),
         }
     }
 
@@ -162,19 +160,6 @@ impl ReviewCommentBatch {
         ctx.emit(ReviewCommentBatchEvent::Changed {
             should_reposition_comments: false,
         });
-    }
-
-    /// Takes all pending imported comments for the given diff mode, leaving the pending list empty.
-    /// Used when diffs have loaded and comments can be relocated.
-    pub(crate) fn take_pending_imported_comments_for_branch(
-        &mut self,
-        branch: &DiffMode,
-    ) -> Vec<PendingImportedReviewComment> {
-        if let Some(pending_comments) = self.pending_imported_comments.get_mut(branch) {
-            std::mem::take(pending_comments)
-        } else {
-            Vec::new()
-        }
     }
 }
 

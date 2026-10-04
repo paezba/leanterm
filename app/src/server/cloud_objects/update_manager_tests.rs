@@ -301,7 +301,6 @@ fn mock_server_notebook(id: NotebookId, owner: Owner, metadata: ServerMetadata) 
         CloudNotebookModel {
             title: format!("n{id}"),
             data: format!("n{id}"),
-            ai_document_id: None,
             conversation_id: None,
         },
         metadata,
@@ -2686,7 +2685,6 @@ fn test_pending_metadata_update_with_polling() {
                 CloudNotebookModel {
                     title: "".into(),
                     data: "".into(),
-                    ai_document_id: None,
                     conversation_id: None,
                 },
                 mocked_metadata.clone(),
@@ -2803,7 +2801,6 @@ fn test_metadata_update_with_polling_no_pending() {
                 CloudNotebookModel {
                     title: "".into(),
                     data: "".into(),
-                    ai_document_id: None,
                     conversation_id: None,
                 },
                 mocked_metadata.clone(),
@@ -4104,7 +4101,6 @@ fn test_accepts_new_metadata_with_force_refresh() {
                 CloudNotebookModel {
                     title: "".into(),
                     data: "".into(),
-                    ai_document_id: None,
                     conversation_id: None,
                 },
                 mocked_metadata.clone(),

@@ -1,7 +1,6 @@
 use std::result::Result as StdResult;
 use std::sync::Arc;
 
-use ai::api_keys::{ApiKeyManager, ChatGPTConnectFailure};
 use anyhow::{Result, anyhow};
 use settings::Setting as _;
 #[cfg(target_family = "wasm")]
@@ -186,16 +185,6 @@ impl AuthManager {
                 return;
             }
             send_telemetry_from_ctx!(TelemetryEvent::AnonymousUserLinkedFromBrowser, ctx);
-        } else if self.incoming_login_conflicts_with_pending_chatgpt_connect(&user_uid, ctx) {
-            // A connect attempt only ever expects a link result, never a login. A login for
-            // another account here would silently switch the user's Warp account.
-            log::warn!(
-                "Ignoring login handoff for a different user while a ChatGPT connect is pending"
-            );
-            ApiKeyManager::handle(ctx).update(ctx, |manager, ctx| {
-                manager.fail_chatgpt_oauth(ChatGPTConnectFailure::AccountMismatch, ctx);
-            });
-            return;
         }
 
         let _ = ctx.spawn(
@@ -787,23 +776,6 @@ impl AuthManager {
             true
         } else {
             false
-        }
-    }
-
-    fn incoming_login_conflicts_with_pending_chatgpt_connect(
-        &self,
-        incoming_user_uid: &Option<UserUid>,
-        ctx: &AppContext,
-    ) -> bool {
-        if !FeatureFlag::ChatGPTSubscription.is_enabled()
-            || self.auth_state.is_anonymous_or_logged_out()
-            || !ApiKeyManager::as_ref(ctx).chatgpt_oauth_pending()
-        {
-            return false;
-        }
-        match (self.auth_state.user_id(), incoming_user_uid) {
-            (Some(current_uid), Some(incoming_uid)) => current_uid != *incoming_uid,
-            _ => false,
         }
     }
 

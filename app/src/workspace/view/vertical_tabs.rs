@@ -4118,11 +4118,7 @@ impl PaneGroup {
             ),
             IPaneType::File => TypedPane::File,
             IPaneType::Notebook => {
-                let is_plan = self
-                    .downcast_pane_by_id::<NotebookPane>(pane_id)
-                    .map(|np| np.notebook_view(app).as_ref(app).is_plan(app))
-                    .unwrap_or(false);
-                TypedPane::Notebook { is_plan }
+                TypedPane::Notebook { is_plan: false }
             }
             IPaneType::Workflow => {
                 let is_ai_prompt = self

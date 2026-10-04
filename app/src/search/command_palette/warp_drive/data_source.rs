@@ -721,9 +721,6 @@ mod full_text_searcher {
                             .get_by_uid(&search_match.uid)?
                             .into();
                         let cloud_notebook = notebook?;
-                        if filter_by_plan && cloud_notebook.model().ai_document_id.is_none() {
-                            return None;
-                        }
 
                         Some(NotebookSearchItem {
                             match_result: FuzzyMatchNotebookResult::no_match(),
@@ -742,10 +739,6 @@ mod full_text_searcher {
                         .get_by_uid(&search_match.values.uid)?
                         .into();
                     let notebook = notebook?;
-
-                    if filter_by_plan && notebook.model().ai_document_id.is_none() {
-                        return None;
-                    }
 
                     // Since Tantivy only produces a single score for the entire document, we put it as the score of all 3.
                     let name_match_result = Some(FuzzyMatchResult {

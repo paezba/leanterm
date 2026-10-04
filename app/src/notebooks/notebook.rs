@@ -827,7 +827,6 @@ impl NotebookView {
                             CloudNotebookModel {
                                 title: notebook.model().title.clone(),
                                 data: content.to_string(),
-                                ai_document_id: notebook.model().ai_document_id,
                                 conversation_id: notebook.model().conversation_id.clone(),
                             },
                             CloudObjectEventEntrypoint::Unknown,
@@ -1012,10 +1011,6 @@ impl NotebookView {
         });
         self.set_editor_interaction_state(InteractionState::Selectable, ctx);
         ctx.notify();
-    }
-
-    pub fn is_plan(&self, ctx: &AppContext) -> bool {
-        self.active_notebook_data.as_ref(ctx).is_plan(ctx)
     }
 
     fn mode<C: ModelAsRef>(&self, ctx: &C) -> Mode {
@@ -1277,14 +1272,6 @@ impl NotebookView {
         let title = self.title.as_ref(ctx).buffer_text(ctx);
         let active_notebook = self.active_notebook_data.as_ref(ctx).active_notebook();
 
-        let ai_document_id = match active_notebook {
-            ActiveNotebook::CommittedNotebook(id) => CloudModel::as_ref(ctx)
-                .get_notebook(&id)
-                .and_then(|n| n.model().ai_document_id),
-            ActiveNotebook::NewNotebook(notebook) => notebook.model().ai_document_id,
-            ActiveNotebook::None => None,
-        };
-
         let copy_client_id = ClientId::new();
         let copy_sync_id = SyncId::ClientId(copy_client_id);
 
@@ -1301,7 +1288,6 @@ impl NotebookView {
                 CloudNotebookModel {
                     title: title.clone(),
                     data: content,
-                    ai_document_id,
                     conversation_id: None,
                 },
                 CloudObjectEventEntrypoint::Unknown,
@@ -1747,7 +1733,6 @@ impl NotebookView {
                             CloudNotebookModel {
                                 title: title.to_string(),
                                 data: notebook.model().data.to_owned(),
-                                ai_document_id: notebook.model().ai_document_id,
                                 conversation_id: notebook.model().conversation_id.clone(),
                             },
                             CloudObjectEventEntrypoint::Unknown,
