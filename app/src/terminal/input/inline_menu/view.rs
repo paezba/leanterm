@@ -46,7 +46,6 @@ use crate::terminal::input::inline_menu::{
     InlineMenuMessageArgs, InlineMenuPositioner, InlineMenuType, default_navigation_message_items,
     styles as inline_styles,
 };
-use crate::terminal::input::message_bar::Message;
 use crate::terminal::input::suggestions_mode_model::{
     InputSuggestionsModeEvent, InputSuggestionsModeModel,
 };

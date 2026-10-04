@@ -4,15 +4,11 @@ mod common;
 pub mod decorations;
 pub mod inline_history;
 pub mod inline_menu;
-pub mod message_bar;
-pub mod prompts;
-pub mod repos;
 mod suggestions_mode_menu;
 pub mod suggestions_mode_model;
 mod terminal;
 mod universal;
 
-use crate::terminal::input::prompts::{InlinePromptsMenuEvent, InlinePromptsMenuView};
 use crate::terminal::model::session::active_session::ActiveSession;
 use crate::terminal::view::init::{CAN_ATTACH_FILE_KEY, CLI_AGENT_SESSION_ACTIVE_KEY};
 use crate::{ ServerApiProvider, cmd_or_ctrl_shift, send_telemetry_from_ctx};
@@ -188,7 +184,6 @@ use crate::suggestions::ignored_suggestions_model::{
 use crate::terminal::input::buffer_model::InputBufferModel;
 use crate::terminal::input::inline_history::InlineHistoryMenuView;
 use crate::terminal::input::inline_menu::InlineMenuPositioner;
-use crate::terminal::input::repos::{InlineReposMenuEvent, InlineReposMenuView};
 use crate::terminal::input::suggestions_mode_model::{
     InputSuggestionsModeEvent, InputSuggestionsModeModel,
 };
@@ -426,16 +421,7 @@ pub enum TelemetryInputSuggestionsMode {
     NaturalLanguageCommandSearch,
     StaticWorkflowEnumSuggestions,
     DynamicWorkflowEnumSuggestions,
-    AIContextMenu,
-    SlashCommands,
-    ConversationMenu,
-    ModelSelector,
-    ProfileSelector,
-    PromptsMenu,
-    SkillMenu,
     InlineHistoryMenu,
-    IndexedReposMenu,
-    PlanMenu,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -495,10 +481,6 @@ pub enum InputSuggestionsMode {
         /// TODO: eventually, we should support saving/resetting _many_ cursors rather than a single one.
         original_cursor_point: Option<BufferPoint>,
         search_mode: HistorySearchMode,
-        /// The AI input mode when arrow-up is pressed.
-        original_input_type: InputType,
-        /// The AI input's lock status when the arrow-up is pressed.
-        original_input_was_locked: bool,
     },
     CompletionSuggestions {
         /// Stores the byte index of the beginning of the text we are replacing
@@ -554,56 +536,12 @@ pub enum InputSuggestionsMode {
         command: String,
     },
 
-    AIContextMenu {
-        /// Text typed after the "@" for filtering
-        filter_text: String,
-        /// Byte position of the "@" symbol that triggered this menu
-        at_symbol_position: usize,
-    },
-
-    SlashCommands,
-
-    /// Conversation menu mode for selecting AI conversations.
-    ConversationMenu,
-
-    /// Model selector mode for selecting the Agent base model.
-    ModelSelector,
-    /// Profile selector mode for selecting an execution profile.
-    ProfileSelector,
-
-    /// Skill menu mode for /open-skill command.
-    SkillMenu,
-
-    /// Prompts menu mode for /prompts command.
-    PromptsMenu,
-
-    /// User query menu mode for selecting a query point (e.g., fork-from, rewind).
-    UserQueryMenu {
-        action: UserQueryMenuAction,
-        conversation_id: AIConversationId,
-    },
-
     /// Inline history menu mode for selecting commands and conversations from history.
     InlineHistoryMenu {
-        original_input_config: Option<InputConfig>,
-    },
-
-    /// Indexed repos switcher menu mode.
-    IndexedReposMenu,
-
-    /// Plan menu mode for selecting among multiple AI document plans.
-    PlanMenu {
-        conversation_id: AIConversationId,
     },
 
     /// Mode indicating that no suggestion UI is being shown.
     Closed,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub enum UserQueryMenuAction {
-    ForkFrom,
-    Rewind,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -646,36 +584,9 @@ impl InputSuggestionsMode {
         self.is_inline_menu()
     }
 
-    fn input_config_to_restore(&self) -> Option<InputConfig> {
-        match self {
-            Self::InlineHistoryMenu {
-                original_input_config,
-            } => *original_input_config,
-            _ => None,
-        }
-    }
-
     /// Returns the placeholder text for this mode, if it has a custom one.
     pub fn placeholder_text(&self) -> Option<&'static str> {
         match self {
-            InputSuggestionsMode::UserQueryMenu {
-                action: UserQueryMenuAction::ForkFrom,
-                ..
-            } => Some("Search queries"),
-            InputSuggestionsMode::UserQueryMenu {
-                action: UserQueryMenuAction::Rewind,
-                ..
-            } => Some("Search queries to rewind to"),
-            InputSuggestionsMode::ConversationMenu => Some("Search conversations"),
-            InputSuggestionsMode::SkillMenu => Some("Search skills"),
-            InputSuggestionsMode::ModelSelector => Some("Search models"),
-            InputSuggestionsMode::ProfileSelector => Some("Search profiles"),
-            InputSuggestionsMode::SlashCommands if FeatureFlag::AgentView.is_enabled() => {
-                Some("Search commands")
-            }
-            InputSuggestionsMode::PromptsMenu => Some("Search prompts"),
-            InputSuggestionsMode::IndexedReposMenu => Some("Search indexed repos"),
-            InputSuggestionsMode::PlanMenu { .. } => Some("Search plans"),
             _ => None,
         }
     }
@@ -699,27 +610,9 @@ impl InputSuggestionsMode {
             InputSuggestionsMode::DynamicWorkflowEnumSuggestions { .. } => {
                 TelemetryInputSuggestionsMode::DynamicWorkflowEnumSuggestions
             }
-            InputSuggestionsMode::AIContextMenu { .. } => {
-                TelemetryInputSuggestionsMode::AIContextMenu
-            }
-            InputSuggestionsMode::SlashCommands => TelemetryInputSuggestionsMode::SlashCommands,
-            InputSuggestionsMode::ConversationMenu => {
-                TelemetryInputSuggestionsMode::ConversationMenu
-            }
-            InputSuggestionsMode::ModelSelector => TelemetryInputSuggestionsMode::ModelSelector,
-            InputSuggestionsMode::ProfileSelector => TelemetryInputSuggestionsMode::ProfileSelector,
-            InputSuggestionsMode::PromptsMenu => TelemetryInputSuggestionsMode::PromptsMenu,
-            InputSuggestionsMode::SkillMenu => TelemetryInputSuggestionsMode::SkillMenu,
-            InputSuggestionsMode::UserQueryMenu { .. } => {
-                TelemetryInputSuggestionsMode::ConversationMenu
-            }
             InputSuggestionsMode::InlineHistoryMenu { .. } => {
                 TelemetryInputSuggestionsMode::InlineHistoryMenu
             }
-            InputSuggestionsMode::IndexedReposMenu => {
-                TelemetryInputSuggestionsMode::IndexedReposMenu
-            }
-            InputSuggestionsMode::PlanMenu { .. } => TelemetryInputSuggestionsMode::PlanMenu,
             InputSuggestionsMode::Closed => unreachable!(),
         }
     }
@@ -2502,7 +2395,6 @@ impl Input {
         self.suggestions_mode_model.update(ctx, |m, ctx| {
             m.set_mode(
                 InputSuggestionsMode::InlineHistoryMenu {
-                    original_input_config: Some(original_input_config),
                 },
                 ctx,
             );
@@ -4336,44 +4228,9 @@ impl Input {
                     | InputSuggestionsMode::DynamicWorkflowEnumSuggestions { .. } => {
                         // If in the future we want to replace the selected arguments with suggestion options as we cycle, this is where we do it
                     }
-                    InputSuggestionsMode::AIContextMenu { .. } => {
-                        // AI context menu selection is handled separately
-                        // This shouldn't be reached since AI context menu doesn't use InputSuggestions
-                    }
-                    InputSuggestionsMode::SlashCommands => {
-                        // Slash commands selection is handled separately
-                        // This shouldn't be reached since slash commands doesn't use InputSuggestions
-                    }
-                    InputSuggestionsMode::ConversationMenu => {
-                        // Conversation menu selection is handled separately
-                        // This shouldn't be reached since conversation menu doesn't use InputSuggestions
-                    }
-                    InputSuggestionsMode::ModelSelector => {
-                        // Model selector selection is handled separately
-                        // This shouldn't be reached since model selector doesn't use InputSuggestions
-                    }
-                    InputSuggestionsMode::ProfileSelector => {
-                        // Profile selector selection is handled separately.
-                        // This shouldn't be reached since profile selector doesn't use InputSuggestions
-                    }
-                    InputSuggestionsMode::PromptsMenu => {
-                        // Prompts menu selection is handled via InlinePromptsMenuView
-                    }
-                    InputSuggestionsMode::SkillMenu => {
-                        // Skill menu selection is handled via InlineSkillSelectorView
-                    }
-                    InputSuggestionsMode::UserQueryMenu { .. } => {
-                        // User query menu selection is handled separately
-                    }
                     InputSuggestionsMode::InlineHistoryMenu { .. } => {
                         // Inline history menu selection is handled separately
                         // This shouldn't be reached since inline history menu doesn't use InputSuggestions
-                    }
-                    InputSuggestionsMode::IndexedReposMenu => {
-                        // Repos menu selection is handled separately
-                    }
-                    InputSuggestionsMode::PlanMenu { .. } => {
-                        // Plan menu selection is handled via InlinePlanMenuView
                     }
                     InputSuggestionsMode::Closed => {
                         log::warn!("Got a InputSuggestionsEvent::Select when the mode was Closed!");
@@ -4497,50 +4354,8 @@ impl Input {
                 });
                 true
             }
-            InputSuggestionsMode::AIContextMenu { .. } => {
-                // AI context menu selection is handled separately
-                // For now, just close the menu
-                false
-            }
-            InputSuggestionsMode::SlashCommands => {
-                // Slash commands selection is handled separately
-                // For now, just close the menu
-                false
-            }
-            InputSuggestionsMode::ConversationMenu => {
-                // Conversation menu selection is handled separately
-                false
-            }
-            InputSuggestionsMode::ModelSelector => {
-                // Model selector selection is handled separately
-                false
-            }
-            InputSuggestionsMode::ProfileSelector => {
-                // Profile selector selection is handled separately
-                false
-            }
-            InputSuggestionsMode::PromptsMenu => {
-                // Prompts menu selection is handled separately
-                false
-            }
-            InputSuggestionsMode::SkillMenu => {
-                // Skill menu selection is handled via InlineSkillSelectorView
-                false
-            }
-            InputSuggestionsMode::UserQueryMenu { .. } => {
-                // User query menu selection is handled separately
-                false
-            }
             InputSuggestionsMode::InlineHistoryMenu { .. } => {
                 // Inline history menu selection is handled separately
-                false
-            }
-            InputSuggestionsMode::IndexedReposMenu => {
-                // Repos menu selection is handled separately
-                false
-            }
-            InputSuggestionsMode::PlanMenu { .. } => {
-                // Plan menu selection is handled via InlinePlanMenuView
                 false
             }
         }
@@ -4556,8 +4371,6 @@ impl Input {
             && let InputSuggestionsMode::HistoryUp {
                 original_buffer,
                 original_cursor_point,
-                original_input_was_locked,
-                original_input_type,
                 ..
             } = self.suggestions_mode_model.as_ref(ctx).mode()
         {
@@ -4815,92 +4628,8 @@ impl Input {
 
         // For some input suggestion modes, the menu handles its own actions.
         let handled = match self.suggestions_mode_model.as_ref(ctx).mode() {
-            InputSuggestionsMode::AIContextMenu { .. } => {
-                self.editor.update(ctx, |editor, ctx| {
-                    if let Some(ai_context_menu) = editor.ai_context_menu() {
-                        ai_context_menu.update(ctx, |menu, ctx| {
-                            menu.handle_action(&AIContextMenuAction::Prev, ctx);
-                        });
-                    }
-                });
-                true
-            }
-            InputSuggestionsMode::SlashCommands => {
-                if self.is_cloud_mode_input_v2_composing(ctx) {
-                    if let Some(view) = self.cloud_mode_v2_slash_commands_view.clone() {
-                        view.update(ctx, |view, ctx| {
-                            view.select_up(ctx);
-                        });
-                    }
-                } else {
-                    self.inline_slash_commands_view.update(ctx, |view, ctx| {
-                        view.select_up(ctx);
-                    });
-                }
-                true
-            }
-            InputSuggestionsMode::ConversationMenu => {
-                self.inline_conversation_menu_view.update(ctx, |view, ctx| {
-                    view.select_up(ctx);
-                });
-                true
-            }
-            InputSuggestionsMode::UserQueryMenu {
-                action: UserQueryMenuAction::ForkFrom,
-                ..
-            } => {
-                self.user_query_menu_view.update(ctx, |view, ctx| {
-                    view.select_up(ctx);
-                });
-                true
-            }
-            InputSuggestionsMode::UserQueryMenu {
-                action: UserQueryMenuAction::Rewind,
-                ..
-            } => {
-                self.rewind_menu_view.update(ctx, |view, ctx| {
-                    view.select_up(ctx);
-                });
-                true
-            }
-            InputSuggestionsMode::ModelSelector => {
-                self.inline_model_selector_view.update(ctx, |view, ctx| {
-                    view.select_up(ctx);
-                });
-                true
-            }
-            InputSuggestionsMode::ProfileSelector => {
-                self.inline_profile_selector_view.update(ctx, |view, ctx| {
-                    view.select_up(ctx);
-                });
-                true
-            }
-            InputSuggestionsMode::PromptsMenu => {
-                self.inline_prompts_menu_view.update(ctx, |view, ctx| {
-                    view.select_up(ctx);
-                });
-                true
-            }
-            InputSuggestionsMode::SkillMenu => {
-                self.inline_skill_selector_view.update(ctx, |view, ctx| {
-                    view.select_up(ctx);
-                });
-                true
-            }
             InputSuggestionsMode::InlineHistoryMenu { .. } => {
                 ctx.dispatch_typed_action_deferred(InputAction::SelectPreviousInlineHistoryItem);
-                true
-            }
-            InputSuggestionsMode::IndexedReposMenu => {
-                self.inline_repos_menu_view.update(ctx, |view, ctx| {
-                    view.select_up(ctx);
-                });
-                true
-            }
-            InputSuggestionsMode::PlanMenu { .. } => {
-                self.inline_plan_menu_view.update(ctx, |view, ctx| {
-                    view.select_up(ctx);
-                });
                 true
             }
             InputSuggestionsMode::HistoryUp { .. }
@@ -4955,8 +4684,6 @@ impl Input {
                         original_buffer,
                         original_cursor_point,
                         search_mode: HistorySearchMode::Prefix,
-                        original_input_type,
-                        original_input_was_locked,
                     },
                     ctx,
                 );
@@ -4991,13 +4718,6 @@ impl Input {
     /// (defaulting to true for any inline menus that don't have specific behavior requirements for this decision).
     fn should_restore_buffer_on_inline_menu_dismiss(&self, ctx: &ViewContext<Self>) -> bool {
         match self.suggestions_mode_model.as_ref(ctx).mode() {
-            // If the input is not being used as a search on the model menu
-            // we should not restore/revert the changes to the input on-dismiss,
-            // unless we parked a prompt to search (then we restore that prompt).
-            InputSuggestionsMode::ModelSelector => {
-                let view = self.inline_model_selector_view.as_ref(ctx);
-                view.prompt_parked_for_search() || view.filter_results_by_input()
-            }
             _ => true,
         }
     }
@@ -5122,90 +4842,6 @@ impl Input {
     fn editor_down(&mut self, ctx: &mut ViewContext<Self>) {
         // For some input suggestion modes, the menu handles its own actions.
         let handled = match self.suggestions_mode_model.as_ref(ctx).mode() {
-            InputSuggestionsMode::AIContextMenu { .. } => {
-                self.editor.update(ctx, |editor, ctx| {
-                    if let Some(ai_context_menu) = editor.ai_context_menu() {
-                        ai_context_menu.update(ctx, |menu, ctx| {
-                            menu.handle_action(&AIContextMenuAction::Next, ctx);
-                        });
-                    }
-                });
-                true
-            }
-            InputSuggestionsMode::SlashCommands => {
-                if self.is_cloud_mode_input_v2_composing(ctx) {
-                    if let Some(view) = self.cloud_mode_v2_slash_commands_view.clone() {
-                        view.update(ctx, |view, ctx| {
-                            view.select_down(ctx);
-                        });
-                    }
-                } else {
-                    self.inline_slash_commands_view.update(ctx, |view, ctx| {
-                        view.select_down(ctx);
-                    });
-                }
-                true
-            }
-            InputSuggestionsMode::ConversationMenu => {
-                self.inline_conversation_menu_view.update(ctx, |view, ctx| {
-                    view.select_down(ctx);
-                });
-                true
-            }
-            InputSuggestionsMode::UserQueryMenu {
-                action: UserQueryMenuAction::ForkFrom,
-                ..
-            } => {
-                self.user_query_menu_view.update(ctx, |view, ctx| {
-                    view.select_down(ctx);
-                });
-                true
-            }
-            InputSuggestionsMode::UserQueryMenu {
-                action: UserQueryMenuAction::Rewind,
-                ..
-            } => {
-                self.rewind_menu_view.update(ctx, |view, ctx| {
-                    view.select_down(ctx);
-                });
-                true
-            }
-            InputSuggestionsMode::ModelSelector => {
-                self.inline_model_selector_view.update(ctx, |view, ctx| {
-                    view.select_down(ctx);
-                });
-                true
-            }
-            InputSuggestionsMode::ProfileSelector => {
-                self.inline_profile_selector_view.update(ctx, |view, ctx| {
-                    view.select_down(ctx);
-                });
-                true
-            }
-            InputSuggestionsMode::PromptsMenu => {
-                self.inline_prompts_menu_view.update(ctx, |view, ctx| {
-                    view.select_down(ctx);
-                });
-                true
-            }
-            InputSuggestionsMode::SkillMenu => {
-                self.inline_skill_selector_view.update(ctx, |view, ctx| {
-                    view.select_down(ctx);
-                });
-                true
-            }
-            InputSuggestionsMode::IndexedReposMenu => {
-                self.inline_repos_menu_view.update(ctx, |view, ctx| {
-                    view.select_down(ctx);
-                });
-                true
-            }
-            InputSuggestionsMode::PlanMenu { .. } => {
-                self.inline_plan_menu_view.update(ctx, |view, ctx| {
-                    view.select_down(ctx);
-                });
-                true
-            }
             InputSuggestionsMode::HistoryUp { .. }
             | InputSuggestionsMode::CompletionSuggestions { .. }
             | InputSuggestionsMode::StaticWorkflowEnumSuggestions { .. }
@@ -6322,30 +5958,6 @@ impl Input {
                             self.open_completion_suggestions(CompletionsTrigger::AsYouType, ctx);
                         }
                     }
-                    InputSuggestionsMode::AIContextMenu { .. } => {
-                        self.handle_ai_context_menu_search(false, ctx);
-                    }
-                    InputSuggestionsMode::SlashCommands => {
-                        // empty for now
-                    }
-                    InputSuggestionsMode::ConversationMenu => {
-                        // Conversation menu handles its own state
-                    }
-                    InputSuggestionsMode::ModelSelector => {
-                        // Model selector handles its own state
-                    }
-                    InputSuggestionsMode::ProfileSelector => {
-                        // Profile selector handles its own state
-                    }
-                    InputSuggestionsMode::PromptsMenu => {
-                        // Prompts menu handles its own state
-                    }
-                    InputSuggestionsMode::SkillMenu => {
-                        // Skill menu handles its own state
-                    }
-                    InputSuggestionsMode::UserQueryMenu { .. } => {
-                        // User query menu handles its own state
-                    }
                     InputSuggestionsMode::InlineHistoryMenu { .. } => {
                         let mismatched = if self.is_cloud_mode_input_v2_composing(ctx) {
                             self.cloud_mode_v2_history_menu_view
@@ -6371,12 +5983,6 @@ impl Input {
                             });
                             ctx.notify();
                         }
-                    }
-                    InputSuggestionsMode::IndexedReposMenu => {
-                        // Repos menu handles its own state
-                    }
-                    InputSuggestionsMode::PlanMenu { .. } => {
-                        // Plan menu handles its own state
                     }
                 }
             }
@@ -6452,61 +6058,8 @@ impl Input {
                                 );
                             }
                         }
-                        InputSuggestionsMode::AIContextMenu {
-                            at_symbol_position, ..
-                        } => {
-                            let at_symbol_position = *at_symbol_position;
-                            // Close the AI context menu if cursor moves to the left of the @ position
-                            let cursor_pos = self
-                                .editor
-                                .as_ref(ctx)
-                                .start_byte_index_of_last_selection(ctx)
-                                .as_usize();
-
-                            if cursor_pos <= at_symbol_position {
-                                self.close_ai_context_menu(ctx);
-                                return;
-                            }
-
-                            self.handle_ai_context_menu_search(true, ctx);
-                        }
-                        InputSuggestionsMode::SlashCommands => {
-                            let cursor_pos = self
-                                .editor
-                                .as_ref(ctx)
-                                .start_byte_index_of_last_selection(ctx)
-                                .as_usize();
-
-                            if cursor_pos == 0 {
-                                self.close_input_suggestions(true, ctx);
-                            }
-                        }
-                        InputSuggestionsMode::ConversationMenu => {
-                            // Conversation menu handles its own selection state
-                        }
-                        InputSuggestionsMode::ModelSelector => {
-                            // Model selector handles its own selection state
-                        }
-                        InputSuggestionsMode::ProfileSelector => {
-                            // Profile selector handles its own selection state
-                        }
-                        InputSuggestionsMode::PromptsMenu => {
-                            // Prompts menu handles its own selection state
-                        }
-                        InputSuggestionsMode::SkillMenu => {
-                            // Skill menu handles its own selection state
-                        }
-                        InputSuggestionsMode::UserQueryMenu { .. } => {
-                            // User query menu handles its own selection state
-                        }
                         InputSuggestionsMode::InlineHistoryMenu { .. } => {
                             // Inline history menu handles its own selection state
-                        }
-                        InputSuggestionsMode::IndexedReposMenu => {
-                            // Repos menu handles its own selection state
-                        }
-                        InputSuggestionsMode::PlanMenu { .. } => {
-                            // Plan menu handles its own selection state
                         }
                     }
                 }
@@ -7055,8 +6608,6 @@ impl Input {
                     original_buffer,
                     original_cursor_point,
                     search_mode: HistorySearchMode::Fuzzy,
-                    original_input_type,
-                    original_input_was_locked,
                 },
                 ctx,
             );
@@ -8032,16 +7583,6 @@ impl Input {
 
     fn input_shift_tab(&mut self, ctx: &mut ViewContext<Self>) {
         match self.suggestions_mode_model.as_ref(ctx).mode() {
-            // If the model selector is open and has multiple tabs,
-            // shift + tab should cycle between them.
-            InputSuggestionsMode::ModelSelector => {
-                if self
-                    .inline_model_selector_view
-                    .update(ctx, |view, ctx| view.select_next_tab(ctx))
-                {
-                    return;
-                }
-            }
             // If the inline history menu is open and has multiple tabs,
             // shift + tab should cycle between them.
             InputSuggestionsMode::InlineHistoryMenu { .. } => {
@@ -8050,16 +7591,6 @@ impl Input {
                 }
                 if self
                     .inline_history_menu_view
-                    .update(ctx, |view, ctx| view.select_next_tab(ctx))
-                {
-                    return;
-                }
-            }
-            // If the conversation menu is open and has multiple tabs,
-            // shift + tab should cycle between them.
-            InputSuggestionsMode::ConversationMenu => {
-                if self
-                    .inline_conversation_menu_view
                     .update(ctx, |view, ctx| view.select_next_tab(ctx))
                 {
                     return;

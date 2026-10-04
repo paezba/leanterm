@@ -8,7 +8,6 @@ use crate::editor::{SELECT_DOWN_ACTION_NAME, SELECT_UP_ACTION_NAME};
 use crate::terminal::input::inline_menu::{
     InlineMenuAction, InlineMenuMessageArgs, InlineMenuRowAction,
 };
-use crate::terminal::input::message_bar::{Message, MessageItem, MessageProvider};
 use crate::util::bindings::keybinding_name_to_keystroke;
 
 /// Generic message provider for inline menus.

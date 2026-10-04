@@ -182,10 +182,6 @@ impl InputSuggestionsModeModel {
     /// Returns the conversation_id if the current mode is UserQueryMenu (ForkFrom).
     pub fn user_query_conversation_id(&self) -> Option<AIConversationId> {
         match &self.mode {
-            InputSuggestionsMode::UserQueryMenu {
-                action: super::UserQueryMenuAction::ForkFrom,
-                conversation_id,
-            } => Some(*conversation_id),
             _ => None,
         }
     }
@@ -193,10 +189,6 @@ impl InputSuggestionsModeModel {
     /// Returns the conversation_id if the current mode is RewindMenu.
     pub fn rewind_conversation_id(&self) -> Option<AIConversationId> {
         match &self.mode {
-            InputSuggestionsMode::UserQueryMenu {
-                action: super::UserQueryMenuAction::Rewind,
-                conversation_id,
-            } => Some(*conversation_id),
             _ => None,
         }
     }
@@ -216,7 +208,6 @@ impl InputSuggestionsModeModel {
     /// Returns the conversation_id if the current mode is PlanMenu.
     pub fn plan_menu_conversation_id(&self) -> Option<AIConversationId> {
         match &self.mode {
-            InputSuggestionsMode::PlanMenu { conversation_id } => Some(*conversation_id),
             _ => None,
         }
     }

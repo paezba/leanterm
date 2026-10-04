@@ -13,7 +13,6 @@ use crate::terminal::input::inline_menu::InlineMenuType;
 use crate::terminal::input::inline_menu::message_bar::INLINE_MENU_BORDER_WIDTH;
 use crate::terminal::input::inline_menu::styles::{CONTENT_BORDER_WIDTH, CONTENT_VERTICAL_PADDING};
 use crate::terminal::input::inline_menu::view::QUERY_RESULT_RENDERER_STYLES;
-use crate::terminal::input::message_bar::common::standard_message_bar_height;
 use crate::terminal::input::suggestions_mode_model::InputSuggestionsModeModel;
 use crate::terminal::{SizeInfo, element_size_at_last_frame};
 
