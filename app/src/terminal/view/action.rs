@@ -256,11 +256,6 @@ pub enum TerminalAction {
         show_secret: bool,
     },
     CopyGridSecret(WithinModel<SecretHandle>),
-    ToggleRichContentSecret {
-        rich_content_tooltip_info: RichContentSecretTooltipInfo,
-        show_secret: bool,
-    },
-    CopyRichContentSecret(RichContentSecretTooltipInfo),
     ShowInFileExplorer(PathBuf),
     OpenFileInWarp(PathBuf),
     #[cfg(feature = "local_fs")]

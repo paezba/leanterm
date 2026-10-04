@@ -11023,15 +11023,6 @@ impl TerminalView {
         ctx.notify();
     }
 
-    fn rerender_rich_content_blocks(&mut self, ctx: &mut ViewContext<Self>) {
-        for rich_content in self.rich_content_views.iter() {
-            if let Some(ai_metadata) = rich_content.ai_block_metadata() {
-                ai_metadata
-                    .ai_block_handle
-                    .update(ctx, |_ai_block, ctx| ctx.notify());
-            }
-        }
-    }
 
     fn reset_selection_to_single_block(
         &mut self,
@@ -11719,8 +11710,8 @@ impl TerminalView {
             InputEvent::CtrlD => {
                 ctx.emit(Event::CtrlD);
             }
-            InputEvent::CtrlC { cleared_buffer_len } => {
-                self.handle_ctrl_c_input_event(*cleared_buffer_len, ctx);
+            InputEvent::CtrlC { .. } => {
+                self.ctrl_c(ctx);
             }
             InputEvent::EmacsBindingUsed => {
                 if OperatingSystem::get().is_linux() && self.should_show_emacs_bindings_banner(ctx)
@@ -12737,26 +12728,6 @@ impl TerminalView {
     }
 
     /// Sends `text` to the active CLI agent, routing to rich input when it is open
-    /// or directly to the PTY when it is closed.
-    ///
-    /// Returns `Some(CliAgentRouting)` indicating how the text was sent, or
-    /// `None` if no CLI agent is active.
-    pub fn try_send_text_to_cli_agent_or_rich_input(
-        &mut self,
-        text: String,
-        ctx: &mut ViewContext<Self>,
-    ) -> Option<CliAgentRouting> {
-        self.active_cli_agent(ctx)?;
-        if self.is_cli_agent_rich_input_open(ctx) {
-            self.append_to_rich_input(&text, ctx);
-            Some(CliAgentRouting::RichInput)
-        } else {
-            self.write_to_pty(text.into_bytes(), ctx);
-            self.focus_terminal(ctx);
-            Some(CliAgentRouting::Pty)
-        }
-    }
-
     fn handle_theme_change(&mut self, ctx: &mut ViewContext<Self>) {
         let appearance = Appearance::as_ref(ctx);
         let colors = color::List::from(&appearance.theme().clone().into());
@@ -12793,16 +12764,7 @@ impl TerminalView {
                 // determines if we need git status updates.
                 self.update_git_status_subscription(ctx);
             }
-            SessionSettingsChangedEvent::CLIAgentToolbarChipSelectionSetting { .. } => {
-                // Force-close rich input when the Rich Input chip is removed so
-                // it doesn't linger open with no toolbar button to manage it.
-                if !is_rich_input_chip_in_cli_toolbar(ctx) {
-                    self.close_cli_agent_rich_input(CLIAgentRichInputCloseReason::Other, ctx);
-                }
-                self.update_git_status_subscription(ctx);
-            }
-            SessionSettingsChangedEvent::AgentToolbarChipSelectionSetting { .. }
-            | SessionSettingsChangedEvent::GithubPrChipDefaultValidation { .. } => {
+            SessionSettingsChangedEvent::GithubPrChipDefaultValidation { .. } => {
                 self.update_git_status_subscription(ctx);
             }
             _ => {}
@@ -12855,12 +12817,6 @@ impl TerminalView {
                     .map_or_else(String::new, |b| format!(" git:({b})")),
             )
         };
-
-        // On Local and Dev channels, append an indicator when NLD was overridden.
-        // Skip the honor_ps1 case since there's no good place to display the extra text.
-        if !block.honor_ps1() && block.nld_overridden() && ChannelState::enable_debug_features() {
-            prompt.push_str(" (nld overridden)");
-        }
 
         prompt
     }
@@ -13459,7 +13415,6 @@ impl TerminalView {
             && ContextFlag::CreateSharedSession.is_enabled())
             || FeatureFlag::ViewingSharedSessions.is_enabled()
         {
-            let is_shared_ambient_agent_session = model.is_shared_ambient_agent_session();
             match &self.inline_banners_state.shared_session_banner_state {
                 SharedSessionBanners::ActiveShare {
                     started_banner_id,
@@ -13470,7 +13425,6 @@ impl TerminalView {
                         *started_banner_id,
                         render_inline_shared_session_started_banner(
                             true,
-                            is_shared_ambient_agent_session,
                             *is_remote_control,
                             *started_at,
                             appearance,
@@ -13488,7 +13442,6 @@ impl TerminalView {
                         *started_banner_id,
                         render_inline_shared_session_started_banner(
                             false,
-                            is_shared_ambient_agent_session,
                             *is_remote_control,
                             *started_at,
                             appearance,
@@ -13497,7 +13450,6 @@ impl TerminalView {
                     inline_banners.insert(
                         *ended_banner_id,
                         render_inline_shared_session_ended_banner(
-                            is_shared_ambient_agent_session,
                             *is_remote_control,
                             *ended_at,
                             appearance,
@@ -13519,27 +13471,6 @@ impl TerminalView {
             inline_banners.insert(
                 vim_banner_state.id,
                 render_vim_mode_banner(vim_banner_state, appearance),
-            );
-        }
-
-        if let Some(banner_state) = &self.inline_banners_state.codebase_index_speedbump_banner {
-            inline_banners.insert(
-                banner_state.id,
-                banner_state.render_codebase_index_speedbump_banner(appearance),
-            );
-        }
-
-        if let Some(banner_state) = &self.inline_banners_state.agent_setup_speedbump_banner {
-            inline_banners.insert(
-                banner_state.id,
-                render_agent_mode_setup_banner(banner_state, appearance),
-            );
-        }
-
-        if let Some(banner_state) = &self.inline_banners_state.aws_bedrock_login_banner {
-            inline_banners.insert(
-                banner_state.id,
-                render_aws_bedrock_login_banner(banner_state, appearance),
             );
         }
 
@@ -13586,12 +13517,6 @@ impl TerminalView {
         let render_context = self.get_terminal_view_render_context(model, app);
 
         let enforce_minimum_contrast = *FontSettings::as_ref(app).enforce_minimum_contrast;
-        let active_cli_subagent_view = model
-            .block_list()
-            .active_block()
-            .is_agent_in_control()
-            .then(|| self.cli_subagent_views.get(model.active_block_id()))
-            .flatten();
         let mut alt_screen_element = AltScreenElement::new(
             self.model.clone(),
             render_context,
@@ -13605,28 +13530,12 @@ impl TerminalView {
             self.alt_screen_scroll_top,
             // TODO(zachbai): Remove this.
             None,
-            active_cli_subagent_view.map(|view| ChildView::new(view).finish()),
         );
         if should_use_ligature_rendering(app) {
             alt_screen_element = alt_screen_element.with_ligature_rendering();
         }
-        if self.should_hide_cli_agent_cursor_cell(app) {
-            alt_screen_element = alt_screen_element.with_hide_cursor_cell();
-        }
         alt_screen_element =
             alt_screen_element.with_shared_session_presence(self.shared_session_presence_manager());
-
-        // Pass voice input toggle key if the CLI agent footer should be rendered
-        #[cfg(feature = "voice_input")]
-        if self.should_render_use_agent_footer(model, app)
-            && self.use_agent_footer.as_ref(app).has_cli_agent(app)
-        {
-            let voice_key = AISettings::as_ref(app)
-                .voice_input_toggle_key
-                .value()
-                .to_key_code();
-            alt_screen_element = alt_screen_element.with_voice_input_toggle_key(voice_key);
-        }
 
         let required_terminal_height = self.size_info.cell_height_px.as_f32() * (rows as f32)
             + 2. * self.size_info.padding_y_px().as_f32();
@@ -13855,11 +13764,6 @@ impl TerminalView {
             ),
             inline_banners,
             subshell_separators,
-            HashMap::from_iter(
-                self.cli_subagent_views
-                    .iter()
-                    .map(|(id, view)| (id.clone(), ChildView::new(view).finish())),
-            ),
             selection_range,
             block_banner,
             self.inline_banners_state.shared_session_banner_state,
@@ -13869,22 +13773,6 @@ impl TerminalView {
 
         if should_use_ligature_rendering(app) {
             element = element.with_ligature_rendering();
-        }
-
-        if self.should_hide_cli_agent_cursor_cell(app) {
-            element = element.with_hide_cursor_cell();
-        }
-
-        // Pass voice input toggle key if the CLI agent footer should be rendered
-        #[cfg(feature = "voice_input")]
-        if self.should_render_use_agent_footer(model, app)
-            && self.use_agent_footer.as_ref(app).has_cli_agent(app)
-        {
-            let voice_key = AISettings::as_ref(app)
-                .voice_input_toggle_key
-                .value()
-                .to_key_code();
-            element = element.with_voice_input_toggle_key(voice_key);
         }
 
         element = element.with_filtered_blocks(filtered_blocks);
@@ -14892,12 +14780,8 @@ impl TerminalView {
         block_index: BlockIndex,
         ctx: &mut ViewContext<Self>,
     ) {
-        // Selecting the block makes it clear which the user is looking at. We shouldn't select the
-        // block if they're in AI mode because that would affect their pending query's context block
-        // selection.
-        if !self.ai_input_model.as_ref(ctx).is_ai_input_enabled() {
-            self.reset_selection_to_single_block(block_index, ctx);
-        }
+        // Selecting the block makes it clear which the user is looking at.
+        self.reset_selection_to_single_block(block_index, ctx);
 
         self.scroll_to(block_index, ctx);
     }
@@ -14928,42 +14812,6 @@ impl TerminalView {
             .is_active_and_long_running();
 
         let image_filepaths = get_image_filepaths_from_paths(paths);
-
-        // CLI-agent paste path: when a CLI agent (e.g. Claude Code) is the
-        // foreground long-running process and the user is interacting with its
-        // TUI directly (rich input closed), hand image drops to the agent the
-        // same way Cmd+V does at `TerminalView::paste` — write each image to
-        // the system clipboard and send the agent's paste keystroke to the
-        // PTY. Without this branch the path string would be shell-escaped and
-        // typed into the agent's prompt. When the rich input is open we leave
-        // the existing chip-attach flow alone, since that's where the user
-        // explicitly asked the drop to land.
-        if !image_filepaths.is_empty()
-            && image_filepaths.len() == paths.len()
-            && is_in_long_running_command
-            && self.has_active_cli_agent_session(ctx)
-            && !CLIAgentSessionsModel::as_ref(ctx).is_input_open(self.view_id)
-        {
-            self.paste_dropped_images_to_cli_agent(image_filepaths, ctx);
-            return;
-        }
-
-        if !is_in_long_running_command {
-            // Check for image file paths to be auto-attached
-            let num_images = image_filepaths.len();
-
-            // If we have image file paths, try to process them for attachment
-            if num_images > 0 {
-                let num_attached = self.input.update(ctx, |input, ctx| {
-                    input.handle_pasted_or_dragdropped_image_filepaths(image_filepaths, ctx)
-                });
-
-                // If dropped only image file paths, we are done
-                if num_attached == paths.len() {
-                    return; // Return early, don't insert file paths
-                }
-            }
-        }
 
         let Some(session) = self
             .active_block_session_id()
@@ -15189,24 +15037,6 @@ impl TerminalView {
         });
     }
 
-    pub(super) fn toggle_file_tree(
-        &mut self,
-        source: crate::server::telemetry::FileTreeSource,
-        cli_agent: Option<CLIAgent>,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        use crate::server::telemetry::TelemetryEvent;
-
-        self.toggle_left_panel_file_tree(false, ctx);
-        send_telemetry_from_ctx!(
-            TelemetryEvent::FileTreeToggled {
-                source,
-                is_code_mode_v2: true,
-                cli_agent,
-            },
-            ctx
-        );
-    }
 }
 
 impl Entity for TerminalView {
@@ -15912,18 +15742,7 @@ impl TypedActionView for TerminalView {
                 handle,
                 show_secret,
             } => self.toggle_grid_secret(handle, *show_secret, ctx),
-            ToggleRichContentSecret {
-                rich_content_tooltip_info,
-                show_secret,
-            } => self.toggle_rich_content_secret(
-                rich_content_tooltip_info.clone(),
-                *show_secret,
-                ctx,
-            ),
             CopyGridSecret(secret_handle) => self.copy_grid_secret(secret_handle, ctx),
-            CopyRichContentSecret(rich_content_tooltip_info) => {
-                self.copy_rich_content_secret(rich_content_tooltip_info.clone(), ctx)
-            }
             OpenGridLink(link) => {
                 self.open_highlighted_link(link, ctx);
             }
