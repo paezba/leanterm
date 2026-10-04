@@ -1,7 +1,6 @@
 mod action;
 mod block_banner;
 pub mod block_onboarding;
-pub(crate) mod blocklist_filter;
 mod bookmarks;
 mod context_menu;
 pub mod init;
@@ -75,7 +74,7 @@ pub use init::{
 use init::{INPUT_BOX_VISIBLE_KEY, TOGGLE_BLOCK_FILTER_KEYBINDING};
 use inline_banner::{
     AliasExpansionBanner, AliasExpansionBannerAction,
-    ByoLlmAuthBannerSessionState, OpenInWarpBannerState, VimModeBannerAction,
+    OpenInWarpBannerState, VimModeBannerAction,
     render_alias_expansion_banner, render_inline_notifications_discovery_banner,
     render_inline_notifications_error_banner, render_inline_shared_session_ended_banner,
     render_inline_shared_session_started_banner, render_open_in_warp_banner,
