@@ -117,7 +117,6 @@ impl TerminalManager {
     ) {
         let reason_string = command_execution_failure_reason_string(reason);
         terminal_view.show_persistent_toast(reason_string, ToastFlavor::Error, ctx);
-        terminal_view.clear_queued_command_in_flight(ctx);
 
         // On command execution request, the input is frozen and set to a loading state.
         // We only need to restore the input for errors that aren't the result of a new buffer.
@@ -853,53 +852,10 @@ impl TerminalManager {
                     network.reauthenticate_viewer(ctx);
                 });
             }
-            TerminalViewEvent::SendAgentPrompt {
-                server_conversation_token,
-                prompt,
-                attachments,
-            } => {
-                Self::update_current_network(&current_network, ctx, |network, _| {
-                    network.send_agent_prompt_request(
-                        *server_conversation_token,
-                        prompt.clone(),
-                        attachments.clone(),
-                    );
-                });
-            }
-            TerminalViewEvent::CancelSharedSessionConversation {
-                server_conversation_token,
-            } => {
-                Self::update_current_network(&current_network, ctx, |network, _| {
-                    network.send_cancel_control_action(*server_conversation_token);
-                });
-            }
             TerminalViewEvent::ReportViewerTerminalSize { window_size } => {
                 Self::update_current_network(&current_network, ctx, |network, _| {
                     network.send_report_terminal_size(*window_size);
                 });
-            }
-            TerminalViewEvent::LongRunningCommandAgentInteractionStateChanged {
-                state,
-                block_id,
-            } => {
-                let interaction =
-                    block_id
-                        .clone()
-                        .map(|block_id| LongRunningCommandAgentInteraction {
-                            block_id: block_id.into(),
-                            state: *state,
-                        });
-                Self::send_input_context_update_to_current_network(
-                    &viewer_remote_update_guard,
-                    &model,
-                    &current_network,
-                    UniversalDeveloperInputContextUpdate {
-                        long_running_command_agent_interaction_state: Some(*state),
-                        long_running_command_agent_interaction: interaction,
-                        ..Default::default()
-                    },
-                    ctx,
-                );
             }
             TerminalViewEvent::UpdateSessionLinkPermissions { role } => {
                 Self::update_current_network(&current_network, ctx, |network, _| {

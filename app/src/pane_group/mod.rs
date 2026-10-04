@@ -1941,7 +1941,6 @@ impl PaneGroup {
                 terminal_pane_id,
                 open_source,
                 terminal_view.as_ref(ctx).model.clone(),
-                terminal_view.id(),
                 ctx,
             );
         });

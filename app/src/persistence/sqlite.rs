@@ -869,16 +869,13 @@ fn save_app_state(conn: &mut SqliteConnection, app_state: &AppState) -> Result<(
                 origin_y,
                 quake_mode: window.quake_mode,
                 universal_search_width: window.universal_search_width,
-                warp_ai_width: window.warp_ai_width,
+                warp_ai_width: None,
                 voltron_width: window.voltron_width,
                 warp_drive_index_width: window.warp_drive_index_width,
                 left_panel_open: Some(window.left_panel_open),
                 vertical_tabs_panel_open: Some(window.vertical_tabs_panel_open),
                 fullscreen_state: window.fullscreen_state as i32,
-                agent_management_filters: window
-                    .agent_management_filters
-                    .as_ref()
-                    .and_then(|f| serde_json::to_string(f).ok()),
+                agent_management_filters: None,
                 team_uid: window.team_uid.map(Into::into),
             };
             diesel::insert_into(schema::windows::dsl::windows)
@@ -2169,7 +2166,7 @@ fn read_sqlite_data(
                         quake_mode: window.quake_mode,
                         bounds,
                         universal_search_width: window.universal_search_width,
-                        warp_ai_width: window.warp_ai_width,
+                        warp_ai_width: None,
                         voltron_width: window.voltron_width,
                         warp_drive_index_width: window.warp_drive_index_width,
                         left_panel_open: window_left_panel_open,
@@ -2177,9 +2174,6 @@ fn read_sqlite_data(
                         fullscreen_state: fullscreen_state_val,
                         left_panel_width,
                         right_panel_width,
-                        agent_management_filters: window
-                            .agent_management_filters
-                            .and_then(|s| serde_json::from_str(&s).ok()),
                         tab_groups: tab_groups_snapshots,
                     }
                 },
@@ -2188,14 +2182,10 @@ fn read_sqlite_data(
 
         let restored_blocks = get_all_restored_blocks(conn)?;
 
-        // Load active MCP servers from database
-        let running_mcp_servers = load_active_mcp_servers(conn)?;
-
         Some(AppState {
             windows: saved_windows,
             active_window_index,
             block_lists: Arc::new(restored_blocks),
-            running_mcp_servers,
         })
     } else {
         None
