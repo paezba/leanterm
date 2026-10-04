@@ -36,10 +36,9 @@ use crate::auth::auth_view_shared_helpers::{
     PrivacySettingsActions, PrivacySettingsHandles, render_privacy_settings_toggles,
 };
 use crate::auth::login_failure_notification::{self, LoginFailureReason};
-use crate::editor::{EditorView, SingleLineEditorOptions, TextColors, TextOptions};
+use crate::editor::EditorView;
 use crate::server::telemetry::{LoginEventSource, TelemetryEvent};
 use crate::settings::PrivacySettings;
-use crate::themes::theme::Fill as ThemeFill;
 use crate::util::bindings::CustomAction;
 use crate::{send_telemetry_from_ctx, send_telemetry_sync_from_ctx};
 

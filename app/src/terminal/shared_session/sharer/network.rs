@@ -21,8 +21,7 @@ use instant::Instant;
 use parking_lot::FairMutex;
 use session_sharing_protocol::common::{
     ActivePrompt, ActivePromptUpdate, AgentPromptFailureReason, AgentPromptRequest,
-    AgentPromptRequestId, CommandExecutionFailureReason, CommandExecutionRequestId, ControlAction,
-    ControlActionFailureReason, ControlActionRequestId, FeatureSupport, InputOperationId,
+    AgentPromptRequestId, CommandExecutionFailureReason, CommandExecutionRequestId, ControlAction, ControlActionRequestId, FeatureSupport, InputOperationId,
     InputOperationSeqNo, InputUpdate, OrderedTerminalEvent, OrderedTerminalEventType,
     ParticipantId, ParticipantList, ParticipantPresenceUpdate, Role, RoleRequestId,
     RoleRequestResponse, Scrollback, Selection, SelectionUpdate, SessionId,

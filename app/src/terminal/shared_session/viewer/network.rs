@@ -13,12 +13,10 @@ use futures_util::{SinkExt, StreamExt};
 use instant::Instant;
 use parking_lot::FairMutex;
 use session_sharing_protocol::common::{
-    ActivePrompt, ActivePromptUpdate, AddGuestsResponse, AgentAttachment, AgentPromptFailureReason,
-    AgentPromptRequest, AgentPromptRequestId, CommandExecutionFailureReason, ControlAction,
+    ActivePrompt, ActivePromptUpdate, AddGuestsResponse, AgentPromptFailureReason, AgentPromptRequestId, CommandExecutionFailureReason,
     ControlActionFailureReason, FeatureSupport, InputOperationId, InputOperationSeqNo, InputUpdate,
     LinkAccessLevelUpdateResponse, ParticipantId, ParticipantList, ParticipantPresenceUpdate,
-    RemoveGuestResponse, Role, RoleRequestId, RoleRequestResponse, Selection, SelectionUpdate,
-    ServerConversationToken, SessionId, TeamAccessLevelUpdateResponse, TeamAclData,
+    RemoveGuestResponse, Role, RoleRequestId, RoleRequestResponse, Selection, SelectionUpdate, SessionId, TeamAccessLevelUpdateResponse, TeamAclData,
     TelemetryContext, UniversalDeveloperInputContext, UniversalDeveloperInputContextUpdate,
     UpdatePendingUserRoleResponse, UserID, WindowSize, WriteToPtyFailureReason,
     WriteToPtyRequestId, WriteToPtySeqNo,

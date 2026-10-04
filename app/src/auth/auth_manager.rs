@@ -1,11 +1,9 @@
 use std::future::Future;
 use std::result::Result as StdResult;
 use std::sync::Arc;
-use std::time::Duration;
 
 use ai::api_keys::{ApiKeyManager, ChatGPTConnectFailure};
 use anyhow::{Result, anyhow};
-use futures::future::Either;
 use settings::Setting as _;
 #[cfg(target_family = "wasm")]
 use url::Url;
@@ -18,7 +16,6 @@ use warp_graphql::mutations::create_anonymous_user::{
 };
 use warp_server_auth::API_KEY_PREFIX;
 use warp_server_auth::user::persistence::PersistedUser;
-use warpui::r#async::Timer;
 use warpui::clipboard::ClipboardContent;
 use warpui::{AppContext, Entity, ModelContext, SingletonEntity, UpdateModel};
 

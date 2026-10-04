@@ -11,10 +11,8 @@ use super::{ GridType, should_right_click_paste};
 use crate::server::cloud_objects::update_manager::UpdateManager;
 #[cfg(feature = "local_fs")]
 use crate::settings::import::model::ImportedConfigModel;
-use crate::terminal::keys::TerminalKeybindings;
 use crate::terminal::waterfall_gap_element::WaterfallGapElement;
 // TODO(advait): if we align on prompt suggestions banner in Input, move code out of inline_banner mod.
-use onboarding::OnboardingKeybindings;
 use repo_metadata::CanonicalizedPath;
 use warp_util::remote_path::RemotePath;
 use warp_util::standardized_path::StandardizedPath;
@@ -51,7 +49,7 @@ use std::time::Duration;
 
 use action::RememberForWarpification;
 pub use action::{AgentOnboardingVersion, OnboardingIntention, OnboardingVersion, TerminalAction};
-use ai::index::full_source_code_embedding::manager::{BuildSource, CodebaseIndexManager};
+use ai::index::full_source_code_embedding::manager::CodebaseIndexManager;
 use async_channel::{Receiver, Sender};
 use base64::Engine as _;
 pub use block_banner::{BLOCK_BANNER_HEIGHT, WithinBlockBanner};
@@ -189,7 +187,7 @@ use crate::cloud_object::model::actions::ObjectActionType;
 use crate::cloud_object::{CloudObject, GenericStringObjectFormat, JsonObjectType};
 #[cfg(feature = "local_fs")]
 use crate::code::editor_management::CodeSource;
-use crate::code_review::diff_state::{DiffMode, GitDeltaPreference};
+use crate::code_review::diff_state::GitDeltaPreference;
 use crate::code_review::git_repo_model::{GitRepoModels, GitRepoStatusModel, GitStatusMetadata};
 use crate::code_review::github_repo_model::GitHubRepoModel;
 use crate::code_review::telemetry_event::CodeReviewPaneEntrypoint;
@@ -198,7 +196,6 @@ use crate::context_chips::prompt::{Prompt, PromptSelection};
 use crate::context_chips::prompt_type::PromptType;
 use crate::drive::CloudObjectTypeAndId;
 use crate::drive::settings::WarpDriveSettings;
-use crate::drive::sharing::ShareableObject;
 use crate::editor::{AutosuggestionType, CrdtOperation, EditorAction};
 use crate::env_vars::env_var_collection_block::{
     EnvVarCollectionBlock, EnvVarCollectionBlockEvent,
@@ -281,7 +278,7 @@ use crate::terminal::model::block::{ Block, BlockId, BlockMetadata, LONG_RUNNING
 };
 use crate::terminal::model::blockgrid::BlockGrid;
 use crate::terminal::model::blocks::{ BlockList,
-    BlockListPoint, Gap, RemovableBlocklistItem,
+    BlockListPoint, Gap,
 };
 use crate::terminal::model::escape_sequences::{
     self, C1, EscCodes, ToEscapeSequence, alt_screen_scroll_to_pty_bytes,
@@ -339,7 +336,7 @@ use crate::terminal::{
     AudibleBell, BlockListSettings, BlockListSettingsChangedEvent, CellSizeAndWindowPadding,
     History, HistoryEntry, ShellHost, ShellLaunchData, SizeInfo, SizeUpdate, SizeUpdateReason,
     color, element_size_at_last_frame, height_in_range_approx, heights_approx_eq,
-    heights_approx_gt, heights_approx_gte, prompt,
+    heights_approx_gt, prompt,
 };
 use crate::terminal::{
     TerminalModel,

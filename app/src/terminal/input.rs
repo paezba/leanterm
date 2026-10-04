@@ -75,7 +75,6 @@ use warpui::{
 
 use self::decorations::InputBackgroundJobOptions;
 use super::alias::is_expandable_alias;
-use super::block_list_viewport::InputMode;
 use super::event::{BlockCompletedEvent, BlockType, UserBlockCompleted};
 use super::ligature_settings::LigatureSettings;
 use super::model::block::{ BlockId, BlockMetadata, BlocklistEnvVarMetadata,
@@ -151,7 +150,7 @@ use crate::settings::{ AliasExpansionSettings, AppEditorSettings,
 };
 use crate::settings_view::{SettingsSection, flags};
 use crate::suggestions::ignored_suggestions_model::{
-    IgnoredSuggestionsModel, IgnoredSuggestionsModelEvent, SuggestionType,
+    IgnoredSuggestionsModel, SuggestionType,
 };
 use crate::terminal::input::buffer_model::InputBufferModel;
 use crate::terminal::input::suggestions_mode_model::InputSuggestionsModeModel;
@@ -181,9 +180,6 @@ use crate::workflows::{self, WorkflowSelectionSource, WorkflowSource, WorkflowTy
 use crate::workspace::sync_inputs::SyncedInputState;
 use crate::workspace::{
     CommandSearchOptions, InitContent, ToastStack, WorkspaceAction,
-};
-use crate::workspaces::user_workspaces::{
-    TeamContext, UserWorkspaces,
 };
 
 /// Drop target data for dropping content on the [`Input`].

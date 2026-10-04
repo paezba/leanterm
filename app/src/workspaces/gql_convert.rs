@@ -40,7 +40,7 @@ use warp_graphql::workspace::{
     AdminEnablementSetting as GqlAdminEnablementSetting,
     AiPermissionsSettings as GqlAiPermissionsSettings, EmailInvite as GqlEmailInvite,
     InviteLinkDomainRestriction as GqlInviteLinkDomainRestriction,
-    MembershipRole as GqlMembershipRole, StringListSettingInfo as GqlStringListSettingInfo,
+    MembershipRole as GqlMembershipRole,
     Team as GqlTeam, TeamMember as GqlTeamMember,
     TeamSettings as GqlTeamSettings, TeamVisibility as GqlTeamVisibility,
     UgcCollectionEnablementSetting as GqlUgcCollectionEnablementSetting, Workspace as GqlWorkspace,

@@ -3,19 +3,18 @@ use std::path::Path;
 
 use warp_core::ui::theme::Fill;
 use warpui::elements::{
-    Border, ChildView, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Empty,
+    Border, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Empty,
     Expanded, Flex, HighlightedRange, MainAxisAlignment, MainAxisSize, MouseStateHandle,
     ParentElement, Radius, Shrinkable, Text,
 };
 use warpui::ui_components::components::UiComponent;
-use warpui::{AppContext, Element, EventContext, SingletonEntity, ViewHandle};
+use warpui::{AppContext, Element, EventContext, SingletonEntity};
 
 use crate::ui_components::inline_action_header::{
     INLINE_ACTION_HEADER_VERTICAL_PADDING, INLINE_ACTION_HORIZONTAL_PADDING,
 };
 use crate::ui_components::inline_action_icons::icon_size;
 use crate::appearance::Appearance;
-use crate::code::editor::view::CodeEditorView;
 use crate::code::editor_management::CodeSource;
 use crate::search::ItemHighlightState;
 use crate::search::files::icon::icon_from_file_path;

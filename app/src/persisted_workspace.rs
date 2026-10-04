@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::SyncSender;
 
@@ -22,7 +22,7 @@ use warp_errors::report_if_error;
 use warp_util::standardized_path::StandardizedPath;
 #[cfg(feature = "local_fs")]
 use warpui::windowing::WindowManager;
-use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
+use warpui::{Entity, ModelContext, SingletonEntity};
 
 #[cfg(feature = "local_fs")]
 use crate::code::language_server_shutdown_manager::LanguageServerShutdownManager;
@@ -33,7 +33,6 @@ use crate::persistence::ModelEvent;
 use crate::send_telemetry_from_ctx;
 #[cfg(feature = "local_fs")]
 use crate::server::server_api::ServerApiProvider;
-use crate::terminal::TerminalView;
 #[cfg(feature = "local_fs")]
 use crate::terminal::local_shell::LocalShellState;
 #[cfg(feature = "local_fs")]

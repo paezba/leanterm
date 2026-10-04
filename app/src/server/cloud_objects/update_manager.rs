@@ -36,12 +36,11 @@ use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent, Updat
 use crate::cloud_object::model::view::{CloudViewModel, Editor, EditorState};
 use crate::cloud_object::{
     CloudLinkSharing, CloudModelType, CloudObject, CloudObjectEventEntrypoint, CloudObjectLocation,
-    CloudObjectSyncStatus, CreateCloudObjectResult, CreateObjectRequest, GenericCloudObject,
+    CloudObjectSyncStatus, GenericCloudObject,
     GenericServerObject, GenericStringObjectFormat, JsonObjectType, NumInFlightRequests,
     ObjectDeleteResult, ObjectIdType, ObjectMetadataUpdateResult, ObjectPermissionsUpdateData,
     ObjectType, Owner, Revision, RevisionAndLastEditor, ServerCloudObject,
     ServerEnvVarCollection, ServerMetadata, ServerPermissions, ServerPreference, ServerWorkflowEnum, Space,
-    UpdateCloudObjectResult,
 };
 use crate::drive::CloudObjectTypeAndId;
 use crate::drive::drive_helpers::{

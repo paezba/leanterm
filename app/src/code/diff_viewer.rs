@@ -1,10 +1,9 @@
-use std::ops::Range;
 
 use ai::diff_validation::DiffType;
 use warp_editor::render::element::VerticalExpansionBehavior;
 use warpui::elements::ScrollbarWidth;
 use warpui::elements::new_scrollable::ScrollableAppearance;
-use warpui::{AppContext, View, ViewContext, ViewHandle};
+use warpui::{View, ViewContext, ViewHandle};
 
 use super::editor::NavBarBehavior;
 use super::editor::scroll::ScrollWheelBehavior;

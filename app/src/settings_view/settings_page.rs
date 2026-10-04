@@ -49,7 +49,7 @@ use crate::themes::theme::Fill;
 use crate::ui_components::blended_colors;
 use crate::ui_components::icons::Icon;
 use crate::view_components::{
-    Dropdown, DropdownItemAction, FilterableDropdown, SubmittableTextInput,
+    Dropdown, DropdownItemAction, SubmittableTextInput,
 };
 
 pub const TOGGLE_BUTTON_RIGHT_PADDING: f32 = 5.;

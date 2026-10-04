@@ -2,7 +2,6 @@ use std::path::{Path, PathBuf};
 #[cfg(not(target_family = "wasm"))]
 use std::{fs, sync::Arc, time::Duration};
 
-use dirs::home_dir;
 #[cfg(not(target_family = "wasm"))]
 use notify_debouncer_full::notify::{RecursiveMode, WatchFilter};
 use repo_metadata::RepositoryUpdate;

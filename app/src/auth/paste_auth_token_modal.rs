@@ -26,14 +26,12 @@ use warpui::{
 };
 
 use crate::appearance::Appearance;
-use crate::auth::auth_manager::{AuthManager, AuthManagerEvent};
+use crate::auth::auth_manager::AuthManager;
 use crate::auth::auth_view_modal::AuthRedirectPayload;
 use crate::auth::login_failure_notification::LoginFailureReason;
 use crate::editor::{
-    EditorView, InteractionState, SingleLineEditorOptions, TextColors, TextOptions,
+    EditorView, InteractionState,
 };
-use crate::server::server_api::auth::UserAuthenticationError;
-use crate::themes::theme::Fill as ThemeFill;
 use crate::util::bindings::CustomAction;
 
 const MODAL_WIDTH: f32 = 460.;

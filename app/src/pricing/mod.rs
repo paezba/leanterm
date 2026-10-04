@@ -1,5 +1,5 @@
 use warp_graphql::billing::{
-    AddonCreditsOption, OveragesPricing, PlanPricing, PricingInfo, StripeSubscriptionPlan,
+    OveragesPricing, PlanPricing, PricingInfo, StripeSubscriptionPlan,
 };
 use warpui::{Entity, ModelContext, SingletonEntity};
 

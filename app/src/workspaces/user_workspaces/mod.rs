@@ -45,7 +45,7 @@ pub(crate) mod team_workspace_settings;
 #[cfg(test)]
 pub(crate) use team_workspace_settings::TeamlessScopeForTest;
 pub use team_workspace_settings::{
-    ResolvedTeamScope, TeamContext, TeamContextForOperation, TeamScope,
+    ResolvedTeamScope, TeamContext, TeamScope,
 };
 
 const STRIPE_SUBSCRIPTION_INTERVAL_PAGE_PREFIX: &str = "/upgrade";

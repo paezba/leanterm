@@ -21,7 +21,6 @@ use lsp::{
 use lsp_types::FormattingOptions;
 use markdown_parser::FormattedText;
 use num_traits::SaturatingSub;
-use pathfinder_color::ColorU;
 use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::Vector2F;
 use remote_server::manager::RemoteServerManager;
@@ -64,8 +63,6 @@ use crate::code::global_buffer_model::{BufferState, GlobalBufferModel, GlobalBuf
 use crate::code::{SaveOutcome, ShowFindReferencesCardProvider};
 use crate::code_review::comments::CommentId;
 use crate::menu::{Event, Menu, MenuItem, MenuItemFields};
-use crate::terminal::TerminalView;
-use crate::workspace::WorkspaceAction;
 
 const HOVER_DEBOUNCE_PERIOD: Duration = Duration::from_millis(500);
 

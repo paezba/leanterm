@@ -1,5 +1,4 @@
 use crate::server::ids::ServerId;
-use crate::workspaces::user_workspaces::TeamScope;
 
 impl RequestTeamScope {
 

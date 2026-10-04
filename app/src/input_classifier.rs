@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
-use input_classifier::{HeuristicClassifier, InputClassifier};
+use input_classifier::InputClassifier;
 #[cfg(any(
     feature = "nld_classifier_v1",
     feature = "nld_classifier_v2",
     feature = "nld_classifier_v3"
 ))]
 use input_classifier::{OnnxClassifier, OnnxModel};
-use warpui::{Entity, ModelContext, SingletonEntity};
+use warpui::{Entity, SingletonEntity};
 
 impl InputClassifierModel {
 

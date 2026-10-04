@@ -1,17 +1,8 @@
 //! A reusable warning callout component with optional action button.
-use markdown_parser::{FormattedText, FormattedTextInline, FormattedTextLine};
-use warp_core::ui::color::blend::Blend;
+use markdown_parser::FormattedTextInline;
 use warpui::EventContext;
-use warpui::color::ColorU;
-use warpui::elements::{
-    Border, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Element, Expanded, Flex,
-    FormattedTextElement, Hoverable, HyperlinkLens, MainAxisSize, MouseStateHandle, ParentElement,
-    Radius, Text,
-};
-use warpui::platform::Cursor;
+use warpui::elements::MouseStateHandle;
 
-use crate::appearance::Appearance;
-use crate::themes::theme::Fill as ThemeFill;
 use crate::ui_components::icons::Icon;
 
 impl WarningBoxButtonConfig {

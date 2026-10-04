@@ -4,12 +4,8 @@
 use std::rc::Rc;
 
 use settings::Setting;
-#[cfg(not(target_family = "wasm"))]
-use warp_cli::scope::{ObjectScope, TeamSelection};
 use warpui::{AppContext, Entity, SingletonEntity, ViewContext, WeakViewHandle, WindowId};
 
-#[cfg(not(target_family = "wasm"))]
-use super::SoleTeamError;
 use super::UserWorkspaces;
 #[cfg(any(test, feature = "test-util"))]
 use crate::ai::llms::LLMInfo;
