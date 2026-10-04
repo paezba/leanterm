@@ -85,7 +85,8 @@ use crate::code::local_code_editor::{
 use crate::code::view::PendingSaveIntent;
 use crate::code_review::DiffSetScope;
 use crate::code_review::comments::{
-    AttachedReviewCommentTarget, CommentId, ReviewCommentBatch, ReviewCommentBatchEvent,
+    AttachedReviewCommentTarget, CommentId, CurrentHead, DiffBase, ReviewCommentBatch,
+    ReviewCommentBatchEvent,
 };
 use crate::code_review::diff_selector::{DiffSelector, DiffSelectorEvent, DiffTarget};
 use crate::code_review::diff_state::{
