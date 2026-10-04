@@ -15202,16 +15202,7 @@ impl TypedActionView for TerminalView {
                         ))
                     })
             }
-            BlockSelect { .. }
-            | SelectPriorBlock
-            | SelectNextBlock
-            | SelectBookmarkUp
-            | SelectBookmarkDown
-            | JumpToLatestAgentMessage
-            | Up
-            | Down
-            | JumpToBookmark(_)
-            | ScrollToTopOfBlock { topmost_block: _ } => {
+            BlockSelect { .. } | SelectPriorBlock | SelectNextBlock | SelectBookmarkUp | SelectBookmarkDown | Up | Down | JumpToBookmark(_) | ScrollToTopOfBlock { topmost_block: _ } => {
                 if let Some(content) = self
                     .selected_blocks
                     .tail()
@@ -15337,89 +15328,10 @@ impl TypedActionView for TerminalView {
                 "Opened file search palette",
                 WarpA11yRole::ButtonRole,
             )),
-            InsertCommandCorrection { .. }
-            | BlockListContextMenu(_)
-            | CloseContextMenu
-            | Paste
-            | MiddleClickOnGrid { .. }
-            | MiddleClickOnInput
-            | CopyCommands
-            | MaybeHoverSecret { .. }
-            | CopyGitBranch
-            | OpenShareModal
-            | ReinputCommands
-            | ReinputCommandsWithSudo
-            | ClearBuffer
-            | Focus
-            | ShowFindBar
-            | PageUp
-            | PageDown
-            | Home
-            | End
-            | KeyboardSelectText(_)
-            | ContextMenu(_)
-            | SplitRight(_)
-            | SplitLeft(_)
-            | SplitDown(_)
-            | SplitUp(_)
-            | OpenGridLink(_)
-            | OpenRichContentLink(_)
-            | ToggleGridSecret { .. }
-            | ToggleRichContentSecret { .. }
-            | CopyGridSecret(_)
-            | CopyRichContentSecret(_)
-            | ShowInFileExplorer(_)
-            | OpenFileInWarp(_)
-            | CtrlD
-            | CtrlC
-            | ClearSelectionsWhenShellMode
-            | Close
-            | TypedCharacters(_)
-            | UserInputSequence(_)
-            | ControlSequence(_)
-            | TriggerSubshellBootstrap
-            | ShowSubshellBanner(_)
-            | DismissWarpifyBanner(_)
-            | OpenBlockListContextMenu
-            | AliasExpansionBanner(_)
-            | VimModeBanner(_)
-            | InsertMostRecentCommandCorrection
-            | StopSharingCurrentSession { .. }
-            | RequestSharedSessionRole(_)
-            | OnboardingFlow(_)
-            | ImportSettings
-            | DragAndDropFiles(_)
-            | ToggleBlockFilterOnSelectedOrLastBlock(_)
-            | SetMarkedText { .. }
-            | ResumeConversation
-            | ForkConversationFromLastKnownGoodState
-            | ToggleAIDocumentPane
-            | ClearMarkedText
-            | StartLspServer => ActionAccessibilityContent::from_debug(),
+            InsertCommandCorrection { .. } | BlockListContextMenu(_) | CloseContextMenu | Paste | MiddleClickOnGrid { .. } | MiddleClickOnInput | CopyCommands | MaybeHoverSecret { .. } | CopyGitBranch | OpenShareModal | ReinputCommands | ReinputCommandsWithSudo | ClearBuffer | Focus | ShowFindBar | PageUp | PageDown | Home | End | KeyboardSelectText(_) | ContextMenu(_) | SplitRight(_) | SplitLeft(_) | SplitDown(_) | SplitUp(_) | OpenGridLink(_) | OpenRichContentLink(_) | ToggleGridSecret { .. } | CopyGridSecret(_) | ShowInFileExplorer(_) | OpenFileInWarp(_) | CtrlD | CtrlC | ClearSelectionsWhenShellMode | Close | TypedCharacters(_) | UserInputSequence(_) | ControlSequence(_) | TriggerSubshellBootstrap | ShowSubshellBanner(_) | DismissWarpifyBanner(_) | OpenBlockListContextMenu | AliasExpansionBanner(_) | VimModeBanner(_) | InsertMostRecentCommandCorrection | StopSharingCurrentSession { .. } | RequestSharedSessionRole(_) | ImportSettings | DragAndDropFiles(_) | ToggleBlockFilterOnSelectedOrLastBlock(_) | SetMarkedText { .. } | ClearMarkedText | StartLspServer => ActionAccessibilityContent::from_debug(),
             #[cfg(feature = "local_fs")]
             OpenCodeInWarp { .. } => ActionAccessibilityContent::from_debug(),
             OpenInWarpBanner(action) => self.open_in_warp_banner_accessibility_content(*action),
-            OpenAIBlockAttachedBlocksMenu { .. } => Custom(AccessibilityContent::new_without_help(
-                "Open list of blocks attached as context to this AI query.".to_owned(),
-                WarpA11yRole::PopoverRole,
-            )),
-            OpenAIBlockOverflowMenu { .. } => Custom(AccessibilityContent::new_without_help(
-                "Open overflow menu with copy options for this AI block.".to_owned(),
-                WarpA11yRole::PopoverRole,
-            )),
-            RewindAIConversation { .. } => Custom(AccessibilityContent::new_without_help(
-                "Show confirmation dialog to rewind to before this point in the AI conversation."
-                    .to_owned(),
-                WarpA11yRole::ButtonRole,
-            )),
-            ExecuteRewindAIConversation { .. } => Custom(AccessibilityContent::new_without_help(
-                "Execute rewind to before this point in the AI conversation.".to_owned(),
-                WarpA11yRole::ButtonRole,
-            )),
-            SelectAIAttachedBlock(_) => Custom(AccessibilityContent::new_without_help(
-                "Click on a block attached as context to this AI query.".to_owned(),
-                WarpA11yRole::ButtonRole,
-            )),
             PickRepoToOpen => Custom(AccessibilityContent::new_without_help(
                 "Use file picker to select a git repository".to_owned(),
                 WarpA11yRole::PopoverRole,
@@ -15428,97 +15340,7 @@ impl TypedActionView for TerminalView {
             ToggleCLIAgentVoiceInput(_) => Empty,
             // Below are actions that are most likely irrelevant to users or are very noisy and the
             // debug version shouldn't be announced.
-            Scroll { .. }
-            | AltScroll { .. }
-            | SharedSessionViewerAltScroll { .. }
-            | ClickOnGrid { .. }
-            | MaybeDismissToolTip { .. }
-            | MaybeClearAltSelect
-            | AltScreenContextMenu { .. }
-            | AltSelect(_)
-            | AltMouseAction(_)
-            | ToggleMaximizePane
-            | PromptContextMenu { .. }
-            | OpenInputContextMenu { .. }
-            | InputContextMenuItem(_)
-            | NotificationsDiscoveryBanner(_)
-            | NotificationsErrorBanner(_)
-            | OpenWorkflowModal
-            | OpenWorkflowModalForAIWorkflow(_)
-            | OpenWorkflowModalForBlock(_)
-            | OpenWorkflowModalWithCloudWorkflow(_)
-            | OpenShareSessionModal { .. }
-            | OpenSharedSessionViewerRoleMenu
-            | CopySharedSessionLink { .. }
-            | OpenSharedSessionOnDesktop { .. }
-            | MakeAllParticipantsReaders { .. }
-            | AskAIAssistant { .. }
-            | ToggleSnackbarInActivePane
-            | SetInputModeAgent
-            | SetInputModeTerminal
-            | HyperlinkClick { .. }
-            | AttemptLoginGatedFeature
-            | StartFileDropTarget
-            | StopFileDropTarget
-            | RunNativeShellCompletions { .. }
-            | OpenTeamSettingsPage
-            | HideTelemetryBannerPermanently
-            | GenerateCodebaseIndex
-            | LoadAgentModeConversation
-            | DeleteAttachment { .. }
-            | OpenAttachmentLightbox { .. }
-            | WriteCodebaseIndex
-            | AttachFile
-            | ToggleAutoexecuteMode
-            | ToggleQueueNextPrompt
-            | ToggleTodoPopup
-            | CloseTodoPopup
-            | ToggleCodeReviewPane { .. }
-            | OpenProjectRulesPane
-            | InitProject
-            | IndexProjectSpeedbump
-            | OpenViewMCPPane
-            | OpenAddMCPPane
-            | OpenBillingAndUsagePane
-            | OpenAddRulePane
-            | OpenRulesPane
-            | OpenEditSkillPane { .. }
-            | OpenAddPromptPane
-            | AddProjectAtCurrentDirectory
-            | CodebaseIndexSpeedbumpBanner(_)
-            | AgentModeSetupSpeedbumpBanner(_)
-            | SetupCloudEnvironment(_)
-            | SetupCloudEnvironmentAndStart(_)
-            | TriggerEnvironmentSetupSelection(_)
-            | OpenEnvironmentManagementPane
-            | DismissCodeToolbeltTooltip
-            | SummarizeConversation
-            | ToggleLongRunningCommandControl
-            | ToggleHideCliResponses
-            | OpenConversationsPalette
-            | ExitAgentView
-            | EnterCloudAgentView
-            | StartNewAgentConversation { .. }
-            | ToggleConversationDetailsPanel
-            | CancelAmbientAgentTask
-            | OpenInlineHistoryMenu
-            | OpenModelSelector
-            | ResolvePromptSuggestion(..)
-            | AwsBedrockLoginBanner(_)
-            | AwsCliNotInstalledBanner(_)
-            | ExecuteRewindFromInlineMenu { .. }
-            | ToggleUsageFooter
-            | RevealChildAgent { .. }
-            | SwitchAgentViewToConversation { .. }
-            | OpenChildAgentInNewPane { .. }
-            | OpenChildAgentInNewTab { .. }
-            | StopAgentConversation { .. }
-            | KillAgentConversation { .. }
-            | CyclePreviousOrchestrationChildAgent
-            | CycleNextOrchestrationChildAgent
-            | ToggleCLIAgentRichInput
-            | ToggleSessionRecording
-            | Osc52AllowBlockedClipboardOperation => Empty,
+            Scroll { .. } | AltScroll { .. } | SharedSessionViewerAltScroll { .. } | ClickOnGrid { .. } | MaybeDismissToolTip { .. } | MaybeClearAltSelect | AltScreenContextMenu { .. } | AltSelect(_) | AltMouseAction(_) | ToggleMaximizePane | PromptContextMenu { .. } | OpenInputContextMenu { .. } | InputContextMenuItem(_) | NotificationsDiscoveryBanner(_) | NotificationsErrorBanner(_) | OpenWorkflowModal | OpenWorkflowModalForBlock(_) | OpenWorkflowModalWithCloudWorkflow(_) | OpenShareSessionModal { .. } | OpenSharedSessionViewerRoleMenu | CopySharedSessionLink { .. } | OpenSharedSessionOnDesktop { .. } | MakeAllParticipantsReaders { .. } | ToggleSnackbarInActivePane | HyperlinkClick { .. } | AttemptLoginGatedFeature | StartFileDropTarget | StopFileDropTarget | RunNativeShellCompletions { .. } | OpenTeamSettingsPage | ToggleCodeReviewPane { .. } | DismissCodeToolbeltTooltip | ToggleSessionRecording | Osc52AllowBlockedClipboardOperation => Empty,
         }
     }
 
@@ -15580,18 +15402,6 @@ impl TypedActionView for TerminalView {
             AltScreenContextMenu { position } => self.alt_screen_context_menu(*position, ctx),
             AltMouseAction(mouse_state) => self.alt_mouse_action(mouse_state, ctx),
             BlockListContextMenu(menu_state) => self.block_list_context_menu(menu_state, ctx),
-            OpenAIBlockOverflowMenu {
-                exchange_id,
-                conversation_id: ai_conversation_id,
-                ai_block_view_id,
-                is_restored,
-            } => self.open_ai_block_overflow_context_menu(
-                *ai_block_view_id,
-                *exchange_id,
-                *ai_conversation_id,
-                *is_restored,
-                ctx,
-            ),
             CloseContextMenu => self.close_context_menu(ctx, true),
             Paste => self.paste(false, ctx),
             Copy => self.copy(ctx),
@@ -15821,9 +15631,6 @@ impl TypedActionView for TerminalView {
             OpenSharedSessionOnDesktop { source } => {
                 self.open_shared_session_on_desktop(*source, ctx)
             }
-            SelectAIAttachedBlock(block_index) => {
-                self.scroll_to_and_maybe_select_block(*block_index, ctx)
-            }
             DragAndDropFiles(paths) => {
                 self.drag_and_drop_files(paths, ctx);
             }
@@ -15875,15 +15682,8 @@ impl TypedActionView for TerminalView {
                 selected_range,
             } => self.set_marked_text_on_terminal(marked_text, selected_range, ctx),
             ClearMarkedText => self.clear_marked_text_on_terminal(ctx),
-            HideTelemetryBannerPermanently => self.hide_telemetry_banner_permanently(ctx),
             ShowInitializationBlock => self.show_initialization_block(),
-            GenerateCodebaseIndex => {
-                self.generate_codebase_index(ctx);
-            }
             ShowWarpifySettings => ctx.emit(Event::OpenSettings(SettingsSection::Warpify)),
-            WriteCodebaseIndex => {
-                self.write_codebase_index(ctx);
-            }
             ToggleCodeReviewPane { entrypoint } => {
                 ctx.emit(Event::ToggleCodeReviewPane(CodeReviewPanelArg {
                     repo_path: self.current_repo_path.clone(),

@@ -116,8 +116,6 @@ impl TerminalView {
     /// ended-conversation tombstone even though its session is still reachable; reattaching must
     /// produce a writable terminal rather than that ended-run view.
     pub(crate) fn prepare_for_live_session_reattach(&mut self, ctx: &mut ViewContext<Self>) {
-        self.remove_conversation_ended_tombstone(ctx);
-
         {
             let mut model = self.model.lock();
             if model.shared_session_status().is_finished_viewer() {
@@ -719,10 +717,6 @@ impl TerminalView {
             pane_config.notify_header_content_changed(ctx);
             ctx.notify();
         });
-    }
-
-    pub fn on_ambient_agent_execution_ended(&mut self, ctx: &mut ViewContext<Self>) {
-        self.handle_non_running_ambient_agent_task(ctx);
     }
 
     pub fn handle_inactivity_modal_event(
