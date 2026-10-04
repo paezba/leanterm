@@ -138,10 +138,6 @@ use super::util::{
     WorkspaceMouseStates, WorkspaceState, team_switcher_menu_items,
 };
 use super::{ActiveSession, TabBarDropTargetData, TabBarLocation, WorkspaceRegistry, util};
-#[cfg(target_family = "wasm")]
-use crate::ai::agent_conversations_model::AgentConversationsModelEvent;
-#[cfg(target_family = "wasm")]
-use crate::ai::conversation_details_panel::ConversationDetailsPanel;
 use crate::persisted_workspace::PersistedWorkspace;
 use crate::app_state::{
     LeafContents, LeafSnapshot, LeftPanelDisplayedTab, LeftPanelSnapshot, NotebookPaneSnapshot,
@@ -2778,10 +2774,6 @@ impl Workspace {
         self.palette.clone()
     }
 
-    #[cfg(any(test, feature = "integration_tests"))]
-    pub fn ai_fact_view(&self) -> ViewHandle<AIFactView> {
-        self.ai_fact_view.clone()
-    }
 
     /// Handle session settings changes.
     fn handle_session_settings_event(

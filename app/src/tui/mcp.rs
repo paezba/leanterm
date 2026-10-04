@@ -5,15 +5,6 @@ use std::path::PathBuf;
 use uuid::Uuid;
 use warpui::{Entity, ModelContext, SingletonEntity};
 
-use crate::ai::mcp::file_based_manager::FileBasedMCPServerScope;
-use crate::ai::mcp::gallery::MCPGalleryManagerEvent;
-use crate::ai::mcp::parsing::resolve_json;
-use crate::ai::mcp::templatable_manager::TemplatableMCPServerManagerEvent;
-use crate::ai::mcp::{
-    FileBasedMCPManager, FileMCPWatcher, MCPGalleryManager, MCPServer, MCPServerExt,
-    MCPServerState, TemplatableMCPServer, TemplatableMCPServerInstallation,
-    TemplatableMCPServerManager, TransportType, VariableType, VariableValue,
-};
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum TuiMcpServerId {

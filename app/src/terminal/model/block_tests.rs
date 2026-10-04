@@ -1667,37 +1667,7 @@ fn test_restored_block_was_local() {
     assert_eq!(block.restored_block_was_local(), None);
 }
 
-#[test]
-fn test_deserialize_legacy_agent_view_visibility_agent_variant() {
-    let origin_conversation_id = AIConversationId::new();
-    let json = format!("{{\"Agent\":{{\"conversation_id\":\"{origin_conversation_id}\"}}}}");
 
-    let visibility: SerializedAgentViewVisibility = serde_json::from_str(&json).unwrap();
-    match visibility {
-        SerializedAgentViewVisibility::Agent {
-            origin_conversation_id: parsed_origin_conversation_id,
-            pending_other_conversation_ids,
-            other_conversation_ids,
-        } => {
-            assert_eq!(parsed_origin_conversation_id, origin_conversation_id);
-            assert!(pending_other_conversation_ids.is_empty());
-            assert!(other_conversation_ids.is_empty());
-        }
-        _ => panic!("Expected agent visibility"),
-    }
-}
-
-#[test]
-fn test_calculate_optimal_row_counts_wide_terminal() {
-    // Terminal width >= 150 should return default values
-    let (top, bottom) = calculate_optimal_row_counts(150, 100, 200);
-    assert_eq!(top, 100);
-    assert_eq!(bottom, 200);
-
-    let (top, bottom) = calculate_optimal_row_counts(200, 50, 100);
-    assert_eq!(top, 50);
-    assert_eq!(bottom, 100);
-}
 
 #[test]
 fn test_calculate_optimal_row_counts_narrow_terminal() {

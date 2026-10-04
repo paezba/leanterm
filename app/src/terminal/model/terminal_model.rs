@@ -973,7 +973,6 @@ impl TerminalModel {
             honor_ps1,
             is_inverted,
             ObfuscateSecrets::No,
-            false,
             session_startup_path,
             ShellLaunchState::ShellSpawned {
                 available_shell: None,

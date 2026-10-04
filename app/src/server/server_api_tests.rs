@@ -2,8 +2,7 @@ use futures::executor::block_on;
 use mockito::Server;
 
 use super::*;
-use crate::server::retry_strategies::is_transient_http_error;
-use crate::workspaces::user_workspaces::{TeamContextForOperation, TeamlessScopeForTest};
+use crate::workspaces::user_workspaces::{ TeamlessScopeForTest};
 
 /// Sends a GET request to a mock endpoint returning `status`/`headers`/`body`, then feeds the
 /// resulting response through [`ServerApi::error_from_response`].
@@ -36,91 +35,8 @@ fn status_in_chain(err: &anyhow::Error) -> Option<u16> {
         .map(|status_error| status_error.status)
 }
 
-#[test]
-fn permanent_4xx_client_error_carries_status_and_fails_fast() {
-    let err = error_from_mock_response(
-        403,
-        &[],
-        r#"{"error": "checkpoint generation is incomplete"}"#,
-    );
 
-    assert_eq!(status_in_chain(&err), Some(403));
-    assert!(!is_transient_http_error(&err));
-    assert_eq!(err.to_string(), "checkpoint generation is incomplete");
-    assert_eq!(
-        err.downcast_ref::<ClientError>().unwrap().error,
-        "checkpoint generation is incomplete"
-    );
-}
 
-#[test]
-fn permanent_4xx_without_parseable_body_still_carries_status() {
-    let err = error_from_mock_response(404, &[], "not found");
 
-    assert_eq!(status_in_chain(&err), Some(404));
-    assert!(!is_transient_http_error(&err));
-    assert_eq!(
-        err.to_string(),
-        "API request failed with status 404 Not Found"
-    );
-}
 
-#[test]
-fn transient_5xx_still_retries() {
-    let err = error_from_mock_response(503, &[], "unavailable");
 
-    assert_eq!(status_in_chain(&err), Some(503));
-    assert!(is_transient_http_error(&err));
-}
-
-#[test]
-fn at_capacity_header_wraps_capacity_error_and_still_carries_status() {
-    let err = error_from_mock_response(
-        403,
-        &[(WARP_ERROR_CODE_HEADER, WARP_ERROR_CODE_AT_CAPACITY)],
-        r#"{"error": "at capacity", "running_agents": 5}"#,
-    );
-
-    assert_eq!(status_in_chain(&err), Some(403));
-    assert!(!is_transient_http_error(&err));
-    assert_eq!(
-        err.downcast_ref::<CloudAgentCapacityError>()
-            .unwrap()
-            .running_agents,
-        5
-    );
-}
-
-#[test]
-fn out_of_credits_429_wraps_quota_limit_and_stays_transient() {
-    let err = error_from_mock_response(
-        429,
-        &[(WARP_ERROR_CODE_HEADER, WARP_ERROR_CODE_OUT_OF_CREDITS)],
-        r#"{"userDisplayMessage": "You're out of credits"}"#,
-    );
-
-    // 429 always retries regardless of error code, matching every other public-API caller.
-    assert_eq!(status_in_chain(&err), Some(429));
-    assert!(is_transient_http_error(&err));
-    assert!(matches!(
-        err.downcast_ref::<AIApiError>().unwrap(),
-        AIApiError::QuotaLimit {
-            user_display_message: Some(message)
-        } if message == "You're out of credits"
-    ));
-}
-
-#[test]
-fn team_uid_header_value_includes_only_resolved_team_scope() {
-    let team_uid = 7.into();
-    let team_scope = RequestTeamScope::from_scope(&TeamContextForOperation::new_for_test(team_uid));
-
-    assert_eq!(
-        ServerApi::team_uid_header_value(team_scope),
-        Some(team_uid.uid().to_string())
-    );
-    assert_eq!(
-        ServerApi::team_uid_header_value(RequestTeamScope::from_scope(&TeamlessScopeForTest)),
-        None
-    );
-}

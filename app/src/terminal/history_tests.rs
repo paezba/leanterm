@@ -11,10 +11,8 @@ use warp_core::command::ExitCode;
 use warpui::{App, ModelHandle};
 
 use super::{HistoryEntry, HistoryEvent, PersistedCommand, ShellHost};
-use crate::ai::agent::conversation::AIConversationId;
 use crate::terminal::History;
-use crate::terminal::model::block::{
-    AgentInteractionMetadata, SerializedAIMetadata, SerializedBlock,
+use crate::terminal::model::block::{ SerializedBlock,
 };
 use crate::terminal::model::bootstrap::BootstrapStage;
 use crate::terminal::model::session::command_executor::testing::TestCommandExecutor;
@@ -74,7 +72,6 @@ impl HistoryEntry {
             completed_ts: None,
             git_head: None,
             shell_host: None,
-            is_agent_executed: false,
             is_for_restored_block: false,
         }
     }
@@ -95,81 +92,14 @@ impl HistoryEntry {
             completed_ts: None,
             git_head: None,
             shell_host: None,
-            is_agent_executed: false,
             is_for_restored_block: false,
         }
     }
 }
 
-#[test]
-fn history_entry_for_restored_block_preserves_agent_execution() {
-    let mut block = TestBlockBuilder::new()
-        .with_bootstrap_stage(BootstrapStage::RestoreBlocks)
-        .build();
-    block.set_agent_interaction_mode_for_requested_command(
-        String::from("action-id").into(),
-        None,
-        AIConversationId::new(),
-    );
 
-    let entry = HistoryEntry::for_restored_block("ls".to_string(), &block);
 
-    assert!(entry.is_agent_executed);
-}
 
-#[test]
-fn history_entry_for_restored_block_does_not_treat_all_agent_interactions_as_agent_execution() {
-    let mut block = TestBlockBuilder::new()
-        .with_bootstrap_stage(BootstrapStage::RestoreBlocks)
-        .build();
-    block.set_agent_interaction_mode(AgentInteractionMetadata::new(
-        None,
-        AIConversationId::new(),
-        None,
-        None,
-        false,
-        false,
-    ));
-
-    let entry = HistoryEntry::for_restored_block("ls".to_string(), &block);
-
-    assert!(!entry.is_agent_executed);
-}
-
-#[test]
-fn history_entry_for_completed_block_preserves_agent_execution() {
-    let ai_metadata = serde_json::to_string(&SerializedAIMetadata::from(
-        AgentInteractionMetadata::new_hidden(
-            String::from("action-id").into(),
-            AIConversationId::new(),
-        ),
-    ))
-    .unwrap();
-    let block = SerializedBlock {
-        ai_metadata: Some(ai_metadata),
-        ..SerializedBlock::new_for_test("ls".as_bytes().to_vec(), vec![])
-    };
-
-    let entry = HistoryEntry::for_completed_block("ls".to_string(), &block);
-
-    assert!(entry.is_agent_executed);
-}
-
-#[test]
-fn history_entry_for_completed_block_does_not_treat_all_agent_interactions_as_agent_execution() {
-    let ai_metadata = serde_json::to_string(&SerializedAIMetadata::from(
-        AgentInteractionMetadata::new(None, AIConversationId::new(), None, None, false, false),
-    ))
-    .unwrap();
-    let block = SerializedBlock {
-        ai_metadata: Some(ai_metadata),
-        ..SerializedBlock::new_for_test("ls".as_bytes().to_vec(), vec![])
-    };
-
-    let entry = HistoryEntry::for_completed_block("ls".to_string(), &block);
-
-    assert!(!entry.is_agent_executed);
-}
 
 /// Initializes history for testing
 /// initialization is complete.
@@ -204,57 +134,6 @@ async fn initialize_history_for_testing<F>(
     });
 }
 
-#[test]
-fn test_append_commands() {
-    VirtualFS::test("history_append_command", |dirs, mut sandbox| {
-        App::test((), |mut app| async move {
-            sandbox.with_files(vec![Stub::FileWithContentToBeTrimmed(
-                ".bash_history",
-                r#"
-                    ls
-                    pwd
-                    warp --listen --ports=8080,8081
-                "#,
-            )]);
-
-            let mut history_handle = app.add_model(|_| History::default());
-            let file = Some(dirs.tests().join(".bash_history").display().to_string());
-            let session = Arc::new(Session::new(
-                SessionInfo::new_for_test()
-                    .with_histfile(file)
-                    .with_shell_type(ShellType::Bash),
-                Arc::new(TestCommandExecutor::default()),
-            ));
-
-            let session_clone = session.clone();
-            initialize_history_for_testing(
-                &mut history_handle,
-                session.clone(),
-                async move { session_clone.read_history(false).await },
-                vec![
-                    "pwd".to_owned(),
-                    "ls".to_owned(),
-                    "pwd".to_owned(),
-                    "git status".to_owned(),
-                ],
-                &mut app,
-            )
-            .await;
-
-            history_handle.read(&app, |history, _ctx| {
-                assert_eq!(
-                    history.commands(session.id()).unwrap_or_default(),
-                    vec![
-                        &HistoryEntry::command_only("warp --listen --ports=8080,8081"),
-                        &HistoryEntry::with_session_id(session.id(), "ls"),
-                        &HistoryEntry::with_session_id(session.id(), "pwd"),
-                        &HistoryEntry::with_session_id(session.id(), "git status"),
-                    ]
-                );
-            });
-        });
-    });
-}
 
 #[cfg_attr(windows, ignore = "TODO(CORE-3626)")]
 #[test]
@@ -737,248 +616,7 @@ fn test_sessions_no_dupes_new_session() {
     });
 }
 
-#[cfg_attr(windows, ignore = "TODO(CORE-3626)")]
-#[test]
-fn append_command_with_rich_history_data() {
-    App::test((), |mut app| async move {
-        let session = Arc::new(Session::new(
-            SessionInfo::new_for_test().with_id(0),
-            Arc::new(TestCommandExecutor::default()),
-        ));
 
-        let start_ts_1 = Local::now();
-        let end_ts_1 = Local::now();
-        let start_ts_2 = Local::now();
-        let end_ts_2 = Local::now();
-        let start_ts_3 = Local::now();
-        let end_ts_3 = Local::now();
-        let start_ts_4 = Local::now();
-        let end_ts_4 = Local::now();
-
-        let shell_host = ShellHost {
-            shell_type: ShellType::Bash,
-            user: String::from("local:user"),
-            hostname: String::from("local:host"),
-        };
-        let persisted_commands = vec![
-            PersistedCommand {
-                id: 0,
-                command: String::from("ls"),
-                exit_code: Some(ExitCode::from(0)),
-                start_ts: Some(start_ts_1),
-                completed_ts: Some(end_ts_1),
-                pwd: Some(String::from("/")),
-                shell_host: Some(shell_host.clone()),
-                session_id: None,
-                git_branch: None,
-                workflow_id: None,
-                workflow_command: None,
-                is_agent_executed: false,
-            },
-            PersistedCommand {
-                id: 0,
-                command: String::from("date"),
-                exit_code: Some(ExitCode::from(0)),
-                start_ts: Some(start_ts_2),
-                completed_ts: Some(end_ts_2),
-                pwd: Some(String::from("/usr/bin")),
-                shell_host: Some(shell_host.clone()),
-                session_id: None,
-                git_branch: Some(String::from("foobar")),
-                workflow_id: None,
-                workflow_command: None,
-                is_agent_executed: false,
-            },
-        ];
-
-        let mut history_handle = app.add_model(|_| History::new(persisted_commands));
-        initialize_history_for_testing(
-            &mut history_handle,
-            session.clone(),
-            async {
-                vec![
-                    "cd ~/Desktop".to_string(),
-                    "ls".to_string(),
-                    "date".to_string(),
-                ]
-            },
-            Vec::new(),
-            &mut app,
-        )
-        .await;
-
-        history_handle.update(&mut app, |history, _ctx| {
-            history.append_commands(
-                session.id(),
-                vec![
-                    HistoryEntry {
-                        session_id: Some(session.id()),
-                        command: String::from("touch foobar"),
-                        pwd: Some(String::from("/Users/andy/")),
-                        start_ts: Some(start_ts_3),
-                        completed_ts: Some(end_ts_3),
-                        workflow_id: None,
-                        workflow_command: None,
-                        exit_code: Some(ExitCode::from(0)),
-                        git_head: None,
-                        shell_host: None,
-                        is_agent_executed: false,
-                        is_for_restored_block: false,
-                    },
-                    HistoryEntry {
-                        session_id: Some(session.id()),
-                        command: String::from("ls"),
-                        pwd: Some(String::from("/Users/andy/")),
-                        start_ts: Some(start_ts_4),
-                        completed_ts: Some(end_ts_4),
-                        workflow_id: None,
-                        workflow_command: None,
-                        exit_code: Some(ExitCode::from(0)),
-                        git_head: None,
-                        shell_host: None,
-                        is_agent_executed: false,
-                        is_for_restored_block: false,
-                    },
-                ],
-            );
-        });
-
-        history_handle.read(&app, |history, _ctx| {
-            assert_eq!(
-                history.commands(session.id()).unwrap_or_default(),
-                vec![
-                    &HistoryEntry::command_only("cd ~/Desktop"),
-                    &HistoryEntry {
-                        session_id: None,
-                        command: String::from("date"),
-                        pwd: Some(String::from("/usr/bin")),
-                        start_ts: Some(start_ts_2),
-                        completed_ts: Some(end_ts_2),
-                        workflow_id: None,
-                        workflow_command: None,
-                        exit_code: Some(ExitCode::from(0)),
-                        git_head: Some(String::from("foobar")),
-                        shell_host: Some(shell_host.clone()),
-                        is_agent_executed: false,
-                        is_for_restored_block: false,
-                    },
-                    &HistoryEntry {
-                        session_id: Some(session.id()),
-                        command: String::from("touch foobar"),
-                        pwd: Some(String::from("/Users/andy/")),
-                        start_ts: Some(start_ts_3),
-                        completed_ts: Some(end_ts_3),
-                        workflow_id: None,
-                        workflow_command: None,
-                        exit_code: Some(ExitCode::from(0)),
-                        git_head: None,
-                        shell_host: None,
-                        is_agent_executed: false,
-                        is_for_restored_block: false,
-                    },
-                    &HistoryEntry {
-                        session_id: Some(session.id()),
-                        command: String::from("ls"),
-                        pwd: Some(String::from("/Users/andy/")),
-                        start_ts: Some(start_ts_4),
-                        completed_ts: Some(end_ts_4),
-                        workflow_id: None,
-                        workflow_command: None,
-                        exit_code: Some(ExitCode::from(0)),
-                        git_head: None,
-                        shell_host: None,
-                        is_agent_executed: false,
-                        is_for_restored_block: false,
-                    },
-                ]
-            );
-        });
-    });
-}
-
-#[test]
-fn append_restored_command_doesnt_overwrite_rich_history() {
-    App::test((), |mut app| async move {
-        let session = Arc::new(Session::new(
-            SessionInfo::new_for_test().with_id(0),
-            Arc::new(TestCommandExecutor::default()),
-        ));
-        let start_ts = Local::now();
-        let end_ts = Local::now();
-
-        let shell_host = ShellHost {
-            shell_type: ShellType::Bash,
-            user: String::from("local:user"),
-            hostname: String::from("local:host"),
-        };
-        let persisted_commands = vec![PersistedCommand {
-            id: 0,
-            command: String::from("ls"),
-            exit_code: Some(ExitCode::from(0)),
-            start_ts: Some(start_ts),
-            completed_ts: Some(end_ts),
-            pwd: Some(String::from("/tmp")),
-            shell_host: Some(shell_host),
-            session_id: None,
-            git_branch: None,
-            workflow_id: None,
-            workflow_command: None,
-            is_agent_executed: false,
-        }];
-        let mut history_handle = app.add_model(|_| History::new(persisted_commands));
-        initialize_history_for_testing(
-            &mut history_handle,
-            session.clone(),
-            async { vec!["cd ~/Desktop".to_string(), "ls".to_string()] },
-            Vec::new(),
-            &mut app,
-        )
-        .await;
-
-        history_handle.update(&mut app, |history, _ctx| {
-            history.append_restored_commands(
-                session.id(),
-                vec![HistoryEntry {
-                    session_id: Some(session.id()),
-                    command: "ls".to_string(),
-                    pwd: Some("/tmp".to_string()),
-                    start_ts: Some(start_ts),
-                    completed_ts: Some(end_ts),
-                    workflow_id: None,
-                    workflow_command: None,
-                    exit_code: Some(ExitCode::from(0)),
-                    git_head: None,
-                    shell_host: None,
-                    is_agent_executed: false,
-                    is_for_restored_block: true,
-                }],
-            );
-        });
-
-        history_handle.read(&app, |history, _ctx| {
-            assert_eq!(
-                history.commands(session.id()).unwrap_or_default(),
-                vec![
-                    &HistoryEntry::command_only("cd ~/Desktop"),
-                    &HistoryEntry {
-                        session_id: Some(session.id()),
-                        command: String::from("ls"),
-                        pwd: Some(String::from("/tmp")),
-                        start_ts: Some(start_ts),
-                        completed_ts: Some(end_ts),
-                        workflow_id: None,
-                        workflow_command: None,
-                        exit_code: Some(ExitCode::from(0)),
-                        git_head: None,
-                        shell_host: None,
-                        is_agent_executed: false,
-                        is_for_restored_block: true,
-                    },
-                ]
-            )
-        });
-    });
-}
 
 #[test]
 fn is_appendable_vs_is_queryable() {

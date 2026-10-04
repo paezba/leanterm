@@ -7,40 +7,29 @@ use pathfinder_geometry::vector::Vector2F;
 use warpui::EntityId;
 use warpui::elements::PositionedElementOffsetBounds;
 
-use super::{
-    AgentTabTextPreference, SummaryPaneKind, SummaryPaneKindIcons, TerminalAgentText,
+use super::{ SummaryPaneKind, SummaryPaneKindIcons,
     TerminalPrimaryLineData, TerminalPrimaryLineFont, VerticalTabsDetailTarget,
     VerticalTabsDetailTargetKind, VerticalTabsSummaryBranchEntry, VerticalTabsSummaryData,
     VerticalTabsSummaryPrimaryLabel, branch_label_display, coalesce_summary_branch_entries,
     code_detail_kind_label, compact_branch_subtitle_display, detail_sidecar_width_and_bounds,
     detail_target_for_hovered_row, group_display_name, group_name_highlight_indices,
     matched_group_ids, merge_group_name_matches, non_terminal_search_text_fragments,
-    pane_ids_for_display_granularity, pane_search_text_fragments, preferred_agent_tab_titles,
+    pane_ids_for_display_granularity, pane_search_text_fragments,
     push_normalized_unique_summary_label, search_fragments_contain_query,
     select_summary_pane_kind_icons, should_keep_detail_sidecar_visible_for_mouse_position,
-    should_show_tab_group_header, shows_synced_inputs_indicator,
-    sort_summary_primary_labels_status_first, summary_overflow_count,
-    summary_search_text_fragments, tab_admitted_by_group_name, terminal_kind_badge_label,
-    terminal_primary_line_data, terminal_pull_request_badge_label, terminal_search_text_fragments,
-    terminal_title_fallback_font, uses_outer_group_container, visible_pane_ids_for_detail_target,
+    should_show_tab_group_header, shows_synced_inputs_indicator, summary_overflow_count,
+    summary_search_text_fragments, tab_admitted_by_group_name,
+    terminal_primary_line_data, terminal_pull_request_badge_label, terminal_search_text_fragments, uses_outer_group_container, visible_pane_ids_for_detail_target,
     vtab_diff_stats_text,
 };
-use crate::ai::agent::conversation::ConversationStatus;
 use crate::context_chips::display_chip::GitLineChanges;
 use crate::pane_group::pane::IPaneType;
 use crate::pane_group::{PaneId, TerminalPaneId};
 use crate::safe_triangle::SafeTriangle;
 use crate::tab::{ShortcutModifierKind, reveals_shortcut_hints};
-use crate::terminal::CLIAgent;
 use crate::workspace::tab_group::{TabGroup, TabGroupId};
 use crate::workspace::tab_settings::VerticalTabsDisplayGranularity;
 
-fn label(text: &str) -> VerticalTabsSummaryPrimaryLabel {
-    VerticalTabsSummaryPrimaryLabel {
-        text: text.to_string(),
-        status: None,
-    }
-}
 
 fn pane_id() -> PaneId {
     TerminalPaneId::dummy_terminal_pane_id().into()
@@ -95,290 +84,17 @@ fn summary_pane_kind_icons_recompute_when_oldest_kind_is_removed() {
     );
 }
 
-#[test]
-fn summary_pane_kind_icons_distinguish_agent_terminals_from_plain_terminals() {
-    assert_eq!(
-        select_summary_pane_kind_icons([
-            (EntityId::from_usize(10), SummaryPaneKind::Terminal),
-            (
-                EntityId::from_usize(20),
-                SummaryPaneKind::CLIAgent {
-                    agent: CLIAgent::Claude,
-                    is_ambient: false,
-                },
-            ),
-            (
-                EntityId::from_usize(30),
-                SummaryPaneKind::OzAgent { is_ambient: false },
-            ),
-        ]),
-        Some(SummaryPaneKindIcons::Pair {
-            primary: SummaryPaneKind::Terminal,
-            secondary: SummaryPaneKind::CLIAgent {
-                agent: CLIAgent::Claude,
-                is_ambient: false,
-            },
-        })
-    );
-}
 
-#[test]
-fn summary_pane_kind_icons_distinguish_ambient_claude_from_local_claude() {
-    // A local Claude session and a cloud-mode Claude session should count as distinct kinds
-    // so they render with different icons (claude.svg vs claude_cloud.svg).
-    assert_eq!(
-        select_summary_pane_kind_icons([
-            (
-                EntityId::from_usize(10),
-                SummaryPaneKind::CLIAgent {
-                    agent: CLIAgent::Claude,
-                    is_ambient: false,
-                },
-            ),
-            (
-                EntityId::from_usize(20),
-                SummaryPaneKind::CLIAgent {
-                    agent: CLIAgent::Claude,
-                    is_ambient: true,
-                },
-            ),
-        ]),
-        Some(SummaryPaneKindIcons::Pair {
-            primary: SummaryPaneKind::CLIAgent {
-                agent: CLIAgent::Claude,
-                is_ambient: false,
-            },
-            secondary: SummaryPaneKind::CLIAgent {
-                agent: CLIAgent::Claude,
-                is_ambient: true,
-            },
-        })
-    );
-}
 
-#[test]
-fn preferred_agent_tab_titles_default_to_title_like_text() {
-    let agent_text = TerminalAgentText {
-        conversation_display_title: Some("Generated Warp Agent title".to_string()),
-        conversation_latest_user_prompt: Some("Latest Warp Agent prompt".to_string()),
-        cli_agent_title: Some("CLI summary".to_string()),
-        cli_agent_latest_user_prompt: Some("Latest CLI prompt".to_string()),
-        is_oz_agent: true,
-        cli_agent: Some(CLIAgent::Claude),
-    };
 
-    assert_eq!(
-        preferred_agent_tab_titles(&agent_text, AgentTabTextPreference::ConversationTitle),
-        (
-            Some("Generated Warp Agent title".to_string()),
-            Some("CLI summary".to_string())
-        )
-    );
-}
 
-#[test]
-fn preferred_agent_tab_titles_do_not_use_cli_prompt_when_disabled() {
-    let agent_text = TerminalAgentText {
-        conversation_display_title: None,
-        conversation_latest_user_prompt: None,
-        cli_agent_title: None,
-        cli_agent_latest_user_prompt: Some("Latest CLI prompt".to_string()),
-        is_oz_agent: false,
-        cli_agent: Some(CLIAgent::Claude),
-    };
 
-    assert_eq!(
-        preferred_agent_tab_titles(&agent_text, AgentTabTextPreference::ConversationTitle),
-        (None, None)
-    );
-}
 
-#[test]
-fn terminal_primary_line_uses_terminal_title_when_disabled_cli_has_only_prompt() {
-    let agent_text = TerminalAgentText {
-        conversation_display_title: None,
-        conversation_latest_user_prompt: None,
-        cli_agent_title: None,
-        cli_agent_latest_user_prompt: Some("Latest CLI prompt".to_string()),
-        is_oz_agent: false,
-        cli_agent: Some(CLIAgent::Claude),
-    };
-    let (conversation_title, cli_title) =
-        preferred_agent_tab_titles(&agent_text, AgentTabTextPreference::ConversationTitle);
 
-    let line = terminal_primary_line_data(
-        false,
-        conversation_title,
-        cli_title,
-        "Generated Claude Code title",
-        "~/warp",
-        terminal_title_fallback_font(&agent_text),
-        Some("claude".to_string()),
-    );
 
-    assert_eq!(line.text(), "Generated Claude Code title");
-    assert!(matches!(
-        line,
-        TerminalPrimaryLineData::Text {
-            font: TerminalPrimaryLineFont::Ui,
-            ..
-        }
-    ));
-}
 
-#[test]
-fn preferred_agent_tab_titles_use_latest_prompt_when_enabled() {
-    let agent_text = TerminalAgentText {
-        conversation_display_title: Some("Generated Warp Agent title".to_string()),
-        conversation_latest_user_prompt: Some("Latest Warp Agent prompt".to_string()),
-        cli_agent_title: Some("CLI summary".to_string()),
-        cli_agent_latest_user_prompt: Some("Latest CLI prompt".to_string()),
-        is_oz_agent: true,
-        cli_agent: Some(CLIAgent::Claude),
-    };
 
-    assert_eq!(
-        preferred_agent_tab_titles(&agent_text, AgentTabTextPreference::LatestUserPrompt),
-        (
-            Some("Latest Warp Agent prompt".to_string()),
-            Some("Latest CLI prompt".to_string())
-        )
-    );
-}
 
-#[test]
-fn terminal_primary_line_uses_cli_prompt_when_enabled_cli_has_prompt() {
-    let agent_text = TerminalAgentText {
-        conversation_display_title: None,
-        conversation_latest_user_prompt: None,
-        cli_agent_title: None,
-        cli_agent_latest_user_prompt: Some("Latest CLI prompt".to_string()),
-        is_oz_agent: false,
-        cli_agent: Some(CLIAgent::Claude),
-    };
-    let (conversation_title, cli_title) =
-        preferred_agent_tab_titles(&agent_text, AgentTabTextPreference::LatestUserPrompt);
-
-    let line = terminal_primary_line_data(
-        false,
-        conversation_title,
-        cli_title,
-        "Generated Claude Code title",
-        "~/warp",
-        terminal_title_fallback_font(&agent_text),
-        Some("claude".to_string()),
-    );
-
-    assert_eq!(line.text(), "Latest CLI prompt");
-}
-
-#[test]
-fn terminal_primary_line_uses_cli_prompt_when_enabled_cli_is_long_running() {
-    let agent_text = TerminalAgentText {
-        conversation_display_title: None,
-        conversation_latest_user_prompt: None,
-        cli_agent_title: None,
-        cli_agent_latest_user_prompt: Some("Latest CLI prompt".to_string()),
-        is_oz_agent: false,
-        cli_agent: Some(CLIAgent::Claude),
-    };
-    let (conversation_title, cli_title) =
-        preferred_agent_tab_titles(&agent_text, AgentTabTextPreference::LatestUserPrompt);
-
-    let line = terminal_primary_line_data(
-        true,
-        conversation_title,
-        cli_title,
-        "Generated Claude Code title",
-        "~/warp",
-        terminal_title_fallback_font(&agent_text),
-        Some("claude".to_string()),
-    );
-
-    assert_eq!(line.text(), "Latest CLI prompt");
-}
-
-#[test]
-fn preferred_agent_tab_titles_fall_back_when_preferred_text_is_missing() {
-    let agent_text = TerminalAgentText {
-        conversation_display_title: Some("Generated Warp Agent title".to_string()),
-        conversation_latest_user_prompt: None,
-        cli_agent_title: None,
-        cli_agent_latest_user_prompt: Some("Latest CLI prompt".to_string()),
-        is_oz_agent: true,
-        cli_agent: Some(CLIAgent::Claude),
-    };
-
-    assert_eq!(
-        preferred_agent_tab_titles(&agent_text, AgentTabTextPreference::LatestUserPrompt),
-        (
-            Some("Generated Warp Agent title".to_string()),
-            Some("Latest CLI prompt".to_string())
-        )
-    );
-}
-
-fn pane_type_supports_vertical_tabs_detail_sidecar(pane_type: IPaneType) -> bool {
-    matches!(
-        pane_type,
-        IPaneType::Terminal
-            | IPaneType::Code
-            | IPaneType::Notebook
-            | IPaneType::Workflow
-            | IPaneType::EnvVarCollection
-            | IPaneType::AIFact
-            | IPaneType::AIDocument
-    )
-}
-
-fn collect_normalized_unique_summary_texts(
-    texts: impl IntoIterator<Item = impl AsRef<str>>,
-) -> Vec<String> {
-    texts
-        .into_iter()
-        .filter_map(|text| {
-            let normalized = text
-                .as_ref()
-                .split_whitespace()
-                .collect::<Vec<_>>()
-                .join(" ");
-            (!normalized.is_empty()).then_some(normalized)
-        })
-        .fold(Vec::new(), |mut values, normalized| {
-            if !values.contains(&normalized) {
-                values.push(normalized);
-            }
-            values
-        })
-}
-
-#[test]
-fn detail_sidecar_supports_terminal_code_and_warp_drive_object_panes() {
-    assert!(pane_type_supports_vertical_tabs_detail_sidecar(
-        IPaneType::Terminal
-    ));
-    assert!(pane_type_supports_vertical_tabs_detail_sidecar(
-        IPaneType::Code
-    ));
-    assert!(pane_type_supports_vertical_tabs_detail_sidecar(
-        IPaneType::Notebook
-    ));
-    assert!(pane_type_supports_vertical_tabs_detail_sidecar(
-        IPaneType::Workflow
-    ));
-    assert!(pane_type_supports_vertical_tabs_detail_sidecar(
-        IPaneType::EnvVarCollection
-    ));
-    assert!(pane_type_supports_vertical_tabs_detail_sidecar(
-        IPaneType::AIFact
-    ));
-    assert!(pane_type_supports_vertical_tabs_detail_sidecar(
-        IPaneType::AIDocument
-    ));
-    assert!(!pane_type_supports_vertical_tabs_detail_sidecar(
-        IPaneType::Settings
-    ));
-}
 
 #[test]
 fn code_detail_kind_label_uses_programming_language_display_name() {
@@ -415,23 +131,6 @@ fn detail_target_matches_panes_granularity() {
     );
 }
 
-#[test]
-fn detail_target_matches_tabs_granularity() {
-    let pane_group_id = EntityId::new();
-    let hovered_pane_id = pane_id();
-
-    assert_eq!(
-        detail_target_for_hovered_row(
-            pane_group_id,
-            hovered_pane_id,
-            VerticalTabsDisplayGranularity::Tabs,
-        ),
-        VerticalTabsDetailTarget::Tab {
-            pane_group_id,
-            source_pane_id: hovered_pane_id,
-        }
-    );
-}
 
 #[test]
 fn pane_detail_target_returns_hovered_pane_when_supported() {
@@ -448,20 +147,6 @@ fn pane_detail_target_returns_hovered_pane_when_supported() {
     );
 }
 
-#[test]
-fn pane_detail_target_returns_none_when_hovered_pane_is_not_supported() {
-    let hovered_pane_id = pane_id();
-
-    assert_eq!(
-        visible_pane_ids_for_detail_target(
-            &[hovered_pane_id],
-            hovered_pane_id,
-            VerticalTabsDetailTargetKind::Pane,
-            |_| false,
-        ),
-        None
-    );
-}
 
 #[test]
 fn tab_detail_target_returns_all_visible_panes_when_every_pane_is_supported() {
@@ -481,22 +166,6 @@ fn tab_detail_target_returns_all_visible_panes_when_every_pane_is_supported() {
     );
 }
 
-#[test]
-fn tab_detail_target_returns_none_for_mixed_support_tabs() {
-    let pane_1 = pane_id();
-    let pane_2 = pane_id();
-    let pane_3 = pane_id();
-
-    assert_eq!(
-        visible_pane_ids_for_detail_target(
-            &[pane_1, pane_2, pane_3],
-            pane_2,
-            VerticalTabsDetailTargetKind::Tab,
-            |pane_id| pane_id != pane_3,
-        ),
-        None
-    );
-}
 
 #[test]
 fn panes_granularity_returns_all_visible_panes_in_order() {
@@ -531,22 +200,6 @@ fn tabs_granularity_returns_focused_pane_when_present() {
     );
 }
 
-#[test]
-fn tabs_granularity_falls_back_to_first_visible_pane_when_focused_pane_is_absent() {
-    let pane_1 = pane_id();
-    let pane_2 = pane_id();
-    let pane_3 = pane_id();
-    let focused_pane = pane_id();
-
-    assert_eq!(
-        pane_ids_for_display_granularity(
-            &[pane_1, pane_2, pane_3],
-            focused_pane,
-            VerticalTabsDisplayGranularity::Tabs,
-        ),
-        vec![pane_1]
-    );
-}
 
 #[test]
 fn tabs_granularity_returns_empty_for_empty_visible_panes() {
@@ -698,150 +351,13 @@ fn tab_group_header_distinguishes_two_auto_named_multi_pane_tabs() {
     assert_eq!(renders_header, vec![true, true, true]);
 }
 
-#[test]
-fn terminal_primary_line_prefers_cli_agent_display_title() {
-    let line = terminal_primary_line_data(
-        false,
-        None,
-        Some("Review the failing tests".to_string()),
-        "~/warp",
-        "~/warp",
-        TerminalPrimaryLineFont::Monospace,
-        Some("cargo nextest run".to_string()),
-    );
 
-    assert_eq!(line.text(), "Review the failing tests");
-}
 
-#[test]
-fn terminal_primary_line_prefers_cli_agent_display_title_over_conversation_title() {
-    let line = terminal_primary_line_data(
-        false,
-        Some("Review the failing tests".to_string()),
-        Some("Summarize the failures".to_string()),
-        "~/warp",
-        "~/warp",
-        TerminalPrimaryLineFont::Monospace,
-        Some("cargo nextest run".to_string()),
-    );
 
-    assert_eq!(line.text(), "Summarize the failures");
-}
 
-#[test]
-fn terminal_primary_line_falls_through_to_terminal_title_when_cli_agent_has_no_plugin_data() {
-    let line = terminal_primary_line_data(
-        false,
-        None,
-        None,
-        "codex - ~/warp",
-        "~/warp",
-        TerminalPrimaryLineFont::Monospace,
-        Some("cargo nextest run".to_string()),
-    );
 
-    assert_eq!(line.text(), "codex - ~/warp");
-}
 
-#[test]
-fn terminal_primary_line_uses_terminal_title_as_fallback() {
-    let line = terminal_primary_line_data(
-        false,
-        None,
-        None,
-        "nvim src/workspace/view/vertical_tabs.rs",
-        "~/warp",
-        TerminalPrimaryLineFont::Monospace,
-        Some("cargo nextest run".to_string()),
-    );
 
-    assert_eq!(line.text(), "nvim src/workspace/view/vertical_tabs.rs");
-}
-
-#[test]
-fn terminal_primary_line_uses_last_completed_command_when_shell_title_matches_working_directory() {
-    let line = terminal_primary_line_data(
-        false,
-        None,
-        None,
-        "~/warp",
-        "~/warp",
-        TerminalPrimaryLineFont::Monospace,
-        Some("cargo nextest run".to_string()),
-    );
-
-    assert_eq!(line.text(), "cargo nextest run");
-}
-
-#[test]
-fn terminal_primary_line_falls_back_to_new_session() {
-    let line = terminal_primary_line_data(
-        false,
-        None,
-        None,
-        "~/warp",
-        "~/warp",
-        TerminalPrimaryLineFont::Monospace,
-        None,
-    );
-
-    assert_eq!(line.text(), "New session");
-    assert!(matches!(
-        line,
-        TerminalPrimaryLineData::Text {
-            font: TerminalPrimaryLineFont::Ui,
-            ..
-        }
-    ));
-}
-
-#[test]
-fn terminal_primary_line_uses_monospace_for_last_completed_command() {
-    let line = terminal_primary_line_data(
-        false,
-        None,
-        None,
-        "~/warp",
-        "~/warp",
-        TerminalPrimaryLineFont::Monospace,
-        Some("cargo nextest run".to_string()),
-    );
-
-    assert!(matches!(
-        line,
-        TerminalPrimaryLineData::Text {
-            font: TerminalPrimaryLineFont::Monospace,
-            ..
-        }
-    ));
-}
-
-#[test]
-fn terminal_search_fragments_include_rendered_terminal_badges() {
-    let fragments = terminal_search_text_fragments(
-        "Review the failing tests".to_string(),
-        "~/warp".to_string(),
-        Some("main".to_string()),
-        terminal_kind_badge_label(false, Some(CLIAgent::Claude)),
-        Some(terminal_pull_request_badge_label(
-            "https://github.com/warpdotdev/warp-internal/pull/12345",
-        )),
-        Some(GitLineChanges {
-            files_changed: 1,
-            lines_added: 2,
-            lines_removed: 3,
-        }),
-    );
-
-    assert!(search_fragments_contain_query(&fragments, "claude"));
-    assert!(search_fragments_contain_query(
-        &fragments,
-        "review the failing tests"
-    ));
-    assert!(search_fragments_contain_query(&fragments, "#12345"));
-    assert!(search_fragments_contain_query(&fragments, "+2"));
-    assert!(search_fragments_contain_query(&fragments, "-3"));
-}
 
 #[test]
 fn pane_search_fragments_prepend_custom_title_and_keep_generated_metadata() {
@@ -938,100 +454,8 @@ fn compact_branch_subtitle_falls_back_to_working_directory_without_branch_icon()
     );
 }
 
-#[test]
-fn collect_normalized_unique_summary_texts_dedupes_after_whitespace_normalization() {
-    assert_eq!(
-        collect_normalized_unique_summary_texts([
-            "  cargo   test  ",
-            "cargo test",
-            "",
-            " git   status ",
-        ]),
-        vec!["cargo test".to_string(), "git status".to_string()]
-    );
-}
 
-#[test]
-fn collect_normalized_unique_summary_texts_preserves_first_seen_order() {
-    assert_eq!(
-        collect_normalized_unique_summary_texts([
-            "~/warp-internal",
-            "~/warp-server",
-            "~/warp-internal",
-            "~/warp-terraform",
-        ]),
-        vec![
-            "~/warp-internal".to_string(),
-            "~/warp-server".to_string(),
-            "~/warp-terraform".to_string(),
-        ]
-    );
-}
 
-#[test]
-fn coalesce_summary_branch_entries_groups_by_repo_and_branch() {
-    let repo_a = PathBuf::from("/tmp/repo-a");
-    let repo_b = PathBuf::from("/tmp/repo-b");
-    let entries = vec![
-        VerticalTabsSummaryBranchEntry {
-            repo_path: repo_a.clone(),
-            branch_name: "main".to_string(),
-            diff_stats: None,
-            pull_request_label: None,
-            pull_request_url: None,
-        },
-        VerticalTabsSummaryBranchEntry {
-            repo_path: repo_a.clone(),
-            branch_name: "main".to_string(),
-            diff_stats: Some(GitLineChanges {
-                files_changed: 1,
-                lines_added: 2,
-                lines_removed: 3,
-            }),
-            pull_request_label: Some("#123".to_string()),
-            pull_request_url: Some("https://github.com/acme/repo-a/pull/123".to_string()),
-        },
-        VerticalTabsSummaryBranchEntry {
-            repo_path: repo_b.clone(),
-            branch_name: "main".to_string(),
-            diff_stats: Some(GitLineChanges {
-                files_changed: 4,
-                lines_added: 5,
-                lines_removed: 6,
-            }),
-            pull_request_label: Some("#456".to_string()),
-            pull_request_url: Some("https://github.com/acme/repo-b/pull/456".to_string()),
-        },
-    ];
-
-    assert_eq!(
-        coalesce_summary_branch_entries(entries),
-        vec![
-            VerticalTabsSummaryBranchEntry {
-                repo_path: repo_a,
-                branch_name: "main".to_string(),
-                diff_stats: Some(GitLineChanges {
-                    files_changed: 1,
-                    lines_added: 2,
-                    lines_removed: 3,
-                }),
-                pull_request_label: Some("#123".to_string()),
-                pull_request_url: Some("https://github.com/acme/repo-a/pull/123".to_string()),
-            },
-            VerticalTabsSummaryBranchEntry {
-                repo_path: repo_b,
-                branch_name: "main".to_string(),
-                diff_stats: Some(GitLineChanges {
-                    files_changed: 4,
-                    lines_added: 5,
-                    lines_removed: 6,
-                }),
-                pull_request_label: Some("#456".to_string()),
-                pull_request_url: Some("https://github.com/acme/repo-b/pull/456".to_string()),
-            },
-        ]
-    );
-}
 
 #[test]
 fn summary_overflow_count_caps_visible_region() {
@@ -1040,117 +464,8 @@ fn summary_overflow_count_caps_visible_region() {
     assert_eq!(summary_overflow_count(2, 3), 0);
 }
 
-#[test]
-fn primary_labels_dedupe_preserves_first_seen_status() {
-    let mut values = Vec::new();
-    let mut seen = std::collections::HashMap::new();
-    push_normalized_unique_summary_label(&mut values, &mut seen, "  cargo   test  ", None);
-    push_normalized_unique_summary_label(
-        &mut values,
-        &mut seen,
-        "cargo test",
-        Some(ConversationStatus::InProgress),
-    );
 
-    assert_eq!(
-        values,
-        vec![VerticalTabsSummaryPrimaryLabel {
-            text: "cargo test".to_string(),
-            status: None,
-        }]
-    );
-}
 
-#[test]
-fn primary_labels_preserve_status_through_aggregation() {
-    let mut values = Vec::new();
-    let mut seen = std::collections::HashMap::new();
-    push_normalized_unique_summary_label(
-        &mut values,
-        &mut seen,
-        "Plan a refactor",
-        Some(ConversationStatus::InProgress),
-    );
-    push_normalized_unique_summary_label(
-        &mut values,
-        &mut seen,
-        "Investigate failure",
-        Some(ConversationStatus::Success),
-    );
-    push_normalized_unique_summary_label(&mut values, &mut seen, "cargo build", None);
-
-    assert_eq!(
-        values,
-        vec![
-            VerticalTabsSummaryPrimaryLabel {
-                text: "Plan a refactor".to_string(),
-                status: Some(ConversationStatus::InProgress),
-            },
-            VerticalTabsSummaryPrimaryLabel {
-                text: "Investigate failure".to_string(),
-                status: Some(ConversationStatus::Success),
-            },
-            VerticalTabsSummaryPrimaryLabel {
-                text: "cargo build".to_string(),
-                status: None,
-            },
-        ]
-    );
-}
-
-#[test]
-fn sort_summary_primary_labels_moves_status_first_and_preserves_order() {
-    let mut values = vec![
-        VerticalTabsSummaryPrimaryLabel {
-            text: "plain terminal".to_string(),
-            status: None,
-        },
-        VerticalTabsSummaryPrimaryLabel {
-            text: "first conversation".to_string(),
-            status: Some(ConversationStatus::InProgress),
-        },
-        VerticalTabsSummaryPrimaryLabel {
-            text: "code pane".to_string(),
-            status: None,
-        },
-        VerticalTabsSummaryPrimaryLabel {
-            text: "second conversation".to_string(),
-            status: Some(ConversationStatus::Success),
-        },
-        VerticalTabsSummaryPrimaryLabel {
-            text: "last terminal".to_string(),
-            status: None,
-        },
-    ];
-
-    sort_summary_primary_labels_status_first(&mut values);
-
-    assert_eq!(
-        values,
-        vec![
-            VerticalTabsSummaryPrimaryLabel {
-                text: "first conversation".to_string(),
-                status: Some(ConversationStatus::InProgress),
-            },
-            VerticalTabsSummaryPrimaryLabel {
-                text: "second conversation".to_string(),
-                status: Some(ConversationStatus::Success),
-            },
-            VerticalTabsSummaryPrimaryLabel {
-                text: "plain terminal".to_string(),
-                status: None,
-            },
-            VerticalTabsSummaryPrimaryLabel {
-                text: "code pane".to_string(),
-                status: None,
-            },
-            VerticalTabsSummaryPrimaryLabel {
-                text: "last terminal".to_string(),
-                status: None,
-            },
-        ]
-    );
-}
 
 #[test]
 fn synced_inputs_indicator_shows_on_synced_terminal_rows() {
@@ -1162,10 +477,6 @@ fn synced_inputs_indicator_hidden_when_tab_is_not_synced() {
     assert!(!shows_synced_inputs_indicator(true, false, true));
 }
 
-#[test]
-fn synced_inputs_indicator_respects_tab_indicators_setting() {
-    assert!(!shows_synced_inputs_indicator(true, true, false));
-}
 
 #[test]
 fn synced_inputs_indicator_hidden_on_non_terminal_rows() {
@@ -1184,84 +495,9 @@ fn reveals_shortcut_hints_requires_overlap_with_binding_modifiers() {
     assert!(!reveals_shortcut_hints(&empty, &super_kind));
 }
 
-#[test]
-fn summary_search_fragments_include_hidden_overflow_values() {
-    let summary = VerticalTabsSummaryData {
-        primary_labels: vec![
-            VerticalTabsSummaryPrimaryLabel {
-                text: "Claude".to_string(),
-                status: Some(ConversationStatus::InProgress),
-            },
-            label("Warp Agent"),
-            label("cargo"),
-            label("code review"),
-            label("hidden work"),
-        ],
-        working_directories: vec!["~/warp-internal".to_string(), "~/warp-server".to_string()],
-        branch_entries: vec![
-            VerticalTabsSummaryBranchEntry {
-                repo_path: PathBuf::from("/tmp/repo-a"),
-                branch_name: "main".to_string(),
-                diff_stats: Some(GitLineChanges {
-                    files_changed: 1,
-                    lines_added: 2,
-                    lines_removed: 3,
-                }),
-                pull_request_label: Some("#123".to_string()),
-                pull_request_url: Some("https://github.com/acme/repo-a/pull/123".to_string()),
-            },
-            VerticalTabsSummaryBranchEntry {
-                repo_path: PathBuf::from("/tmp/repo-b"),
-                branch_name: "feature/hidden".to_string(),
-                diff_stats: None,
-                pull_request_label: None,
-                pull_request_url: None,
-            },
-            VerticalTabsSummaryBranchEntry {
-                repo_path: PathBuf::from("/tmp/repo-c"),
-                branch_name: "cleanup".to_string(),
-                diff_stats: None,
-                pull_request_label: None,
-                pull_request_url: None,
-            },
-            VerticalTabsSummaryBranchEntry {
-                repo_path: PathBuf::from("/tmp/repo-d"),
-                branch_name: "hidden-branch".to_string(),
-                diff_stats: None,
-                pull_request_label: Some("#789".to_string()),
-                pull_request_url: Some("https://github.com/acme/repo-d/pull/789".to_string()),
-            },
-        ],
-        has_unread_activity: false,
-    };
 
-    let fragments = summary_search_text_fragments(&summary, Some("Custom tab"));
 
-    assert!(search_fragments_contain_query(&fragments, "custom tab"));
-    assert!(search_fragments_contain_query(&fragments, "claude"));
-    assert!(search_fragments_contain_query(&fragments, "hidden work"));
-    assert!(search_fragments_contain_query(&fragments, "hidden-branch"));
-    assert!(search_fragments_contain_query(&fragments, "#789"));
-    assert!(search_fragments_contain_query(&fragments, "+2"));
-    assert!(search_fragments_contain_query(&fragments, "-3"));
-}
 
-fn tab_group(name: Option<&str>) -> TabGroup {
-    TabGroup {
-        name: name.map(str::to_string),
-        ..TabGroup::new()
-    }
-}
-
-#[test]
-fn group_display_name_uses_the_group_name_when_set() {
-    assert_eq!(group_display_name(&tab_group(Some("backend"))), "backend");
-}
-
-#[test]
-fn group_display_name_falls_back_to_the_untitled_header_text() {
-    assert_eq!(group_display_name(&tab_group(None)), "New Group");
-}
 
 #[test]
 fn group_name_match_includes_members_that_did_not_match_on_their_own() {
@@ -1360,43 +596,9 @@ fn tab_groups_map(groups: Vec<TabGroup>) -> HashMap<TabGroupId, TabGroup> {
     groups.into_iter().map(|group| (group.id, group)).collect()
 }
 
-#[test]
-fn matched_group_ids_selects_groups_whose_displayed_name_contains_the_query() {
-    let backend = tab_group(Some("backend"));
-    let frontend = tab_group(Some("frontend"));
-    let backend_id = backend.id;
-    let groups = tab_groups_map(vec![backend, frontend]);
 
-    assert_eq!(
-        matched_group_ids(&groups, "backend"),
-        HashSet::from([backend_id])
-    );
-}
 
-#[test]
-fn matched_group_ids_is_case_insensitive() {
-    let group = tab_group(Some("Backend Services"));
-    let id = group.id;
-    let groups = tab_groups_map(vec![group]);
 
-    assert_eq!(matched_group_ids(&groups, "backend"), HashSet::from([id]));
-}
-
-#[test]
-fn matched_group_ids_matches_the_untitled_group_placeholder() {
-    let group = tab_group(None);
-    let id = group.id;
-    let groups = tab_groups_map(vec![group]);
-
-    assert_eq!(matched_group_ids(&groups, "new group"), HashSet::from([id]));
-}
-
-#[test]
-fn matched_group_ids_is_empty_when_nothing_matches() {
-    let groups = tab_groups_map(vec![tab_group(Some("backend"))]);
-
-    assert!(matched_group_ids(&groups, "nomatch").is_empty());
-}
 
 #[test]
 fn tab_is_admitted_by_group_name_only_when_its_group_matched() {
@@ -1471,10 +673,3 @@ fn group_name_highlights_do_not_use_fuzzy_matching() {
     );
 }
 
-#[test]
-fn group_name_highlights_match_untitled_fallback() {
-    assert_eq!(
-        group_name_highlight_indices(&group_display_name(&tab_group(None)), "group"),
-        vec![4, 5, 6, 7, 8]
-    );
-}

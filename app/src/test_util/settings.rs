@@ -26,18 +26,16 @@ pub fn initialize_settings_for_tests_with_mode(
     use warp_core::execution_mode::AppExecutionMode;
     use warp_core::semantic_selection::SemanticSelection;
 
-    use crate::ai::cloud_agent_settings::CloudAgentSettings;
     use crate::drive::settings::WarpDriveSettings;
     use crate::search::command_search::settings::CommandSearchSettings;
     use crate::settings::app_icon::AppIconSettings;
     use crate::settings::manager::SettingsManager;
-    use crate::settings::{
-        AISettings, AccessibilitySettings, AliasExpansionSettings, AppEditorSettings,
+    use crate::settings::{ AccessibilitySettings, AliasExpansionSettings, AppEditorSettings,
         BlockVisibilitySettings, ChangelogSettings, CloudPreferencesSettings, CodeSettings,
         DebugSettings, EmacsBindingsSettings, FontSettings, GPUSettings, InputModeSettings,
         InputSettings, LocalControlSettings, NativePreferenceSettings, PaneSettings,
         SameLinePromptBlockSettings, ScrollSettings, SelectionSettings,
-        SharedObjectLimitBannerSettings, SshSettings, ThemeSettings, TuiVoiceSettings,
+        SharedObjectLimitBannerSettings, SshSettings, ThemeSettings,
         VimBannerSettings, init_and_register_user_preferences,
     };
     use crate::terminal::BlockListSettings;
@@ -64,9 +62,7 @@ pub fn initialize_settings_for_tests_with_mode(
     });
 
     AccessibilitySettings::register(app);
-    app.update(AISettings::register_and_subscribe_to_events);
     AliasExpansionSettings::register(app);
-    CloudAgentSettings::register(app);
     AppEditorSettings::register(app);
     BlockVisibilitySettings::register(app);
     BlockListSettings::register(app);
@@ -113,7 +109,6 @@ pub fn initialize_settings_for_tests_with_mode(
     TerminalSettings::register(app);
     PaneSettings::register(app);
     ThemeSettings::register(app);
-    TuiVoiceSettings::register(app);
     UndoCloseSettings::register(app);
     VimBannerSettings::register(app);
     SharedObjectLimitBannerSettings::register(app);

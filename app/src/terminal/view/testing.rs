@@ -1,4 +1,5 @@
 //! Module for test-only convenience methods on `TerminalView`.
+use crate::terminal::model::block::SerializedBlockListItem;
 use warpui::ModelHandle;
 
 use crate::terminal::find::TerminalFindModel;
@@ -9,8 +10,7 @@ cfg_if::cfg_if! {
         use parking_lot::FairMutex;
         use warpui::{ViewContext};
 
-        use crate::{
-            ai::blocklist::SerializedBlockListItem, pane_group::TerminalViewResources,
+        use crate::{ pane_group::TerminalViewResources,
             resource_center::TipsCompleted,
         };
         use crate::terminal::model::session::Sessions;
@@ -115,10 +115,7 @@ impl TerminalView {
             colors,
             None,
             prompt_type,
-            None,
-            None, // conversation_restoration - not used for test
             None, // inactive_pty_reads_rx - not used for test
-            is_cloud_mode,
             ctx,
         )
     }

@@ -7,8 +7,6 @@ use settings::Setting;
 use warpui::{AppContext, Entity, SingletonEntity, ViewContext, WeakViewHandle, WindowId};
 
 use super::UserWorkspaces;
-#[cfg(any(test, feature = "test-util"))]
-use crate::ai::llms::LLMInfo;
 use crate::server::ids::ServerId;
 use crate::workspaces::team::Team;
 use crate::workspaces::workspace::Workspace;

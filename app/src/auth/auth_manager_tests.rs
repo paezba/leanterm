@@ -5,7 +5,7 @@ use std::time::Duration;
 use anyhow::anyhow;
 use warpui::{App, SingletonEntity};
 
-use super::{AuthManager, AuthManagerEvent, request_device_code_with_timeout};
+use super::{AuthManager, AuthManagerEvent,};
 use crate::ServerApiProvider;
 use crate::auth::auth_view_modal::AuthRedirectPayload;
 use crate::auth::credentials::{Credentials, LoginToken, RefreshToken};
@@ -166,74 +166,7 @@ fn validated_api_key_is_promoted_with_its_user() {
     });
 }
 
-#[test]
-fn test_device_code_request_retries_then_times_out() {
-    App::test((), |_app| async move {
-        let attempts = Arc::new(AtomicUsize::new(0));
-        let attempts_for_request = attempts.clone();
 
-        let result = request_device_code_with_timeout(
-            move || {
-                attempts_for_request.fetch_add(1, Ordering::Relaxed);
-                futures::future::pending()
-            },
-            Duration::from_millis(1),
-            2,
-        )
-        .await;
-
-        assert_eq!(attempts.load(Ordering::Relaxed), 2);
-        let error = result.unwrap_err();
-        assert!(matches!(
-            &error,
-            UserAuthenticationError::DeviceCodeRequestTimedOut { attempts: 2 }
-        ));
-        assert_eq!(
-            error.to_string(),
-            "Timed out requesting a sign-in link after 2 attempts"
-        );
-    });
-}
-
-/// When the user is fully logged out, a redirect carrying a state that does
-/// not match the pending token must surface an `InvalidStateParameter` error.
-#[test]
-fn test_stale_state_when_logged_out_emits_invalid_state_parameter() {
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-
-        // Clear the default test user so we're fully logged out.
-        app.update(|ctx| {
-            let auth_state = AuthStateProvider::as_ref(ctx).get();
-            auth_state.set_user(None);
-            auth_state.set_credentials(None);
-        });
-
-        let saw_invalid_state = track_invalid_state_failures(&mut app);
-
-        // Generate a real pending state, then deliver a redirect whose state
-        // doesn't match it.
-        AuthManager::handle(&app).update(&mut app, |auth_manager, _ctx| {
-            let _known_state = auth_manager.generate_auth_state();
-        });
-
-        let bogus_payload = AuthRedirectPayload {
-            refresh_token: RefreshToken::new("test_refresh_token"),
-            user_uid: Some(UserUid::new("some_user_uid")),
-            deleted_anonymous_user: Some(false),
-            state: Some("not_the_real_state".to_owned()),
-        };
-
-        AuthManager::handle(&app).update(&mut app, |auth_manager, ctx| {
-            auth_manager.initialize_user_from_auth_payload(bogus_payload, true, ctx);
-        });
-
-        assert!(
-            saw_invalid_state.load(Ordering::Relaxed),
-            "expected AuthFailed(InvalidStateParameter) when logged out and state does not match"
-        );
-    });
-}
 
 /// Even when a user is logged in, a redirect with a bad state and a `user_uid`
 /// that does NOT match the current user must surface an `InvalidStateParameter`

@@ -4,6 +4,7 @@
 //!
 //! The example code in this module's documentation is marked `no_run`: it is
 //! compiled to keep the examples correct, but not executed.
+use crate::terminal::model::block::SerializedBlockListItem;
 
 use std::collections::HashMap;
 use std::io::sink;
@@ -28,7 +29,6 @@ use super::kitty::{
 };
 use super::terminal_model::BlockIndex;
 use super::{ObfuscateSecrets, TerminalModel};
-use crate::ai::blocklist::SerializedBlockListItem;
 use crate::terminal::color::{self, Colors};
 use crate::terminal::event_listener::ChannelEventListener;
 use crate::terminal::{BlockPadding, SizeInfo};
@@ -199,7 +199,6 @@ impl<'a> TestBlockListBuilder<'a> {
             self.honor_ps1,
             false, /* is_inverted */
             ObfuscateSecrets::No,
-            false, /* is_telemetry_enabled */
         );
         // This is usually done by the terminal manager after constructing the blocklist,
         // but we have tests assuming the separator exists.

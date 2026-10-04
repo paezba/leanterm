@@ -1,5 +1,4 @@
 use crate::terminal::model::block::SerializedBlockListItem;
-use crate::ai::persisted_workspace::PersistedWorkspace;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -25,26 +24,7 @@ use warpui::{AddSingletonModel, App, ViewHandle};
 use watcher::HomeDirectoryWatcher;
 
 use super::*;
-use crate::ai::AIRequestUsageModel;
-use crate::ai::active_agent_views_model::ActiveAgentViewsModel;
-use crate::ai::agent_conversations_model::AgentConversationsModel;
-use crate::ai::agent_tips::AITipModel;
-use crate::ai::ambient_agents::github_auth_notifier::GitHubAuthNotifier;
-use crate::ai::blocklist::agent_view::orchestration_pill_bar_model::OrchestrationPillBarModel;
-use crate::ai::blocklist::{BlocklistAIHistoryModel, BlocklistAIPermissions};
-use crate::ai::cloud_environments::CloudEnvironmentCatalog;
-use crate::ai::document::ai_document_model::AIDocumentModel;
-use crate::ai::execution_profiles::profiles::AIExecutionProfilesModel;
-use crate::ai::facts::manager::AIFactManager;
-use crate::ai::harness_availability::HarnessAvailabilityModel;
-use crate::ai::llms::LLMPreferences;
-use crate::ai::mcp::gallery::MCPGalleryManager;
-use crate::ai::mcp::templatable_manager::TemplatableMCPServerManager;
-use crate::ai::mcp::{FileBasedMCPManager, FileMCPWatcher};
-use crate::ai::outline::RepoOutlines;
 use crate::persisted_workspace::PersistedWorkspace;
-use crate::ai::restored_conversations::RestoredAgentConversations;
-use crate::ai::skills::SkillManager;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::model::view::CloudViewModel;
 use crate::context_chips::prompt::Prompt;
@@ -55,8 +35,6 @@ use crate::notebooks::editor::keys::NotebookKeybindings;
 use crate::notebooks::notebook::NotebookView;
 use crate::pane_group::{Direction, PaneGroupAction, PaneId};
 use crate::pricing::PricingInfoModel;
-#[cfg(not(target_family = "wasm"))]
-use crate::remote_server::codebase_index_model::RemoteCodebaseIndexModel;
 use crate::resource_center::Tip;
 use crate::server::cloud_objects::listener::Listener;
 use crate::server::cloud_objects::update_manager::UpdateManager;
@@ -73,7 +51,6 @@ use crate::settings_view::keybindings::KeybindingChangedNotifier;
 use crate::suggestions::ignored_suggestions_model::IgnoredSuggestionsModel;
 use crate::system::SystemStats;
 use crate::tab_configs::tab_config::{TabConfigPaneNode, TabConfigPaneType};
-use crate::terminal::cli_agent_sessions::CLIAgentSessionsModel;
 use crate::terminal::history::History;
 use crate::terminal::keys::TerminalKeybindings;
 use crate::terminal::local_tty::spawner::PtySpawner;
@@ -92,8 +69,7 @@ use crate::workspaces::team_tester::TeamTesterStatus;
 use crate::workspaces::update_manager::TeamUpdateManager;
 use crate::workspaces::user_profiles::UserProfiles;
 use crate::workspaces::user_workspaces::UserWorkspaces;
-use crate::{
-    AgentNotificationsModel, GlobalResourceHandlesProvider, ObjectActions, experiments, workspace,
+use crate::{ GlobalResourceHandlesProvider, ObjectActions, experiments, workspace,
 };
 pub(crate) fn initialize_app(app: &mut App) {
     initialize_app_with_team_client(app, Arc::new(MockTeamClient::new()));
@@ -115,7 +91,6 @@ pub(crate) fn initialize_app_with_team_client(app: &mut App, team_client: Arc<dy
     app.add_singleton_model(|_| crate::tab::TabShortcutModifierState::new());
     app.add_singleton_model(SyncQueue::mock);
     app.add_singleton_model(CloudModel::mock);
-    app.add_singleton_model(CloudEnvironmentCatalog::new);
     app.add_singleton_model(|ctx| {
         UserWorkspaces::mock(
             team_client,
@@ -128,7 +103,6 @@ pub(crate) fn initialize_app_with_team_client(app: &mut App, team_client: Arc<dy
     app.add_singleton_model(TeamTesterStatus::mock);
     app.add_singleton_model(TeamUpdateManager::mock);
     app.add_singleton_model(UpdateManager::mock);
-    app.add_singleton_model(MCPGalleryManager::new);
     app.add_singleton_model(CloudViewModel::mock);
     app.add_singleton_model(Listener::mock);
     app.add_singleton_model(|_| Appearance::mock());
@@ -138,7 +112,6 @@ pub(crate) fn initialize_app_with_team_client(app: &mut App, team_client: Arc<dy
     app.add_singleton_model(|_| KeybindingChangedNotifier::new());
     app.add_singleton_model(|_ctx| RelaunchModel::new());
     app.add_singleton_model(|ctx| ChangelogModel::new(ServerApiProvider::as_ref(ctx).get()));
-    app.add_singleton_model(|_| GitHubAuthNotifier::new());
     app.add_singleton_model(|_ctx| SyncedInputState::mock());
     app.add_singleton_model(|_| ResizableData::default());
     app.add_singleton_model(LocalWorkflows::new);
@@ -158,49 +131,24 @@ pub(crate) fn initialize_app_with_team_client(app: &mut App, team_client: Arc<dy
             ctx,
         )
     });
-    app.add_singleton_model(|_| BlocklistAIHistoryModel::new_for_test());
     // QueuedQueryModel subscribes to history events; register after the
     // history model is in place.
-    app.add_singleton_model(crate::ai::blocklist::QueuedQueryModel::new);
-    app.add_singleton_model(|ctx| OrchestrationPillBarModel::new(Default::default(), ctx));
-    app.add_singleton_model(|_| CLIAgentSessionsModel::new());
     // The blocklist controller created during terminal bootstrap subscribes to
     // OrchestrationEventService and OrchestrationEventStreamer unconditionally,
     // so both singletons must be registered before bootstrap.
-    app.add_singleton_model(
-        crate::ai::blocklist::orchestration_events::OrchestrationEventService::new,
-    );
-    app.add_singleton_model(
-        crate::ai::blocklist::orchestration_event_streamer::OrchestrationEventStreamer::new,
-    );
-    app.add_singleton_model(|_| ActiveAgentViewsModel::new());
-    app.add_singleton_model(AgentNotificationsModel::new);
-    app.add_singleton_model(AgentConversationsModel::new);
     app.add_singleton_model(SessionPermissionsManager::new);
-    app.add_singleton_model(LLMPreferences::new);
-    app.add_singleton_model(HarnessAvailabilityModel::new);
-    app.add_singleton_model(|ctx| AITipModel::new_for_agent_tips(ctx));
     app.add_singleton_model(|_| SettingsPaneManager::new());
-    app.add_singleton_model(|_| AIFactManager::new());
 
     // Initialize file-based MCP dependencies.
     app.add_singleton_model(|_| DetectedRepositories::default());
     app.add_singleton_model(HomeDirectoryWatcher::new_for_test);
     app.add_singleton_model(DirectoryWatcher::new);
     app.add_singleton_model(WarpManagedPathsWatcher::new_for_testing);
-    app.add_singleton_model(FileMCPWatcher::new);
-    app.add_singleton_model(|_| FileBasedMCPManager::default());
 
-    app.add_singleton_model(|_| TemplatableMCPServerManager::default());
     #[cfg(feature = "local_fs")]
     app.add_singleton_model(FileModel::new);
-    app.add_singleton_model(|ctx| {
-        AIExecutionProfilesModel::new(&crate::LaunchMode::new_for_unit_test(), ctx)
-    });
-    app.add_singleton_model(RepoOutlines::new_for_test);
     #[cfg(feature = "voice_input")]
     app.add_singleton_model(voice_input::VoiceInput::new);
-    app.add_singleton_model(BlocklistAIPermissions::new);
     app.add_singleton_model(|_| GPUState::new());
     // Register IapManager in a disabled state (no IapState). The settings
     // page's `IapManager::as_ref(ctx).is_enabled()` check panics if the
@@ -213,10 +161,6 @@ pub(crate) fn initialize_app_with_team_client(app: &mut App, team_client: Arc<dy
             ctx,
         )
     });
-    app.add_singleton_model(|_| RestoredAgentConversations::new_seeded(vec![]));
-    app.add_singleton_model(|ctx| {
-        AIRequestUsageModel::new_for_test(ServerApiProvider::as_ref(ctx).get_ai_client(), ctx)
-    });
     app.add_singleton_model(OneTimeModalModel::new);
     // Register GlobalResourceHandlesProvider before ServerExperiments which depends on it
     let global_resource_handles = GlobalResourceHandles::mock(app);
@@ -227,7 +171,6 @@ pub(crate) fn initialize_app_with_team_client(app: &mut App, team_client: Arc<dy
     app.add_singleton_model(|_| crate::code_review::git_repo_model::GitRepoModels::new());
     app.add_singleton_model(remote_server::manager::RemoteServerManager::new);
     #[cfg(not(target_family = "wasm"))]
-    app.add_singleton_model(RemoteCodebaseIndexModel::new);
 
     #[cfg(feature = "local_fs")]
     app.add_singleton_model(RepoMetadataModel::new);
@@ -247,23 +190,14 @@ pub(crate) fn initialize_app_with_team_client(app: &mut App, team_client: Arc<dy
 
     app.update(experiments::init);
 
-    app.add_singleton_model(
-        crate::workspace::bonus_grant_notification_model::BonusGrantNotificationModel::new,
-    );
-    app.add_singleton_model(|ctx| {
-        CodebaseIndexManager::new_for_test(ServerApiProvider::as_ref(ctx).get(), ctx)
-    });
     app.add_singleton_model(|ctx| PersistedWorkspace::new(vec![], HashMap::new(), None, ctx));
     app.add_singleton_model(|_| ProjectContextModel::default());
     app.add_singleton_model(|_| PricingInfoModel::new());
-    app.add_singleton_model(crate::ai::pricing_promotion::PricingPromotionState::new);
-    app.add_singleton_model(AIDocumentModel::new);
     app.add_singleton_model(|_| History::new(vec![]));
 
     // SkillManager is registered after `HomeDirectoryWatcher`, `DirectoryWatcher`,
     // `WarpManagedPathsWatcher`, `DetectedRepositories`, and `RepoMetadataModel`
     // because `SkillWatcher::new` subscribes to all of them.
-    app.add_singleton_model(SkillManager::new);
 
     // Make sure to initialize the keybindings so that they are available for subviews
     app.update(workspace::init);
@@ -584,662 +518,14 @@ fn test_theme_chooser_does_not_suppress_tab_bar_traffic_light_padding() {
     });
 }
 
-/// Regression for account-first onboarding users who select Warp Drive and
-/// conversation history, skip signup, and create an account later. The stored
-/// preferences should remain true while unavailable, then take effect
-/// automatically as account and AI availability change—without an off/on
-/// toggle.
-#[test]
-fn test_tools_panel_preferences_activate_after_signup_and_ai_enablement() {
-    let _skip_anon_guard = FeatureFlag::SkipFirebaseAnonymousUser.override_enabled(true);
-    let _conversation_list_guard =
-        FeatureFlag::AgentViewConversationListView.override_enabled(true);
 
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
 
-        // Preserve the user's onboarding intent while starting logged out with
-        // AI disabled (the account-skipped account-first completion state).
-        app.update(|ctx| {
-            WarpDriveSettings::handle(ctx).update(ctx, |settings, ctx| {
-                settings
-                    .enable_warp_drive
-                    .set_value(true, ctx)
-                    .expect("remember Warp Drive preference");
-            });
-            AISettings::handle(ctx).update(ctx, |settings, ctx| {
-                settings
-                    .show_conversation_history
-                    .set_value(true, ctx)
-                    .expect("remember conversation-history preference");
-                settings
-                    .is_any_ai_enabled
-                    .set_value(false, ctx)
-                    .expect("AI remains disabled after skipped signup");
-            });
-            let auth_state = AuthStateProvider::as_ref(ctx).get();
-            auth_state.set_user(None);
-            auth_state.set_credentials(None);
-        });
 
-        let workspace = mock_workspace(&mut app);
-        workspace.update(&mut app, |workspace, ctx| {
-            assert!(
-                workspace
-                    .left_panel_views
-                    .contains(&ToolPanelView::WarpDrive),
-                "the stored preference should keep the locked Warp Drive entry visible"
-            );
-            assert!(
-                workspace
-                    .left_panel_views
-                    .contains(&ToolPanelView::ConversationListView),
-                "the stored preference should keep the locked conversations entry visible"
-            );
-            workspace.left_panel_view.update(ctx, |left_panel, ctx| {
-                left_panel.handle_action_with_force_open(&LeftPanelAction::WarpDrive, false, ctx);
-                assert_eq!(
-                    left_panel.active_view_availability(ctx),
-                    left_panel::ToolPanelAvailability::RequiresAccount
-                );
-                drop(left_panel.render(ctx));
 
-                left_panel.handle_action_with_force_open(
-                    &LeftPanelAction::ConversationListView,
-                    false,
-                    ctx,
-                );
-                assert_eq!(
-                    left_panel.active_view_availability(ctx),
-                    left_panel::ToolPanelAvailability::RequiresAccount
-                );
-                drop(left_panel.render(ctx));
-            });
-            workspace.handle_left_panel_event(&LeftPanelEvent::SignInRequested, ctx);
-            assert!(
-                workspace
-                    .current_workspace_state
-                    .is_require_login_modal_open,
-                "locked-panel Sign in should open the existing auth modal"
-            );
-            // Keep the remainder of this state-transition test focused on the
-            // tool panel rather than modal rendering.
-            workspace
-                .current_workspace_state
-                .is_require_login_modal_open = false;
-        });
-        app.read(|ctx| {
-            // Availability must not erase the raw onboarding preferences.
-            assert!(*WarpDriveSettings::as_ref(ctx).enable_warp_drive);
-            assert!(*AISettings::as_ref(ctx).show_conversation_history);
-            assert!(!WarpDriveSettings::is_warp_drive_available(ctx));
-            assert!(!WarpDriveSettings::is_warp_drive_enabled(ctx));
-            assert!(!AISettings::as_ref(ctx).is_conversation_history_available(ctx));
-            assert!(!AISettings::as_ref(ctx).is_conversation_history_enabled(ctx));
-        });
 
-        // Signing up makes account-backed features available. AuthComplete
-        // must refresh the existing workspace even though no setting changed.
-        app.update(|ctx| {
-            AuthStateProvider::as_ref(ctx)
-                .get()
-                .apply_remote_server_auth_context(
-                    "test-token".to_string(),
-                    "test-user".to_string(),
-                    "test@warp.dev".to_string(),
-                );
-        });
-        workspace.update(&mut app, |workspace, ctx| {
-            workspace.handle_auth_manager_event(
-                AuthManager::handle(ctx),
-                &AuthManagerEvent::AuthComplete,
-                ctx,
-            );
-            assert!(
-                workspace
-                    .left_panel_views
-                    .contains(&ToolPanelView::WarpDrive),
-                "Drive entry remains visible and unlocks after signup"
-            );
-            assert!(
-                workspace
-                    .left_panel_views
-                    .contains(&ToolPanelView::ConversationListView),
-                "conversation entry remains visible while waiting for AI"
-            );
-            assert!(!workspace.auth_state.is_anonymous_or_logged_out());
-            assert!(WarpDriveSettings::is_warp_drive_enabled(ctx));
-            assert!(!AISettings::as_ref(ctx).is_conversation_history_enabled(ctx));
-            workspace.left_panel_view.update(ctx, |left_panel, ctx| {
-                left_panel.handle_action_with_force_open(&LeftPanelAction::WarpDrive, false, ctx);
-                assert_eq!(
-                    left_panel.active_view_availability(ctx),
-                    left_panel::ToolPanelAvailability::Available
-                );
 
-                left_panel.handle_action_with_force_open(
-                    &LeftPanelAction::ConversationListView,
-                    false,
-                    ctx,
-                );
-                assert_eq!(
-                    left_panel.active_view_availability(ctx),
-                    left_panel::ToolPanelAvailability::RequiresAi
-                );
-                drop(left_panel.render(ctx));
-            });
-        });
 
-        // Enabling AI later should make the preserved conversation-history
-        // preference effective through the existing AI-settings subscription.
-        app.update(|ctx| {
-            AISettings::handle(ctx).update(ctx, |settings, ctx| {
-                settings
-                    .is_any_ai_enabled
-                    .set_value(true, ctx)
-                    .expect("enable AI");
-            });
-        });
-        workspace.update(&mut app, |workspace, ctx| {
-            assert!(
-                workspace
-                    .left_panel_views
-                    .contains(&ToolPanelView::ConversationListView)
-            );
-            workspace.left_panel_view.update(ctx, |left_panel, ctx| {
-                left_panel.handle_action_with_force_open(
-                    &LeftPanelAction::ConversationListView,
-                    false,
-                    ctx,
-                );
-                assert_eq!(
-                    left_panel.active_view_availability(ctx),
-                    left_panel::ToolPanelAvailability::Available
-                );
-            });
-        });
-        app.read(|ctx| {
-            assert!(AISettings::as_ref(ctx).is_conversation_history_enabled(ctx));
-        });
 
-        // The raw setting still controls whether the toolbelt entry exists.
-        app.update(|ctx| {
-            AISettings::handle(ctx).update(ctx, |settings, ctx| {
-                settings
-                    .show_conversation_history
-                    .set_value(false, ctx)
-                    .expect("hide conversation history");
-            });
-        });
-        workspace.read(&app, |workspace, _| {
-            assert!(
-                !workspace
-                    .left_panel_views
-                    .contains(&ToolPanelView::ConversationListView)
-            );
-        });
-    });
-}
-
-fn assert_vertical_tabs_tools_panel_preserves_padding(config: HeaderToolbarChipSelection) {
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-        app.update(|ctx| {
-            TabSettings::handle(ctx).update(ctx, |settings, ctx| {
-                report_if_error!(settings.use_vertical_tabs.set_value(true, ctx));
-                report_if_error!(
-                    settings
-                        .header_toolbar_chip_selection
-                        .set_value(config, ctx)
-                );
-            });
-        });
-
-        let workspace = mock_workspace(&mut app);
-        workspace.update(&mut app, |workspace, ctx| {
-            let closed_padding = workspace.compute_tab_bar_left_padding(ctx);
-            assert!(
-                closed_padding > 0.,
-                "Vertical tabs should reserve traffic light padding"
-            );
-
-            workspace.open_left_panel(ctx);
-            assert_eq!(
-                workspace.compute_tab_bar_left_padding(ctx),
-                closed_padding,
-                "An open tools panel should still reserve traffic light padding in vertical tabs"
-            );
-        });
-    });
-}
-
-#[test]
-fn test_tools_panel_does_not_suppress_vertical_tab_bar_traffic_light_padding() {
-    let _vertical_tabs_guard = FeatureFlag::VerticalTabs.override_enabled(true);
-    for config in [
-        HeaderToolbarChipSelection::Custom {
-            left: vec![HeaderToolbarItemKind::AgentManagement],
-            right: vec![
-                HeaderToolbarItemKind::TabsPanel,
-                HeaderToolbarItemKind::ToolsPanel,
-                HeaderToolbarItemKind::CodeReview,
-                HeaderToolbarItemKind::NotificationsMailbox,
-            ],
-        },
-        HeaderToolbarChipSelection::Custom {
-            left: vec![
-                HeaderToolbarItemKind::TabsPanel,
-                HeaderToolbarItemKind::ToolsPanel,
-                HeaderToolbarItemKind::AgentManagement,
-            ],
-            right: vec![
-                HeaderToolbarItemKind::CodeReview,
-                HeaderToolbarItemKind::NotificationsMailbox,
-            ],
-        },
-    ] {
-        assert_vertical_tabs_tools_panel_preserves_padding(config);
-    }
-}
-/// Regression test for the handoff model carry-over: the copy must preserve
-/// the source pane's explicit selection M even when M equals the destination
-/// pane's current profile default — the case where re-normalizing the resolved
-/// id against the destination's default (instead of copying the raw override)
-/// would drop the override and let the source profile's default D win.
-#[test]
-fn copy_model_and_profile_preserves_explicit_model_over_source_profile_default() {
-    use warpui::EntityId;
-
-    use crate::ai::llms::{AvailableLLMs, LLMId, LLMInfo, ModelsByFeature};
-    use crate::workspaces::user_workspaces::TeamlessScopeForTest;
-
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-
-        let m = LLMId::from("auto-genius");
-        let d = LLMId::from("auto");
-
-        let source_id = EntityId::new();
-        let new_id = EntityId::new();
-
-        app.update(|ctx| {
-            // Catalog containing both slugs so profile/override ids resolve.
-            LLMPreferences::handle(ctx).update(ctx, |prefs, ctx| {
-                let models = ModelsByFeature {
-                    agent_mode: AvailableLLMs::new(
-                        "auto".into(),
-                        vec![
-                            LLMInfo::new_for_test("auto"),
-                            LLMInfo::new_for_test("auto-genius"),
-                        ],
-                        None,
-                    )
-                    .expect("valid available llms"),
-                    ..Default::default()
-                };
-                prefs.update_feature_model_choices(Ok(models), ctx);
-            });
-
-            // Default profile default = M (the destination pane's current profile).
-            // Source uses a second profile whose default = D.
-            let profiles = AIExecutionProfilesModel::handle(ctx);
-            let default_profile_id = profiles.read(ctx, |p, _| p.default_profile_id());
-            profiles.update(ctx, |p, ctx| {
-                p.set_base_model(&default_profile_id, Some(m.clone()), ctx);
-                let source_profile_id = p.create_profile(ctx).expect("create source profile");
-                p.set_base_model(&source_profile_id, Some(d.clone()), ctx);
-                p.set_active_profile(source_id, source_profile_id, ctx);
-            });
-
-            // Source's explicit selection = M (differs from its profile default D).
-            let scope = TeamlessScopeForTest;
-            LLMPreferences::handle(ctx).update(ctx, |prefs, ctx| {
-                prefs.update_preferred_agent_mode_llm(&scope, &m, source_id, ctx);
-            });
-        });
-
-        // Preconditions: source resolves to M; destination's current default is M.
-        app.update(|ctx| {
-            let scope = TeamlessScopeForTest;
-            let prefs = LLMPreferences::as_ref(ctx);
-            assert_eq!(
-                prefs.get_active_base_model(&scope, ctx, Some(source_id)).id,
-                m,
-                "source pane should resolve to its explicit selection"
-            );
-            assert_eq!(
-                prefs.get_active_base_model(&scope, ctx, Some(new_id)).id,
-                m,
-                "destination pane's current profile default should be M"
-            );
-        });
-
-        // Carry source -> new via the production helper.
-        app.update(|ctx| {
-            Workspace::copy_model_and_profile_to_terminal_view(source_id, new_id, ctx);
-        });
-
-        app.update(|ctx| {
-            let scope = TeamlessScopeForTest;
-            assert_eq!(
-                LLMPreferences::as_ref(ctx)
-                    .get_active_base_model(&scope, ctx, Some(new_id))
-                    .id,
-                m,
-                "destination pane must retain the source's explicit selection, not the source profile default"
-            );
-        });
-    });
-}
-
-#[cfg(feature = "local_fs")]
-fn open_worktree_sidecar(workspace: &ViewHandle<Workspace>, app: &mut App) {
-    workspace.update(app, |workspace, ctx| {
-        workspace.open_new_session_dropdown_menu(
-            crate::workspace::action::NewSessionMenuAnchor::AddTabButton(Vector2F::zero()),
-            ctx,
-        );
-
-        let worktree_index = workspace
-            .new_session_dropdown_menu
-            .read(ctx, |menu, _| {
-                menu.items().iter().position(|item| {
-                    matches!(
-                        item,
-                        MenuItem::Item(fields) if fields.label() == "New worktree config"
-                    )
-                })
-            })
-            .expect("expected new worktree config item in new-session menu");
-
-        workspace
-            .new_session_dropdown_menu
-            .update(ctx, |menu, view_ctx| {
-                menu.set_selected_by_index(worktree_index, view_ctx);
-            });
-    });
-}
-
-#[cfg(feature = "local_fs")]
-#[test]
-fn test_worktree_sidecar_hover_takes_precedence_over_selection() {
-    let _tab_configs_guard = FeatureFlag::TabConfigs.override_enabled(true);
-
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-
-        let workspace = mock_workspace(&mut app);
-        let temp_root = TempDir::new().expect("failed to create temp dir");
-        let alpha_repo = temp_root.path().join("alpha-repo");
-        let beta_repo = temp_root.path().join("beta-repo");
-        std::fs::create_dir_all(&alpha_repo).expect("failed to create alpha repo dir");
-        std::fs::create_dir_all(&beta_repo).expect("failed to create beta repo dir");
-
-        workspace.update(&mut app, |_, ctx| {
-            PersistedWorkspace::handle(ctx).update(ctx, |persisted, ctx| {
-                persisted.user_added_workspace(alpha_repo.clone(), ctx);
-                persisted.user_added_workspace(beta_repo.clone(), ctx);
-            });
-        });
-
-        open_worktree_sidecar(&workspace, &mut app);
-
-        workspace.update(&mut app, |workspace, ctx| {
-            workspace
-                .new_session_sidecar_menu
-                .update(ctx, |menu, view_ctx| {
-                    menu.set_selected_by_index(1, view_ctx);
-                    menu.handle_action(
-                        &crate::menu::MenuAction::HoverSubmenuLeafNode {
-                            depth: 0,
-                            row_index: 2,
-                            position: Vector2F::zero(),
-                        },
-                        view_ctx,
-                    );
-                });
-
-            workspace.handle_new_session_sidecar_event(&MenuEvent::ItemHovered, ctx);
-        });
-
-        workspace.read(&app, |workspace, ctx| {
-            assert_eq!(
-                workspace
-                    .new_session_sidecar_menu
-                    .read(ctx, |menu, _| menu.selected_index()),
-                Some(2)
-            );
-        });
-    });
-}
-
-#[cfg(feature = "local_fs")]
-#[test]
-fn test_worktree_sidecar_pointer_entry_does_not_select_top_repo() {
-    let _tab_configs_guard = FeatureFlag::TabConfigs.override_enabled(true);
-
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-
-        let workspace = mock_workspace(&mut app);
-        let temp_root = TempDir::new().expect("failed to create temp dir");
-        let alpha_repo = temp_root.path().join("alpha-repo");
-        let beta_repo = temp_root.path().join("beta-repo");
-        std::fs::create_dir_all(&alpha_repo).expect("failed to create alpha repo dir");
-        std::fs::create_dir_all(&beta_repo).expect("failed to create beta repo dir");
-
-        workspace.update(&mut app, |_, ctx| {
-            PersistedWorkspace::handle(ctx).update(ctx, |persisted, ctx| {
-                persisted.user_added_workspace(alpha_repo.clone(), ctx);
-                persisted.user_added_workspace(beta_repo.clone(), ctx);
-            });
-        });
-
-        workspace.update(&mut app, |workspace, ctx| {
-            workspace.open_new_session_dropdown_menu(
-                crate::workspace::action::NewSessionMenuAnchor::AddTabButton(Vector2F::zero()),
-                ctx,
-            );
-
-            let worktree_index = workspace
-                .new_session_dropdown_menu
-                .read(ctx, |menu, _| {
-                    menu.items().iter().position(|item| {
-                        matches!(
-                            item,
-                            MenuItem::Item(fields) if fields.label() == "New worktree config"
-                        )
-                    })
-                })
-                .expect("expected new worktree config item in new-session menu");
-
-            workspace
-                .new_session_dropdown_menu
-                .update(ctx, |menu, view_ctx| {
-                    menu.handle_action(
-                        &crate::menu::MenuAction::HoverSubmenuWithChildren(
-                            0,
-                            crate::menu::SelectAction::Index {
-                                row: worktree_index,
-                                item: 0,
-                            },
-                        ),
-                        view_ctx,
-                    );
-                });
-            workspace.update_new_session_sidecar(ctx);
-        });
-
-        workspace.read(&app, |workspace, ctx| {
-            assert!(workspace.show_new_session_sidecar);
-            assert_eq!(
-                workspace
-                    .new_session_sidecar_menu
-                    .read(ctx, |menu, _| menu.selected_index()),
-                None
-            );
-        });
-    });
-}
-
-#[cfg(feature = "local_fs")]
-#[test]
-fn test_worktree_sidecar_close_via_select_item_executes_from_workspace() {
-    let _tab_configs_guard = FeatureFlag::TabConfigs.override_enabled(true);
-
-    App::test((), |mut app| async move {
-        let _cleanup = TabConfigCleanupGuard::new("alpha-repo");
-
-        initialize_app(&mut app);
-
-        let workspace = mock_workspace(&mut app);
-        let temp_root = TempDir::new().expect("failed to create temp dir");
-        let alpha_repo = temp_root.path().join("alpha-repo");
-        std::fs::create_dir_all(&alpha_repo).expect("failed to create alpha repo dir");
-
-        workspace.update(&mut app, |_, ctx| {
-            PersistedWorkspace::handle(ctx).update(ctx, |persisted, ctx| {
-                persisted.user_added_workspace(alpha_repo.clone(), ctx);
-            });
-        });
-
-        open_worktree_sidecar(&workspace, &mut app);
-
-        workspace.update(&mut app, |workspace, ctx| {
-            workspace
-                .new_session_sidecar_menu
-                .update(ctx, |menu, view_ctx| {
-                    menu.set_selected_by_index(1, view_ctx);
-                });
-            workspace.handle_new_session_sidecar_event(
-                &MenuEvent::Close {
-                    via_select_item: true,
-                },
-                ctx,
-            );
-            workspace.handle_new_session_sidecar_event(&MenuEvent::ItemSelected, ctx);
-        });
-
-        workspace.read(&app, |workspace, _| {
-            assert_eq!(workspace.tab_count(), 2);
-        });
-    });
-}
-
-#[cfg(feature = "local_fs")]
-#[test]
-fn test_open_file_notebook_focuses_existing_markdown_pane() {
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-        let workspace = mock_workspace(&mut app);
-        let temp_dir = TempDir::new().expect("failed to create temp dir");
-        let markdown_path = temp_dir.path().join("README.md");
-        std::fs::write(&markdown_path, "# Test\n").expect("failed to write markdown file");
-
-        workspace.update(&mut app, |workspace, ctx| {
-            workspace.open_file_with_target(
-                markdown_path.clone(),
-                FileTarget::MarkdownViewer(EditorLayout::SplitPane),
-                None,
-                CodeSource::Link {
-                    path: markdown_path.clone(),
-                    range_start: None,
-                    range_end: None,
-                },
-                ctx,
-            );
-        });
-
-        let markdown_pane_id = workspace.update(&mut app, |workspace, ctx| {
-            let pane_group = workspace.active_tab_pane_group();
-            pane_group.update(ctx, |pane_group, ctx| {
-                let markdown_panes = pane_group.file_notebook_panes(ctx).collect_vec();
-                assert_eq!(markdown_panes.len(), 1);
-                let pane_id = markdown_panes[0].0;
-
-                pane_group.add_terminal_pane(Direction::Right, None, ctx);
-                assert_ne!(pane_group.focused_pane_id(ctx), pane_id);
-
-                pane_id
-            })
-        });
-
-        workspace.update(&mut app, |workspace, ctx| {
-            workspace.open_file_with_target(
-                markdown_path.clone(),
-                FileTarget::MarkdownViewer(EditorLayout::SplitPane),
-                None,
-                CodeSource::Link {
-                    path: markdown_path,
-                    range_start: None,
-                    range_end: None,
-                },
-                ctx,
-            );
-        });
-
-        workspace.read(&app, |workspace, ctx| {
-            let pane_group = workspace.active_tab_pane_group().as_ref(ctx);
-            assert_eq!(pane_group.file_notebook_panes(ctx).count(), 1);
-            assert_eq!(pane_group.focused_pane_id(ctx), markdown_pane_id);
-        });
-    });
-}
-
-/// Regression test for the agent file-range preview's "Open file" button: the
-/// handler used to zero out `range_start`, so consumers that read the jump
-/// target off the `CodeSource` opened the file at the top.
-#[cfg(feature = "local_fs")]
-#[test]
-fn test_open_file_with_target_event_preserves_requested_line() {
-    use crate::code::editor_management::CodeManager;
-    use crate::code::global_buffer_model::GlobalBufferModel;
-    use crate::terminal::local_shell::LocalShellState;
-
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-        app.add_singleton_model(|_| CodeManager::default());
-        app.add_singleton_model(|_| LocalShellState::NotLoaded);
-        app.add_singleton_model(GlobalBufferModel::new);
-        let workspace = mock_workspace(&mut app);
-        let temp_dir = TempDir::new().expect("failed to create temp dir");
-        let code_path = temp_dir.path().join("main.rs");
-        let contents: String = (1..=80).map(|line| format!("// line {line}\n")).collect();
-        std::fs::write(&code_path, contents).expect("failed to write code file");
-
-        let range_start = LineAndColumnArg {
-            line_num: 42,
-            column_num: None,
-        };
-
-        workspace.update(&mut app, |workspace, ctx| {
-            let pane_group = workspace.active_tab_pane_group().clone();
-            workspace.handle_file_tree_event(
-                pane_group,
-                &crate::pane_group::Event::OpenFileWithTarget {
-                    path: code_path.clone(),
-                    target: FileTarget::CodeEditor(EditorLayout::SplitPane),
-                    line_col: Some(range_start),
-                },
-                ctx,
-            );
-        });
-
-        workspace.read(&app, |workspace, ctx| {
-            let pane_group = workspace.active_tab_pane_group().as_ref(ctx);
-            let code_panes = pane_group.code_panes(ctx).collect_vec();
-            assert_eq!(code_panes.len(), 1);
-            assert_eq!(
-                *code_panes[0].1.as_ref(ctx).source(),
-                CodeSource::Link {
-                    path: code_path.clone(),
-                    range_start: Some(range_start),
-                    range_end: None,
-                }
-            );
-        });
-    });
-}
 
 /// Regression test for the raw-code toggle: the notebook-viewer target used to
 /// drop the `CodeSource` outright, so the raw view always started at line 1.
@@ -1287,43 +573,6 @@ fn test_open_markdown_viewer_target_preserves_requested_line() {
     });
 }
 
-#[cfg(feature = "local_fs")]
-#[test]
-fn test_worktree_sidecar_search_editor_enter_executes_selection() {
-    let _tab_configs_guard = FeatureFlag::TabConfigs.override_enabled(true);
-
-    App::test((), |mut app| async move {
-        let _cleanup = TabConfigCleanupGuard::new("alpha-repo");
-
-        initialize_app(&mut app);
-
-        let workspace = mock_workspace(&mut app);
-        let temp_root = TempDir::new().expect("failed to create temp dir");
-        let alpha_repo = temp_root.path().join("alpha-repo");
-        std::fs::create_dir_all(&alpha_repo).expect("failed to create alpha repo dir");
-
-        workspace.update(&mut app, |_, ctx| {
-            PersistedWorkspace::handle(ctx).update(ctx, |persisted, ctx| {
-                persisted.user_added_workspace(alpha_repo.clone(), ctx);
-            });
-        });
-
-        open_worktree_sidecar(&workspace, &mut app);
-
-        workspace.update(&mut app, |workspace, ctx| {
-            workspace
-                .worktree_sidecar_search_editor
-                .update(ctx, |_, ctx| {
-                    ctx.emit(Event::Enter);
-                });
-        });
-
-        workspace.read(&app, |workspace, _| {
-            assert_eq!(workspace.tab_count(), 2);
-            assert!(workspace.show_new_session_dropdown_menu.is_none());
-        });
-    });
-}
 
 /// RAII guard that removes tab config TOML files whose name starts with
 /// `prefix` from `~/.warp/tab_configs/` on drop. Because `Drop` runs even
@@ -1495,44 +744,6 @@ fn active_session_state(
     }
 }
 
-#[test]
-fn restore_conversation_in_active_pane_enters_existing_live_conversation_without_loading() {
-    let _agent_view = FeatureFlag::AgentView.override_enabled(true);
-
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-
-        let workspace = mock_workspace(&mut app);
-        let terminal_view = workspace.read(&app, |workspace, ctx| {
-            workspace
-                .active_tab_pane_group()
-                .as_ref(ctx)
-                .focused_session_view(ctx)
-                .expect("workspace should start with a terminal view")
-        });
-        let terminal_view_id = terminal_view.read(&app, |view, _| view.view_id());
-        let conversation_id =
-            BlocklistAIHistoryModel::handle(&app).update(&mut app, |history, ctx| {
-                history.start_new_conversation(terminal_view_id, false, false, false, ctx)
-            });
-
-        workspace.update(&mut app, |workspace, ctx| {
-            assert_eq!(workspace.tab_count(), 1);
-
-            workspace.restore_conversation_in_active_pane(conversation_id, ctx);
-
-            assert_eq!(workspace.tab_count(), 1);
-        });
-
-        terminal_view.read(&app, |view, ctx| {
-            assert_eq!(view.active_conversation_id(ctx), Some(conversation_id));
-            assert_eq!(
-                view.model.lock().conversation_transcript_viewer_status(),
-                None
-            );
-        });
-    });
-}
 fn new_session_menu_label(item: &MenuItem<WorkspaceAction>) -> String {
     match item {
         MenuItem::Item(fields) => fields.label().to_string(),
@@ -1819,103 +1030,6 @@ fn test_set_active_tab_color() {
     });
 }
 
-#[test]
-fn test_cycle_active_tab_color_uses_resolved_color_and_only_mutates_the_active_tab() {
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-
-        let workspace = mock_workspace(&mut app);
-
-        workspace.update(&mut app, |workspace, ctx| {
-            workspace.add_terminal_tab(false, ctx);
-            let active = workspace.active_tab_index;
-            let inactive = 0;
-            workspace.tabs[inactive].selected_color =
-                SelectedTabColor::Color(AnsiColorIdentifier::Magenta);
-            workspace.tabs[inactive].in_multi_selection = true;
-            workspace.tabs[active].in_multi_selection = true;
-
-            workspace.handle_action(&WorkspaceAction::CycleActiveTabColor, ctx);
-            assert_eq!(
-                workspace.tabs[active].selected_color,
-                SelectedTabColor::Color(AnsiColorIdentifier::Red),
-                "an uncolored active tab should start at red"
-            );
-            workspace.handle_action(&WorkspaceAction::CycleActiveTabColor, ctx);
-            assert_eq!(
-                workspace.tabs[active].selected_color,
-                SelectedTabColor::Color(AnsiColorIdentifier::Green),
-                "red should advance to green"
-            );
-            workspace.handle_action(&WorkspaceAction::CycleActiveTabColor, ctx);
-            assert_eq!(
-                workspace.tabs[active].selected_color,
-                SelectedTabColor::Color(AnsiColorIdentifier::Yellow),
-                "green should advance to yellow"
-            );
-            workspace.handle_action(&WorkspaceAction::CycleActiveTabColor, ctx);
-            assert_eq!(
-                workspace.tabs[active].selected_color,
-                SelectedTabColor::Color(AnsiColorIdentifier::Blue),
-                "yellow should advance to blue"
-            );
-            workspace.handle_action(&WorkspaceAction::CycleActiveTabColor, ctx);
-            assert_eq!(
-                workspace.tabs[active].selected_color,
-                SelectedTabColor::Color(AnsiColorIdentifier::Magenta),
-                "blue should advance to magenta"
-            );
-            workspace.tabs[active].default_directory_color = Some(AnsiColorIdentifier::Yellow);
-            workspace.handle_action(&WorkspaceAction::CycleActiveTabColor, ctx);
-            assert_eq!(
-                workspace.tabs[active].selected_color,
-                SelectedTabColor::Color(AnsiColorIdentifier::Cyan),
-                "magenta should advance to cyan"
-            );
-            workspace.handle_action(&WorkspaceAction::CycleActiveTabColor, ctx);
-            assert_eq!(
-                workspace.tabs[active].selected_color,
-                SelectedTabColor::Cleared,
-                "cyan should advance to an explicit clear"
-            );
-            assert_eq!(
-                workspace.tabs[active].color(),
-                None,
-                "an explicit clear should suppress the directory-derived color"
-            );
-            workspace.handle_action(&WorkspaceAction::CycleActiveTabColor, ctx);
-            assert_eq!(
-                workspace.tabs[active].selected_color,
-                SelectedTabColor::Color(AnsiColorIdentifier::Red),
-                "the invocation after an explicit clear should restart at red"
-            );
-
-            assert_eq!(
-                workspace.tabs[inactive].selected_color,
-                SelectedTabColor::Color(AnsiColorIdentifier::Magenta),
-                "the inactive tab should not change"
-            );
-            assert!(workspace.tabs[inactive].in_multi_selection);
-            assert!(workspace.tabs[active].in_multi_selection);
-
-            workspace.tabs[active].selected_color = SelectedTabColor::Unset;
-            workspace.handle_action(&WorkspaceAction::CycleActiveTabColor, ctx);
-            assert_eq!(
-                workspace.tabs[active].selected_color,
-                SelectedTabColor::Color(AnsiColorIdentifier::Blue),
-                "a directory-derived yellow should advance to blue"
-            );
-
-            workspace.active_tab_index = workspace.tabs.len();
-            let active_selection = workspace.tabs[active].selected_color;
-            let inactive_selection = workspace.tabs[inactive].selected_color;
-            workspace.handle_action(&WorkspaceAction::CycleActiveTabColor, ctx);
-            workspace.active_tab_index = active;
-            assert_eq!(workspace.tabs[active].selected_color, active_selection);
-            assert_eq!(workspace.tabs[inactive].selected_color, inactive_selection);
-        });
-    });
-}
 
 #[test]
 fn test_cycle_active_tab_color_mutates_group_color_without_member_overrides() {
@@ -3101,41 +2215,6 @@ fn test_switch_focus_panels() {
             );
         });
 
-        // Shift focus from WD to left panel when AI panel is open
-        workspace.update(&mut app, |view, ctx| {
-            view.current_workspace_state.is_ai_assistant_panel_open = true;
-            view.focus_left_panel(ctx);
-        });
-        workspace.update(&mut app, |view, ctx| {
-            assert!(
-                view.ai_assistant_panel.is_self_or_child_focused(ctx),
-                "Expected AI panel to be focused"
-            );
-        });
-
-        // Shift focus from AI panel to left panel (terminal)
-        workspace.update(&mut app, |view, ctx| {
-            view.focus_left_panel(ctx);
-        });
-        workspace.update(&mut app, |_view, ctx| {
-            assert!(
-                workspace.is_self_or_child_focused(ctx),
-                "Expected terminal to be focused"
-            );
-        });
-
-        // Shift focus from workspace to right panel when the agent panel is open
-        workspace.update(&mut app, |view, ctx| {
-            view.current_workspace_state.is_ai_assistant_panel_open = true;
-            view.focus_right_panel(ctx);
-        });
-        workspace.update(&mut app, |view, ctx| {
-            assert!(
-                view.ai_assistant_panel.is_self_or_child_focused(ctx),
-                "Expected AI panel to be focused"
-            );
-        });
-
         // Shift focus from WD to right panel (terminal)
         workspace.update(&mut app, |view, ctx| {
             view.focus_right_panel(ctx);
@@ -3357,18 +2436,6 @@ fn set_left_panel_visibility_across_tabs(is_enabled: bool, ctx: &mut ViewContext
     });
 }
 
-fn add_get_started_tab(workspace: &mut Workspace, ctx: &mut ViewContext<Workspace>) {
-    workspace.add_tab_with_pane_layout(
-        PanesLayout::Snapshot(Box::new(PaneNodeSnapshot::Leaf(LeafSnapshot {
-            is_focused: true,
-            custom_vertical_tabs_title: None,
-            contents: LeafContents::GetStarted,
-        }))),
-        Arc::new(HashMap::<PaneUuid, Vec<SerializedBlockListItem>>::new()),
-        None,
-        ctx,
-    );
-}
 
 fn find_terminal_tab_index(workspace: &Workspace, ctx: &AppContext) -> usize {
     workspace
@@ -3451,83 +2518,6 @@ fn test_left_panel_window_scoped_reconciles_between_terminal_tabs_when_enabled()
     });
 }
 
-#[test]
-fn test_left_panel_window_scoped_non_following_tab_does_not_reconcile_but_updates_window_state() {
-    let _conversation_list_guard =
-        FeatureFlag::AgentViewConversationListView.override_enabled(false);
-    let _get_started_guard = FeatureFlag::GetStartedTab.override_enabled(true);
-
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-
-        let workspace = mock_workspace(&mut app);
-
-        workspace.update(&mut app, |workspace, ctx| {
-            set_left_panel_visibility_across_tabs(true, ctx);
-
-            // Establish window-scoped desired state = open on a terminal tab.
-            workspace.open_left_panel(ctx);
-            assert!(workspace.left_panel_open);
-
-            // Create a non-following tab (e.g. Get Started), which should not auto-open even though
-            // the window state is open.
-            add_get_started_tab(workspace, ctx);
-            let non_following_tab_index = find_non_following_tab_index(workspace, ctx);
-            workspace.activate_tab(non_following_tab_index, ctx);
-
-            assert!(
-                !workspace
-                    .active_tab_pane_group()
-                    .as_ref(ctx)
-                    .left_panel_open
-            );
-            assert!(workspace.left_panel_open);
-
-            // User actions in the non-following tab still update window state.
-            workspace.open_left_panel(ctx);
-            assert!(
-                workspace
-                    .active_tab_pane_group()
-                    .as_ref(ctx)
-                    .left_panel_open
-            );
-            assert!(workspace.left_panel_open);
-
-            workspace.close_left_panel(ctx);
-            assert!(
-                !workspace
-                    .active_tab_pane_group()
-                    .as_ref(ctx)
-                    .left_panel_open
-            );
-            assert!(!workspace.left_panel_open);
-
-            // The window state should reconcile back onto following tabs.
-            let terminal_tab_index = find_terminal_tab_index(workspace, ctx);
-            workspace.activate_tab(terminal_tab_index, ctx);
-            assert!(
-                !workspace
-                    .active_tab_pane_group()
-                    .as_ref(ctx)
-                    .left_panel_open
-            );
-
-            // But toggling the window state from a following tab should not auto-open the
-            // non-following tab.
-            workspace.open_left_panel(ctx);
-            assert!(workspace.left_panel_open);
-
-            workspace.activate_tab(non_following_tab_index, ctx);
-            assert!(
-                !workspace
-                    .active_tab_pane_group()
-                    .as_ref(ctx)
-                    .left_panel_open
-            );
-            assert!(workspace.left_panel_open);
-        });
-    });
-}
 
 #[test]
 fn test_left_panel_window_scoped_disabled_keeps_per_tab_state() {
@@ -3700,25 +2690,6 @@ fn test_vertical_tabs_panel_closed_when_disabled_even_if_persisted_open() {
     });
 }
 
-#[test]
-fn test_vertical_tabs_panel_defaults_open_for_new_window_when_vertical_tabs_enabled() {
-    let _vertical_tabs_guard = FeatureFlag::VerticalTabs.override_enabled(true);
-
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-        app.update(|ctx| {
-            TabSettings::handle(ctx).update(ctx, |settings, ctx| {
-                report_if_error!(settings.use_vertical_tabs.set_value(true, ctx));
-            });
-        });
-
-        let workspace = mock_workspace(&mut app);
-
-        workspace.read(&app, |workspace, _| {
-            assert!(workspace.vertical_tabs_panel_open);
-        });
-    });
-}
 
 #[test]
 fn test_vertical_tabs_panel_inherits_transferred_tab_source_window_state() {
@@ -4110,302 +3081,10 @@ fn test_unified_new_session_menu_includes_reopen_closed_session() {
     });
 }
 
-#[cfg(feature = "local_fs")]
-#[test]
-fn test_worktree_sidecar_search_editor_proxies_navigation_and_escape() {
-    let _tab_configs_guard = FeatureFlag::TabConfigs.override_enabled(true);
 
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
 
-        let workspace = mock_workspace(&mut app);
-        let temp_root = TempDir::new().expect("failed to create temp dir");
-        let alpha_repo = temp_root.path().join("alpha-repo");
-        let beta_repo = temp_root.path().join("beta-repo");
-        std::fs::create_dir_all(&alpha_repo).expect("failed to create alpha repo dir");
-        std::fs::create_dir_all(&beta_repo).expect("failed to create beta repo dir");
 
-        workspace.update(&mut app, |_, ctx| {
-            PersistedWorkspace::handle(ctx).update(ctx, |persisted, ctx| {
-                persisted.user_added_workspace(alpha_repo.clone(), ctx);
-                persisted.user_added_workspace(beta_repo.clone(), ctx);
-            });
-        });
 
-        open_worktree_sidecar(&workspace, &mut app);
-
-        workspace.read(&app, |workspace, ctx| {
-            assert!(workspace.show_new_session_sidecar);
-            assert!(workspace.worktree_sidecar_search_editor.is_focused(ctx));
-            assert_eq!(
-                workspace
-                    .new_session_sidecar_menu
-                    .read(ctx, |menu, _| menu.selected_index()),
-                Some(1)
-            );
-        });
-
-        workspace.update(&mut app, |workspace, ctx| {
-            workspace
-                .worktree_sidecar_search_editor
-                .update(ctx, |_, ctx| {
-                    ctx.emit(Event::Navigate(NavigationKey::Down));
-                });
-        });
-        workspace.read(&app, |workspace, ctx| {
-            assert_eq!(
-                workspace
-                    .new_session_sidecar_menu
-                    .read(ctx, |menu, _| menu.selected_index()),
-                Some(2)
-            );
-        });
-
-        workspace.update(&mut app, |workspace, ctx| {
-            workspace
-                .worktree_sidecar_search_editor
-                .update(ctx, |_, ctx| {
-                    ctx.emit(Event::Navigate(NavigationKey::Up));
-                });
-        });
-        workspace.read(&app, |workspace, ctx| {
-            assert_eq!(
-                workspace
-                    .new_session_sidecar_menu
-                    .read(ctx, |menu, _| menu.selected_index()),
-                Some(1)
-            );
-        });
-
-        workspace.update(&mut app, |workspace, ctx| {
-            workspace
-                .worktree_sidecar_search_editor
-                .update(ctx, |editor, ctx| {
-                    editor.set_buffer_text("beta", ctx);
-                });
-        });
-        workspace.read(&app, |workspace, ctx| {
-            assert_eq!(workspace.worktree_sidecar_search_query, "beta");
-            assert_eq!(
-                workspace
-                    .new_session_sidecar_menu
-                    .read(ctx, |menu, _| menu.items_len()),
-                2
-            );
-            assert_eq!(
-                workspace
-                    .new_session_sidecar_menu
-                    .read(ctx, |menu, _| menu.selected_index()),
-                Some(1)
-            );
-        });
-
-        workspace.update(&mut app, |workspace, ctx| {
-            workspace
-                .worktree_sidecar_search_editor
-                .update(ctx, |_, ctx| {
-                    ctx.emit(Event::Escape);
-                });
-        });
-        workspace.read(&app, |workspace, ctx| {
-            assert!(workspace.show_new_session_dropdown_menu.is_none());
-            assert!(!workspace.show_new_session_sidecar);
-            assert!(workspace.worktree_sidecar_search_query.is_empty());
-            assert!(
-                workspace
-                    .worktree_sidecar_search_editor
-                    .as_ref(ctx)
-                    .buffer_text(ctx)
-                    .is_empty()
-            );
-        });
-    });
-}
-
-#[cfg(feature = "local_fs")]
-#[test]
-fn test_worktree_sidecar_hides_linked_worktrees_from_repo_list() {
-    let _tab_configs_guard = FeatureFlag::TabConfigs.override_enabled(true);
-
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-
-        let workspace = mock_workspace(&mut app);
-        let temp_root = TempDir::new().expect("failed to create temp dir");
-        let main_repo = temp_root.path().join("main-repo");
-        let linked_worktree = temp_root.path().join("linked-worktree");
-        let external_git_dir = main_repo
-            .join(".git")
-            .join("worktrees")
-            .join("linked-worktree");
-
-        std::fs::create_dir_all(&main_repo).expect("failed to create main repo dir");
-        std::fs::create_dir_all(&linked_worktree).expect("failed to create linked worktree dir");
-        std::fs::create_dir_all(&external_git_dir).expect("failed to create external git dir");
-
-        workspace.update(&mut app, |_, ctx| {
-            PersistedWorkspace::handle(ctx).update(ctx, |persisted, ctx| {
-                persisted.user_added_workspace(main_repo.clone(), ctx);
-                persisted.user_added_workspace(linked_worktree.clone(), ctx);
-            });
-
-            let main_repo_canon =
-                CanonicalizedPath::try_from(main_repo.as_path()).expect("canonical main repo");
-            let linked_worktree_canon = CanonicalizedPath::try_from(linked_worktree.as_path())
-                .expect("canonical linked worktree");
-            let external_git_dir_canon = CanonicalizedPath::try_from(external_git_dir.as_path())
-                .expect("canonical external git dir");
-
-            let main_repo_std: warp_util::standardized_path::StandardizedPath =
-                main_repo_canon.into();
-            let linked_worktree_std: warp_util::standardized_path::StandardizedPath =
-                linked_worktree_canon.into();
-            let external_git_dir_std: warp_util::standardized_path::StandardizedPath =
-                external_git_dir_canon.into();
-
-            DetectedRepositories::handle(ctx).update(ctx, |repos, _ctx| {
-                repos.insert_test_repo_root(main_repo_std.clone());
-                repos.insert_test_repo_root(linked_worktree_std.clone());
-            });
-
-            DirectoryWatcher::handle(ctx).update(ctx, |watcher, ctx| {
-                watcher
-                    .add_directory_with_git_dir(main_repo_std, None, ctx)
-                    .expect("register main repo");
-                watcher
-                    .add_directory_with_git_dir(
-                        linked_worktree_std,
-                        Some(external_git_dir_std),
-                        ctx,
-                    )
-                    .expect("register linked worktree");
-            });
-        });
-
-        open_worktree_sidecar(&workspace, &mut app);
-
-        workspace.read(&app, |workspace, ctx| {
-            let labels = workspace.new_session_sidecar_menu.read(ctx, |menu, _| {
-                menu.items()
-                    .iter()
-                    .filter_map(|item| match item {
-                        MenuItem::Item(fields) => Some(fields.label().to_string()),
-                        _ => None,
-                    })
-                    .collect::<Vec<_>>()
-            });
-
-            let main_repo_label = main_repo.to_string_lossy().to_string();
-            let linked_worktree_label = linked_worktree.to_string_lossy().to_string();
-
-            assert!(labels.iter().any(|label| label == "Search repos"));
-            assert!(labels.iter().any(|label| label == &main_repo_label));
-            assert!(!labels.iter().any(|label| label == &linked_worktree_label));
-        });
-    });
-}
-
-#[test]
-fn test_vertical_tabs_context_menu_does_not_show_hover_only_tab_bar() {
-    let _full_screen_zen_mode_guard = FeatureFlag::FullScreenZenMode.override_enabled(true);
-    let _vertical_tabs_guard = FeatureFlag::VerticalTabs.override_enabled(true);
-
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-
-        let workspace = mock_workspace(&mut app);
-
-        workspace.update(&mut app, |workspace, ctx| {
-            TabSettings::handle(ctx).update(ctx, |settings, ctx| {
-                report_if_error!(
-                    settings
-                        .workspace_decoration_visibility
-                        .set_value(WorkspaceDecorationVisibility::OnHover, ctx)
-                );
-                report_if_error!(settings.use_vertical_tabs.set_value(true, ctx));
-            });
-            workspace.should_show_ai_assistant_warm_welcome = false;
-            workspace.vertical_tabs_panel_open = true;
-
-            workspace.show_tab_right_click_menu =
-                Some((0, TabContextMenuAnchor::Pointer(Vector2F::zero())));
-
-            assert_eq!(workspace.tab_bar_mode(ctx), ShowTabBar::Hidden);
-        });
-    });
-}
-
-#[test]
-fn test_standard_tab_context_menu_shows_hover_only_tab_bar() {
-    let _full_screen_zen_mode_guard = FeatureFlag::FullScreenZenMode.override_enabled(true);
-
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-
-        let workspace = mock_workspace(&mut app);
-
-        workspace.update(&mut app, |workspace, ctx| {
-            TabSettings::handle(ctx).update(ctx, |settings, ctx| {
-                report_if_error!(
-                    settings
-                        .workspace_decoration_visibility
-                        .set_value(WorkspaceDecorationVisibility::OnHover, ctx)
-                );
-            });
-            workspace.should_show_ai_assistant_warm_welcome = false;
-
-            workspace.show_tab_right_click_menu =
-                Some((0, TabContextMenuAnchor::Pointer(Vector2F::zero())));
-
-            assert_eq!(workspace.tab_bar_mode(ctx), ShowTabBar::Stacked);
-        });
-    });
-}
-
-#[test]
-fn test_open_cloud_agent_setup_guide_action_opens_management_view_and_is_idempotent() {
-    let _agent_management_guard = FeatureFlag::AgentManagementView.override_enabled(true);
-
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-
-        let workspace = mock_workspace(&mut app);
-
-        workspace.update(&mut app, |workspace, ctx| {
-            assert!(
-                !workspace
-                    .current_workspace_state
-                    .is_agent_management_view_open
-            );
-
-            workspace.handle_action(&WorkspaceAction::OpenCloudAgentSetupGuide, ctx);
-            assert!(
-                workspace
-                    .current_workspace_state
-                    .is_agent_management_view_open
-            );
-            assert!(
-                workspace
-                    .agent_management_view
-                    .as_ref(ctx)
-                    .is_showing_setup_guide()
-            );
-
-            workspace.handle_action(&WorkspaceAction::OpenCloudAgentSetupGuide, ctx);
-            assert!(
-                workspace
-                    .current_workspace_state
-                    .is_agent_management_view_open
-            );
-            assert!(
-                workspace
-                    .agent_management_view
-                    .as_ref(ctx)
-                    .is_showing_setup_guide()
-            );
-        });
-    });
-}
 
 #[test]
 fn test_tab_mru_order() {
@@ -4747,137 +3426,7 @@ fn test_close_tab_group_removes_group_and_members() {
     });
 }
 
-#[test]
-fn test_new_tab_with_after_all_tabs_setting_lands_top_level_at_end() {
-    // With `new_tab_placement = AfterAllTabs`, a new tab lands at the very end
-    // of the tab bar, outside any group — even when the active tab is in a
-    // group.
-    let _grouped_tabs_guard = FeatureFlag::GroupedTabs.override_enabled(true);
 
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-        app.update(|ctx| {
-            TabSettings::handle(ctx).update(ctx, |settings, ctx| {
-                report_if_error!(
-                    settings
-                        .new_tab_placement
-                        .set_value(NewTabPlacement::AfterAllTabs, ctx)
-                );
-            });
-        });
-
-        let workspace = mock_workspace(&mut app);
-        workspace.update(&mut app, |workspace, ctx| {
-            // Build [g0, g1, ungrouped] by assigning membership directly, so the
-            // setup doesn't depend on new-tab placement behavior.
-            workspace.add_terminal_tab(false, ctx);
-            workspace.add_terminal_tab(false, ctx);
-            assert_eq!(workspace.tab_count(), 3);
-
-            let group = TabGroup::new();
-            let group_id = group.id;
-            workspace.tab_groups.insert(group_id, group);
-            workspace.tabs[0].group_id = Some(group_id);
-            workspace.tabs[1].group_id = Some(group_id);
-
-            // Activate a member of the group, then add a new tab.
-            workspace.activate_tab(0, ctx);
-            workspace.add_terminal_tab(false, ctx);
-
-            // The new tab lands at the very end of the bar and is top-level.
-            let last = workspace.tab_count() - 1;
-            assert_eq!(workspace.active_tab_index(), last);
-            assert_eq!(workspace.tabs[last].group_id, None);
-
-            // The group keeps exactly its original two contiguous members.
-            let group_members: Vec<usize> = workspace
-                .tabs
-                .iter()
-                .enumerate()
-                .filter(|(_, t)| t.group_id == Some(group_id))
-                .map(|(idx, _)| idx)
-                .collect();
-            assert_eq!(group_members, vec![0, 1]);
-        });
-    });
-}
-
-#[test]
-fn test_new_tab_with_after_current_tab_setting_lands_after_active_tab_in_group() {
-    // With `new_tab_placement = AfterCurrentTab` and the active tab in the
-    // middle of a group, a new tab should land immediately after the active
-    // tab and inherit the group_id, preserving group contiguity rather than
-    // jumping to the end of the group or past it.
-    let _grouped_tabs_guard = FeatureFlag::GroupedTabs.override_enabled(true);
-
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-        app.update(|ctx| {
-            TabSettings::handle(ctx).update(ctx, |settings, ctx| {
-                report_if_error!(
-                    settings
-                        .new_tab_placement
-                        .set_value(NewTabPlacement::AfterCurrentTab, ctx)
-                );
-            });
-        });
-
-        let workspace = mock_workspace(&mut app);
-        workspace.update(&mut app, |workspace, ctx| {
-            // Create a group and grow it to two contiguous members so we can
-            // activate the first one (i.e. a member that isn't at the end of
-            // the group's run).
-            workspace.handle_action(
-                &WorkspaceAction::SelectNewSessionMenuItem(NewSessionMenuItem::CreateNewTabGroup),
-                ctx,
-            );
-            let group_id = workspace.tabs[workspace.active_tab_index()]
-                .group_id
-                .expect("active tab should be in a group");
-            workspace.add_terminal_tab(false, ctx);
-
-            // Activate the first grouped tab so the next insertion happens in
-            // the middle of the group's contiguous run.
-            let first_grouped_idx = workspace
-                .tabs
-                .iter()
-                .position(|t| t.group_id == Some(group_id))
-                .expect("expected at least one grouped tab");
-            workspace.activate_tab(first_grouped_idx, ctx);
-
-            let expected_new_idx = first_grouped_idx + 1;
-
-            workspace.add_terminal_tab(false, ctx);
-
-            // The new tab lands immediately after the previously-active
-            // grouped tab, inherits its group_id, and keeps the group's run
-            // contiguous.
-            assert_eq!(workspace.active_tab_index(), expected_new_idx);
-            assert_eq!(
-                workspace.tabs[expected_new_idx].group_id,
-                Some(group_id),
-                "new tab should inherit the active tab's group_id"
-            );
-
-            let group_indices: Vec<usize> = workspace
-                .tabs
-                .iter()
-                .enumerate()
-                .filter(|(_, t)| t.group_id == Some(group_id))
-                .map(|(idx, _)| idx)
-                .collect();
-            assert_eq!(
-                group_indices.len(),
-                3,
-                "group should have grown to three members"
-            );
-            assert!(
-                group_indices.windows(2).all(|w| w[1] == w[0] + 1),
-                "group's tab indices should be contiguous, got {group_indices:?}"
-            );
-        });
-    });
-}
 
 #[test]
 fn test_move_tab_to_group_expands_collapsed_group() {
@@ -5290,15 +3839,6 @@ mod simplified_wasm_tab_bar {
     use warpui::{AppContext, View, ViewContext};
 
     use super::*;
-    use crate::ai::agent::api::ServerConversationToken;
-    use crate::ai::agent::conversation::{
-        AIAgentHarness, AIConversation, ServerAIConversationMetadata,
-    };
-    use crate::ai::ambient_agents::task::TaskPrincipalInfo;
-    use crate::ai::ambient_agents::{
-        AgentSource, AmbientAgentTask, AmbientAgentTaskId, AmbientAgentTaskState,
-    };
-    use crate::ai::blocklist::history_model::CloudConversationData;
     use crate::auth::user::TEST_USER_UID;
     use crate::cloud_object::{Owner, Revision, ServerMetadata, ServerPermissions};
     use crate::persistence::model::ConversationUsageMetadata;

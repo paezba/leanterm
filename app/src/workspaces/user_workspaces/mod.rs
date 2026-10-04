@@ -35,7 +35,7 @@ use crate::settings::{ CodeSettings, CodeSettingsChangedEvent, PrivacySettings,
 };
 #[cfg(test)]
 use crate::workspaces::workspace::{
-    AIAutonomyPolicy, AiAutonomySettings, BillingMetadata, CustomerType, SplitListSetting,
+    AIAutonomyPolicy, BillingMetadata, CustomerType, SplitListSetting,
     WorkspaceMember, WorkspaceSettings,
 };
 use crate::workspaces::workspace::{
@@ -1637,62 +1637,6 @@ impl UserWorkspaces {
 
 #[cfg(test)]
 impl UserWorkspaces {
-    /// Creates a test workspace with a team and sets it as the current workspace.
-    /// Returns the workspace UID and admin UID for use in tests.
-    pub fn setup_test_workspace(&mut self, ctx: &mut ModelContext<Self>) {
-        let workspace_uid = WorkspaceUid::from(ServerId::from(1));
-        let owner_uid = UserUid::new("test_owner");
-
-        let workspace_settings = WorkspaceSettings::default();
-
-        let workspace = Workspace {
-            uid: workspace_uid,
-            name: "Test Workspace".to_string(),
-            stripe_customer_id: None,
-            teams: vec![Team {
-                uid: ServerId::from(2),
-                name: "Test Team".to_string(),
-                settings: Default::default(),
-                color: None,
-                billing_metadata: BillingMetadata::default(),
-                members: vec![],
-                invite_link: None,
-                pending_email_invites: vec![],
-                invite_link_domain_restrictions: vec![],
-                stripe_customer_id: None,
-                feature_model_choice: Default::default(),
-                is_eligible_for_discovery: false,
-                has_billing_history: false,
-                visibility: TeamVisibility::Open,
-            }],
-            open_teams: vec![],
-            members: vec![WorkspaceMember {
-                uid: owner_uid,
-                email: "test@example.com".to_string(),
-                role: MembershipRole::Owner,
-                is_disabled: false,
-                usage_info: WorkspaceMemberUsageInfo {
-                    requests_used_since_last_refresh: 0,
-                    request_limit: 1000,
-                    is_unlimited: false,
-                    is_request_limit_prorated: false,
-                },
-            }],
-            billing_metadata: BillingMetadata::default(),
-            bonus_grants_purchased_this_month: Default::default(),
-            billing_cycle_usage: None,
-            has_billing_history: false,
-            settings: workspace_settings,
-            feature_model_choice: Default::default(),
-            invite_link_domain_restrictions: vec![],
-            pending_email_invites: vec![],
-            is_eligible_for_discovery: false,
-            total_requests_used_since_last_refresh: 0,
-        };
-
-        self.update_workspaces(vec![workspace], ctx);
-        self.set_current_workspace_uid(workspace_uid, ctx);
-    }
 
     /// Updates the current workspace by applying a mutation function.
     pub fn update_current_workspace<F>(&mut self, f: F, ctx: &mut ModelContext<Self>)

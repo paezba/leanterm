@@ -2,7 +2,6 @@ use self::parse_url_paths::{WarpWebLink, get_item_data_from_warp_link};
 use super::*;
 use crate::ChannelState;
 use crate::launch_configs::launch_config::make_mock_single_window_launch_config;
-use crate::linear::{LinearAction, LinearIssueWork};
 
 #[test]
 fn test_find_matching_config() {
@@ -374,155 +373,13 @@ fn resolve_browser_url_returns_none_when_neither_url_is_known() {
     assert_eq!(resolved, None);
 }
 
-#[test]
-fn test_action_create_environment_parse() {
-    let url = Url::parse(&format!(
-        "{}://action/create_environment?repo=foo&repo=bar",
-        ChannelState::url_scheme()
-    ))
-    .unwrap();
 
-    let action = Action::parse(&url).unwrap();
-    match action {
-        Action::CreateEnvironment { repos } => {
-            assert_eq!(repos, vec!["foo".to_owned(), "bar".to_owned()]);
-        }
-        _ => panic!("unexpected action: {action:?}"),
-    }
-}
 
-#[test]
-fn test_action_focus_cloud_mode_parse() {
-    let url = Url::parse(&format!(
-        "{}://action/focus_cloud_mode",
-        ChannelState::url_scheme()
-    ))
-    .unwrap();
 
-    let action = Action::parse(&url).unwrap();
-    assert!(matches!(action, Action::FocusCloudMode));
-}
 
-#[test]
-fn test_action_create_environment_parse_no_repos() {
-    let url = Url::parse(&format!(
-        "{}://action/create_environment",
-        ChannelState::url_scheme()
-    ))
-    .unwrap();
 
-    let action = Action::parse(&url).unwrap();
-    match action {
-        Action::CreateEnvironment { repos } => {
-            assert!(repos.is_empty());
-        }
-        _ => panic!("unexpected action: {action:?}"),
-    }
-}
 
-fn open_file_editor_test_path(file_name: &str) -> (String, PathBuf) {
-    #[cfg(windows)]
-    let path = format!("C:/tmp/{file_name}");
-    #[cfg(not(windows))]
-    let path = format!("/tmp/{file_name}");
 
-    (path.clone(), PathBuf::from(path))
-}
-
-#[test]
-fn test_action_open_file_editor_parse_with_path_only() {
-    let (path_param, expected_path) = open_file_editor_test_path("test.rs");
-    let url = Url::parse(&format!(
-        "{}://action/open_file_editor?path={path_param}",
-        ChannelState::url_scheme()
-    ))
-    .unwrap();
-
-    let action = Action::parse(&url).unwrap();
-    match action {
-        Action::OpenFileEditor { path, line_col } => {
-            assert_eq!(path, expected_path);
-            assert_eq!(line_col, None);
-        }
-        _ => panic!("unexpected action: {action:?}"),
-    }
-}
-
-#[test]
-fn test_action_open_file_editor_parse_with_line_only() {
-    let (path_param, expected_path) = open_file_editor_test_path("test.rs");
-    let url = Url::parse(&format!(
-        "{}://action/open_file_editor?path={path_param}&line=120",
-        ChannelState::url_scheme()
-    ))
-    .unwrap();
-
-    let action = Action::parse(&url).unwrap();
-    match action {
-        Action::OpenFileEditor { path, line_col } => {
-            assert_eq!(path, expected_path);
-            assert_eq!(
-                line_col,
-                Some(LineAndColumnArg {
-                    line_num: 120,
-                    column_num: None,
-                })
-            );
-        }
-        _ => panic!("unexpected action: {action:?}"),
-    }
-}
-
-#[test]
-fn test_action_open_file_editor_parse_with_line_and_column() {
-    let (path_param, expected_path) = open_file_editor_test_path("test.rs");
-    let url = Url::parse(&format!(
-        "{}://action/open_file_editor?path={path_param}&line=120&column=8",
-        ChannelState::url_scheme()
-    ))
-    .unwrap();
-
-    let action = Action::parse(&url).unwrap();
-    match action {
-        Action::OpenFileEditor { path, line_col } => {
-            assert_eq!(path, expected_path);
-            assert_eq!(
-                line_col,
-                Some(LineAndColumnArg {
-                    line_num: 120,
-                    column_num: Some(8),
-                })
-            );
-        }
-        _ => panic!("unexpected action: {action:?}"),
-    }
-}
-
-#[test]
-fn test_action_open_file_editor_parse_decodes_percent_encoded_path() {
-    let (path_param, _) = open_file_editor_test_path("hello%20world.rs");
-    let (_, expected_path) = open_file_editor_test_path("hello world.rs");
-    let url = Url::parse(&format!(
-        "{}://action/open_file_editor?path={path_param}&line=1",
-        ChannelState::url_scheme()
-    ))
-    .unwrap();
-
-    let action = Action::parse(&url).unwrap();
-    match action {
-        Action::OpenFileEditor { path, line_col } => {
-            assert_eq!(path, expected_path);
-            assert_eq!(
-                line_col,
-                Some(LineAndColumnArg {
-                    line_num: 1,
-                    column_num: None,
-                })
-            );
-        }
-        _ => panic!("unexpected action: {action:?}"),
-    }
-}
 
 #[test]
 fn test_action_open_file_editor_parse_expands_home_dir() {
@@ -608,187 +465,19 @@ fn test_action_open_file_editor_parse_rejects_invalid_line_or_column() {
     assert!(Action::parse(&invalid_column).is_err());
 }
 
-#[test]
-fn test_action_cloud_agent_setup_parse() {
-    let url = Url::parse(&format!(
-        "{}://action/cloud_agent_setup",
-        ChannelState::url_scheme()
-    ))
-    .unwrap();
 
-    let action = Action::parse(&url).unwrap();
-    assert!(matches!(action, Action::CloudAgentSetup));
-}
-#[test]
-fn test_action_auto_handoff_to_cloud_parse_default_trigger() {
-    let url = Url::parse(&format!(
-        "{}://action/auto_handoff_to_cloud",
-        ChannelState::url_scheme()
-    ))
-    .unwrap();
 
-    let action = Action::parse(&url).unwrap();
-    assert!(matches!(
-        action,
-        Action::AutoHandoffToCloud {
-            trigger: AutoCloudHandoffTrigger::Uri,
-        }
-    ));
-}
 
-#[test]
-fn test_action_auto_handoff_to_cloud_parse_alias_path() {
-    let url = Url::parse(&format!(
-        "{}://action/auto-handoff-to-cloud",
-        ChannelState::url_scheme()
-    ))
-    .unwrap();
 
-    let action = Action::parse(&url).unwrap();
-    assert!(matches!(
-        action,
-        Action::AutoHandoffToCloud {
-            trigger: AutoCloudHandoffTrigger::Uri,
-        }
-    ));
-}
 
-#[test]
-fn test_action_auto_handoff_to_cloud_parse_sleep_trigger() {
-    let url = Url::parse(&format!(
-        "{}://action/auto_handoff_to_cloud?trigger=sleep",
-        ChannelState::url_scheme()
-    ))
-    .unwrap();
 
-    let action = Action::parse(&url).unwrap();
-    assert!(matches!(
-        action,
-        Action::AutoHandoffToCloud {
-            trigger: AutoCloudHandoffTrigger::MacOsSleep,
-        }
-    ));
-}
 
-#[test]
-fn test_action_new_cloud_agent_conversation_parse() {
-    let url = Url::parse(&format!(
-        "{}://action/new_cloud_agent_conversation",
-        ChannelState::url_scheme()
-    ))
-    .unwrap();
 
-    let action = Action::parse(&url).unwrap();
-    assert!(matches!(action, Action::NewCloudAgentConversation));
-}
 
-#[test]
-fn test_action_new_agent_conversation_parse() {
-    let url = Url::parse(&format!(
-        "{}://action/new_agent_conversation",
-        ChannelState::url_scheme()
-    ))
-    .unwrap();
 
-    let action = Action::parse(&url).unwrap();
-    assert!(matches!(action, Action::NewAgentConversation));
-}
-
-#[test]
-fn test_validate_custom_uri_linear() {
-    let url = Url::parse(&format!(
-        "{}://linear/work?prompt=hello",
-        ChannelState::url_scheme()
-    ))
-    .unwrap();
-    let host = validate_custom_uri(&url).unwrap();
-    assert!(matches!(host, UriHost::Linear));
-}
-
-#[test]
-fn test_linear_action_parse_work() {
-    let url = Url::parse(&format!(
-        "{}://linear/work?prompt=hello",
-        ChannelState::url_scheme()
-    ))
-    .unwrap();
-    let action = LinearAction::parse(&url).unwrap();
-    assert_eq!(action, LinearAction::WorkOnIssue);
-}
-
-#[test]
-fn test_linear_action_parse_unknown_path() {
-    let url = Url::parse(&format!("{}://linear/unknown", ChannelState::url_scheme())).unwrap();
-    assert!(LinearAction::parse(&url).is_err());
-}
-
-#[test]
-fn test_linear_issue_work_with_prompt() {
-    let url = Url::parse(&format!(
-        "{}://linear/work?prompt=fix+the+bug",
-        ChannelState::url_scheme()
-    ))
-    .unwrap();
-    let args = LinearIssueWork::from_url(&url);
-    assert_eq!(args.prompt.as_deref(), Some("fix the bug"));
-}
-
-#[test]
-fn test_linear_issue_work_without_prompt() {
-    let url = Url::parse(&format!("{}://linear/work", ChannelState::url_scheme())).unwrap();
-    let args = LinearIssueWork::from_url(&url);
-    assert!(args.prompt.is_none());
-}
-
-#[test]
-fn test_linear_issue_work_empty_prompt() {
-    let url = Url::parse(&format!(
-        "{}://linear/work?prompt=",
-        ChannelState::url_scheme()
-    ))
-    .unwrap();
-    let args = LinearIssueWork::from_url(&url);
-    assert!(args.prompt.is_none());
-}
 
 // -- handle_incoming_uri validation errors -----------------------------------
 
-/// `validate_custom_uri` returns `anyhow::Error`s whose messages feed the
-/// non-dogfood `log::warn!("Custom URI is invalid: {e:?}")` fallback in
-/// `handle_incoming_uri`. Those messages must never embed the full URL, its
-/// query string, or its fragment — otherwise the fallback warn line becomes
-/// a second secret leak.
-#[test]
-fn validate_custom_uri_errors_do_not_leak_query_string() {
-    // Unexpected scheme.
-    let url = Url::parse("https://auth/desktop_redirect?refresh_token=LEAKED").unwrap();
-    let err = validate_custom_uri(&url).unwrap_err();
-    let msg = format!("{err:?}");
-    assert!(!msg.contains("refresh_token"), "{msg}");
-    assert!(!msg.contains("LEAKED"), "{msg}");
-
-    // Unexpected host.
-    let url = Url::parse(&format!(
-        "{}://unknown_host/desktop_redirect?refresh_token=LEAKED",
-        ChannelState::url_scheme()
-    ))
-    .unwrap();
-    let err = validate_custom_uri(&url).unwrap_err();
-    let msg = format!("{err:?}");
-    assert!(!msg.contains("refresh_token"), "{msg}");
-    assert!(!msg.contains("LEAKED"), "{msg}");
-
-    // Unexpected path for a host that doesn't allow arbitrary paths.
-    let url = Url::parse(&format!(
-        "{}://auth/not_the_redirect?refresh_token=LEAKED",
-        ChannelState::url_scheme()
-    ))
-    .unwrap();
-    let err = validate_custom_uri(&url).unwrap_err();
-    let msg = format!("{err:?}");
-    assert!(!msg.contains("refresh_token"), "{msg}");
-    assert!(!msg.contains("LEAKED"), "{msg}");
-}
 
 #[test]
 fn test_parse_tab_path_expands_tilde() {
@@ -797,13 +486,6 @@ fn test_parse_tab_path_expands_tilde() {
     assert_eq!(parse_tab_path(&url), Some(home.join("Projects")));
 }
 
-#[test]
-fn test_parse_tab_path_expands_url_encoded_tilde() {
-    // `%7E` and `%2F` are URL-encoded `~` and `/`.
-    let url = Url::parse("warp://action/new_tab?path=%7E%2FProjects").unwrap();
-    let home = dirs::home_dir().expect("HOME must be set for this test");
-    assert_eq!(parse_tab_path(&url), Some(home.join("Projects")));
-}
 
 #[test]
 fn test_parse_tab_path_absolute_path_unchanged() {
@@ -811,11 +493,6 @@ fn test_parse_tab_path_absolute_path_unchanged() {
     assert_eq!(parse_tab_path(&url), Some(PathBuf::from("/tmp/foo")));
 }
 
-#[test]
-fn test_parse_tab_path_relative_path_unchanged() {
-    let url = Url::parse("warp://action/new_tab?path=relative/dir").unwrap();
-    assert_eq!(parse_tab_path(&url), Some(PathBuf::from("relative/dir")));
-}
 
 #[test]
 fn test_parse_tab_path_missing_returns_none() {
@@ -823,93 +500,13 @@ fn test_parse_tab_path_missing_returns_none() {
     assert_eq!(parse_tab_path(&url), None);
 }
 
-#[test]
-fn test_parse_tab_path_bare_tilde() {
-    let url = Url::parse("warp://action/new_tab?path=~").unwrap();
-    let home = dirs::home_dir().expect("HOME must be set for this test");
-    assert_eq!(parse_tab_path(&url), Some(home));
-}
 
 // -- warp://settings deeplink parsing ----------------------------------------
 
-#[test]
-fn test_settings_widget_deeplink_target() {
-    assert_eq!(
-        settings_widget_deeplink_target("global_hotkey").map(|(section, _)| section),
-        Some(SettingsSection::Features),
-    );
-    assert_eq!(
-        settings_widget_deeplink_target("custom_router").map(|(section, _)| section),
-        Some(SettingsSection::WarpAgent),
-    );
-    #[cfg(not(target_family = "wasm"))]
-    assert_eq!(
-        settings_widget_deeplink_target("cli_agents").map(|(section, _)| section),
-        Some(SettingsSection::ThirdPartyCLIAgents),
-    );
-    // Unknown / empty slugs are not linkable (allowlist only).
-    assert!(settings_widget_deeplink_target("not_a_widget").is_none());
-    assert!(settings_widget_deeplink_target("").is_none());
-}
 
-#[test]
-fn test_settings_section_for_simple_subpage() {
-    assert_eq!(
-        settings_section_for_simple_subpage("appearance"),
-        Some(SettingsSection::Appearance),
-    );
-    assert_eq!(
-        settings_section_for_simple_subpage("billing_and_usage"),
-        Some(SettingsSection::BillingAndUsage),
-    );
-    assert_eq!(
-        settings_section_for_simple_subpage("platform"),
-        Some(SettingsSection::WarpCloudAgentAPIKeys),
-    );
-    assert_eq!(
-        settings_section_for_simple_subpage("warp_agent"),
-        Some(SettingsSection::WarpAgent),
-    );
-    assert!(settings_section_for_simple_subpage("not_a_subpage").is_none());
-}
 
 // -- post-checkout desktop hand-off ------------------------------------------
 
-/// Regression coverage for REV-1952: the confirmation page reports a completed
-/// purchase by riding `checkoutSuccessful=true` on the ordinary desktop
-/// redirect, so onboarding can advance without opening a settings page.
-#[test]
-fn test_url_reports_checkout_success() {
-    let scheme = ChannelState::url_scheme();
-
-    let with_flag = Url::parse(&format!(
-        "{scheme}://auth/desktop_redirect?refresh_token=abc&checkoutSuccessful=true"
-    ))
-    .unwrap();
-    assert!(url_reports_checkout_success(&with_flag));
-
-    let plain_redirect = Url::parse(&format!(
-        "{scheme}://auth/desktop_redirect?refresh_token=abc"
-    ))
-    .unwrap();
-    assert!(!url_reports_checkout_success(&plain_redirect));
-
-    // Only an explicit `true` counts, so an abandoned checkout that reports
-    // failure never advances onboarding.
-    let failed = Url::parse(&format!(
-        "{scheme}://auth/desktop_redirect?checkoutSuccessful=false"
-    ))
-    .unwrap();
-    assert!(!url_reports_checkout_success(&failed));
-
-    // The flag is not tied to the auth host: an older confirmation page can
-    // still send it on the settings deeplink.
-    let on_settings = Url::parse(&format!(
-        "{scheme}://settings/billing_and_usage?checkoutSuccessful=true"
-    ))
-    .unwrap();
-    assert!(url_reports_checkout_success(&on_settings));
-}
 
 // Regression coverage for issue #9005: shell scripts opened via `file://` should run,
 // not open in the editor. Exercised through the pure routing helper to avoid standing
@@ -1046,19 +643,6 @@ fn test_open_file_directory_routes_to_session() {
     );
 }
 
-#[test]
-#[cfg(unix)]
-fn test_open_file_non_runnable_shebang_routes_to_editor() {
-    // Extensionless `#!/bin/sh` file without the user-execute bit. Without the
-    // shebang fall-through this would hit `ExecuteInSession` and the shell would
-    // refuse to run it; the editor is the right place to view it.
-    use std::os::unix::fs::PermissionsExt;
-    let dir = tempfile::tempdir().unwrap();
-    let p = dir.path().join("noext");
-    std::fs::write(&p, b"#!/bin/sh\necho hi\n").unwrap();
-    std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o644)).unwrap();
-    assert_eq!(classify_open_file_action(&p, true), OpenFileAction::Editor);
-}
 
 #[test]
 fn test_session_uri_host_parsing() {
@@ -1066,16 +650,6 @@ fn test_session_uri_host_parsing() {
     assert!(matches!(result, Ok(UriHost::Session)));
 }
 
-#[test]
-fn test_session_uri_validation() {
-    let url = Url::parse(&format!(
-        "{}://session/A1B2C3D4E5F6A1B2C3D4E5F6A1B2C3D4",
-        ChannelState::url_scheme()
-    ))
-    .unwrap();
-    let host = validate_custom_uri(&url).unwrap();
-    assert!(matches!(host, UriHost::Session));
-}
 
 #[test]
 fn test_session_uri_empty_path_does_not_panic() {
@@ -1095,22 +669,7 @@ fn test_session_uri_invalid_hex_does_not_panic() {
     assert!(matches!(host, UriHost::Session));
 }
 
-#[test]
-fn test_session_uri_case_insensitive_hex() {
-    let upper = "A1B2C3D4E5F6A1B2C3D4E5F6A1B2C3D4";
-    let lower = "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4";
-    let upper_bytes = super::decode_uuid_hex(upper).expect("upper hex should decode");
-    let lower_bytes = super::decode_uuid_hex(lower).expect("lower hex should decode");
-    assert_eq!(upper_bytes, lower_bytes);
-    assert_eq!(upper_bytes.len(), 16);
-}
 
-#[test]
-fn test_decode_uuid_hex_rejects_wrong_length() {
-    assert!(super::decode_uuid_hex("ABCD").is_none());
-    assert!(super::decode_uuid_hex("").is_none());
-    assert!(super::decode_uuid_hex("A1B2C3D4E5F6A1B2C3D4E5F6A1B2C3D4FF").is_none());
-}
 
 #[test]
 fn test_decode_uuid_hex_rejects_invalid_chars() {

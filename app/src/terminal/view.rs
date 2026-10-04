@@ -168,8 +168,6 @@ use super::ssh::util::{InteractiveSshCommand, SshWarpifyCommand, parse_interacti
 use super::warpify::WarpificationSource;
 use super::warpify::success_block::{WarpifySuccessBlock, WarpifySuccessBlockEvent};
 use super::warpify::trigger_state::{SshBlockState, WarpifyState};
-#[cfg(any(test, feature = "integration_tests"))]
-use crate::ai::agent::UserQueryMode;
 #[cfg(feature = "local_fs")]
 use crate::persisted_workspace::PersistedWorkspace;
 use crate::antivirus::AntivirusInfo;
@@ -1715,13 +1713,6 @@ struct TerminalViewMouseStates {
 /// The output a test-only dummy AI block should report, selecting which
 /// `FakeAIBlockModel` shape backs the inserted block.
 #[cfg(any(test, feature = "integration_tests"))]
-enum DummyAIBlockOutput {
-    /// Still streaming, so the block never finishes.
-    Streaming,
-    Complete(crate::ai::agent::AIAgentOutput),
-    /// The stream was cancelled with this partial output.
-    Cancelled(crate::ai::agent::AIAgentOutput),
-}
 
 /// Where content was routed when sent to a CLI agent.
 /// Returned by [`TerminalView::try_send_text_to_cli_agent_or_rich_input`]
@@ -3749,75 +3740,9 @@ impl TerminalView {
         &self.input
     }
 
-    /// Whether the WASM workspace-level conversation details panel should be shown for this
-    /// terminal view. This is the authoritative predicate: `Workspace::should_show_conversation_details_panel`
-    /// delegates here. The `#[cfg(any(test, target_arch = "wasm32"))]` gate allows this logic
-    /// to be exercised by host-target unit tests even though the WASM render path is compiled out.
-    ///
-    /// Note: the pane-header `(i)` button uses a narrower gate
-    /// ([`Self::should_show_wasm_pane_header_details_button`]) that additionally excludes shared
-    /// sessions and transcript viewers, so it only appears on surfaces without a tab-bar
-    /// affordance. This predicate is intentionally broader so the panel renders for all three
-    /// surfaces.
-    ///
-    /// Returns `true` for:
-    /// - Restored ambient cloud tasks
-    /// - Conversation transcript viewers
-    /// - Shared sessions with an active conversation
-    #[cfg(any(test, target_arch = "wasm32"))]
-    pub(crate) fn should_show_wasm_conversation_details_panel(&self, app: &AppContext) -> bool {
-        if self.ambient_agent_task_id_for_details_panel(app).is_some() {
-            return true;
-        }
-        let model = self.model.lock();
-        if model.is_conversation_transcript_viewer() {
-            return true;
-        }
-        if model.shared_session_status().is_sharer_or_viewer() {
-            drop(model);
-            return BlocklistAIHistoryModel::as_ref(app)
-                .active_conversation(self.view_id)
-                .is_some();
-        }
-        false
-    }
 
-    /// Whether the WASM pane-header `(i)` details toggle should be shown for this terminal view.
-    /// Narrower than [`Self::should_show_wasm_conversation_details_panel`]: the pane-header button
-    /// appears only on ambient-task panes that lack a tab-bar `(i)` affordance, so shared sessions
-    /// and conversation-transcript viewers — which already show the simplified WASM tab-bar `(i)`
-    /// via `get_simplified_wasm_tab_bar_content` — are excluded to avoid a duplicate button. The
-    /// `#[cfg(any(test, target_arch = "wasm32"))]` gate lets host-target unit tests exercise this
-    /// even though the render path is compiled out on the host.
-    #[cfg(any(test, target_arch = "wasm32"))]
-    pub(crate) fn should_show_wasm_pane_header_details_button(&self, app: &AppContext) -> bool {
-        let model = self.model.lock();
-        self.ambient_agent_task_id_for_details_panel_from_model(&model, app)
-            .is_some()
-            && !model.shared_session_status().is_sharer_or_viewer()
-            && !model.is_conversation_transcript_viewer()
-    }
 
-    #[cfg(test)]
-    pub(crate) fn is_orchestration_child_live_unavailable_for_test(&self) -> bool {
-        self.orchestration_child_live_unavailable
-    }
-    #[cfg(test)]
-    pub(crate) fn has_agent_view_zero_state_for_test(&self) -> bool {
-        self.rich_content_views
-            .iter()
-            .any(|view| view.is_agent_view_zero_state())
-    }
 
-    #[cfg(test)]
-    pub(crate) fn is_initial_conversation_details_panel_auto_open_suppressed_for_test(
-        &self,
-    ) -> bool {
-        matches!(
-            self.conversation_details_panel_auto_open_policy,
-            ConversationDetailsPanelAutoOpenPolicy::DefaultClosed
-        )
-    }
 
     pub fn active_session(&self) -> &ModelHandle<ActiveSession> {
         &self.active_session

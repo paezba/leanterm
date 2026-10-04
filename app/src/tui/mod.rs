@@ -24,7 +24,6 @@ use warp_core::telemetry::TelemetryEvent as _;
 use warpui::{AppContext, Entity, SingletonEntity};
 
 use crate::TuiMountFn;
-use crate::ai::mcp::FileBasedMCPManager;
 use crate::auth::auth_manager::{AuthManager, AuthManagerEvent};
 use crate::auth::auth_state::AuthState;
 use crate::auth::{self, AuthStateProvider};

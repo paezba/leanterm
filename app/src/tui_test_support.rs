@@ -12,27 +12,6 @@ use warp_core::execution_mode::{AppExecutionMode, ExecutionMode};
 use warpui::{AppContext, ModelContext, ModelHandle, SingletonEntity as _};
 
 use crate::LaunchMode;
-use crate::ai::active_agent_views_model::ActiveAgentViewsModel;
-use crate::ai::agent::conversation::{AIConversation, AIConversationId};
-use crate::ai::agent::{AIAgentAction, AIAgentExchangeId};
-use crate::ai::agent_conversations_model::AgentConversationsModel;
-use crate::ai::blocklist::history_model::AIQueryHistoryOutputStatus;
-use crate::ai::blocklist::local_agent_task_sync_model::LocalAgentTaskSyncModel;
-use crate::ai::blocklist::orchestration_event_streamer::OrchestrationEventStreamer;
-use crate::ai::blocklist::orchestration_events::OrchestrationEventService;
-use crate::ai::blocklist::pending_cli_harness_prompt_queue::PendingCliHarnessPromptQueue;
-use crate::ai::blocklist::{
-    BlocklistAIActionModel, BlocklistAIHistoryModel, BlocklistAIPermissions, PersistedAIInput,
-    PersistedAIInputType, QueuedQueryModel,
-};
-use crate::ai::cloud_agent_settings::{AuthSecretPreference, CloudAgentSettings};
-use crate::ai::cloud_environments::CloudEnvironmentCatalog;
-use crate::ai::connected_self_hosted_workers::ConnectedSelfHostedWorkersModel;
-use crate::ai::execution_profiles::profiles::AIExecutionProfilesModel;
-use crate::ai::harness_availability::HarnessAvailabilityModel;
-use crate::ai::llms::{LLMId, LLMPreferences};
-use crate::ai::mcp::templatable_manager::TemplatableMCPServerManager;
-use crate::ai::request_usage_model::AIRequestUsageModel;
 use crate::auth::AuthStateProvider;
 use crate::auth::auth_manager::AuthManager;
 use crate::cloud_object::model::persistence::CloudModel;

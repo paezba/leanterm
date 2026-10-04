@@ -2,8 +2,6 @@ use std::path::PathBuf;
 
 use warpui::{App, EntityId, SingletonEntity};
 
-use crate::ai::execution_profiles::profiles::AIExecutionProfilesModel;
-use crate::ai::execution_profiles::{AIExecutionProfile, ActionPermission, ExecutionProfileId};
 
 #[derive(Debug)]
 pub struct ExecutionProfileSnapshot {

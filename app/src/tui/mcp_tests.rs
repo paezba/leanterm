@@ -6,7 +6,6 @@ use super::{
     TuiMcpVariableValue, is_represented_by_global_warp_server, server_priority, sort_servers,
     template_identity, validate_variable_values,
 };
-use crate::ai::mcp::TemplatableMCPServer;
 
 fn server(id: TuiMcpServerId, name: &str, status: TuiMcpServerStatus) -> TuiMcpServerSnapshot {
     TuiMcpServerSnapshot {
