@@ -261,7 +261,7 @@ impl PromptDisplay {
             prompt
                 .chips(ctx)
                 .iter()
-                .find(|chip_result| matches!(chip_result.kind, ContextChipKind::ShellGitBranch))
+                .find(|chip_result| matches!(chip_result.kind, crate::context_chips::ContextChipKind::ShellGitBranch))
                 .and_then(|chip_result| chip_result.value.as_ref().map(|v| v.to_string()))
         })
     }

@@ -4,8 +4,8 @@ use warp::features::FeatureFlag;
 use warp::integration_testing::clipboard::write_to_clipboard;
 use warp::integration_testing::input::{
     AutosuggestionState, assert_autosuggestion_state, input_contains_string, input_is_empty,
-    latest_buffer_operations_are_empty, open_inline_model_selector_from_chip,
-    tab_completions_menu_is_open, toggle_inline_model_selector_from_chip,
+    latest_buffer_operations_are_empty, 
+    tab_completions_menu_is_open, 
 };
 use warp::integration_testing::step::new_step_with_default_assertions;
 use warp::integration_testing::terminal::util::{
@@ -101,7 +101,6 @@ pub fn test_inline_model_selector_restores_prompt_on_dismissal() -> Builder {
                     input_contains_string(0, original_prompt.to_owned()),
                 ),
         )
-        .with_step(open_inline_model_selector_from_chip())
         .with_step(
             new_step_with_default_assertions("Type model search")
                 .with_typed_characters(&["claude"])
@@ -134,7 +133,6 @@ pub fn test_inline_model_selector_restores_prompt_on_model_selection() -> Builde
                     input_contains_string(0, original_prompt.to_owned()),
                 ),
         )
-        .with_step(open_inline_model_selector_from_chip())
         .with_step(
             new_step_with_default_assertions("Type model search")
                 .with_typed_characters(&["auto"])
@@ -153,36 +151,6 @@ pub fn test_inline_model_selector_restores_prompt_on_model_selection() -> Builde
         )
 }
 
-pub fn test_inline_model_selector_restores_prompt_on_chip_toggle_close() -> Builder {
-    FeatureFlag::RestorePromptOnInlineModelSelectorSearch.set_enabled(true);
-
-    let original_prompt = "refactor this into smaller modules";
-    new_builder()
-        .with_step(wait_until_bootstrapped_single_pane_for_tab(0))
-        .with_step(
-            new_step_with_default_assertions("Type prompt before opening model selector")
-                .with_typed_characters(&[original_prompt])
-                .add_named_assertion(
-                    "Prompt is present before opening selector",
-                    input_contains_string(0, original_prompt.to_owned()),
-                ),
-        )
-        .with_step(open_inline_model_selector_from_chip())
-        .with_step(
-            new_step_with_default_assertions("Type model search")
-                .with_typed_characters(&["claude"])
-                .add_named_assertion(
-                    "Model search text is in the input",
-                    input_contains_string(0, "claude".to_owned()),
-                ),
-        )
-        .with_step(
-            toggle_inline_model_selector_from_chip().add_named_assertion(
-                "Original prompt is restored after toggling closed",
-                input_contains_string(0, original_prompt.to_owned()),
-            ),
-        )
-}
 
 pub fn test_latest_buffer_operations() -> Builder {
     new_builder()

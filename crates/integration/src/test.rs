@@ -2,9 +2,6 @@
 //! src/integration.rs and src/bin/integration.rs in order to register them
 //! to be run.
 
-mod agent_mode;
-mod ai_assistant;
-mod ai_document;
 mod block_filtering;
 mod bootstrapping;
 mod code_review;
@@ -18,17 +15,13 @@ mod keyboard_protocol;
 mod launch_configs;
 mod native_shell_completions;
 mod notebooks;
-mod orchestration_navigation;
 mod osc8_hyperlinks;
 mod pane_restoration;
 #[cfg(target_os = "macos")]
 mod preview_config_migration;
 mod remote_server;
-mod rich_input_ctrl_enter;
-mod rules;
 mod secrets;
 mod session_restoration;
-mod settings_execution_profiles;
 mod settings_file_errors;
 mod settings_file_hot_reload;
 mod settings_file_migration;
@@ -49,9 +42,6 @@ use std::path::PathBuf;
 use std::rc::Rc;
 use std::time::Duration;
 
-pub use agent_mode::*;
-pub use ai_assistant::*;
-pub use ai_document::*;
 use anyhow::{Result, anyhow};
 pub use block_filtering::*;
 pub use bootstrapping::*;
@@ -67,7 +57,6 @@ pub use keyboard_protocol::*;
 pub use launch_configs::*;
 pub use native_shell_completions::*;
 pub use notebooks::*;
-pub use orchestration_navigation::*;
 pub use osc8_hyperlinks::*;
 pub use pane_restoration::*;
 use parking_lot::Mutex;
@@ -76,13 +65,10 @@ use pathfinder_geometry::vector::Vector2F;
 #[cfg(target_os = "macos")]
 pub use preview_config_migration::*;
 pub use remote_server::*;
-pub use rich_input_ctrl_enter::*;
-pub use rules::*;
 use rust_embed::RustEmbed;
 pub use secrets::*;
 pub use session_restoration::*;
 use settings::Setting as _;
-pub use settings_execution_profiles::*;
 pub use settings_file_errors::*;
 pub use settings_file_hot_reload::*;
 pub use settings_file_migration::*;
@@ -192,7 +178,7 @@ use warp::workflows::categories::CategoriesView;
 use warp::workspace::{
     NEW_SESSION_MENU_BUTTON_POSITION_ID, NEW_TAB_BUTTON_POSITION_ID, Workspace, WorkspaceAction,
 };
-use warp::{AgentModeEntrypoint, cmd_or_ctrl_shift};
+use warp::{ cmd_or_ctrl_shift};
 use warpui_core::event::KeyState;
 use warpui_core::integration::{AssertionOutcome, StepData, TestStep};
 use warpui_core::keymap::{Keystroke, PerPlatformKeystroke, Trigger};
@@ -6735,91 +6721,6 @@ pub fn test_pane_group_state_clear_blocks() -> Builder {
         )
 }
 
-/// Create a small window and enough terminal panes inside it so that a new pane would normally have
-/// a narrow width. Check that the Agent Mode pane is wide enough regardless.
-pub fn test_agent_mode_pane_minimum_size() -> Builder {
-    const WINDOW_ID_KEY: &str = "small_window_id";
-
-    new_builder()
-        .with_step(set_window_custom_size(40, 120))
-        .with_step(add_and_save_window(WINDOW_ID_KEY))
-        .with_step(
-            new_step_with_default_assertions("Check the new window size")
-                .add_named_assertion_with_data_from_prior_step(
-                    "Validate window size",
-                    move |app, _, step_data_map| {
-                        let window_id = step_data_map
-                            .get(WINDOW_ID_KEY)
-                            .expect("Window ID for new window should exist");
-
-                        let size = app
-                            .window_bounds(window_id)
-                            .expect("Window should exist")
-                            .size();
-                        // This doesn't correspond clearly to the given rows and columns due to line
-                        // height and padding. There's also some platform-specific variance and room
-                        // for floating-point error.
-                        assert_approx_eq!(f32, size.x(), 992., epsilon = 2.);
-                        assert_approx_eq!(f32, size.y(), 644., epsilon = 2.);
-                        AssertionOutcome::Success
-                    },
-                ),
-        )
-        .with_step(
-            new_step_with_default_assertions("Create a new empty pane")
-                .with_keystrokes(&[cmd_or_ctrl_shift("d")]),
-        )
-        .with_step(
-            new_step_with_default_assertions("Create an Agent Mode pane and check its width")
-                .with_action(move |app, _, step_data_map| {
-                    let window_id = step_data_map
-                        .get(WINDOW_ID_KEY)
-                        .expect("Window ID for new window should exist");
-
-                    let workspace_view_id = workspace_view(app, *window_id).id();
-
-                    app.dispatch_typed_action(
-                        *window_id,
-                        &[workspace_view_id],
-                        &WorkspaceAction::NewPaneInAgentMode {
-                            entrypoint: AgentModeEntrypoint::TabBar,
-                            zero_state_prompt_suggestion_type: None,
-                        },
-                    );
-                })
-                .add_named_assertion_with_data_from_prior_step(
-                    "Check Agent Mode pane width",
-                    |app, _, step_data_map| {
-                        let window_id = step_data_map
-                            .get(WINDOW_ID_KEY)
-                            .expect("Window ID for new window should exist");
-
-                        let pane_group = pane_group_view(app, *window_id, 0);
-                        pane_group.read(app, |view, app| {
-                            let Some(agent_mode_pane) = view.terminal_view_at_pane_index(2, app)
-                            else {
-                                return AssertionOutcome::failure(
-                                    "no terminal pane at pane_index 2".to_owned(),
-                                );
-                            };
-
-                            let pane_width =
-                                agent_mode_pane.as_ref(app).size_info().pane_size_px().x();
-
-                            // Approx equality to handle pane borders, etc.
-                            assert_approx_eq!(
-                                f32,
-                                pane_width - AGENT_MODE_PANE_DEFAULT_MINIMUM_WIDTH,
-                                0.,
-                                epsilon = 4.
-                            );
-
-                            AssertionOutcome::Success
-                        })
-                    },
-                ),
-        )
-}
 
 // cheating a little bit in this test; it's hard to tell if the create folder dialog is open from
 // the workspace view, but we DO force warp drive open to show the dialog, so we can look for that

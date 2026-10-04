@@ -159,7 +159,7 @@ pub fn test_open_launch_config_from_add_tab_menu_legacy() -> Builder {
 
 pub fn test_launch_config_single_child_branch() -> Builder {
     use warp::launch_configs::launch_config::{
-        LaunchConfig, PaneMode, PaneTemplateType, SplitDirection, TabTemplate, WindowTemplate,
+        LaunchConfig, PaneTemplateType, SplitDirection, TabTemplate, WindowTemplate,
     };
     use warpui_core::actions::StandardAction;
 
@@ -180,7 +180,6 @@ pub fn test_launch_config_single_child_branch() -> Builder {
                             is_focused: Some(true),
                             cwd: PathBuf::from("/some/path"),
                             commands: Vec::new(),
-                            pane_mode: PaneMode::Terminal,
                             shell: None,
                         }],
                     },
@@ -292,7 +291,7 @@ pub fn test_open_launch_config_in_active_window() -> Builder {
 
 pub fn test_with_launch_config_with_active_tab_index() -> Builder {
     use warp::launch_configs::launch_config::{
-        LaunchConfig, PaneMode, PaneTemplateType, SplitDirection, TabTemplate, WindowTemplate,
+        LaunchConfig, PaneTemplateType, SplitDirection, TabTemplate, WindowTemplate,
     };
 
     fn create_launch_config() -> LaunchConfig {
@@ -312,7 +311,6 @@ pub fn test_with_launch_config_with_active_tab_index() -> Builder {
                                 is_focused: Some(true),
                                 cwd: PathBuf::from("/some/path"),
                                 commands: Vec::new(),
-                                pane_mode: PaneMode::Terminal,
                                 shell: None,
                             }],
                         },
@@ -354,7 +352,7 @@ pub fn test_with_launch_config_with_active_tab_index() -> Builder {
 
 pub fn test_with_launch_config_with_active_pane() -> Builder {
     use warp::launch_configs::launch_config::{
-        LaunchConfig, PaneMode, PaneTemplateType, SplitDirection, TabTemplate, WindowTemplate,
+        LaunchConfig, PaneTemplateType, SplitDirection, TabTemplate, WindowTemplate,
     };
 
     fn create_launch_config() -> LaunchConfig {
@@ -374,7 +372,6 @@ pub fn test_with_launch_config_with_active_pane() -> Builder {
                                 is_focused: Some(false),
                                 cwd: PathBuf::from("/some/path"),
                                 commands: Vec::new(),
-                                pane_mode: PaneMode::Terminal,
                                 shell: None,
                             },
                             PaneTemplateType::PaneBranchTemplate {
@@ -384,14 +381,12 @@ pub fn test_with_launch_config_with_active_pane() -> Builder {
                                         is_focused: Some(false),
                                         cwd: PathBuf::from("/some/path"),
                                         commands: Vec::new(),
-                                        pane_mode: PaneMode::Terminal,
                                         shell: None,
                                     },
                                     PaneTemplateType::PaneTemplate {
                                         is_focused: Some(true),
                                         cwd: PathBuf::from("/some/path"),
                                         commands: Vec::new(),
-                                        pane_mode: PaneMode::Terminal,
                                         shell: None,
                                     },
                                 ],
@@ -435,7 +430,7 @@ pub fn test_with_launch_config_with_active_pane() -> Builder {
 
 pub fn test_with_launch_config_with_no_active_pane() -> Builder {
     use warp::launch_configs::launch_config::{
-        LaunchConfig, PaneMode, PaneTemplateType, SplitDirection, TabTemplate, WindowTemplate,
+        LaunchConfig, PaneTemplateType, SplitDirection, TabTemplate, WindowTemplate,
     };
 
     fn create_launch_config() -> LaunchConfig {
@@ -455,7 +450,6 @@ pub fn test_with_launch_config_with_no_active_pane() -> Builder {
                                 is_focused: Some(false),
                                 cwd: PathBuf::from("/some/path"),
                                 commands: Vec::new(),
-                                pane_mode: PaneMode::Terminal,
                                 shell: None,
                             },
                             PaneTemplateType::PaneBranchTemplate {
@@ -465,14 +459,12 @@ pub fn test_with_launch_config_with_no_active_pane() -> Builder {
                                         is_focused: Some(false),
                                         cwd: PathBuf::from("/some/path"),
                                         commands: Vec::new(),
-                                        pane_mode: PaneMode::Terminal,
                                         shell: None,
                                     },
                                     PaneTemplateType::PaneTemplate {
                                         is_focused: Some(false),
                                         cwd: PathBuf::from("/some/path"),
                                         commands: Vec::new(),
-                                        pane_mode: PaneMode::Terminal,
                                         shell: None,
                                     },
                                 ],
@@ -529,7 +521,7 @@ pub fn test_with_launch_config_with_no_active_pane() -> Builder {
 pub fn test_launch_config_restores_tab_groups() -> Builder {
     use warp::integration_testing::workspace::assert_tab_groups;
     use warp::launch_configs::launch_config::{
-        LaunchConfig, PaneMode, PaneTemplateType, TabGroupTemplate, TabTemplate, WindowTemplate,
+        LaunchConfig, PaneTemplateType, TabGroupTemplate, TabTemplate, WindowTemplate,
     };
     use warp::themes::theme::AnsiColorIdentifier;
 
@@ -543,7 +535,6 @@ pub fn test_launch_config_restores_tab_groups() -> Builder {
                 is_focused: Some(true),
                 cwd: PathBuf::from("/some/path"),
                 commands: Vec::new(),
-                pane_mode: PaneMode::Terminal,
                 shell: None,
             },
             commands: Vec::new(),
@@ -637,7 +628,7 @@ pub fn test_launch_config_restores_tab_groups() -> Builder {
 pub fn test_launch_config_restores_tab_groups_into_active_window() -> Builder {
     use warp::integration_testing::workspace::assert_tab_groups;
     use warp::launch_configs::launch_config::{
-        LaunchConfig, PaneMode, PaneTemplateType, TabGroupTemplate, TabTemplate, WindowTemplate,
+        LaunchConfig, PaneTemplateType, TabGroupTemplate, TabTemplate, WindowTemplate,
     };
     use warp::themes::theme::AnsiColorIdentifier;
 
@@ -651,7 +642,6 @@ pub fn test_launch_config_restores_tab_groups_into_active_window() -> Builder {
                 is_focused: Some(true),
                 cwd: PathBuf::from("/some/path"),
                 commands: Vec::new(),
-                pane_mode: PaneMode::Terminal,
                 shell: None,
             },
             commands: Vec::new(),
@@ -761,7 +751,7 @@ pub fn test_launch_config_restores_tab_groups_into_active_window() -> Builder {
 pub fn test_launch_config_restores_pinned_tab_group_into_pinned_prefix() -> Builder {
     use warp::integration_testing::workspace::assert_tab_groups;
     use warp::launch_configs::launch_config::{
-        LaunchConfig, PaneMode, PaneTemplateType, TabGroupTemplate, TabTemplate, WindowTemplate,
+        LaunchConfig, PaneTemplateType, TabGroupTemplate, TabTemplate, WindowTemplate,
     };
     use warp::themes::theme::AnsiColorIdentifier;
 
@@ -776,7 +766,6 @@ pub fn test_launch_config_restores_pinned_tab_group_into_pinned_prefix() -> Buil
                 is_focused: Some(true),
                 cwd: PathBuf::from("/some/path"),
                 commands: Vec::new(),
-                pane_mode: PaneMode::Terminal,
                 shell: None,
             },
             commands: Vec::new(),
@@ -892,7 +881,7 @@ pub fn test_launch_config_restores_pinned_tab_group_into_pinned_prefix() -> Buil
 pub fn test_launch_config_restore_keeps_existing_group_contiguous() -> Builder {
     use warp::integration_testing::workspace::assert_tab_groups;
     use warp::launch_configs::launch_config::{
-        LaunchConfig, PaneMode, PaneTemplateType, TabGroupTemplate, TabTemplate, WindowTemplate,
+        LaunchConfig, PaneTemplateType, TabGroupTemplate, TabTemplate, WindowTemplate,
     };
     use warp::themes::theme::AnsiColorIdentifier;
 
@@ -906,7 +895,6 @@ pub fn test_launch_config_restore_keeps_existing_group_contiguous() -> Builder {
                 is_focused: Some(true),
                 cwd: PathBuf::from("/some/path"),
                 commands: Vec::new(),
-                pane_mode: PaneMode::Terminal,
                 shell: None,
             },
             commands: Vec::new(),

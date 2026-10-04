@@ -1,3 +1,4 @@
+use crate::workspaces::user_workspaces::{ResolvedTeamScope, UserWorkspaces};
 use crate::terminal::view::{ Event as TerminalViewEvent};
 use std::any::Any;
 use std::cell::RefCell;
