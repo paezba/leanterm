@@ -181,9 +181,7 @@ impl NotebooksEditorModel {
         lazy_layout: bool,
         ctx: &mut ModelContext<Self>,
     ) -> Self {
-        let content = ctx.add_model(|_| {
-            Buffer::new(Box::new(notebook_tab_indentation))
-        });
+        let content = ctx.add_model(|_| Buffer::new(Box::new(notebook_tab_indentation)));
         ctx.subscribe_to_model(&content, |me, _, event, ctx| {
             me.handle_content_model_event(event, ctx);
         });
@@ -2195,8 +2193,7 @@ impl ChildModels {
         // We have to add new models in a separate pass, because creating anchors requires a
         // mutable borrow of `content`, while the `outline_blocks` iterator already immutably
         // borrows it.
-        self.models
-            .reserve(to_add.len() + reset_selection.len());
+        self.models.reserve(to_add.len() + reset_selection.len());
 
         for (model_start, model) in reset_selection {
             model.set_selected(false, ctx);

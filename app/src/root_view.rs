@@ -1097,7 +1097,6 @@ impl NewWorkspaceSource {
             _ => false,
         }
     }
-
 }
 
 pub struct RootView {

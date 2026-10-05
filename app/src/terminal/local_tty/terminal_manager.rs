@@ -440,8 +440,8 @@ fn on_shell_determined<S: TerminalSurface>(
         shell_starter_source,
         Some(ShellStarterSource::Fallback { .. })
     );
-    let shell_starter = shell_starter_source
-        .map(|source| get_shell_starter_internal(source, bg_executor));
+    let shell_starter =
+        shell_starter_source.map(|source| get_shell_starter_internal(source, bg_executor));
     let shell_starter = match shell_starter {
         Some(shell_starter) => shell_starter,
         None => {

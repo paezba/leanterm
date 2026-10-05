@@ -45,7 +45,6 @@ use super::keys::{NotebookKeybindings, custom_action_to_display};
 use super::model::ChildModelHandle;
 use super::view::EditorViewAction;
 use super::{NotebookWorkflow, rich_text_styles};
-use crate::workflows::arguments::ArgumentsState;
 use crate::ASSETS;
 use crate::appearance::Appearance;
 use crate::completer::SessionAgnosticContext;
@@ -68,6 +67,7 @@ use crate::util::color::{ContrastingColor, MinimumAllowedContrast};
 use crate::view_components::Dropdown;
 use crate::view_components::dropdown::DropdownAction;
 use crate::workflows::WorkflowType;
+use crate::workflows::arguments::ArgumentsState;
 use crate::workflows::workflow::Workflow;
 use crate::workspace::WorkspaceAction;
 

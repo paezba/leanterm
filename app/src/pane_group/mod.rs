@@ -23,8 +23,8 @@ use warp_terminal::focus_env::add_session_focus_env_vars;
 use warp_util::path::LineAndColumnArg;
 use warp_util::path::convert_wsl_to_windows_host_path;
 use warpui::elements::{
-    ChildView, CrossAxisAlignment, DispatchEventResult, Element, EventHandler, Flex,
-    MainAxisSize, ParentElement, Shrinkable, Stack,
+    ChildView, CrossAxisAlignment, DispatchEventResult, Element, EventHandler, Flex, MainAxisSize,
+    ParentElement, Shrinkable, Stack,
 };
 use warpui::keymap::{Context, EditableBinding, FixedBinding};
 use warpui::notification::NotificationSendError;
@@ -37,8 +37,8 @@ use warpui::{
 #[cfg(feature = "local_fs")]
 use crate::app_state::CodePaneSnapShot;
 use crate::app_state::{
-    self, BranchSnapshot, LeafContents, LeafSnapshot,
-    NotebookPaneSnapshot, PaneNodeSnapshot, PaneUuid, SettingsPaneSnapshot, TerminalPaneSnapshot,
+    self, BranchSnapshot, LeafContents, LeafSnapshot, NotebookPaneSnapshot, PaneNodeSnapshot,
+    PaneUuid, SettingsPaneSnapshot, TerminalPaneSnapshot,
 };
 use crate::appearance::Appearance;
 use crate::banner::{Banner, BannerEvent, BannerState, BannerTextContent, DismissalType};
@@ -76,10 +76,7 @@ use crate::terminal::view::ssh_file_upload::FileUploadId;
 use crate::terminal::view::{
     BlockNotification, ExecuteCommandEvent, LeftPanelTargetView, SyncEvent, TerminalViewState,
 };
-use crate::terminal::{
-    ShellLaunchData, TerminalManager, TerminalModel,
-    TerminalView,
-};
+use crate::terminal::{ShellLaunchData, TerminalManager, TerminalModel, TerminalView};
 use crate::undo_close::{UndoCloseStack, UndoCloseStackEvent};
 #[cfg(target_family = "wasm")]
 use crate::uri::browser_url_handler::update_browser_url;
@@ -664,9 +661,7 @@ pub struct PaneGroup {
     /// Mapping from pane IDs to their contents.
     pane_contents: HashMap<PaneId, Box<dyn AnyPaneContent>>,
 
-
     /// The terminal session with an open share block modal. Only terminal panes use the share block modal.
-
     // We are only holding one instance of share modal view in the pane group and
     // update it with the correct terminal model and size info when triggered by
     // the context menu event.
@@ -1736,7 +1731,7 @@ impl PaneGroup {
 
     fn new_internal(
         user_default_shell_unsupported_banner_model_handle: ModelHandle<BannerState>,
-            model_event_sender: Option<SyncSender<ModelEvent>>,
+        model_event_sender: Option<SyncSender<ModelEvent>>,
         initial_layout_callback: InitialLayoutCallback,
         ctx: &mut ViewContext<Self>,
     ) -> Self {
@@ -1902,7 +1897,7 @@ impl PaneGroup {
     #[allow(clippy::too_many_arguments)]
     pub fn new_with_panes_layout(
         user_default_shell_unsupported_banner_model_handle: ModelHandle<BannerState>,
-            panes_layout: PanesLayout,
+        panes_layout: PanesLayout,
         block_lists: Arc<HashMap<PaneUuid, Vec<SerializedBlockListItem>>>,
         model_event_sender: Option<SyncSender<ModelEvent>>,
         ctx: &mut ViewContext<Self>,
@@ -1980,7 +1975,7 @@ impl PaneGroup {
     pub fn new_from_existing_pane(
         pane: Box<dyn AnyPaneContent>,
         user_default_shell_unsupported_banner_model_handle: ModelHandle<BannerState>,
-            model_event_sender: Option<SyncSender<ModelEvent>>,
+        model_event_sender: Option<SyncSender<ModelEvent>>,
         ctx: &mut ViewContext<Self>,
     ) -> Self {
         let pane_id = pane.as_pane().id();
@@ -4359,9 +4354,7 @@ impl View for PaneGroup {
         // "circular view reference". The per-pane views (and their backing
         // terminal/editor views) are reached via the structural parent graph
         // and `PaneView::child_view_ids`.
-        vec![
-            self.user_default_shell_changed_banner.id(),
-        ]
+        vec![self.user_default_shell_changed_banner.id()]
     }
 
     fn render(&self, app: &AppContext) -> Box<dyn Element> {

@@ -103,8 +103,7 @@ fn setup_editor_window(app: &mut App, should_initialize_cloud_model: bool) -> wa
     app.add_singleton_model(TerminalKeybindings::new);
 
     // In some tests, we need to initialize CloudModel first to mock some server data. In those cases, avoid mocking it a second time.
-    if should_initialize_cloud_model {
-    }
+    if should_initialize_cloud_model {}
 
     let (window, _) = app.add_window(WindowStyle::NotStealFocus, |ctx| {
         let window_id = ctx.window_id();
@@ -1822,7 +1821,6 @@ Second command
         });
     });
 }
-
 
 #[test]
 fn test_toggle_style_at_cursor() {

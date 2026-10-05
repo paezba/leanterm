@@ -49,9 +49,7 @@ impl BlockInsertionMenuState {
         }
     }
 
-    fn create_menu(
-        ctx: &mut ViewContext<Menu<EditorViewAction>>,
-    ) -> Menu<EditorViewAction> {
+    fn create_menu(ctx: &mut ViewContext<Menu<EditorViewAction>>) -> Menu<EditorViewAction> {
         let appearance = Appearance::as_ref(ctx);
         let mut menu = Menu::new().prevent_interaction_with_other_elements();
 

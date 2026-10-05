@@ -3622,10 +3622,7 @@ fn build_vertical_tabs_summary_data(
                     &pane_subtitle,
                 );
             }
-            TypedPane::CodeDiff
-            | TypedPane::File
-            | TypedPane::Settings
-            | TypedPane::Other => {
+            TypedPane::CodeDiff | TypedPane::File | TypedPane::Settings | TypedPane::Other => {
                 push_normalized_unique_summary_label(
                     &mut primary_labels,
                     &mut primary_seen,

@@ -26,7 +26,6 @@ pub struct SettingsUmbrella {
 }
 
 impl SettingsUmbrella {
-
     pub fn toggle(&mut self) {
         self.expanded = !self.expanded;
     }

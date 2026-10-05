@@ -20,8 +20,8 @@ use warpui::{
 
 use super::SettingsSection;
 use super::settings_page::{
-    MatchData, PageType, SettingsPageMeta, SettingsPageViewHandle,
-    SettingsWidget, render_sub_header,
+    MatchData, PageType, SettingsPageMeta, SettingsPageViewHandle, SettingsWidget,
+    render_sub_header,
 };
 use crate::appearance::Appearance;
 use crate::editor::{
@@ -936,8 +936,7 @@ fn trigger_keybinding_notifier(
 }
 
 #[derive(Default)]
-struct KeybindingsWidget {
-}
+struct KeybindingsWidget {}
 
 impl KeybindingsWidget {
     fn render_description(
@@ -1078,11 +1077,7 @@ impl SettingsWidget for KeybindingsWidget {
         appearance: &Appearance,
         _app: &AppContext,
     ) -> Box<dyn Element> {
-        let subheader = render_sub_header(
-            appearance,
-            "Configure keyboard shortcuts",
-            None,
-        );
+        let subheader = render_sub_header(appearance, "Configure keyboard shortcuts", None);
         let description = self.render_description(view.bindings.as_ref(), appearance);
 
         Flex::column()

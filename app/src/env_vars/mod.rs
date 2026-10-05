@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 use warp_util::path::ShellFamily;
 
 use crate::terminal::shell::ShellType;
@@ -32,7 +32,6 @@ impl Default for EnvVarValue {
         EnvVarValue::Constant(String::new())
     }
 }
-
 
 pub trait EnvVarExt {
     fn get_initialization_string(&self, shell_type: ShellType) -> String;

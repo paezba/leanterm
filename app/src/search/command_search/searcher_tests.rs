@@ -130,8 +130,7 @@ impl<T: SearchItem<Action = CommandSearchItemAction> + Clone + 'static> SyncData
     }
 }
 
-fn initialize_app(app: &mut App) {
-}
+fn initialize_app(app: &mut App) {}
 
 #[test]
 fn test_add_source_to_mixer() {

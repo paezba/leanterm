@@ -1536,7 +1536,6 @@ pub struct TerminalView {
 
     mouse_states: TerminalViewMouseStates,
 
-
     /// A sender used to handle messages for whenever the entire terminal view
     /// changes size.  Note that this size contains not just the content element
     /// but also the input.

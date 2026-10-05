@@ -81,9 +81,7 @@ pub use video_recording::*;
 use warp::appearance::Appearance;
 use warp::cmd_or_ctrl_shift;
 use warp::features::FeatureFlag;
-use warp::integration_testing::assertions::{
-    assert_binding_display_string,
-};
+use warp::integration_testing::assertions::assert_binding_display_string;
 use warp::integration_testing::block::{
     BlockPosition, LinePosition, assert_block_visible, assert_bottom_of_block_approx_at,
     assert_num_blocks_in_model,

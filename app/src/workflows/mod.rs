@@ -12,7 +12,6 @@ pub mod workflow;
 
 pub use categories::{CategoriesView, CategoriesViewEvent, WorkflowsViewAction};
 
-
 pub fn init(app: &mut AppContext) {
     categories::init(app);
 }
