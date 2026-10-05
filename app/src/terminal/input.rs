@@ -2005,7 +2005,6 @@ impl Input {
         }
     }
 
-
     pub fn set_zero_state_hint_text(&mut self, ctx: &mut ViewContext<Self>) {
         self.editor.update(ctx, |editor, ctx| {
             editor.clear_placeholder_text(ctx);

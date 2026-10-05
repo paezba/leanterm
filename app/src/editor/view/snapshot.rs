@@ -87,7 +87,6 @@ pub struct ViewSnapshot {
 
     pub baseline_position_computation_method: BaselinePositionComputationMethod,
 
-
     pub editor_height_shrink_delay: Arc<Mutex<EditorHeightShrinkDelay>>,
 }
 

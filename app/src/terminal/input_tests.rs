@@ -2619,7 +2619,6 @@ macro_rules! input_mode_prefix_tests {
 }
 
 #[test]
-
 #[test]
 fn test_remove_ignored_suggestion_on_command_execution() {
     App::test((), |mut app| async move {

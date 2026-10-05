@@ -438,7 +438,6 @@ impl EditorElement {
         false
     }
 
-
     fn mouse_moved(
         &mut self,
         position: Vector2F,
@@ -1493,7 +1492,6 @@ impl EditorElement {
             ])
             .finish()
     }
-
 
     /// Takes into account whether or not we're in Vim mode to determine the cursor type.
     fn get_cursor_type(&self) -> CursorDisplayType {

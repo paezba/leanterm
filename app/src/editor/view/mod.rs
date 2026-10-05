@@ -2725,7 +2725,6 @@ impl EditorView {
 
             baseline_position_computation_method: self.baseline_position_computation_method.clone(),
 
-
             editor_height_shrink_delay: self.editor_height_shrink_delay.clone(),
         }
     }
@@ -2801,7 +2800,6 @@ impl EditorView {
                 }
             },
         );
-
 
         let editor_model = ctx.add_model(|ctx| {
             EditorModel::new(
@@ -3304,7 +3302,6 @@ impl EditorView {
         interaction_state: InteractionState,
         ctx: &mut ViewContext<Self>,
     ) {
-
         self.editor_model.update(ctx, |model, _| {
             model.set_interaction_state(interaction_state);
         });
@@ -3930,7 +3927,6 @@ impl EditorView {
     /// Clears editor buffer if the vim mode allows for it, but does not
     /// clear the undo/redo stack.
     pub fn handle_ctrl_c(&mut self, ctx: &mut ViewContext<Self>) {
-
         #[cfg(windows)]
         // On Windows, if there is selected text, users expect ctrl-c to copy.
         if !self.selected_text(ctx).is_empty() {
@@ -7586,7 +7582,6 @@ impl View for EditorView {
             false,
             ctx,
         );
-
 
         Hoverable::new(self.hover_handle.clone(), |_state| editor_element.finish())
             .with_cursor(Cursor::IBeam)

@@ -1702,6 +1702,8 @@ pub(crate) fn initialize_app(
 
     // This model has to be registered after the user workspaces model because it relies on it,
     // and before the UpdateManager models because they rely on the TeamTester model.
+    ctx.add_singleton_model(|_| pricing::PricingInfoModel::new());
+
     ctx.add_singleton_model(TeamTesterStatus::new);
 
     ctx.add_singleton_model(|ctx| {

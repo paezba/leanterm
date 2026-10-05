@@ -40,7 +40,6 @@ fn initialize_app(app: &mut App) {
     app.add_singleton_model(|_| ObjectActions::new(Vec::new()));
     app.add_singleton_model(|_| KeybindingChangedNotifier::mock());
     app.add_singleton_model(|_| AuthStateProvider::new_for_test());
-
 }
 
 fn create_env_var_collection_view(app: &mut App) -> ViewHandle<EnvVarCollectionView> {

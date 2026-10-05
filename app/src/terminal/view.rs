@@ -7116,7 +7116,6 @@ impl TerminalView {
             },
             ctx,
         );
-
     }
 
     #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
@@ -7136,8 +7135,7 @@ impl TerminalView {
             ctx,
         );
 
-        if self.block_onboarding_active {
-        }
+        if self.block_onboarding_active {}
     }
 
     pub fn interrupt_onboarding_blocks(&mut self, ctx: &mut ViewContext<Self>) {

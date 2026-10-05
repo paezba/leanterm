@@ -1241,7 +1241,6 @@ fn show_or_hide_non_quake_mode_windows(_: &(), ctx: &mut AppContext) {
     };
 }
 
-
 #[derive(Clone)]
 pub enum NewWorkspaceSource {
     Empty {
