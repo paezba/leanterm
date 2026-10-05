@@ -178,8 +178,8 @@ use crate::session_management::{SessionNavigationData, SessionSource, TabNavigat
 use crate::settings::{
     AccessibilitySettings, AliasExpansionSettings, AppEditorSettings, BlockVisibilitySettings,
     CodeSettings, CodeSettingsChangedEvent, CtrlTabBehavior, CursorBlink, DebugSettings,
-    FontSettings, GPUSettings, InputSettings, MonospaceFontSize, PaneSettings, PrivacySettings,
-    SelectionSettings, SshSettings, ThemeSettings, active_theme_kind, respect_system_theme,
+    FontSettings, GPUSettings, InputSettings, MonospaceFontSize, PaneSettings, SelectionSettings,
+    SshSettings, ThemeSettings, active_theme_kind, respect_system_theme,
 };
 use crate::settings_view::keybindings::{KeybindingChangedEvent, KeybindingChangedNotifier};
 use crate::settings_view::pane_manager::SettingsPaneManager;
@@ -2194,9 +2194,6 @@ impl Workspace {
             | TabSettingsChangedEvent::VerticalTabsTabItemMode { .. }
             | TabSettingsChangedEvent::VerticalTabsPrimaryInfo { .. }
             | TabSettingsChangedEvent::VerticalTabsCompactSubtitle { .. }
-            | TabSettingsChangedEvent::UseLatestUserPromptAsConversationTitleInTabNames {
-                ..
-            }
             | TabSettingsChangedEvent::VerticalTabsShowPrLink { .. }
             | TabSettingsChangedEvent::VerticalTabsShowDiffStats { .. }
             | TabSettingsChangedEvent::HideTitleBarSearchBarInVerticalTabs { .. } => {
@@ -13117,7 +13114,6 @@ impl Workspace {
     }
 
     fn add_toggle_setting_context_flags(&self, app: &AppContext, context: &mut Context) {
-        let privacy_settings = PrivacySettings::as_ref(app);
         let editor_settings = AppEditorSettings::as_ref(app);
         let semantic_selection_settings = SemanticSelection::as_ref(app);
         let selection_settings = SelectionSettings::as_ref(app);
@@ -13279,9 +13275,6 @@ impl Workspace {
         if *safe_mode_settings.safe_mode_enabled.value() {
             context.set.insert(flags::SAFE_MODE_FLAG);
         }
-        if privacy_settings.is_cloud_conversation_storage_enabled {
-            context.set.insert(flags::CLOUD_CONVERSATION_STORAGE_FLAG);
-        }
 
         if editor_settings.cursor_blink.value() == &CursorBlink::Enabled {
             context.set.insert(flags::CURSOR_BLINK_CONTEXT_FLAG);
@@ -13308,12 +13301,6 @@ impl Workspace {
             context
                 .set
                 .insert(flags::LEFT_PANEL_VISIBILITY_ACROSS_TABS_FLAG);
-        }
-
-        if *font_settings.match_ai_font_to_terminal_font {
-            context
-                .set
-                .insert(flags::MATCH_AI_FONT_TO_TERMINAL_FONT_FLAG);
         }
 
         if *font_settings.match_notebook_to_monospace_font_size {
@@ -13347,12 +13334,6 @@ impl Workspace {
         if *tab_settings.show_code_review_diff_stats.value() {
             context.set.insert(flags::SHOW_CODE_REVIEW_DIFF_STATS_FLAG);
         }
-        if *general_settings
-            .auto_open_code_review_pane_on_first_agent_change
-            .value()
-        {
-            context.set.insert(flags::AUTO_OPEN_CODE_REVIEW_PANE_FLAG);
-        }
         if *tab_settings.use_vertical_tabs.value() {
             context.set.insert(flags::USE_VERTICAL_TABS_FLAG);
         }
@@ -13366,14 +13347,6 @@ impl Workspace {
             context
                 .set
                 .insert(flags::SHOW_VERTICAL_TAB_PANEL_IN_RESTORED_WINDOWS_FLAG);
-        }
-        if *tab_settings
-            .use_latest_user_prompt_as_conversation_title_in_tab_names
-            .value()
-        {
-            context
-                .set
-                .insert(flags::USE_LATEST_USER_PROMPT_AS_CONVERSATION_TITLE_IN_TAB_NAMES_FLAG);
         }
         if self.should_show_session_config_tab_config_chip() {
             context
@@ -13403,21 +13376,10 @@ impl Workspace {
             context.set.insert(flags::CODE_AS_DEFAULT_EDITOR);
         }
 
-        if *code_settings.codebase_context_enabled.value() {
-            context.set.insert(flags::IS_CODEBASE_INDEXING_ENABLED);
-        }
-
-        if *code_settings.auto_indexing_enabled.value() {
-            context.set.insert(flags::IS_AUTOINDEXING_ENABLED);
-        }
-
         if *input_settings.show_hint_text.value() {
             context.set.insert(flags::SHOW_INPUT_HINT_TEXT_CONTEXT_FLAG);
         }
 
-        if *input_settings.show_agent_tips.value() {
-            context.set.insert(flags::SHOW_AGENT_TIPS_FLAG);
-        }
         if *editor_settings.enable_autosuggestions {
             context.set.insert(flags::AUTOSUGGESTIONS_ENABLED_FLAG);
         }
@@ -13458,12 +13420,6 @@ impl Workspace {
         let gpu_settings = GPUSettings::as_ref(app);
         if *gpu_settings.prefer_low_power_gpu {
             context.set.insert(flags::PREFER_LOW_POWER_GPU_FLAG);
-        }
-
-        if input_settings.is_terminal_input_message_bar_enabled() {
-            context
-                .set
-                .insert(flags::SHOW_TERMINAL_INPUT_MESSAGE_LINE_FLAG);
         }
 
         if *input_settings.enable_slash_commands_in_terminal.value() {

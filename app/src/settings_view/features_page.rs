@@ -58,15 +58,14 @@ use crate::search::command_search::settings::{
 use crate::settings::native_preference::{NativePreferenceSettings, UserNativePreference};
 use crate::settings::{
     AliasExpansionEnabled, AliasExpansionSettings, AppEditorSettings, AutocompleteSymbols,
-    AutosuggestionKeybindingHint, ChangelogSettings, CodeSettings, CommandCorrections,
-    CompletionsOpenWhileTyping, CopyOnSelect, CtrlTabBehavior, DEFAULT_QUAKE_MODE_SIZE_PERCENTAGES,
-    ErrorUnderliningEnabled, ExtraMetaKeys, GPUSettings, GlobalHotkeyMode, InputSettings,
-    InputSettingsChangedEvent, LinuxSelectionClipboard, MiddleClickPasteEnabled,
-    MouseScrollMultiplier, NativeShellCompletionsEnabled, PreferLowPowerGPU,
-    PreferredGraphicsBackend, QUAKE_WINDOW_AUTOHIDE_SUPPORTED, QuakeModeSettings,
-    RightClickBehavior, RightClickBehaviorSetting, ScrollSettings, ScrollSettingsChangedEvent,
-    SelectionSettings, SelectionSettingsChangedEvent, ShowAutosuggestionIgnoreButton,
-    ShowChangelogAfterUpdate, ShowTerminalInputMessageBar, SshSettings, SyntaxHighlighting,
+    AutosuggestionKeybindingHint, CodeSettings, CommandCorrections, CompletionsOpenWhileTyping,
+    CopyOnSelect, CtrlTabBehavior, DEFAULT_QUAKE_MODE_SIZE_PERCENTAGES, ErrorUnderliningEnabled,
+    ExtraMetaKeys, GPUSettings, GlobalHotkeyMode, InputSettings, InputSettingsChangedEvent,
+    LinuxSelectionClipboard, MiddleClickPasteEnabled, MouseScrollMultiplier,
+    NativeShellCompletionsEnabled, PreferLowPowerGPU, PreferredGraphicsBackend,
+    QUAKE_WINDOW_AUTOHIDE_SUPPORTED, QuakeModeSettings, RightClickBehavior,
+    RightClickBehaviorSetting, ScrollSettings, ScrollSettingsChangedEvent, SelectionSettings,
+    SelectionSettingsChangedEvent, ShowAutosuggestionIgnoreButton, SshSettings, SyntaxHighlighting,
     TabBehavior, UserNativeRedirectPreference, VimModeEnabled, VimStatusBar,
     VimUnnamedSystemClipboard, WarpCompletionsEnabled,
 };
@@ -543,15 +542,6 @@ pub fn init_actions_from_parent_view<T: Action + Clone>(
     ));
 
     toggle_binding_pairs.push(ToggleSettingActionPair::new(
-        "terminal input message line",
-        builder(SettingsAction::FeaturesPageToggle(
-            FeaturesPageAction::ToggleShowTerminalInputMessageLine,
-        )),
-        context,
-        flags::SHOW_TERMINAL_INPUT_MESSAGE_LINE_FLAG,
-    ));
-
-    toggle_binding_pairs.push(ToggleSettingActionPair::new(
         "preserve input focus on block selection",
         builder(SettingsAction::FeaturesPageToggle(
             FeaturesPageAction::TogglePreserveInputFocusOnBlockSelection,
@@ -706,13 +696,10 @@ pub enum FeaturesPageAction {
     SetOsc52ClipboardAccess(Osc52ClipboardAccess),
     SearchForKeybinding(String),
     ToggleAutosuggestions,
-    ToggleShowChangelogAfterUpdate,
     #[cfg(any(target_os = "linux", target_os = "freebsd"))]
     ToggleForceX11,
     ToggleAutosuggestionKeybindingHint,
     ToggleShowAutosuggestionIgnoreButton,
-    ToggleAutoOpenCodeReviewPane,
-    ToggleShowTerminalInputMessageLine,
     TogglePreserveInputFocusOnBlockSelection,
     MakeWarpDefaultTerminal,
 }
@@ -1307,15 +1294,6 @@ impl TypedActionView for FeaturesPageView {
                     report_if_error!(input_settings.show_hint_text.toggle_and_save_value(ctx));
                 });
             }
-            ToggleShowTerminalInputMessageLine => {
-                InputSettings::handle(ctx).update(ctx, |input_settings, ctx| {
-                    report_if_error!(
-                        input_settings
-                            .show_terminal_input_message_bar
-                            .toggle_and_save_value(ctx)
-                    );
-                });
-            }
             ToggleLinkTooltip => {
                 GeneralSettings::handle(ctx).update(ctx, |settings, ctx| {
                     report_if_error!(settings.link_tooltip.toggle_and_save_value(ctx));
@@ -1458,15 +1436,6 @@ impl TypedActionView for FeaturesPageView {
                 ctx.update_rendering_config(|config| config.backend_preference = *graphics_backend);
                 self.graphics_backend_preference_changed = true;
             }
-            ToggleShowChangelogAfterUpdate => {
-                ChangelogSettings::handle(ctx).update(ctx, |changelog_settings, ctx| {
-                    report_if_error!(
-                        changelog_settings
-                            .show_changelog_after_update
-                            .toggle_and_save_value(ctx)
-                    );
-                })
-            }
             ToggleLinuxClipboardSelection => {
                 SelectionSettings::handle(ctx).update(ctx, |selection_settings, ctx| {
                     report_if_error!(
@@ -1499,15 +1468,6 @@ impl TypedActionView for FeaturesPageView {
             ToggleLoginItem => GeneralSettings::handle(ctx).update(ctx, |settings, ctx| {
                 report_if_error!(settings.add_app_as_login_item.toggle_and_save_value(ctx));
             }),
-            ToggleAutoOpenCodeReviewPane => {
-                GeneralSettings::handle(ctx).update(ctx, |settings, ctx| {
-                    report_if_error!(
-                        settings
-                            .auto_open_code_review_pane_on_first_agent_change
-                            .toggle_and_save_value(ctx)
-                    );
-                })
-            }
             TogglePreserveInputFocusOnBlockSelection => {
                 BlockListSettings::handle(ctx).update(ctx, |blocklist_settings, ctx| {
                     report_if_error!(
@@ -1578,7 +1538,6 @@ impl FeaturesPageView {
         ctx.subscribe_to_model(&AliasExpansionSettings::handle(ctx), |_, _, _, ctx| {
             ctx.notify()
         });
-        ctx.subscribe_to_model(&ChangelogSettings::handle(ctx), |_, _, _, ctx| ctx.notify());
         ctx.subscribe_to_model(&CommandSearchSettings::handle(ctx), |_, _, _, ctx| {
             ctx.notify()
         });
@@ -2092,14 +2051,6 @@ impl FeaturesPageView {
             general_widgets.push(Box::new(LoginItemWidget::default()));
         }
 
-        let changelog_settings = ChangelogSettings::as_ref(ctx);
-        if changelog_settings
-            .show_changelog_after_update
-            .is_supported_on_current_platform()
-        {
-            general_widgets.push(Box::new(ShowChangelogWidget::default()));
-        }
-
         let scroll_settings = ScrollSettings::as_ref(ctx);
         if scroll_settings
             .mouse_scroll_multiplier
@@ -2229,8 +2180,6 @@ impl FeaturesPageView {
         editor_widgets.push(Box::new(AutosuggestionKeybindingHintWidget::default()));
 
         editor_widgets.push(Box::new(AutosuggestionIgnoreButtonWidget::default()));
-
-        editor_widgets.push(Box::new(ShowTerminalInputMessageLineWidget::default()));
 
         editor_widgets.push(Box::new(TabKeyBehaviorWidget::default()));
 
@@ -4114,53 +4063,6 @@ impl SettingsWidget for QuitWhenAllWindowsClosedWidget {
 }
 
 #[derive(Default)]
-struct ShowChangelogWidget {
-    switch_state: SwitchStateHandle,
-}
-
-impl SettingsWidget for ShowChangelogWidget {
-    type View = FeaturesPageView;
-
-    fn search_terms(&self) -> &str {
-        "changelog updates"
-    }
-
-    fn render(
-        &self,
-        view: &Self::View,
-        appearance: &Appearance,
-        app: &AppContext,
-    ) -> Box<dyn Element> {
-        let changelog_settings = ChangelogSettings::as_ref(app);
-        let ui_builder = appearance.ui_builder();
-        render_body_item::<FeaturesPageAction>(
-            "Show changelog toast after updates".into(),
-            None,
-            LocalOnlyIconState::for_setting(
-                ShowChangelogAfterUpdate::storage_key(),
-                ShowChangelogAfterUpdate::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
-            ToggleState::Enabled,
-            appearance,
-            ui_builder
-                .switch(self.switch_state.clone())
-                .check(*changelog_settings.show_changelog_after_update)
-                .build()
-                .on_click(move |ctx, _, _| {
-                    ctx.dispatch_typed_action(FeaturesPageAction::ToggleShowChangelogAfterUpdate);
-                })
-                .finish(),
-            None,
-        )
-    }
-}
-
-#[derive(Default)]
 struct MouseScrollMultiplierWidget {
     additional_info_link: MouseStateHandle,
 }
@@ -5339,54 +5241,6 @@ impl SettingsWidget for VimModeWidget {
         }
 
         column.finish()
-    }
-}
-
-#[derive(Default)]
-struct ShowTerminalInputMessageLineWidget {
-    switch_state: SwitchStateHandle,
-}
-
-impl SettingsWidget for ShowTerminalInputMessageLineWidget {
-    type View = FeaturesPageView;
-
-    fn search_terms(&self) -> &str {
-        "terminal input message line bar agent"
-    }
-
-    fn render(
-        &self,
-        view: &Self::View,
-        appearance: &Appearance,
-        app: &AppContext,
-    ) -> Box<dyn Element> {
-        let ui_builder = appearance.ui_builder();
-        render_body_item::<FeaturesPageAction>(
-            "Show terminal input message line".into(),
-            None,
-            LocalOnlyIconState::for_setting(
-                ShowTerminalInputMessageBar::storage_key(),
-                ShowTerminalInputMessageBar::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
-            ToggleState::Enabled,
-            appearance,
-            ui_builder
-                .switch(self.switch_state.clone())
-                .check(InputSettings::as_ref(app).is_terminal_input_message_bar_enabled())
-                .build()
-                .on_click(move |ctx, _, _| {
-                    ctx.dispatch_typed_action(
-                        FeaturesPageAction::ToggleShowTerminalInputMessageLine,
-                    );
-                })
-                .finish(),
-            None,
-        )
     }
 }
 

@@ -31,11 +31,10 @@ pub fn initialize_settings_for_tests_with_mode(
     use crate::settings::manager::SettingsManager;
     use crate::settings::{
         AccessibilitySettings, AliasExpansionSettings, AppEditorSettings, BlockVisibilitySettings,
-        ChangelogSettings, CodeSettings, DebugSettings, EmacsBindingsSettings, FontSettings,
-        GPUSettings, InputModeSettings, InputSettings, LocalControlSettings,
-        NativePreferenceSettings, PaneSettings, SameLinePromptBlockSettings, ScrollSettings,
-        SelectionSettings, SharedObjectLimitBannerSettings, SshSettings, ThemeSettings,
-        VimBannerSettings, init_and_register_user_preferences,
+        CodeSettings, DebugSettings, EmacsBindingsSettings, FontSettings, GPUSettings,
+        InputModeSettings, InputSettings, LocalControlSettings, NativePreferenceSettings,
+        PaneSettings, SameLinePromptBlockSettings, ScrollSettings, SelectionSettings, SshSettings,
+        ThemeSettings, VimBannerSettings, init_and_register_user_preferences,
     };
     use crate::terminal::BlockListSettings;
     use crate::terminal::general_settings::GeneralSettings;
@@ -64,7 +63,6 @@ pub fn initialize_settings_for_tests_with_mode(
     AppEditorSettings::register(app);
     BlockVisibilitySettings::register(app);
     BlockListSettings::register(app);
-    ChangelogSettings::register(app);
     CommandSearchSettings::register(app);
     DebugSettings::register(app);
     AppIconSettings::register(app);
@@ -108,7 +106,6 @@ pub fn initialize_settings_for_tests_with_mode(
     ThemeSettings::register(app);
     UndoCloseSettings::register(app);
     VimBannerSettings::register(app);
-    SharedObjectLimitBannerSettings::register(app);
     WindowSettings::register(app);
     CodeSettings::register(app);
     SemanticSelection::register(app);

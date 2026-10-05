@@ -14,11 +14,10 @@ use super::initializer::SettingsInitializer;
 use super::native_preference::NativePreferenceSettings;
 use super::{
     AccessibilitySettings, AliasExpansionSettings, AppEditorSettings, BlockVisibilitySettings,
-    ChangelogSettings, CodeSettings, DebugSettings, EmacsBindingsSettings, FontSettings,
-    FontSettingsChangedEvent, GPUSettings, InputBoxType, InputModeSettings, InputSettings,
-    LocalControlSettings, PaneSettings, SameLinePromptBlockSettings, ScrollSettings,
-    SelectionSettings, SharedObjectLimitBannerSettings, SshSettings, ThemeSettings,
-    VimBannerSettings, WarpDrivePrivacySettings,
+    CodeSettings, DebugSettings, EmacsBindingsSettings, FontSettings, FontSettingsChangedEvent,
+    GPUSettings, InputBoxType, InputModeSettings, InputSettings, LocalControlSettings,
+    PaneSettings, SameLinePromptBlockSettings, ScrollSettings, SelectionSettings, SshSettings,
+    ThemeSettings, VimBannerSettings,
 };
 use crate::appearance;
 use crate::banner::BannerState;
@@ -64,7 +63,6 @@ pub fn register_all_settings(ctx: &mut AppContext) {
     CodeSettings::register(ctx);
     LigatureSettings::register(ctx);
     GPUSettings::register(ctx);
-    ChangelogSettings::register(ctx);
     GeneralSettings::register(ctx);
     ScrollSettings::register(ctx);
     SelectionSettings::register(ctx);
@@ -72,7 +70,6 @@ pub fn register_all_settings(ctx: &mut AppContext) {
     ThemeSettings::register(ctx);
     AccessibilitySettings::register(ctx);
     NativePreferenceSettings::register(ctx);
-    WarpDrivePrivacySettings::register(ctx);
     UserAppInstallDetectionSettings::register(ctx);
     AppIconSettings::register(ctx);
     AppEditorSettings::register(ctx);
@@ -82,7 +79,6 @@ pub fn register_all_settings(ctx: &mut AppContext) {
     UndoCloseSettings::register(ctx);
     SshSettings::register(ctx);
     VimBannerSettings::register(ctx);
-    SharedObjectLimitBannerSettings::register(ctx);
     EmacsBindingsSettings::register(ctx);
     SameLinePromptBlockSettings::register(ctx);
     SemanticSelection::register(ctx);

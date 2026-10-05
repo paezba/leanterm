@@ -195,27 +195,6 @@ define_settings_group!(InputSettings,
             surface: settings::SettingSurfaces::GUI,
             private: true,
         },
-        show_agent_tips: ShowAgentTips {
-            type: bool,
-            default: true,
-            supported_platforms: SupportedPlatforms::ALL,
-            sync_to_cloud: SyncToCloud::Globally(RespectUserSyncSetting::Yes),
-            surface: settings::SettingSurfaces::GUI,
-            private: false,
-            toml_path: "agents.warp_agent.input.show_agent_tips",
-            description: "Whether agent tips are displayed in the input.",
-        },
-        // Whether to show the terminal input message bar (contextual hints at the bottom of terminal input).
-        show_terminal_input_message_bar: ShowTerminalInputMessageBar {
-            type: bool,
-            default: true,
-            supported_platforms: SupportedPlatforms::ALL,
-            sync_to_cloud: SyncToCloud::Globally(RespectUserSyncSetting::Yes),
-            surface: settings::SettingSurfaces::GUI,
-            private: false,
-            toml_path: "terminal.input.show_terminal_input_message_bar",
-            description: "Whether the terminal input message bar is shown.",
-        },
     ]
 );
 
@@ -260,9 +239,5 @@ impl InputSettings {
 
     pub fn is_classic_input_enabled(&self, app: &AppContext) -> bool {
         self.input_type(app) == InputBoxType::Classic
-    }
-
-    pub fn is_terminal_input_message_bar_enabled(&self) -> bool {
-        *self.show_terminal_input_message_bar
     }
 }

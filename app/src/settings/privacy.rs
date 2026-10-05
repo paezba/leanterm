@@ -2,15 +2,13 @@ use std::fmt::Display;
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use settings::macros::{define_settings_group, maybe_define_setting, register_settings_events};
-use settings::{RespectUserSyncSetting, Setting, SupportedPlatforms, SyncToCloud};
+use settings::macros::{maybe_define_setting, register_settings_events};
+use settings::{
+    ChangeEventReason, RespectUserSyncSetting, Setting, SupportedPlatforms, SyncToCloud,
+};
 use warp_errors::report_error;
 pub use warp_terminal::model::secrets::RegexDisplayInfo;
 use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
-
-pub const TELEMETRY_ENABLED_DEFAULTS_KEY: &str = "TelemetryEnabled";
-pub const CRASH_REPORTING_ENABLED_DEFAULTS_KEY: &str = "CrashReportingEnabled";
-pub const CLOUD_CONVERSATION_STORAGE_ENABLED_DEFAULTS_KEY: &str = "CloudConversationStorageEnabled";
 
 #[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
 #[schemars(description = "A custom regex pattern for detecting and redacting secrets.")]
@@ -56,42 +54,6 @@ impl PartialEq for CustomSecretRegex {
 
 impl settings_value::SettingsValue for CustomSecretRegex {}
 
-define_settings_group!(WarpDrivePrivacySettings, settings: [
-    is_telemetry_enabled: IsTelemetryEnabled {
-        type: bool,
-        default: true,
-        supported_platforms: SupportedPlatforms::ALL,
-        sync_to_cloud: SyncToCloud::Globally(RespectUserSyncSetting::No),
-        surface: settings::SettingSurfaces::ALL,
-        private: false,
-        storage_key: "TelemetryEnabled",
-        toml_path: "privacy.telemetry_enabled",
-        description: "Whether anonymous usage telemetry is collected.",
-    },
-    is_crash_reporting_enabled: IsCrashReportingEnabled {
-        type: bool,
-        default: true,
-        supported_platforms: SupportedPlatforms::ALL,
-        sync_to_cloud: SyncToCloud::Globally(RespectUserSyncSetting::No),
-        surface: settings::SettingSurfaces::ALL,
-        private: false,
-        storage_key: "CrashReportingEnabled",
-        toml_path: "privacy.crash_reporting_enabled",
-        description: "Whether crash reports are sent.",
-    },
-    is_cloud_conversation_storage_enabled: IsCloudConversationStorageEnabled {
-        type: bool,
-        default: true,
-        supported_platforms: SupportedPlatforms::ALL,
-        sync_to_cloud: SyncToCloud::Globally(RespectUserSyncSetting::No),
-        surface: settings::SettingSurfaces::ALL,
-        private: false,
-        storage_key: "CloudConversationStorageEnabled",
-        toml_path: "agents.cloud_conversation_storage_enabled",
-        description: "Whether conversations are stored in the cloud.",
-    },
-]);
-
 maybe_define_setting!(CustomSecretRegexList, group: PrivacySettings, {
     type: Vec<CustomSecretRegex>,
     default: Vec::new(),
@@ -112,12 +74,8 @@ maybe_define_setting!(HasInitializedDefaultSecretRegexes, group: PrivacySettings
     private: true,
 });
 
-/// Singleton model for managing the user's privacy settings (whether the user has enabled crash
-/// reporting and/or telemetry).
+/// Singleton model for managing the user's privacy settings.
 pub struct PrivacySettings {
-    pub is_telemetry_enabled: bool,
-    pub is_crash_reporting_enabled: bool,
-    pub is_cloud_conversation_storage_enabled: bool,
     pub has_initialized_default_secret_regexes: HasInitializedDefaultSecretRegexes,
     /// List of user defined secret regexes.
     /// Enterprise-level secret regexes will always take precedence over user-level secrets,
@@ -127,57 +85,9 @@ pub struct PrivacySettings {
     /// List of enterprise-level secret regexes provided by the organization.
     /// These are kept separate from user-level secrets to support additive behavior.
     pub enterprise_secret_regex_list: Vec<CustomSecretRegex>,
-    /// Whether or not the user's organization has forced telemetry on, in which case we ignore any
-    /// user local/cloud settings. If false, we fall back to the user's settings.
-    /// This is populated by the server when teams data is fetched.
-    pub is_telemetry_force_enabled: bool,
     /// Whether or not the user's organization has enabled enterprise secret redaction.
     /// This is populated by the server when teams data is fetched.
     pub is_enterprise_secret_redaction_enabled: bool,
-}
-
-/// A snapshot of a user's [`PrivacySettings`] settings at some point in time.
-#[derive(Clone, Copy)]
-pub struct PrivacySettingsSnapshot {
-    is_telemetry_enabled: bool,
-    is_crash_reporting_enabled: bool,
-    is_telemetry_force_enabled: bool,
-    // This is an option so that, if a user has not set this value (and it's set to its default value of true),
-    // the default value won't override a value that the user previously set on a different device.
-    // This is set to a non-option once the user manually changes this setting.
-    cloud_conversation_storage_enabled: Option<bool>,
-}
-
-impl PrivacySettingsSnapshot {
-    pub fn cloud_conversation_storage_enabled(&self) -> Option<bool> {
-        self.cloud_conversation_storage_enabled
-    }
-
-    pub fn is_telemetry_enabled(&self) -> bool {
-        self.is_telemetry_enabled
-    }
-
-    pub fn is_crash_reporting_enabled(&self) -> bool {
-        self.is_crash_reporting_enabled
-    }
-
-    pub fn is_telemetry_force_enabled(&self) -> bool {
-        self.is_telemetry_force_enabled
-    }
-
-    pub fn should_disable_telemetry(&self) -> bool {
-        !self.is_telemetry_enabled && !self.is_telemetry_force_enabled
-    }
-
-    #[cfg(test)]
-    pub fn mock() -> Self {
-        Self {
-            cloud_conversation_storage_enabled: None,
-            is_telemetry_enabled: true,
-            is_crash_reporting_enabled: true,
-            is_telemetry_force_enabled: true,
-        }
-    }
 }
 
 impl PrivacySettings {
@@ -202,200 +112,34 @@ impl PrivacySettings {
         });
     }
 
-    /// Returns a new PrivacySettings object initialized from locally cached values. Server-side
-    /// settings are fetched later via `fetch_or_update_settings`, which is called from
-    /// `on_user_fetched` after the user's auth state is established.
+    /// Returns a new PrivacySettings object initialized from locally cached values.
     fn new(ctx: &mut ModelContext<Self>) -> Self {
-        // Initialize from `WarpDrivePrivacySettings`, which is the source of truth for these
-        // booleans.
-        let warp_drive_privacy = WarpDrivePrivacySettings::as_ref(ctx);
-        let is_telemetry_enabled = *warp_drive_privacy.is_telemetry_enabled.value();
-        let is_crash_reporting_enabled = *warp_drive_privacy.is_crash_reporting_enabled.value();
-        let is_cloud_conversation_storage_enabled = *warp_drive_privacy
-            .is_cloud_conversation_storage_enabled
-            .value();
-
-        // Listen for changes to the cloud model and update ourselves when they happen.
-        ctx.subscribe_to_model(
-            &WarpDrivePrivacySettings::handle(ctx),
-            |me, _, event, ctx| {
-                let privacy_settings = WarpDrivePrivacySettings::as_ref(ctx);
-                match event {
-                    WarpDrivePrivacySettingsChangedEvent::IsTelemetryEnabled { .. } => {
-                        me.set_is_telemetry_enabled(
-                            *privacy_settings.is_telemetry_enabled.value(),
-                            ctx,
-                        );
-                    }
-                    WarpDrivePrivacySettingsChangedEvent::IsCrashReportingEnabled { .. } => {
-                        me.set_is_crash_reporting_enabled(
-                            *privacy_settings.is_crash_reporting_enabled.value(),
-                            ctx,
-                        );
-                    }
-                    WarpDrivePrivacySettingsChangedEvent::IsCloudConversationStorageEnabled {
-                        ..
-                    } => {
-                        me.set_is_cloud_conversation_storage_enabled(
-                            *privacy_settings
-                                .is_cloud_conversation_storage_enabled
-                                .value(),
-                            ctx,
-                        );
-                    }
-                }
-            },
-        );
-
         let user_secret_regex_list: CustomSecretRegexList =
             CustomSecretRegexList::new_from_storage(ctx);
         let has_initialized_default_secret_regexes: HasInitializedDefaultSecretRegexes =
             HasInitializedDefaultSecretRegexes::new_from_storage(ctx);
 
         Self {
-            is_crash_reporting_enabled,
-            is_telemetry_enabled,
-            is_cloud_conversation_storage_enabled,
             user_secret_regex_list,
             has_initialized_default_secret_regexes,
-            is_telemetry_force_enabled: false,
             is_enterprise_secret_redaction_enabled: false,
             enterprise_secret_regex_list: Vec::new(),
         }
-    }
-
-    pub fn is_telemetry_force_enabled(&self) -> bool {
-        self.is_telemetry_force_enabled
-    }
-
-    pub fn set_is_telemetry_force_enabled(&mut self, is_telemetry_force_enabled: bool) {
-        self.is_telemetry_force_enabled = is_telemetry_force_enabled;
     }
 
     pub fn is_enterprise_secret_redaction_enabled(&self) -> bool {
         self.is_enterprise_secret_redaction_enabled
     }
 
-    pub fn refresh_to_default(&mut self) {
-        // TODO(zach): this seems incorrect - should we also update the values on disk?
-        self.is_telemetry_enabled = true;
-        self.is_crash_reporting_enabled = true;
-        self.is_cloud_conversation_storage_enabled = true;
-        self.is_telemetry_force_enabled = false;
-        self.is_enterprise_secret_redaction_enabled = false;
-    }
-
     /// Constructor for tests only.
     #[cfg(any(test, feature = "test-util"))]
     pub fn mock(_ctx: &mut ModelContext<Self>) -> Self {
         Self {
-            is_crash_reporting_enabled: true,
-            is_telemetry_enabled: true,
-            is_cloud_conversation_storage_enabled: true,
             user_secret_regex_list: CustomSecretRegexList::new(None),
             has_initialized_default_secret_regexes: HasInitializedDefaultSecretRegexes::new(None),
-            is_telemetry_force_enabled: false,
             is_enterprise_secret_redaction_enabled: false,
             enterprise_secret_regex_list: Vec::new(),
         }
-    }
-
-    /// Returns a snapshot of the user's privacy settings.
-    ///
-    /// The returned snapshot is not stateful, thus its values should be used shortly after the
-    /// snapshot is returned.
-    pub fn get_snapshot(&self, _app: &AppContext) -> PrivacySettingsSnapshot {
-        PrivacySettingsSnapshot {
-            cloud_conversation_storage_enabled: (!self.is_cloud_conversation_storage_enabled)
-                .then_some(false),
-            is_telemetry_enabled: self.is_telemetry_enabled,
-            is_crash_reporting_enabled: self.is_crash_reporting_enabled,
-            is_telemetry_force_enabled: self.is_telemetry_force_enabled,
-        }
-    }
-
-    /// Sets `is_crash_reporting_enabled` to the given value.
-    ///
-    /// Additionally, this writes the given value to the user's local defaults, and additionally
-    /// sends a request to update the user's `is_crash_reporting_enabled` value stored server-side.
-    /// Finally, emits a `PrivacySettingsEvent::UpdateIsCrashReportingEnabled` event.
-    pub fn set_is_crash_reporting_enabled(
-        &mut self,
-        new_value: bool,
-        ctx: &mut ModelContext<PrivacySettings>,
-    ) {
-        let old_value = self.is_crash_reporting_enabled;
-        if new_value != old_value {
-            self.is_crash_reporting_enabled = new_value;
-
-            WarpDrivePrivacySettings::handle(ctx).update(ctx, |settings, ctx| {
-                log::info!("Setting is_crash_reporting_enabled to {new_value}");
-                let _ = settings
-                    .is_crash_reporting_enabled
-                    .set_value(new_value, ctx);
-            });
-
-            ctx.emit(PrivacySettingsChangedEvent::UpdateIsCrashReportingEnabled {
-                old_value,
-                new_value,
-            });
-            ctx.notify();
-        }
-    }
-
-    /// Sets `is_telemetry_enabled` to the given value.
-    ///
-    /// Additionally, this writes the given value to the user's local defaults, and additionally
-    /// sends a request to update the user's `is_telemetry_enabled` value stored server-side.
-    /// Finally, emits a `PrivacySettingsEvent::UpdateIsTelemetryEnabled` event.
-    pub fn set_is_telemetry_enabled(
-        &mut self,
-        new_value: bool,
-        ctx: &mut ModelContext<PrivacySettings>,
-    ) {
-        let old_value = self.is_telemetry_enabled;
-        if new_value != old_value {
-            self.is_telemetry_enabled = new_value;
-
-            WarpDrivePrivacySettings::handle(ctx).update(ctx, |settings, ctx| {
-                log::info!("Setting is_telemetry_enabled to {new_value}");
-                let _ = settings.is_telemetry_enabled.set_value(new_value, ctx);
-            });
-
-            ctx.emit(PrivacySettingsChangedEvent::UpdateIsTelemetryEnabled {
-                old_value,
-                new_value,
-            });
-            ctx.notify();
-        }
-    }
-
-    pub fn set_is_cloud_conversation_storage_enabled(
-        &mut self,
-        new_value: bool,
-        ctx: &mut ModelContext<PrivacySettings>,
-    ) {
-        let old_value = self.is_cloud_conversation_storage_enabled;
-        if new_value == old_value {
-            return;
-        }
-
-        self.is_cloud_conversation_storage_enabled = new_value;
-
-        WarpDrivePrivacySettings::handle(ctx).update(ctx, |settings, ctx| {
-            log::info!("Setting is_cloud_conversation_storage_enabled to {new_value}");
-            let _ = settings
-                .is_cloud_conversation_storage_enabled
-                .set_value(new_value, ctx);
-        });
-
-        ctx.emit(
-            PrivacySettingsChangedEvent::UpdateIsCloudConversationStorageEnabled {
-                old_value,
-                new_value,
-            },
-        );
-        ctx.notify();
     }
 
     pub fn remove_user_secret_regex(&mut self, idx: &usize, ctx: &mut ModelContext<Self>) {
@@ -486,18 +230,6 @@ impl PrivacySettings {
 /// Events emitted when PrivacySettings is updated.
 #[derive(Clone, Copy)]
 pub enum PrivacySettingsChangedEvent {
-    UpdateIsTelemetryEnabled {
-        old_value: bool,
-        new_value: bool,
-    },
-    UpdateIsCrashReportingEnabled {
-        old_value: bool,
-        new_value: bool,
-    },
-    UpdateIsCloudConversationStorageEnabled {
-        old_value: bool,
-        new_value: bool,
-    },
     CustomSecretRegexList {
         change_event_reason: ChangeEventReason,
     },

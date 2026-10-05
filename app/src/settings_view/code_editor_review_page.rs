@@ -24,7 +24,6 @@ use super::{
 };
 use crate::appearance::Appearance;
 use crate::settings::{AppEditorSettings, CodeEditorLineNumberMode, CodeSettings};
-use crate::terminal::general_settings::GeneralSettings;
 use crate::view_components::{Dropdown, DropdownItem};
 use crate::workspace::tab_settings::TabSettings;
 
@@ -79,9 +78,8 @@ impl EditorAndCodeReviewPageView {
         }
 
         widgets.extend([
-            Box::new(AutoOpenCodeReviewPaneCodeWidget::default())
+            Box::new(CodeReviewPanelToggleWidget::default())
                 as Box<dyn SettingsWidget<View = Self>>,
-            Box::new(CodeReviewPanelToggleWidget::default()),
             Box::new(CodeReviewDiffStatsToggleWidget::default()),
             Box::new(ProjectExplorerToggleWidget::default()),
             Box::new(GlobalSearchToggleWidget::default()),
@@ -148,7 +146,6 @@ impl View for EditorAndCodeReviewPageView {
 pub enum EditorAndCodeReviewPageAction {
     ToggleCodeReviewPanel,
     ToggleShowCodeReviewDiffStats,
-    ToggleAutoOpenCodeReviewPane,
     ToggleProjectExplorer,
     ToggleGlobalSearch,
     ToggleShowHiddenFiles,
@@ -208,16 +205,6 @@ impl TypedActionView for EditorAndCodeReviewPageView {
                 });
                 ctx.notify();
             }
-            EditorAndCodeReviewPageAction::ToggleAutoOpenCodeReviewPane => {
-                GeneralSettings::handle(ctx).update(ctx, |settings, ctx| {
-                    report_if_error!(
-                        settings
-                            .auto_open_code_review_pane_on_first_agent_change
-                            .toggle_and_save_value(ctx)
-                    );
-                });
-                ctx.notify();
-            }
             EditorAndCodeReviewPageAction::SetCodeEditorLineNumberMode(mode) => {
                 AppEditorSettings::handle(ctx).update(ctx, |editor_settings, ctx| {
                     report_if_error!(
@@ -267,14 +254,6 @@ pub fn init_actions_from_parent_view<T: Action + Clone>(
 ) {
     ToggleSettingActionPair::add_toggle_setting_action_pairs_as_bindings(
         vec![
-            ToggleSettingActionPair::new(
-                "auto open code review panel",
-                builder(SettingsAction::EditorAndCodeReview(
-                    EditorAndCodeReviewPageAction::ToggleAutoOpenCodeReviewPane,
-                )),
-                context,
-                flags::AUTO_OPEN_CODE_REVIEW_PANE_FLAG,
-            ),
             ToggleSettingActionPair::new(
                 "code review button",
                 builder(SettingsAction::EditorAndCodeReview(
@@ -342,47 +321,6 @@ impl SettingsWidget for ExternalEditorCodeWidget {
         } else {
             Empty::new().finish()
         }
-    }
-}
-
-#[derive(Default)]
-struct AutoOpenCodeReviewPaneCodeWidget {
-    switch_state: SwitchStateHandle,
-}
-
-impl SettingsWidget for AutoOpenCodeReviewPaneCodeWidget {
-    type View = EditorAndCodeReviewPageView;
-
-    fn search_terms(&self) -> &str {
-        "oz auto open code review pane panel agent mode change first time accepted diff view conversation"
-    }
-
-    fn render(
-        &self,
-        _view: &Self::View,
-        appearance: &Appearance,
-        app: &AppContext,
-    ) -> Box<dyn Element> {
-        let general_settings = GeneralSettings::as_ref(app);
-        render_body_item::<EditorAndCodeReviewPageAction>(
-            "Auto open code review panel".into(),
-            None,
-            LocalOnlyIconState::Hidden,
-            ToggleState::Enabled,
-            appearance,
-            appearance
-                .ui_builder()
-                .switch(self.switch_state.clone())
-                .check(*general_settings.auto_open_code_review_pane_on_first_agent_change)
-                .build()
-                .on_click(move |ctx, _, _| {
-                    ctx.dispatch_typed_action(
-                        EditorAndCodeReviewPageAction::ToggleAutoOpenCodeReviewPane,
-                    );
-                })
-                .finish(),
-            Some("When this setting is on, the code review panel will open on the first accepted diff of a conversation".into()),
-        )
     }
 }
 

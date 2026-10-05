@@ -291,13 +291,11 @@ pub mod flags {
     pub const SYNTAX_HIGHLIGHTING_FLAG: &str = "syntax_highlighting";
     pub const SAME_LINE_PROMPT: &str = "Same_Line_Prompt_Enabled";
     pub const SAFE_MODE_FLAG: &str = "safe_mode";
-    pub const CLOUD_CONVERSATION_STORAGE_FLAG: &str = "Cloud_Conversation_Storage_Enabled";
     pub const CLOUD_CONVERSATION_STORAGE_EDITABLE_FLAG: &str =
         "Cloud_Conversation_Storage_Editable";
     pub const DIM_INACTIVE_PANES_FLAG: &str = "Dim_Inactive_Panes";
     pub const OPEN_WINDOWS_AT_CUSTOM_SIZE_FLAG: &str = "Open_Windows_At_Custom_Size";
     pub const LEFT_PANEL_VISIBILITY_ACROSS_TABS_FLAG: &str = "Left_Panel_Visibility_Across_Tabs";
-    pub const MATCH_AI_FONT_TO_TERMINAL_FONT_FLAG: &str = "Match_AI_Font_To_Terminal_Font";
     pub const MATCH_NOTEBOOK_FONT_SIZE_TO_TERMINAL_FONT_SIZE_FLAG: &str =
         "Match_Notebook_Font_Size_To_Terminal_Font_Size";
     pub const QUIT_WARNING_MODAL: &str = "Quit_Warning_Modal";
@@ -309,13 +307,10 @@ pub mod flags {
     pub const TAB_INDICATORS_FLAG: &str = "Tab_Indicators_Enabled";
     pub const SHOW_CODE_REVIEW_BUTTON_FLAG: &str = "Show_Code_Review_Button_Enabled";
     pub const SHOW_CODE_REVIEW_DIFF_STATS_FLAG: &str = "Show_Code_Review_Diff_Stats_Enabled";
-    pub const AUTO_OPEN_CODE_REVIEW_PANE_FLAG: &str = "Auto_Open_Code_Review_Pane_Enabled";
     pub const USE_VERTICAL_TABS_FLAG: &str = "Use_Vertical_Tabs";
     pub const PRESERVE_ACTIVE_TAB_COLOR_FLAG: &str = "Preserve_Active_Tab_Color";
     pub const SHOW_VERTICAL_TAB_PANEL_IN_RESTORED_WINDOWS_FLAG: &str =
         "Show_Vertical_Tab_Panel_In_Restored_Windows";
-    pub const USE_LATEST_USER_PROMPT_AS_CONVERSATION_TITLE_IN_TAB_NAMES_FLAG: &str =
-        "Use_Latest_User_Prompt_As_Conversation_Title_In_Tab_Names";
     pub const ALT_SCREEN_PADDING_FLAG: &str = "Alt_Screen_Padding";
     pub const SESSION_CONFIG_TAB_CONFIG_CHIP_OPEN: &str = "Session_Config_Tab_Config_Chip_Open";
     pub const FEATURE_INTRO_MODAL_OPEN: &str = "Feature_Intro_Modal_Open";
@@ -328,7 +323,6 @@ pub mod flags {
     pub const SYNC_ALL_PANES_IN_CURRENT_TAB: &str = "Sync_All_Panes_In_Current_Tab";
     pub const USE_AUDIBLE_BELL_CONTEXT_FLAG: &str = "Use_Audible_Terminal_Bell";
     pub const SHOW_INPUT_HINT_TEXT_CONTEXT_FLAG: &str = "Show_Input_Hint_text";
-    pub const SHOW_AGENT_TIPS_FLAG: &str = "Show_Agent_Tips";
     pub const SHOW_OZ_UPDATES_IN_ZERO_STATE_FLAG: &str = "Show_Oz_Updates_In_Zero_State";
     pub const USE_AGENT_FOOTER_FLAG: &str = "Use_Agent_Footer";
     pub const THINKING_DISPLAY_SHOW_AND_COLLAPSE: &str = "Thinking_Display_ShowAndCollapse";
@@ -345,7 +339,6 @@ pub mod flags {
     pub const LRC_SUBMISSION_SEND_IMMEDIATELY: &str = "LRC_Submission_Send_Immediately";
     pub const LRC_SUBMISSION_QUEUE_UNTIL_COMMAND_COMPLETES: &str =
         "LRC_Submission_Queue_Until_Command_Completes";
-    pub const SHOW_TERMINAL_INPUT_MESSAGE_LINE_FLAG: &str = "Show_Terminal_Input_Message_Line";
     pub const PRESERVE_INPUT_FOCUS_ON_BLOCK_SELECTION_FLAG: &str =
         "Preserve_Input_Focus_On_Block_Selection";
     pub const SLASH_COMMANDS_IN_TERMINAL_FLAG: &str = "Slash_Commands_In_Terminal";
@@ -387,8 +380,6 @@ pub mod flags {
     pub const IS_ACTIVE_AI_ENABLED: &str = "IsActiveAIEnabled";
     pub const IS_VOICE_INPUT_ENABLED: &str = "IsVoiceInputEnabled";
     pub const IS_BLOCK_AI_SUMMARIES_ENABLED: &str = "IsBlockAISummariesEnabled";
-    pub const IS_CODEBASE_INDEXING_ENABLED: &str = "IsCodebaseIndexingEnabled";
-    pub const IS_AUTOINDEXING_ENABLED: &str = "IsAutoIndexingEnabled";
     pub const LIGATURE_RENDERING_CONTEXT_FLAG: &str = "Ligature_Rendering_Enabled";
     pub const HAS_SETTINGS_TO_IMPORT_FLAG: &str = "HasSettingsToImport";
     /// The user's setting enabled UDI, but we may show a classic input (e.g. ssh/subshell warpification)

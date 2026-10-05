@@ -59,8 +59,8 @@ fn test_resolve_file_target_warp_uses_default_layout() {
 #[cfg(feature = "local_fs")]
 fn test_resolve_file_target_to_open_in_warp_never_leaves_warp() {
     use crate::util::file::external_editor::settings::{
-        OpenCodePanelsFileEditor, OpenConversationLayoutPreference, OpenFileEditor, OpenFileLayout,
-        PreferMarkdownViewer, PreferTabbedEditorView,
+        OpenCodePanelsFileEditor, OpenFileEditor, OpenFileLayout, PreferMarkdownViewer,
+        PreferTabbedEditorView,
     };
 
     let settings = EditorSettings {
@@ -71,7 +71,6 @@ fn test_resolve_file_target_to_open_in_warp_never_leaves_warp() {
         open_file_layout: OpenFileLayout::new(None),
         prefer_markdown_viewer: PreferMarkdownViewer::new(Some(false)),
         prefer_tabbed_editor_view: PreferTabbedEditorView::new(None),
-        open_conversation_layout_preference: OpenConversationLayoutPreference::new(None),
     };
     for path in ["README.md", "data.txt", "main.rs", "image.png", "script.sh"] {
         let target = resolve_file_target_to_open_in_warp(Path::new(path), &settings, None);
