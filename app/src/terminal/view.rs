@@ -6,8 +6,6 @@ pub mod init;
 pub mod inline_banner;
 // TODO(advait): if we align on prompt suggestions banner in Input, move code out of inline_banner mod.
 use repo_metadata::CanonicalizedPath;
-use warp_util::remote_path::RemotePath;
-use warp_util::standardized_path::StandardizedPath;
 
 use super::{GridType, should_right_click_paste};
 use crate::event_sources::AnonymousUserSignupEntrypoint;
@@ -248,7 +246,7 @@ use crate::terminal::model::mouse::MouseState;
 use crate::terminal::model::selection::{SelectAction, SelectionDirection};
 use crate::terminal::model::session::active_session::ActiveSession;
 use crate::terminal::model::session::{
-    BootstrapSessionType, Session, SessionId, SessionType, Sessions, SessionsEvent,
+    BootstrapSessionType, Session, SessionId, Sessions, SessionsEvent,
 };
 use crate::terminal::model::terminal_model::{
     BlockIndex, BlockSelectionCardinality, SelectedBlocks, TerminalInputState, WithinModel,
@@ -10358,10 +10356,8 @@ impl TerminalView {
     /// Returns the active session's CWD as a `LocalOrRemotePath`.
     ///
     /// For local sessions the CWD is canonicalized via `dunce::canonicalize`
-    /// and wrapped as `Local`. For remote sessions the CWD is read from
-    /// `active_block_metadata` and paired with the session's `host_id` to
-    /// form a `Remote` path. Returns `None` when no CWD is available or
-    /// (for remote sessions) the `host_id` has not been established yet.
+    /// and wrapped as `Local`. Returns `None` when no CWD is available or the
+    /// session is remote.
     pub fn pwd_as_local_or_remote(&self, ctx: &AppContext) -> Option<LocalOrRemotePath> {
         let session_id = self.active_block_session_id()?;
         let session = self.sessions.as_ref(ctx).get(session_id)?;
@@ -10379,15 +10375,7 @@ impl TerminalView {
             let canonical = dunce::canonicalize(&path).ok()?;
             Some(LocalOrRemotePath::Local(canonical))
         } else {
-            // Remote session: pair CWD with the session's host_id.
-            let host_id = match session.session_type() {
-                SessionType::WarpifiedRemote { host_id } => host_id,
-                SessionType::Local => return None,
-            }?;
-            let std_path = StandardizedPath::try_new(cwd_str).ok()?;
-            Some(LocalOrRemotePath::Remote(RemotePath::new(
-                host_id, std_path,
-            )))
+            None
         }
     }
 

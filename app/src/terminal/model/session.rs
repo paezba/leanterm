@@ -752,19 +752,14 @@ pub enum SessionType {
 
     /// The session host is a different host from where Warp is running.
     /// Note that we only know this for sure when we Warpify a block.
-    ///
-    /// `host_id` is `Some` when the remote server feature flag is enabled and
-    /// `RemoteServerManager` has completed the connection handshake. It is
-    /// `None` when the feature flag is off or the connection hasn't been
-    /// established yet.
-    WarpifiedRemote { host_id: Option<warp_core::HostId> },
+    WarpifiedRemote,
 }
 
 impl From<BootstrapSessionType> for SessionType {
     fn from(bst: BootstrapSessionType) -> Self {
         match bst {
             BootstrapSessionType::Local => SessionType::Local,
-            BootstrapSessionType::WarpifiedRemote => SessionType::WarpifiedRemote { host_id: None },
+            BootstrapSessionType::WarpifiedRemote => SessionType::WarpifiedRemote,
         }
     }
 }
@@ -839,15 +834,6 @@ impl Session {
 
     pub fn session_type(&self) -> SessionType {
         self.session_type.lock().clone()
-    }
-
-    /// Updates the `host_id` on a `WarpifiedRemote` session type after the
-    /// remote server handshake completes (or clears it on disconnect).
-    pub fn set_remote_host_id(&self, host_id: Option<warp_core::HostId>) {
-        let mut st = self.session_type.lock();
-        if let SessionType::WarpifiedRemote { host_id: ref mut h } = *st {
-            *h = host_id;
-        }
     }
 
     pub fn shell_family(&self) -> ShellFamily {

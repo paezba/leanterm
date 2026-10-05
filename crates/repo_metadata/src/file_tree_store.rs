@@ -194,7 +194,6 @@ impl FileTreeEntry {
             }
         }
     }
-
 }
 
 #[derive(Debug, Clone)]
@@ -324,7 +323,6 @@ impl FileTreeState {
             repository: None,
         }
     }
-
 }
 
 #[cfg(test)]

@@ -71,8 +71,6 @@ use crate::terminal::model::index::VisibleRow;
 use crate::terminal::model::iterm_image::{ITermImage, ITermImageMetadata};
 use crate::terminal::model::secrets::ObfuscateSecrets;
 use crate::terminal::model::session::SessionInfo;
-#[cfg(any(test, feature = "integration_tests"))]
-use crate::terminal::shell::ShellName;
 use crate::terminal::shell::ShellType;
 use crate::terminal::ssh::util::{InteractiveSshCommand, SshLoginState};
 use crate::terminal::{
@@ -947,7 +945,7 @@ impl TerminalModel {
             session_startup_path,
             ShellLaunchState::ShellSpawned {
                 available_shell: None,
-                display_name: ShellName::blank(),
+                display_name: crate::terminal::shell::ShellName::blank(),
                 shell_type: ShellType::Zsh,
             },
         );

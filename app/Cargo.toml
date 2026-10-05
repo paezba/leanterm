@@ -567,7 +567,6 @@ default = [
     "remote_codebase_indexing",
     "custom_model_routers",
     "billing_and_usage_page_v2",
-    "remote_code_review",
     "git_operations_in_code_review",
     "terminal_lifecycle_recovery",
     "cloud_runners",
@@ -773,7 +772,6 @@ allow_opening_file_links_using_editor_env = []
 undo_closed_panes = []
 revert_diff_hunk = []
 code_review_save_changes = []
-remote_code_review = []
 file_tree = []
 diff_set_as_context = []
 discard_per_file_and_all_changes = []

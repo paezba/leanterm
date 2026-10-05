@@ -237,7 +237,6 @@ impl DetectedRepositories {
         }
         None
     }
-
 }
 
 impl Entity for DetectedRepositories {

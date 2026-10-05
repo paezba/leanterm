@@ -687,9 +687,6 @@ pub enum FeatureFlag {
     /// Enables configurable expanded context windows for eligible GPT models.
     GPTConfigurableContextWindow,
 
-    /// Enables the code review view for remote sessions.
-    RemoteCodeReview,
-
     /// Gates the Grouped Tabs feature.
     GroupedTabs,
 

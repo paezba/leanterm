@@ -14,7 +14,6 @@ use repo_metadata::file_tree_store::{
 use repo_metadata::local_model::IndexedRepoState;
 use repo_metadata::repositories::DetectedRepositories;
 use repo_metadata::{FileTreeEntry, RepoMetadataModel};
-use warp_core::features::FeatureFlag;
 use warp_core::ui::theme::Fill;
 use warp_core::ui::theme::color::internal_colors;
 use warp_util::path::LineAndColumnArg;
@@ -49,9 +48,7 @@ use crate::ui_components::icons::Icon;
 use crate::ui_components::item_highlight::{ImageOrIcon, ItemHighlightState};
 #[cfg(feature = "local_fs")]
 use crate::util::file::external_editor::EditorSettings;
-use crate::util::openable_file_type::{
-    EditorLayout, FileTarget, is_file_content_binary, is_jupyter_notebook_file, is_markdown_file,
-};
+use crate::util::openable_file_type::{EditorLayout, FileTarget, is_file_content_binary};
 #[cfg(feature = "local_fs")]
 use crate::util::openable_file_type::{
     resolve_file_target_to_open_in_warp, resolve_file_target_with_editor_choice,
@@ -1924,22 +1921,16 @@ impl FileTreeView {
                 if !is_file_content_binary(&path_local) {
                     items.extend([
                         MenuItemFields::new("Open in new pane")
-                            .with_on_select_action(FileTreeAction::OpenInNewPane {
-                                id: id.clone(),
-                            })
+                            .with_on_select_action(FileTreeAction::OpenInNewPane { id: id.clone() })
                             .into_item(),
                         MenuItemFields::new("Open in new tab")
-                            .with_on_select_action(FileTreeAction::OpenInNewTab {
-                                id: id.clone(),
-                            })
+                            .with_on_select_action(FileTreeAction::OpenInNewTab { id: id.clone() })
                             .into_item(),
                     ]);
                 } else {
                     items.push(
                         MenuItemFields::new("Open file")
-                            .with_on_select_action(FileTreeAction::ItemClicked {
-                                id: id.clone(),
-                            })
+                            .with_on_select_action(FileTreeAction::ItemClicked { id: id.clone() })
                             .into_item(),
                     );
                 }
@@ -1956,9 +1947,7 @@ impl FileTreeView {
                 if self.has_terminal_session {
                     items.push(
                         MenuItemFields::new("cd to directory")
-                            .with_on_select_action(FileTreeAction::CDToDirectory {
-                                id: id.clone(),
-                            })
+                            .with_on_select_action(FileTreeAction::CDToDirectory { id: id.clone() })
                             .into_item(),
                     );
                 }
@@ -1998,7 +1987,6 @@ impl FileTreeView {
                     .into_item(),
             );
         }
-    
 
         if !items.is_empty() {
             items.push(MenuItem::Separator);
