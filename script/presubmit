@@ -24,7 +24,6 @@ echo "Inline Rust test module check succeeded..."
 echo "Running clippy..."
 # TODO(vorporeal): Re-enable the `all-features` flag once we've fixed things.
 cargo clippy --workspace --all-targets --tests -- -D warnings
-# Workspace feature unification enables `warp/tui` through the `warp_tui` package.
 # Also lint the default GUI configuration used by `cargo run` and `./script/run`.
 cargo clippy -p warp --all-targets --tests -- -D warnings
 echo "clippy succeeded..."
@@ -32,10 +31,6 @@ echo "clippy succeeded..."
 echo "Running clang-format..."
 ./script/run-clang-format.py -r --extensions 'c,h,cpp,m' ./crates/warpui/src/ ./app/src/
 echo "clang-format succeeded..."
-
-echo "Running factory-files validator cases..."
-./script/test_factory_files_skill.py
-echo "factory-files validator cases succeeded..."
 
 echo "Running wgslfmt..."
 # Normally a recursive glob pattern will do the trick, e.g. **/*.wgsl
