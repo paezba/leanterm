@@ -33,7 +33,6 @@ use ::settings::{Setting, ToggleableSetting};
 use anyhow::Context as _;
 #[cfg(target_os = "macos")]
 use anyhow::Result;
-use autoupdate::AutoupdateStage;
 #[cfg(target_os = "macos")]
 use command::blocking::Command;
 use futures::Future;
@@ -131,11 +130,7 @@ use crate::auth::auth_override_warning_modal::{
 };
 use crate::auth::auth_state::AuthState;
 use crate::auth::auth_view_modal::{AuthRedirectPayload, AuthView, AuthViewEvent, AuthViewVariant};
-use crate::autoupdate::{
-    AutoupdateState, AutoupdateStateEvent, RelaunchModel, is_incoming_version_past_current,
-};
 use crate::banner::BannerState;
-use crate::changelog_model::{ChangelogModel, ChangelogRequestType, Event as ChangelogEvent};
 use crate::channel::ChannelState;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::toast_message::CloudObjectToastMessage;
@@ -340,7 +335,7 @@ use crate::workspace::view::right_panel::{RightPanelEvent, RightPanelView};
 use crate::workspaces::update_manager::TeamUpdateManager;
 use crate::workspaces::user_workspaces::UserWorkspaces;
 use crate::workspaces::workspace::AdminEnablementSetting;
-use crate::{GlobalResourceHandles, autoupdate};
+use crate::GlobalResourceHandles;
 
 /// The padding that should be applied to the workspace as a whole.
 ///
@@ -380,7 +375,6 @@ const TAB_BAR_PILL_WIDTH: f32 = 100.;
 const PILL_FONT_SIZE: f32 = 12.;
 // We use the word "Warp" in the Update Ready button to make it obvious that the terminal is Warp.
 // This can lead to free advertising when users screen-share Warp when an update is available.
-const UPDATE_READY_TEXT: &str = "Update Warp";
 
 const TAB_BAR_OVERFLOW_MENU_WIDTH: f32 = 300.;
 
@@ -516,13 +510,6 @@ enum TabConfigsMenuOpenSource {
 /// This enumerates the different kinds of banners we show to the user.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum WorkspaceBanner {
-    /// to display the banner when we are in AutoupdateStage::UpdateReady and the
-    /// user's current version has been deprecated
-    VersionDeprecated,
-    /// to display the AutoupdateStage::UnableToUpdateToNewVersion
-    UnableToUpdateToNewVersion,
-    /// to display the AutoupdateStage::UnableToLaunchNewVersion
-    UnableToLaunchNewVersion,
     /// to display when the user needs to reauthenticate
     Reauth,
     // to display an anonymous user has X days left to sign in
@@ -541,9 +528,6 @@ impl WorkspaceBanner {
     /// not be dismissible
     fn is_dismissible(&self) -> bool {
         match self {
-            Self::UnableToUpdateToNewVersion => true,
-            Self::UnableToLaunchNewVersion => true,
-            Self::VersionDeprecated => false,
             Self::AnonymousUserAuth => false,
             Self::Reauth => true,
             #[cfg(target_os = "linux")]
@@ -754,8 +738,6 @@ pub struct Workspace {
     server_api: Arc<ServerApi>,
     auth_state: Arc<AuthState>,
     server_time: Option<Arc<ServerTime>>,
-    tab_bar_overflow_menu: ViewHandle<Menu<WorkspaceAction>>,
-    show_tab_bar_overflow_menu: bool,
     tab_right_click_menu: ViewHandle<Menu<WorkspaceAction>>,
     show_tab_right_click_menu: Option<(usize, TabContextMenuAnchor)>,
     /// Open tab group more-options menu; reuses the `tab_right_click_menu` view.
@@ -773,7 +755,6 @@ pub struct Workspace {
     /// variant determines whether the menu sits below the `+` add-tab button
     /// or floats at the pointer position (right-click on the panel chrome).
     show_new_session_dropdown_menu: Option<NewSessionMenuAnchor>,
-    changelog_model: ModelHandle<ChangelogModel>,
     palette: ViewHandle<CommandPalette>,
     ctrl_tab_palette: ViewHandle<CommandPalette>,
     mouse_states: WorkspaceMouseStates,
@@ -793,8 +774,6 @@ pub struct Workspace {
     show_session_config_tab_config_chip: bool,
     new_worktree_modal: ModalViewState<Modal<NewWorktreeModal>>,
     command_search_view: ViewHandle<CommandSearchView>,
-    autoupdate_unable_to_update_banner_dismissed: bool,
-    autoupdate_unable_to_launch_new_version: bool,
     reauth_banner_dismissed: bool,
     settings_file_error: Option<crate::settings::SettingsFileError>,
     settings_error_banner_dismissed: bool,
@@ -811,7 +790,6 @@ pub struct Workspace {
     theme_creator_modal: ViewHandle<ThemeCreatorModal>,
     theme_deletion_modal: ViewHandle<ThemeDeletionModal>,
     toast_stack: ViewHandle<DismissibleToastStack<WorkspaceAction>>,
-    update_toast_stack: ViewHandle<DismissibleToastStack<WorkspaceAction>>,
     /// We need to render some dynamic keybindings for our tooltips. These cannot be looked up in the
     /// render method, so look them up when the view is constructed and cache them here. Note that they
     /// need to be kept in sync as the keybindings change.
@@ -1434,20 +1412,6 @@ impl Workspace {
             me.handle_native_modal_event(event, ctx);
         });
         native_modal
-    }
-
-    fn build_tab_bar_overflow_menu(
-        ctx: &mut ViewContext<Self>,
-    ) -> ViewHandle<Menu<WorkspaceAction>> {
-        let tab_bar_overflow_menu = ctx.add_typed_action_view(|_| {
-            Menu::new()
-                .with_width(TAB_BAR_OVERFLOW_MENU_WIDTH)
-                .with_drop_shadow()
-        });
-        ctx.subscribe_to_view(&tab_bar_overflow_menu, move |me, _, event, ctx| {
-            me.handle_tab_bar_overflow_menu_event(event, ctx);
-        });
-        tab_bar_overflow_menu
     }
 
     fn build_menus(ctx: &mut ViewContext<Self>) -> WorkspaceMenuHandles {
@@ -2091,7 +2055,6 @@ impl Workspace {
 
         terminal::platform::init().expect("Terminal platform initialized");
 
-        let tab_bar_overflow_menu = Self::build_tab_bar_overflow_menu(ctx);
         let (
             tab_right_click_menu,
             new_session_dropdown_menu,
@@ -2140,15 +2103,6 @@ impl Workspace {
         });
         ctx.observe(&TabShortcutModifierState::handle(ctx), |_, _, ctx| {
             ctx.notify();
-        });
-
-        ctx.observe(&RelaunchModel::handle(ctx), |_, _, ctx| {
-            ctx.notify();
-        });
-
-        let changelog_model = ChangelogModel::handle(ctx);
-        ctx.subscribe_to_model(&changelog_model, |me, _, event, ctx| {
-            me.handle_changelog_event(event, ctx);
         });
 
         let (settings_pane, theme_chooser_view) =
@@ -2200,13 +2154,6 @@ impl Workspace {
             me.handle_right_panel_event(event.clone(), ctx);
         });
 
-        let autoupdate_handle = AutoupdateState::handle(ctx);
-        ctx.subscribe_to_model(&autoupdate_handle, |_view, _handle, evt, ctx| {
-            if let AutoupdateStateEvent::UpdateAvailable = evt {
-                ctx.notify();
-            }
-        });
-
         ctx.subscribe_to_model(
             &SessionSettings::handle(ctx),
             Self::handle_session_settings_event,
@@ -2240,9 +2187,6 @@ impl Workspace {
         });
 
         let toast_stack =
-            ctx.add_typed_action_view(|_| DismissibleToastStack::new(Duration::from_secs(4)));
-
-        let update_toast_stack =
             ctx.add_typed_action_view(|_| DismissibleToastStack::new(Duration::from_secs(4)));
 
         #[cfg(target_family = "wasm")]
@@ -2332,15 +2276,12 @@ impl Workspace {
             server_api,
             auth_state: AuthStateProvider::as_ref(ctx).get().clone(),
             server_time,
-            tab_bar_overflow_menu,
-            show_tab_bar_overflow_menu: false,
             tab_right_click_menu,
             show_tab_right_click_menu: None,
             show_tab_group_right_click_menu: None,
             show_tab_selection_right_click_menu: None,
             new_session_dropdown_menu,
             show_new_session_dropdown_menu: None,
-            changelog_model,
             palette,
             ctrl_tab_palette,
             mouse_states: Default::default(),
@@ -2359,8 +2300,6 @@ impl Workspace {
             show_session_config_tab_config_chip: false,
             new_worktree_modal,
             command_search_view,
-            autoupdate_unable_to_update_banner_dismissed: false,
-            autoupdate_unable_to_launch_new_version: false,
             reauth_banner_dismissed: false,
             settings_file_error,
             settings_error_banner_dismissed: false,
@@ -2372,7 +2311,6 @@ impl Workspace {
             import_modal,
             window_id: ctx.window_id(),
             toast_stack,
-            update_toast_stack,
             cached_keybindings,
             prompt_editor_modal,
             header_toolbar_editor_modal: Self::build_header_toolbar_editor_modal(ctx),
@@ -3133,17 +3071,6 @@ impl Workspace {
         None
     }
 
-    pub fn check_for_changelog(
-        &self,
-        request_type: ChangelogRequestType,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        self.changelog_model.update(ctx, |changelog_model, ctx| {
-            changelog_model.check_for_changelog(request_type, ctx);
-            ctx.notify();
-        });
-    }
-
     /// Sets focused to the index of either the selected object or the first item in WD
     fn reset_focused_index_in_warp_drive(
         &mut self,
@@ -3406,10 +3333,6 @@ impl Workspace {
 
     pub fn active_tab_index(&self) -> usize {
         self.active_tab_index
-    }
-
-    pub fn is_overflow_menu_showing(&self) -> bool {
-        self.show_tab_bar_overflow_menu
     }
 
     #[cfg(feature = "integration_tests")]
@@ -4628,13 +4551,6 @@ impl Workspace {
 
     fn view_user_docs(&mut self, ctx: &mut ViewContext<Self>) {
         ctx.open_url(links::USER_DOCS_URL);
-    }
-
-    fn view_latest_changelog(&mut self, ctx: &mut ViewContext<Self>) {
-        self.update_toast_stack.update(ctx, |stack, ctx| {
-            stack.clear_toasts(ctx);
-        });
-        self.check_for_changelog(ChangelogRequestType::UserAction, ctx);
     }
 
     fn view_privacy_policy(&mut self, ctx: &mut ViewContext<Self>) {
@@ -5880,56 +5796,6 @@ impl Workspace {
         ctx.notify();
     }
 
-    /// The tab bar overflow menu is the context menu that appears when
-    /// a user clicks "Update Warp" in the top right of the tab bar.
-    pub fn toggle_tab_bar_overflow_menu(&mut self, ctx: &mut ViewContext<Self>) {
-        if self.show_tab_bar_overflow_menu {
-            self.close_tab_bar_overflow_menu(ctx);
-            return;
-        }
-
-        let mut menu_items = vec![];
-        if FeatureFlag::Autoupdate.is_enabled()
-            && ChannelState::show_autoupdate_menu_items()
-            && let Some(version) = ChannelState::app_version()
-        {
-            menu_items.push(
-                MenuItemFields::new(format!("Current version is {version}"))
-                    .with_disabled(true)
-                    .into_item(),
-            );
-            match autoupdate::get_update_state(ctx) {
-                AutoupdateStage::UpdateReady { new_version, .. }
-                | AutoupdateStage::UpdatedPendingRestart { new_version } => menu_items.push(
-                    MenuItemFields::new(format!("Install update ({})", new_version.version))
-                        .with_on_select_action(WorkspaceAction::ApplyUpdate)
-                        .into_item(),
-                ),
-                AutoupdateStage::Updating { new_version, .. } => menu_items.push(
-                    MenuItemFields::new(format!("Updating to ({})", new_version.version))
-                        .with_disabled(true)
-                        .into_item(),
-                ),
-                AutoupdateStage::UnableToUpdateToNewVersion { .. } => menu_items.push(
-                    MenuItemFields::new("Update Warp manually")
-                        .with_on_select_action(WorkspaceAction::DownloadNewVersion)
-                        .into_item(),
-                ),
-                AutoupdateStage::NoUpdateAvailable
-                | AutoupdateStage::CheckingForUpdate
-                | AutoupdateStage::DownloadingUpdate
-                | AutoupdateStage::UnableToLaunchNewVersion { .. } => {}
-            }
-        }
-
-        ctx.update_view(&self.tab_bar_overflow_menu, |context_menu, view_ctx| {
-            context_menu.set_items(menu_items, view_ctx);
-        });
-        self.show_tab_bar_overflow_menu = true;
-        ctx.focus(&self.tab_bar_overflow_menu);
-        ctx.notify();
-    }
-
     fn read_from_active_terminal_view<T>(
         &self,
         ctx: &AppContext,
@@ -6611,11 +6477,6 @@ impl Workspace {
             .read(ctx, |pane_group, ctx| pane_group.active_session_view(ctx))
     }
 
-    pub fn close_tab_bar_overflow_menu(&mut self, ctx: &mut ViewContext<Self>) {
-        self.show_tab_bar_overflow_menu = false;
-        ctx.notify();
-    }
-
     /// Find an active session and pre-fill the input editor the Warp executable with the
     /// [`warp_cli::Command::DumpDebugInfo`] subcommand.
     fn dump_debug_info(&mut self, ctx: &mut ViewContext<Self>) {
@@ -7174,56 +7035,7 @@ impl Workspace {
 
         let appearance = Appearance::as_ref(app);
 
-        // Render the subtle autoupdate UI if autoupdate is ready and there is no incoming prominent update version.
-        if FeatureFlag::Autoupdate.is_enabled()
-            && FeatureFlag::AutoupdateUIRevamp.is_enabled()
-            && ChannelState::show_autoupdate_menu_items()
-        {
-            match autoupdate::get_update_state(app) {
-                AutoupdateStage::UpdateReady { new_version, .. }
-                | AutoupdateStage::UpdatedPendingRestart { new_version }
-                    if !is_incoming_version_past_current(
-                        new_version.last_prominent_update.as_deref(),
-                    ) =>
-                {
-                    items.push(
-                        MenuItemFields::new("Update and relaunch Warp")
-                            .with_on_select_action(WorkspaceAction::ApplyUpdate)
-                            .with_override_text_color(appearance.theme().ansi_fg_red())
-                            .into_item(),
-                    )
-                }
-                AutoupdateStage::Updating { new_version, .. }
-                    if !is_incoming_version_past_current(
-                        new_version.last_prominent_update.as_deref(),
-                    ) =>
-                {
-                    items.push(
-                        MenuItemFields::new(format!("Updating to ({})", new_version.version))
-                            .with_disabled(true)
-                            .into_item(),
-                    )
-                }
-                AutoupdateStage::UnableToUpdateToNewVersion { new_version }
-                    if !is_incoming_version_past_current(
-                        new_version.last_prominent_update.as_deref(),
-                    ) =>
-                {
-                    items.push(
-                        MenuItemFields::new("Update Warp manually")
-                            .with_on_select_action(WorkspaceAction::DownloadNewVersion)
-                            .with_override_text_color(appearance.theme().ansi_fg_red())
-                            .into_item(),
-                    )
-                }
-                _ => {}
-            }
-        }
-
         items.extend([
-            MenuItemFields::new("What's new")
-                .with_on_select_action(WorkspaceAction::ViewLatestChangelog)
-                .into_item(),
             MenuItemFields::new("Settings")
                 .with_on_select_action(WorkspaceAction::ShowSettings)
                 .into_item(),
@@ -8024,16 +7836,6 @@ impl Workspace {
         }
 
         ctx.notify();
-    }
-
-    fn handle_tab_bar_overflow_menu_event(
-        &mut self,
-        event: &MenuEvent,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        if let MenuEvent::Close { via_select_item: _ } = event {
-            self.close_tab_bar_overflow_menu(ctx)
-        }
     }
 
     fn handle_launch_config_save_modal_event(
@@ -9436,12 +9238,6 @@ impl Workspace {
         }
     }
 
-    pub fn open_autoupdate_failure_link(&mut self, ctx: &mut ViewContext<Self>) {
-        ctx.open_url(
-            "https://docs.warp.dev/support-and-community/troubleshooting-and-support/updating-warp",
-        );
-    }
-
     pub fn add_terminal_tab(&mut self, hide_homepage: bool, ctx: &mut ViewContext<Self>) {
         self.add_new_session_tab_with_default_mode(
             NewSessionSource::Tab,
@@ -9733,51 +9529,6 @@ impl Workspace {
         self.add_tab_with_pane_layout(panes_layout, Arc::new(HashMap::new()), None, ctx);
     }
 
-    pub fn add_tab_for_assisted_autoupdate<V: View>(
-        &mut self,
-        update_command_fn: impl 'static + Fn(ShellType) -> String,
-        context_block: ViewHandle<V>,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        self.add_tab_with_pane_layout(
-            Default::default(),
-            Arc::new(HashMap::new()),
-            Some("Install Update".to_owned()),
-            ctx,
-        );
-
-        let Some(terminal_view) = self
-            .active_tab_pane_group()
-            .as_ref(ctx)
-            .active_session_view(ctx)
-        else {
-            report_error!("Could not access terminal view after creating a new tab!");
-            return;
-        };
-        terminal_view.update(ctx, |terminal_view, ctx| {
-            terminal_view.insert_rich_content(
-                None,
-                context_block,
-                None,
-                terminal::view::rich_content::RichContentInsertionPosition::Append {
-                    insert_below_long_running_block: false,
-                },
-                ctx,
-            );
-        });
-
-        // Once we know what shell is being used, update the input with the
-        // appropriate assisted auto-update command.
-        ctx.subscribe_to_view(&terminal_view, move |me, _, event, ctx| {
-            if let terminal::Event::ShellSpawned(shell_type) = event {
-                me.set_active_terminal_input_contents_and_focus_app(
-                    &(update_command_fn)(*shell_type),
-                    ctx,
-                );
-            }
-        });
-    }
-
     /// Add a tab with a code pane open for the specified file.
     pub fn add_tab_for_code_file(
         &mut self,
@@ -10043,8 +9794,7 @@ impl Workspace {
         let is_vertical_tabs_active = FeatureFlag::VerticalTabs.is_enabled()
             && *TabSettings::as_ref(app).use_vertical_tabs
             && self.vertical_tabs_panel_open;
-        let is_tab_menu_open = self.show_tab_bar_overflow_menu
-            || (self.show_tab_right_click_menu.is_some() && !is_vertical_tabs_active)
+        let is_tab_menu_open = (self.show_tab_right_click_menu.is_some() && !is_vertical_tabs_active)
             || (self.show_new_session_dropdown_menu.is_some() && !is_vertical_tabs_active)
             || self.is_user_menu_open
             || self.tab_bar_pinned_by_popup;
@@ -10359,7 +10109,6 @@ impl Workspace {
     /// Close all overlays in this workspace and the active pane group.
     fn close_all_overlays(&mut self, ctx: &mut ViewContext<Self>) {
         self.current_workspace_state.close_all_modals();
-        self.close_tab_bar_overflow_menu(ctx);
         self.close_all_chip_menus(ctx);
 
         self.active_tab_pane_group()
@@ -10675,67 +10424,6 @@ impl Workspace {
         ctx.notify();
     }
 
-    fn handle_changelog_event(&mut self, event: &ChangelogEvent, ctx: &mut ViewContext<Self>) {
-        // For certain contexts, like shared sessions, we do not want to force open the side panel
-        // or display the reward modal.
-        if !ContextFlag::ForceSidePanelOpen.is_enabled() {
-            return;
-        }
-        // Don't show changelog if user has disabled it in settings.
-        let show_changelog_setting = *ChangelogSettings::as_ref(ctx).show_changelog_after_update;
-
-        let mut request_type = None;
-        let should_show_changelog = match event {
-            ChangelogEvent::ChangelogRequestFailed {
-                request_type: ChangelogRequestType::UserAction,
-            }
-            | ChangelogEvent::ChangelogRequestComplete {
-                request_type: ChangelogRequestType::UserAction,
-                ..
-            } => {
-                request_type = Some(ChangelogRequestType::UserAction);
-                true
-            }
-            ChangelogEvent::ChangelogRequestComplete {
-                request_type: ChangelogRequestType::WindowLaunch,
-                ..
-            } => match ChannelState::app_version() {
-                Some(version) => {
-                    let opening_warp_drive_on_start_up = OPENING_WARP_DRIVE_ON_START_UP
-                        .lock()
-                        .expect("Should be able to access OPENING_WARP_DRIVE_ON_START_UP");
-
-                    request_type = Some(ChangelogRequestType::WindowLaunch);
-                    // Do not show changelog on quake mode window or if it has already been shown
-                    // or if we are opening Warp Drive on start up
-                    quake_mode_window_id() != Some(ctx.window_id())
-                        && !Settings::has_changelog_been_shown(version, ctx)
-                        && !*opening_warp_drive_on_start_up
-                }
-                None => false,
-            },
-            ChangelogEvent::ChangelogRequestFailed {
-                request_type: ChangelogRequestType::WindowLaunch,
-            } => false,
-            ChangelogEvent::ImageRequestComplete => false,
-        } && show_changelog_setting;
-
-        match (should_show_changelog, request_type) {
-            (true, Some(ChangelogRequestType::WindowLaunch)) => {
-                if let Some(version) = ChannelState::app_version() {
-                    Settings::mark_changelog_shown(version, ctx);
-                }
-            }
-            _ => {}
-        }
-    }
-
-    fn manual_check_for_update(&self, ctx: &mut ViewContext<Self>) {
-        AutoupdateState::handle(ctx).update(ctx, |autoupdate_state, ctx| {
-            autoupdate_state.manually_check_for_update(ctx);
-        });
-    }
-
     pub fn is_theme_creator_modal_open(&self) -> bool {
         self.current_workspace_state.is_theme_creator_modal_open
     }
@@ -10767,9 +10455,6 @@ impl Workspace {
         ctx: &mut ViewContext<Self>,
     ) {
         match event {
-            SettingsViewEvent::CheckForUpdate => {
-                self.manual_check_for_update(ctx);
-            }
             SettingsViewEvent::LaunchNetworkLogging => {
                 self.open_network_log_pane(ctx);
             }
@@ -12778,18 +12463,6 @@ impl Workspace {
         ctx.notify();
     }
 
-    fn apply_update(&mut self, ctx: &mut ViewContext<Self>) {
-        if let Ok(autoupdate::ReadyForRelaunch::Yes) = autoupdate::apply_update(self, ctx) {
-            autoupdate::initiate_relaunch_for_update(ctx);
-        }
-        self.close_tab_bar_overflow_menu(ctx);
-    }
-
-    fn download_new_version(&mut self, ctx: &mut ViewContext<Self>) {
-        autoupdate::manually_download_new_version(ctx);
-        self.close_tab_bar_overflow_menu(ctx);
-    }
-
     fn active_session_ps1_grid_info(&self, app: &AppContext) -> Option<(BlockGrid, SizeInfo)> {
         self.get_active_session_terminal_model(app)
             .and_then(|model| {
@@ -12922,7 +12595,6 @@ impl Workspace {
     ) {
         let current_theme = active_theme_kind(ThemeSettings::as_ref(ctx), ctx);
 
-        self.close_tab_bar_overflow_menu(ctx);
 
         self.current_workspace_state.close_all_left_panels();
 
@@ -14672,13 +14344,6 @@ impl Workspace {
         appearance: &Appearance,
         ctx: &AppContext,
     ) {
-        if let Some(update_pill) = self.render_tab_overflow_menu(ctx, appearance) {
-            target.add_child(
-                Container::new(update_pill)
-                    .with_margin_left(TAB_BAR_PADDING_LEFT)
-                    .finish(),
-            );
-        }
 
         let is_online = NetworkStatus::as_ref(ctx).is_online();
 
@@ -15099,73 +14764,6 @@ impl Workspace {
         }
     }
 
-    fn render_tab_overflow_menu(
-        &self,
-        app: &AppContext,
-        appearance: &Appearance,
-    ) -> Option<Box<dyn Element>> {
-        if !ContextFlag::PromptForVersionUpdates.is_enabled() {
-            return None;
-        }
-
-        let autoupdate_stage = autoupdate::get_update_state(app);
-        // Render the prominent autoupdate pill if autoupdate is ready and the current version is behind a prominent update version.
-        if autoupdate_stage.ready_for_update()
-            && (!FeatureFlag::AutoupdateUIRevamp.is_enabled()
-                || autoupdate_stage
-                    .available_new_version()
-                    .map(|version| {
-                        is_incoming_version_past_current(version.last_prominent_update.as_deref())
-                    })
-                    .unwrap_or(false))
-        {
-            let pill = ConstrainedBox::new(
-                Container::new(
-                    Flex::row()
-                        .with_child(
-                            Text::new_inline(
-                                UPDATE_READY_TEXT,
-                                appearance.ui_font_family(),
-                                PILL_FONT_SIZE,
-                            )
-                            .with_color(Fill::warn().into())
-                            .finish(),
-                        )
-                        .with_main_axis_size(MainAxisSize::Max)
-                        .with_main_axis_alignment(MainAxisAlignment::Center)
-                        .finish(),
-                )
-                .with_border(Border::all(1.).with_border_color(Fill::warn().into()))
-                .with_corner_radius(CornerRadius::with_all(Radius::Percentage(50.)))
-                .with_uniform_margin(4.)
-                .with_uniform_padding(4.)
-                .with_margin_right(5.)
-                .finish(),
-            )
-            .with_width(TAB_BAR_PILL_WIDTH)
-            .finish();
-
-            let button = if self.show_tab_bar_overflow_menu {
-                pill
-            } else {
-                // Only attach the event handler in the case where the menu isn't already showing
-                // Otherwise we have a race condition in the case that someone clicks on the button
-                // where the menu tries to dismiss itself onclick and the menu gets reshown on mouseup
-                Hoverable::new(self.mouse_states.overflow_button.clone(), |_state| pill)
-                    .on_click(move |ctx, _, _| {
-                        ctx.dispatch_typed_action(WorkspaceAction::ToggleTabBarOverflowMenu);
-                    })
-                    .with_reset_cursor_after_click()
-                    .with_cursor(Cursor::PointingHand)
-                    .finish()
-            };
-
-            Some(Align::new(SavePosition::new(button, "tab_bar_overflow_button").finish()).finish())
-        } else {
-            None
-        }
-    }
-
     fn render_banner_and_active_tab(
         &self,
         app: &AppContext,
@@ -15285,8 +14883,7 @@ impl Workspace {
         // banners.
         let banner_fields = self
             .render_reauth_banner_element()
-            .or_else(|| self.render_settings_error_banner(app))
-            .or_else(|| self.render_autoupdate_banner_element(app));
+            .or_else(|| self.render_settings_error_banner(app));
 
         #[cfg(enable_crash_recovery)]
         let banner_fields = banner_fields.or_else(|| crash_recovery::banner_metadata(app));
@@ -15344,113 +14941,6 @@ impl Workspace {
                 more_info_button_action: None,
             }),
         })
-    }
-
-    fn render_autoupdate_banner_element(&self, app: &AppContext) -> Option<WorkspaceBannerFields> {
-        if FeatureFlag::Autoupdate.is_enabled() {
-            match autoupdate::get_update_state(app) {
-                AutoupdateStage::UnableToUpdateToNewVersion { new_version }
-                    if !self.autoupdate_unable_to_update_banner_dismissed =>
-                {
-                    let description =
-                        if is_incoming_version_past_current(new_version.soft_cutoff.as_deref()) {
-                            VERSION_DEPRECATION_WITHOUT_PERMISSIONS_BANNER_TEXT.to_owned()
-                        } else {
-                            "A new version is available but Warp is unable to perform the update."
-                                .to_owned()
-                        };
-
-                    Some(WorkspaceBannerFields {
-                        banner_type: WorkspaceBanner::UnableToUpdateToNewVersion,
-                        severity: BannerSeverity::Error,
-                        heading: None,
-                        description,
-                        secondary_button: None,
-                        button: Some(WorkspaceBannerButtonDetails {
-                            text: "Update Warp manually".to_string(),
-                            action: WorkspaceAction::DownloadNewVersion,
-                            variant: BannerButtonVariant::Outlined,
-                            icon: None,
-                            more_info_button_action: Some(WorkspaceAction::AutoupdateFailureLink),
-                        }),
-                    })
-                }
-                AutoupdateStage::UnableToLaunchNewVersion { new_version }
-                    if !self.autoupdate_unable_to_launch_new_version =>
-                {
-                    let description =
-                        if is_incoming_version_past_current(new_version.soft_cutoff.as_deref()) {
-                            VERSION_DEPRECATION_WITHOUT_PERMISSIONS_BANNER_TEXT.to_owned()
-                        } else {
-                            "Warp was unable to launch the new installed version.".to_owned()
-                        };
-
-                    Some(WorkspaceBannerFields {
-                        banner_type: WorkspaceBanner::UnableToLaunchNewVersion,
-                        severity: BannerSeverity::Error,
-                        heading: None,
-                        description,
-                        secondary_button: None,
-                        button: Some(WorkspaceBannerButtonDetails {
-                            text: "Update Warp manually".to_string(),
-                            action: WorkspaceAction::DownloadNewVersion,
-                            variant: BannerButtonVariant::Outlined,
-                            icon: None,
-                            more_info_button_action: Some(WorkspaceAction::AutoupdateFailureLink),
-                        }),
-                    })
-                }
-                AutoupdateStage::UpdateReady { new_version, .. }
-                | AutoupdateStage::UpdatedPendingRestart { new_version } => {
-                    if is_incoming_version_past_current(new_version.soft_cutoff.as_deref()) {
-                        Some(WorkspaceBannerFields {
-                            banner_type: WorkspaceBanner::VersionDeprecated,
-                            severity: BannerSeverity::Error,
-                            heading: None,
-                            description: VERSION_DEPRECATION_BANNER_TEXT.to_string(),
-                            secondary_button: None,
-                            button: Some(WorkspaceBannerButtonDetails {
-                                text: "Update now".to_string(),
-                                action: WorkspaceAction::ApplyUpdate,
-                                variant: BannerButtonVariant::Outlined,
-                                icon: None,
-                                more_info_button_action: None,
-                            }),
-                        })
-                    } else if let Some(update_by) = new_version.update_by {
-                        self.server_time.as_ref().and_then(|server_time| {
-                            (server_time.current_time() > update_by).then(|| {
-                                WorkspaceBannerFields {
-                                    banner_type: WorkspaceBanner::VersionDeprecated,
-                                    severity: BannerSeverity::Warning,
-                                    heading: None,
-                                    description: "Your app is out of date and needs to update."
-                                        .to_string(),
-                                    secondary_button: None,
-                                    button: Some(WorkspaceBannerButtonDetails {
-                                        text: "Restart app and update now".to_string(),
-                                        action: WorkspaceAction::ApplyUpdate,
-                                        variant: BannerButtonVariant::Outlined,
-                                        icon: None,
-                                        more_info_button_action: None,
-                                    }),
-                                }
-                            })
-                        })
-                    } else {
-                        None
-                    }
-                }
-                AutoupdateStage::NoUpdateAvailable
-                | AutoupdateStage::CheckingForUpdate
-                | AutoupdateStage::DownloadingUpdate
-                | AutoupdateStage::Updating { .. }
-                | AutoupdateStage::UnableToUpdateToNewVersion { .. }
-                | AutoupdateStage::UnableToLaunchNewVersion { .. } => None,
-            }
-        } else {
-            None
-        }
     }
 
     fn render_workspace_banner(
@@ -15675,13 +15165,6 @@ impl Workspace {
         banner_type: &WorkspaceBanner,
     ) {
         match banner_type {
-            WorkspaceBanner::UnableToUpdateToNewVersion => {
-                self.autoupdate_unable_to_update_banner_dismissed = true;
-            }
-            WorkspaceBanner::UnableToLaunchNewVersion => {
-                self.autoupdate_unable_to_launch_new_version = true;
-            }
-            WorkspaceBanner::VersionDeprecated => {}
             WorkspaceBanner::AnonymousUserAuth => {}
             WorkspaceBanner::Reauth => {
                 self.reauth_banner_dismissed = true;
@@ -16746,7 +16229,6 @@ impl TypedActionView for Workspace {
                 target,
                 position,
             } => self.toggle_vertical_tabs_pane_context_menu(*tab_index, *target, *position, ctx),
-            ToggleTabBarOverflowMenu => self.toggle_tab_bar_overflow_menu(ctx),
             ToggleBlockSnackbar => self.toggle_block_snackbar(ctx),
             CloseTab(index) => self.close_tab(*index, false, true, ctx),
             CloseActiveTab => self.close_tab(self.active_tab_index, false, true, ctx),
@@ -16950,8 +16432,6 @@ impl TypedActionView for Workspace {
                 self.close_new_session_dropdown_menu(ctx);
                 self.open_folder_picker_for_worktree_submenu(ctx);
             }
-            AutoupdateFailureLink => self.open_autoupdate_failure_link(ctx),
-            ApplyUpdate => self.apply_update(ctx),
             LogOut => {
                 // Need to dispatch global action, or else we will not be able to retrieve
                 // the currently active session in the log out modal.
@@ -16961,7 +16441,6 @@ impl TypedActionView for Workspace {
                 self.export_all_warp_drive_objects(ctx);
             }
             CopyVersion(version) => self.copy_version(version, ctx),
-            DownloadNewVersion => self.download_new_version(ctx),
             ConfigureKeybindingSettings { keybinding_name } => {
                 self.show_keyboard_settings(keybinding_name.as_deref(), ctx)
             }
@@ -17005,7 +16484,6 @@ impl TypedActionView for Workspace {
             }
             JoinSlack => self.join_slack(ctx),
             ViewUserDocs => self.view_user_docs(ctx),
-            ViewLatestChangelog => self.view_latest_changelog(ctx),
             ViewPrivacyPolicy => self.view_privacy_policy(ctx),
             SendFeedback => self.send_feedback(ctx),
             #[cfg(not(target_family = "wasm"))]
@@ -17013,7 +16491,6 @@ impl TypedActionView for Workspace {
             ChangeCursor(cursor) => self.change_cursor(*cursor, ctx),
             ToggleErrorUnderlining => self.toggle_error_underlining(ctx),
             ToggleSyntaxHighlighting => self.toggle_syntax_highlighting(ctx),
-            CheckForUpdate => self.manual_check_for_update(ctx),
             SetA11yVerbosityLevel(verbosity) => self.set_a11y_verbosity(*verbosity, ctx),
             ToggleNotifications => self.toggle_notifications(ctx),
             ToggleTabColor { color, tab_index } => self.toggle_tab_color(*tab_index, *color, ctx),
@@ -17976,13 +17453,6 @@ impl View for Workspace {
         }
 
         if matches!(
-            autoupdate::get_update_state(app),
-            AutoupdateStage::UpdateReady { .. } | AutoupdateStage::UpdatedPendingRestart { .. }
-        ) {
-            context.set.insert("AutoupdateState_UpdateReady");
-        }
-
-        if matches!(
             *AccessibilitySettings::as_ref(app).a11y_verbosity,
             AccessibilityVerbosity::Verbose
         ) {
@@ -18113,14 +17583,6 @@ impl View for Workspace {
             if debug_settings.should_show_memory_stats() {
                 context.set.insert(flags::DEBUG_SHOW_MEMORY_STATS_FLAG);
             }
-        }
-
-        // We only want to register the temporary changelog shortcut if the changelog toast is
-        // visible.
-        // There is a collision between the default shortcut and `/open-repo`, so durable changelog
-        // access lives in the command palette and slash-command menu instead.
-        if self.update_toast_stack.as_ref(app).has_toasts() {
-            context.set.insert("UpdateToastVisible");
         }
 
         if let Some(terminal_view) = self
@@ -18381,19 +17843,6 @@ impl View for Workspace {
         // Conditionally render tab bar menus. These must be added after the tab bar itself
         // (whether stacked inside panels or as an overlay) so that tab bar button save
         // positions are committed to the position cache before these menus read them.
-        if tab_bar_mode.has_tab_bar() && self.show_tab_bar_overflow_menu {
-            stack.add_positioned_overlay_child(
-                ChildView::new(&self.tab_bar_overflow_menu).finish(),
-                OffsetPositioning::offset_from_save_position_element(
-                    "tab_bar_overflow_button",
-                    vec2f(0., 10.),
-                    PositionedElementOffsetBounds::Unbounded,
-                    PositionedElementAnchor::BottomRight,
-                    ChildAnchor::TopRight,
-                ),
-            );
-        }
-
         if let Some((tab_idx, right_click_menu_anchor)) = self.show_tab_right_click_menu {
             let is_vertical = FeatureFlag::VerticalTabs.is_enabled()
                 && *TabSettings::as_ref(app).use_vertical_tabs

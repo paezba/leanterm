@@ -49,7 +49,6 @@ bytecount = "0.6.9"
 bytes.workspace = true
 byte-unit = "5.1.4"
 cfg-if.workspace = true
-channel_versions.workspace = true
 chrono.workspace = true
 clap.workspace = true
 cloud_object_client.workspace = true
@@ -406,7 +405,6 @@ embed-resource = "3.0"
 # Note that we support channel-specific enables for these features
 [features]
 ai_resume_button = []
-autoupdate = []
 bundled_skills = []
 agent_mode_debug = []
 agent_mode_primary_xml = []
@@ -438,7 +436,6 @@ default = [
     "suggested_rules",
     "default_waterfall_mode",
     "am_workflows",
-    "autoupdate_ui_revamp",
     "render_agent_mode_output_markdown",
     "agent_mode_primary_xml",
     "agent_mode_pre_plan_xml",
@@ -740,7 +737,6 @@ partial_next_command_suggestions = []
 drive_objects_as_context = []
 iterm_images = []
 validate_autosuggestions = []
-autoupdate_ui_revamp = []
 suggested_rules = []
 command_correction_key = []
 full_source_code_embedding = []

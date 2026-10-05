@@ -44,8 +44,6 @@ use crate::auth::paste_auth_token_modal::PasteAuthTokenModalView;
 #[cfg(target_family = "wasm")]
 use crate::auth::web_handoff::{WebHandoffEvent, WebHandoffView};
 use crate::auth::{AuthStateProvider, LoginFailureReason};
-use crate::autoupdate::{AutoupdateState, AutoupdateStateEvent, RequestType, UpdateReady};
-use crate::changelog_model::ChangelogRequestType;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::{GenericStringObjectFormat, JsonObjectType, ObjectType};
 use crate::drive::export::ExportManager;
@@ -1457,12 +1455,6 @@ impl RootView {
         };
 
         match &root_view.auth_onboarding_state {
-            AuthOnboardingState::Terminal(workspace) if FeatureFlag::Changelog.is_enabled() => {
-                // Only show the changelog if we aren't about to launch the authentication flow
-                workspace.update(ctx, |workspace, ctx| {
-                    workspace.check_for_changelog(ChangelogRequestType::WindowLaunch, ctx);
-                })
-            }
             AuthOnboardingState::Auth(_) => {
                 // ApplePressAndHoldEnabled is the setting for whether or not the accent
                 // menu is shown when a key is held. If "false", we repeat the character
@@ -1498,32 +1490,7 @@ impl RootView {
             _ => {}
         }
 
-        let autoupdate_handle = AutoupdateState::handle(ctx);
-        ctx.subscribe_to_model(&autoupdate_handle, |root_view, _handle, evt, ctx| {
-            if let AutoupdateStateEvent::CheckComplete {
-                result,
-                request_type: RequestType::Poll,
-            } = evt
-            {
-                root_view.polling_update_check_complete(result, ctx)
-            }
-        });
-
-        // For users who bypass onboarding (already logged in, or onboarding flags not active),
-        // start autoupdate polling immediately. For new users in onboarding, this is a no-op;
-        // polling will be started once onboarding completes.
-        root_view.start_autoupdate_polling(ctx);
-
         root_view
-    }
-
-    /// Starts the autoupdate polling loop, but only if we are already in the `Terminal` state
-    /// (i.e. onboarding has completed or was not shown). Safe to call unconditionally — it is
-    /// a no-op when still in a pre-terminal state.
-    fn start_autoupdate_polling(&self, ctx: &mut ViewContext<Self>) {
-        if matches!(self.auth_onboarding_state, AuthOnboardingState::Terminal(_)) {
-            AutoupdateState::handle(ctx).update(ctx, |state, ctx| state.start_polling(ctx));
-        }
     }
 
     /// Used for integration tests.
@@ -1531,24 +1498,6 @@ impl RootView {
         match &self.auth_onboarding_state {
             AuthOnboardingState::Terminal(workspace) => Some(workspace),
             _ => None,
-        }
-    }
-
-    fn polling_update_check_complete(
-        &mut self,
-        result: &Result<UpdateReady>,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        if let Ok(UpdateReady::Yes { new_version, .. }) = result {
-            log::info!("Update ready for channel version {new_version:?}");
-            if new_version.update_by.is_some() {
-                log::info!("Update ready, there is an update-by time, checking for server time.");
-                let server_api = self.server_api.clone();
-                let _ = ctx.spawn(
-                    async move { server_api.server_time().await },
-                    Self::server_time_updated,
-                );
-            }
         }
     }
 
@@ -2010,7 +1959,6 @@ impl RootView {
                         .complete_auth_and_create_workspace(ctx);
                 }
 
-                self.start_autoupdate_polling(ctx);
                 self.focus(ctx);
             }
             AuthManagerEvent::AuthFailed(err) => match err {
@@ -2050,7 +1998,6 @@ impl RootView {
                     self.auth_onboarding_state
                         .complete_auth_and_create_workspace(ctx);
                 }
-                self.start_autoupdate_polling(ctx);
                 self.focus(ctx);
             }
             AuthManagerEvent::LoginOverrideDetected(interrupted_auth_payload) => {

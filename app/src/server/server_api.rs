@@ -15,7 +15,6 @@ use ::http::header::CONTENT_LENGTH;
 use anyhow::{Context, Result, anyhow};
 use auth::AuthClient;
 use block::BlockClient;
-use channel_versions::ChannelVersions;
 use chrono::{DateTime, FixedOffset};
 use instant::Instant;
 use object::ObjectClient;
@@ -41,8 +40,6 @@ use super::experiments::{ServerExperiment, ServerExperiments};
 use crate::auth::auth_manager::AuthManager;
 use crate::auth::auth_state::AuthState;
 use crate::{ChannelState, settings_view};
-
-pub const FETCH_CHANNEL_VERSIONS_TIMEOUT: std::time::Duration = Duration::from_secs(60);
 
 /// We use a special error code header `X-Warp-Error-Code` to allow the server to send
 /// more specific error code information, so that the client can discern between different
@@ -571,60 +568,6 @@ impl ServerApi {
         }
     }
 
-    /// Fetches updated Warp Channel Versions from Warp Server. If it is the first such request of
-    /// the current calendar day, first attempts to call the '/client_version/daily'. If that call
-    /// fails or if it not the first request of the calendar day, returns the result of a call to
-    /// `/client_version'. The caller can specify whether or not changelog information should be
-    /// included in the response based on whether or not it will be used.
-    pub async fn fetch_channel_versions(
-        &self,
-        include_changelogs: bool,
-        is_daily: bool,
-    ) -> Result<ChannelVersions> {
-        let mut url = Url::parse(&ChannelState::server_root_url())
-            .expect("Should not fail to parse server root URL");
-        if is_daily {
-            url.set_path("/client_version/daily");
-        } else {
-            url.set_path("/client_version");
-        }
-        url.query_pairs_mut()
-            .append_pair("include_changelogs", &include_changelogs.to_string());
-
-        if include_changelogs {
-            log::info!("Fetching channel versions and changelogs from Warp server");
-        } else {
-            log::info!("Fetching channel versions (without changelogs) from Warp server");
-        }
-
-        let mut request_builder = self
-            .base_client
-            .http_client()
-            .get(url.as_str())
-            .timeout(FETCH_CHANNEL_VERSIONS_TIMEOUT)
-            .header(EXPERIMENT_ID_HEADER, self.anonymous_id());
-
-        // Authorization for /client_version is optional. Attach authorization header if an access
-        // token is present. First, try to get a valid token. If our cached one is expired, try to
-        // refresh. Failing that, send the expired token.
-        let auth_token = self
-            .get_or_refresh_access_token()
-            .await
-            .ok()
-            .and_then(|token| token.bearer_token())
-            .or_else(|| self.access_token_ignoring_validity());
-        if let Some(token_str) = auth_token {
-            request_builder = request_builder.bearer_auth(token_str);
-        }
-
-        let response = request_builder.send().await?;
-        if !response.status().is_success() {
-            self.observe_iap_challenge(&response);
-        }
-        let versions: ChannelVersions = response.json().await?;
-        log::info!("Received channel versions from Warp server: {versions}");
-        Ok(versions)
-    }
 }
 
 /// A singleton entity that provides access to the global [`ServerApi`] instance,

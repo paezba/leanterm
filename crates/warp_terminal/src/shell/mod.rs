@@ -5,7 +5,6 @@ use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
 use anyhow::Result;
-use channel_versions::overrides::TargetOS;
 use enum_iterator::Sequence;
 use itertools::Itertools;
 use lazy_static::lazy_static;
@@ -1046,4 +1045,12 @@ pub fn shell_escape_single_quotes(command: &str, shell_type: ShellType) -> Strin
 /// not for fragments that intentionally contain operators, pipes, or flags.
 pub fn shell_quote_arg(value: &str, shell_type: ShellType) -> String {
     format!("'{}'", shell_escape_single_quotes(value, shell_type))
+}
+
+/// The operating system a shell's rc files live on.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TargetOS {
+    MacOS,
+    Linux,
+    Windows,
 }
