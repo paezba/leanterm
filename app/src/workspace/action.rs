@@ -150,7 +150,6 @@ pub enum WorkspaceAction {
     },
     TabHoverWidthEnd,
     ToggleTabBarOverflowMenu,
-    ToggleWelcomeTips,
     CloseTab(usize),
     CloseActiveTab,
     CloseOtherTabs(usize),
@@ -312,7 +311,6 @@ pub enum WorkspaceAction {
     OpenLaunchConfigSaveModal,
     SelectTabConfig(TabConfig),
     DispatchToSettingsTab(SettingsTabAction),
-    ToggleResourceCenter,
     ToggleUserMenu,
     ToggleKeybindingsPage,
     ShowCommandSearch(CommandSearchOptions),
@@ -523,12 +521,6 @@ pub enum WorkspaceAction {
     ToggleGlobalSearch,
     ToggleHiddenFiles,
     OpenGlobalSearch,
-    /// Open the OpenWarp Launch Modal (for debugging)
-    #[cfg(debug_assertions)]
-    OpenOpenWarpLaunchModal,
-    /// Reset the OpenWarp launch modal dismissed state (for debugging)
-    #[cfg(debug_assertions)]
-    ResetOpenWarpLaunchModalState,
     /// Take a process sample of the app (equivalent to Activity Monitor > Sample Process).
     #[cfg(target_os = "macos")]
     SampleProcess,
@@ -545,9 +537,6 @@ pub enum WorkspaceAction {
     },
     ShowSessionConfigModal,
     DismissSessionConfigTabConfigChip,
-    /// Start the HOA onboarding flow (for debugging)
-    #[cfg(debug_assertions)]
-    ShowHoaOnboardingFlow,
     /// Open the "New worktree" modal for creating a reusable worktree tab config.
     OpenNewWorktreeModal,
     /// Open the native folder picker for the repo field in the new-worktree modal.
@@ -741,7 +730,6 @@ impl WorkspaceAction {
             | SetA11yVerbosityLevel(_)
             | ToggleNotifications
             | DispatchToSettingsTab { .. }
-            | ToggleResourceCenter
             | ToggleUserMenu
             | ToggleKeybindingsPage
             | ShowCommandSearch(_)
@@ -780,7 +768,6 @@ impl WorkspaceAction {
             | ToggleVerticalTabsShowPrLink
             | ToggleVerticalTabsShowDiffStats
             | ToggleVerticalTabsShowDetailsOnHover
-            | ToggleWelcomeTips
             | CopyTextToClipboard(_)
             | CopyCurrentPath
             | CopyAccessTokenToClipboard
@@ -851,10 +838,6 @@ impl WorkspaceAction {
             | OpenNewWindowForTeam { .. }
             | BrowseTeams
             | ShowTeamSwitcherMenu => false,
-            #[cfg(debug_assertions)]
-            ShowHoaOnboardingFlow => false,
-            #[cfg(debug_assertions)]
-            OpenOpenWarpLaunchModal | ResetOpenWarpLaunchModalState => false,
             #[cfg(not(target_family = "wasm"))]
             ViewLogs => false,
             #[cfg(target_os = "macos")]

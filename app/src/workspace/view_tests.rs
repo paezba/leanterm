@@ -27,7 +27,6 @@ use crate::notebooks::notebook::NotebookView;
 use crate::pane_group::{Direction, PaneGroupAction, PaneId};
 use crate::persisted_workspace::PersistedWorkspace;
 use crate::pricing::PricingInfoModel;
-use crate::resource_center::Tip;
 use crate::server::cloud_objects::listener::Listener;
 use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::experiments::ServerExperiments;
@@ -143,7 +142,6 @@ pub(crate) fn initialize_app_with_team_client(app: &mut App, team_client: Arc<dy
             ctx,
         )
     });
-    app.add_singleton_model(OneTimeModalModel::new);
     // Register GlobalResourceHandlesProvider before ServerExperiments which depends on it
     let global_resource_handles = GlobalResourceHandles::mock(app);
     app.add_singleton_model(|_| GlobalResourceHandlesProvider::new(global_resource_handles));
@@ -614,44 +612,6 @@ fn reopen_closed_session_menu_item(
         Some(MenuItem::Item(fields)) if fields.label() == "Reopen closed session" => fields,
         _ => panic!("expected Reopen closed session to be the last new-session menu item"),
     }
-}
-
-#[test]
-fn test_reward_modal_no_overlap() {
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-
-        let workspace = mock_workspace(&mut app);
-
-        // Trigger the referral reward response
-        workspace.update(&mut app, |view, ctx| {
-            view.handle_referral_theme_status_event(
-                &ReferralThemeEvent::SentReferralThemeActivated,
-                ctx,
-            );
-
-            // This _should_ show the reward modal, since the changelog modal is _not_ active
-            assert!(view.current_workspace_state.is_reward_modal_open);
-        });
-    });
-}
-
-#[test]
-fn test_reward_modal_shows_for_received_referral() {
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-
-        let workspace = mock_workspace(&mut app);
-
-        workspace.update(&mut app, |view, ctx| {
-            view.handle_referral_theme_status_event(
-                &ReferralThemeEvent::ReceivedReferralThemeActivated,
-                ctx,
-            );
-
-            assert!(view.current_workspace_state.is_reward_modal_open);
-        });
-    });
 }
 
 #[test]
@@ -1392,7 +1352,7 @@ fn test_open_or_toggle_warp_drive() {
 
         let workspace = mock_workspace(&mut app);
         workspace.update(&mut app, |workspace, ctx| {
-            // First, unconditionally open Warp Drive as a system action. WD should be open and welcome tips should not have opening warp drive.
+            // First, unconditionally open Warp Drive as a system action. WD should be open.
             workspace.open_or_toggle_warp_drive(
                 false, /* toggle */
                 false, /* explicit_user_action */
@@ -1402,16 +1362,8 @@ fn test_open_or_toggle_warp_drive() {
                 workspace.current_workspace_state.is_warp_drive_open,
                 "Warp Drive should be open"
             );
-            assert!(
-                !workspace
-                    .tips_completed
-                    .as_ref(ctx)
-                    .features_used
-                    .contains(&Tip::Action(TipAction::OpenWarpDrive)),
-                "Warp drive welcome tip should not be completed"
-            );
 
-            // Next, toggle warp drive as a user action. WD should be closed and tip should not be filled out.
+            // Next, toggle warp drive as a user action. WD should be closed.
             workspace.open_or_toggle_warp_drive(
                 true, /* toggle */
                 true, /* explicit_user_action */
@@ -1421,16 +1373,8 @@ fn test_open_or_toggle_warp_drive() {
                 !workspace.current_workspace_state.is_warp_drive_open,
                 "Warp Drive should be closed"
             );
-            assert!(
-                !workspace
-                    .tips_completed
-                    .as_ref(ctx)
-                    .features_used
-                    .contains(&Tip::Action(TipAction::OpenWarpDrive)),
-                "Warp drive welcome tip should not be completed"
-            );
 
-            // Finally, toggle warp drive again as a user action. WD should be open and tip filled out.
+            // Finally, toggle warp drive again as a user action. WD should be open.
             workspace.open_or_toggle_warp_drive(
                 true, /* toggle */
                 true, /* explicit_user_action */
@@ -1439,14 +1383,6 @@ fn test_open_or_toggle_warp_drive() {
             assert!(
                 workspace.current_workspace_state.is_warp_drive_open,
                 "Warp Drive should be open"
-            );
-            assert!(
-                workspace
-                    .tips_completed
-                    .as_ref(ctx)
-                    .features_used
-                    .contains(&Tip::Action(TipAction::OpenWarpDrive)),
-                "Warp drive welcome tip should not be completed"
             );
         });
     });

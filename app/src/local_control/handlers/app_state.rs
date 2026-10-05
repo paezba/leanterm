@@ -121,13 +121,6 @@ pub(crate) fn handle(
             target,
             ctx,
         ),
-        ActionKind::SurfaceResourceCenterToggle => workspace_action(
-            instance_id,
-            action,
-            WorkspaceAction::ToggleResourceCenter,
-            target,
-            ctx,
-        ),
         ActionKind::SurfaceCodeReviewOpen => surface_code_review_open(instance_id, target, ctx),
         ActionKind::SurfaceCodeReviewToggle | ActionKind::SurfaceRightPanelToggle => {
             workspace_action(

@@ -1,6 +1,5 @@
 mod action;
 mod block_banner;
-pub mod block_onboarding;
 mod bookmarks;
 mod context_menu;
 pub mod init;
@@ -48,11 +47,10 @@ use std::thread::JoinHandle;
 use std::time::Duration;
 
 use action::RememberForWarpification;
-pub use action::{AgentOnboardingVersion, OnboardingIntention, OnboardingVersion, TerminalAction};
+pub use action::TerminalAction;
 use async_channel::{Receiver, Sender};
 pub use block_banner::{BLOCK_BANNER_HEIGHT, WithinBlockBanner};
 use block_banner::{WarpifyBannerState, render_warpification_banner};
-use block_onboarding::onboarding_drive_sharing_block::OnboardingDriveSharingBlock;
 use bookmarks::render_floating_block_snapshot;
 use chrono::{Local, NaiveDateTime};
 use command_corrections::rules::generic::history::History as CommandCorrectionsHistoryRule;
@@ -195,13 +193,10 @@ use crate::persistence::{self, FinishedCommandMetadata};
 use crate::remote_server::manager::{
     RemoteServerInitPhase, RemoteServerManager, RemoteServerManagerEvent,
 };
-use crate::resource_center::{
-    Tip, TipHint, TipsCompleted, mark_feature_used_and_write_to_user_defaults,
-};
 use crate::server::ids::{ObjectUid, SyncId};
 use crate::server::server_api::ServerApi;
 use crate::server::telemetry::{
-    self, BootstrappingInfo, NotificationsTurnedOnSource, PaletteSource, SaveAsWorkflowModalSource,
+    BootstrappingInfo, NotificationsTurnedOnSource, PaletteSource, SaveAsWorkflowModalSource,
     SecretInteraction, SlowBootstrapInfo, TelemetryEvent, ToggleBlockFilterSource,
 };
 use crate::session_management::{CommandContext, SessionNavigationPromptElements};
@@ -259,7 +254,6 @@ use crate::terminal::model::ansi::{ClearMode, Handler};
 use crate::terminal::model::block::{
     Block, BlockId, BlockMetadata, LONG_RUNNING_BOTTOM_PADDING_LINES,
 };
-use crate::terminal::model::blockgrid::BlockGrid;
 use crate::terminal::model::blocks::{BlockList, BlockListPoint, Gap};
 use crate::terminal::model::escape_sequences::{
     self, C1, EscCodes, ToEscapeSequence, alt_screen_scroll_to_pty_bytes,
@@ -284,7 +278,6 @@ use crate::terminal::session_settings::{
     SessionSettings, SessionSettingsChangedEvent,
 };
 use crate::terminal::settings::{TerminalSettings, TerminalSettingsChangedEvent};
-use crate::terminal::view::block_onboarding::onboarding_prompt_block::OnboardingPromptBlock;
 use crate::terminal::view::inline_banner::{
     AliasExpansionBannerState, NotificationsDiscoveryBannerState, NotificationsErrorBannerState,
     VimModeBannerState,
@@ -341,9 +334,7 @@ use crate::view_components::find::{Event as FindEvent, Find, FindDirection, Find
 use crate::view_components::{DismissibleToast, ToastFlavor};
 use crate::workflows::workflow::Workflow;
 use crate::workspace::sync_inputs::SyncedInputState;
-use crate::workspace::{
-    CommandSearchOptions, OneTimeModalModel, ToastStack, WorkspaceAction, WorkspaceRegistry,
-};
+use crate::workspace::{CommandSearchOptions, ToastStack, WorkspaceAction, WorkspaceRegistry};
 use crate::workspaces::user_workspaces::{UserWorkspaces, UserWorkspacesEvent};
 use crate::{
     ActiveSession as WindowActiveSession, safe_warn, send_telemetry_from_ctx,
@@ -1720,7 +1711,6 @@ pub struct TerminalView {
     file_link_scanning_join_handle: Option<JoinHandle<()>>,
 
     last_focus_ts: Option<NaiveDateTime>,
-    tips_completed: ModelHandle<TipsCompleted>,
 
     /// A manually managed [`PrivacySettingsSnapshot`]. We must maintain a separate snapshot of
     /// [`PrivacySettings`] (rather than using it directly), so we can decide whether to send a
@@ -1768,12 +1758,8 @@ pub struct TerminalView {
     rich_content_views: Vec<RichContent>,
 
     // Whether the block onboarding view is active or not.
-    block_onboarding_active: bool,
 
     // View handles for the onboarding blocks.
-    onboarding_prompt_block: Option<ViewHandle<OnboardingPromptBlock>>,
-    settings_import_onboarding_block: Option<ViewHandle<SettingsImportView>>,
-
     /// The type of the subshell that we will bootstrap/"warpify"" on the next [`AfterBlockStarted`]
     /// terminal model event. Will only be `Some` with a [`ShellType`] we can bootstrap.
     pending_auto_bootstrap_shell_type: Option<ShellType>,
@@ -2169,7 +2155,6 @@ impl TerminalView {
         let input: ViewHandle<Input> = ctx.add_typed_action_view(|ctx| {
             Input::new(
                 model.clone(),
-                resources.tips_completed.clone(),
                 resources.server_api.clone(),
                 sessions.clone(),
                 size_info,
@@ -2568,7 +2553,6 @@ impl TerminalView {
             bookmarked_blocks: Default::default(),
             file_link_scanning_join_handle: None,
             last_focus_ts: None,
-            tips_completed: resources.tips_completed.clone(),
             privacy_settings_snapshot: privacy_settings_handle.as_ref(ctx).get_snapshot(ctx),
             was_ever_visible: false,
             view_id: ctx.view_id(),
@@ -2580,9 +2564,6 @@ impl TerminalView {
             block_filter_editor,
             active_filter_editor_block_index: None,
             rich_content_views: Vec::new(),
-            block_onboarding_active: false,
-            onboarding_prompt_block: None,
-            settings_import_onboarding_block: None,
             pending_auto_bootstrap_shell_type: None,
             pending_env_var_collection: None,
             env_vars: Vec::new(),
@@ -6689,33 +6670,6 @@ impl TerminalView {
 
     // Helper function to get the PATH variable for a local session.
 
-    pub fn insert_drive_sharing_onboarding_block(
-        &mut self,
-        object_id: CloudObjectTypeAndId,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        self.reset_onboarding_blocks(ctx);
-
-        WarpDriveSettings::handle(ctx).update(ctx, |settings, ctx| {
-            report_if_error!(settings.sharing_onboarding_block_shown.set_value(true, ctx));
-        });
-
-        let block_view_handle =
-            ctx.add_view(|ctx| OnboardingDriveSharingBlock::new(object_id, ctx));
-
-        self.insert_rich_content(
-            None,
-            block_view_handle,
-            None,
-            RichContentInsertionPosition::Append {
-                insert_below_long_running_block: false,
-            },
-            ctx,
-        );
-
-        send_telemetry_from_ctx!(TelemetryEvent::DriveSharingOnboardingBlockShown, ctx);
-    }
-
     fn should_display_vim_banner(
         &self,
         session: &Arc<Session>,
@@ -6754,27 +6708,12 @@ impl TerminalView {
     }
 
     #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
-    fn get_ps1_grid_info(&mut self) -> Option<(BlockGrid, SizeInfo)> {
-        let model = self.model.lock();
-
-        model
-            .prompt_grid()
-            .cloned()
-            .zip(Some(*model.block_list().size()))
-    }
-
-    #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
     fn add_settings_import_block(&mut self, ctx: &mut ViewContext<Self>) {
-        self.block_onboarding_active = true;
         let current_block_view_handle = ctx.add_typed_action_view(SettingsImportView::new);
-        self.settings_import_onboarding_block = Some(current_block_view_handle.clone());
 
         ctx.subscribe_to_view(
             &current_block_view_handle,
-            move |terminal_view, settings_import_view_handle, event, ctx| match event {
-                SettingsImportEvent::Completed(true) => {
-                    terminal_view.add_prompt_block(ctx);
-                }
+            move |terminal_view, settings_import_view_handle, event, _ctx| match event {
                 SettingsImportEvent::NoConfigsFound => {
                     // In the case where no settings were found to import, we want to remove the settings import block.
                     terminal_view
@@ -6782,12 +6721,8 @@ impl TerminalView {
                         .lock()
                         .block_list_mut()
                         .remove_rich_content(settings_import_view_handle.id());
-
-                    terminal_view.add_prompt_block(ctx);
                 }
-                _ => {
-                    terminal_view.add_prompt_block(ctx);
-                }
+                SettingsImportEvent::Completed(_) => {}
             },
         );
 
@@ -6800,44 +6735,6 @@ impl TerminalView {
             },
             ctx,
         );
-    }
-
-    #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
-    fn add_prompt_block(&mut self, ctx: &mut ViewContext<Self>) {
-        let ps1_grid_info = self.get_ps1_grid_info();
-        let current_block_view_handle =
-            ctx.add_typed_action_view(|_| OnboardingPromptBlock::new(ps1_grid_info));
-        self.onboarding_prompt_block = Some(current_block_view_handle.clone());
-
-        self.insert_rich_content(
-            None,
-            current_block_view_handle,
-            None,
-            RichContentInsertionPosition::Append {
-                insert_below_long_running_block: false,
-            },
-            ctx,
-        );
-
-        if self.block_onboarding_active {}
-    }
-
-    pub fn interrupt_onboarding_blocks(&mut self, ctx: &mut ViewContext<Self>) {
-        if let Some(onboarding_prompt_block_handle) = &self.onboarding_prompt_block {
-            onboarding_prompt_block_handle.update(ctx, |onboarding_prompt_block, block_ctx| {
-                onboarding_prompt_block.interrupt_block(block_ctx);
-            })
-        }
-
-        if let Some(settings_import_onboarding_block_handle) =
-            &self.settings_import_onboarding_block
-        {
-            settings_import_onboarding_block_handle.update(ctx, |settings_import_view, ctx| {
-                settings_import_view.interrupt_block(ctx);
-            })
-        }
-
-        self.reset_onboarding_blocks(ctx);
     }
 
     /// Opens a folder that the user may or may not have opened in the past
@@ -6852,14 +6749,6 @@ impl TerminalView {
 
     // Initialize project for a path and suppress the agent mode setup banner for that path. This also auto-opens
     // the code-review pane after the initialization step completes.
-
-    fn reset_onboarding_blocks(&mut self, ctx: &mut ViewContext<Self>) {
-        self.block_onboarding_active = false;
-        self.onboarding_prompt_block = None;
-        self.settings_import_onboarding_block = None;
-
-        let _ = ctx;
-    }
 
     /// Gets the selected text from the terminal, if any.
     pub fn selected_text(&self, ctx: &AppContext) -> Option<String> {
@@ -8903,14 +8792,6 @@ impl TerminalView {
                         }),
                         ctx
                     );
-                    self.tips_completed.update(ctx, |tips, ctx| {
-                        mark_feature_used_and_write_to_user_defaults(
-                            Tip::Hint(TipHint::BlockSelect),
-                            tips,
-                            ctx,
-                        );
-                        ctx.notify();
-                    });
                 } else {
                     // Clear the current block selection upon clicking on a rich content block
                     self.clear_selected_blocks(ctx);
@@ -8994,14 +8875,6 @@ impl TerminalView {
                             }),
                             ctx
                         );
-                        self.tips_completed.update(ctx, |tips, ctx| {
-                            mark_feature_used_and_write_to_user_defaults(
-                                Tip::Hint(TipHint::BlockSelect),
-                                tips,
-                                ctx,
-                            );
-                            ctx.notify();
-                        });
                     }
                 }
             }
@@ -9469,21 +9342,9 @@ impl TerminalView {
         self.any_session_contains_remote_blocks = self.active_block_is_considered_remote(ctx);
 
         ctx.notify();
-
-        if self.block_onboarding_active {
-            self.reset_onboarding_blocks(ctx);
-        }
     }
 
     fn find_within_block(&mut self, ctx: &mut ViewContext<Self>) {
-        self.tips_completed.update(ctx, |tips, ctx| {
-            mark_feature_used_and_write_to_user_defaults(
-                Tip::Hint(TipHint::BlockAction),
-                tips,
-                ctx,
-            );
-            ctx.notify();
-        });
         self.update_find_selection(ctx);
         self.show_find_bar(ctx);
     }
@@ -9726,14 +9587,6 @@ impl TerminalView {
             TelemetryEvent::ContextMenuCopyPrompt { part: part.clone() },
             ctx
         );
-        self.tips_completed.update(ctx, |tips, ctx| {
-            mark_feature_used_and_write_to_user_defaults(
-                Tip::Hint(TipHint::BlockAction),
-                tips,
-                ctx,
-            );
-            ctx.notify();
-        });
         self.close_context_menu(ctx, true);
     }
 
@@ -9939,15 +9792,6 @@ impl TerminalView {
             ctx
         );
 
-        self.tips_completed.update(ctx, |tips, ctx| {
-            mark_feature_used_and_write_to_user_defaults(
-                Tip::Hint(TipHint::BlockSelect),
-                tips,
-                ctx,
-            );
-            ctx.notify();
-        });
-
         // Selecting a block should focus the terminal so blocklist navigation keeps working,
         // unless the user has opted to preserve input focus on block selection.
         let preserve_input_focus =
@@ -10002,15 +9846,6 @@ impl TerminalView {
                 }),
                 ctx
             );
-
-            self.tips_completed.update(ctx, |tips, ctx| {
-                mark_feature_used_and_write_to_user_defaults(
-                    Tip::Hint(TipHint::BlockSelect),
-                    tips,
-                    ctx,
-                );
-                ctx.notify();
-            });
         } else {
             self.select_most_recent_blocks(1, ctx);
         }
@@ -10075,14 +9910,6 @@ impl TerminalView {
                     }),
                     ctx
                 );
-                self.tips_completed.update(ctx, |tips, ctx| {
-                    mark_feature_used_and_write_to_user_defaults(
-                        Tip::Hint(TipHint::BlockSelect),
-                        tips,
-                        ctx,
-                    );
-                    ctx.notify();
-                });
             } else if !is_most_recent_block_visible {
                 // Scroll to the bottom if the index hasn't changed.
                 // This happens when there is a second arrow down when the bottom
@@ -10319,10 +10146,6 @@ impl TerminalView {
             return;
         }
 
-        if OneTimeModalModel::as_ref(ctx).is_any_modal_open() {
-            return;
-        }
-
         self.last_focus_ts = Some(Local::now().naive_local());
 
         let is_input_visible = {
@@ -10475,14 +10298,6 @@ impl TerminalView {
             TelemetryEvent::ContextMenuOpenShareModal(self.selected_blocks.cardinality()),
             ctx
         );
-        self.tips_completed.update(ctx, |tips, ctx| {
-            mark_feature_used_and_write_to_user_defaults(
-                Tip::Hint(TipHint::BlockAction),
-                tips,
-                ctx,
-            );
-            ctx.notify();
-        });
         ctx.emit(Event::ShareModalOpened(block_index));
         self.close_context_menu(ctx, true);
         ctx.notify();
@@ -10559,14 +10374,6 @@ impl TerminalView {
             TelemetryEvent::ContextMenuCopy(entity, self.selected_blocks.cardinality()),
             ctx
         );
-        self.tips_completed.update(ctx, |tips, ctx| {
-            mark_feature_used_and_write_to_user_defaults(
-                Tip::Hint(TipHint::BlockAction),
-                tips,
-                ctx,
-            );
-            ctx.notify();
-        });
 
         let selected_block_contents = self.selected_block_contents_as_string(entity, "\n", ctx);
         ctx.clipboard()
@@ -10621,14 +10428,6 @@ impl TerminalView {
     }
 
     fn bookmark_selected_block(&mut self, ctx: &mut ViewContext<Self>) {
-        self.tips_completed.update(ctx, |tips, ctx| {
-            mark_feature_used_and_write_to_user_defaults(
-                Tip::Hint(TipHint::BlockAction),
-                tips,
-                ctx,
-            );
-            ctx.notify();
-        });
         if let Some(selected_block_index) = self.selected_blocks.tail() {
             self.bookmark_block(&selected_block_index, ctx);
             ctx.notify();
@@ -10743,10 +10542,6 @@ impl TerminalView {
                 }
 
                 ctx.emit(Event::ExecuteCommand(event.as_ref().clone()));
-
-                if self.block_onboarding_active {
-                    self.interrupt_onboarding_blocks(ctx);
-                }
             }
             InputEvent::ClearSelectedBlock => self.clear_selected_blocks(ctx),
             InputEvent::SelectRecentBlocks { count } => self.select_most_recent_blocks(*count, ctx),

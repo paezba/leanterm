@@ -153,11 +153,9 @@ mod testing {
             restored_blocks: Option<&[SerializedBlockListItem]>,
         ) -> ViewHandle<TerminalView> {
             let server_api = app.read(|ctx| ServerApiProvider::as_ref(ctx).get());
-            let tips_model = app.add_model(|_| Default::default());
 
             let (window_id, _) = app.add_window(WindowStyle::NotStealFocus, |ctx| {
                 let resources = TerminalViewResources {
-                    tips_completed: tips_model,
                     server_api,
                     model_event_sender: None,
                 };

@@ -117,9 +117,6 @@ use crate::input_suggestions::{
 use crate::pane_group::PaneGroupAction;
 use crate::pane_group::focus_state::PaneFocusHandle;
 use crate::prefix::longest_common_prefix;
-use crate::resource_center::{
-    Tip, TipAction, TipHint, TipsCompleted, mark_feature_used_and_write_to_user_defaults,
-};
 use crate::search::QueryFilter;
 use crate::send_telemetry_from_ctx;
 use crate::server::ids::SyncId;
@@ -986,7 +983,6 @@ impl CanExecuteCommand {
 pub struct Input {
     model: Arc<FairMutex<TerminalModel>>,
     menu_positioning_provider: Arc<dyn MenuPositioningProvider>,
-    tips_completed: ModelHandle<TipsCompleted>,
     editor: ViewHandle<EditorView>,
     server_api: Arc<ServerApi>,
     input_suggestions: ViewHandle<InputSuggestions>,
@@ -1345,7 +1341,6 @@ impl Input {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn new(
         model: Arc<FairMutex<TerminalModel>>,
-        tips_completed: ModelHandle<TipsCompleted>,
         server_api: Arc<ServerApi>,
         sessions: ModelHandle<Sessions>,
         size_info: SizeInfo,
@@ -1599,7 +1594,6 @@ impl Input {
             suggestions_mode_model,
             completions_menu_resizable_width: resizable_state_handle(completions_menu_width),
             completions_menu_resizable_height: resizable_state_handle(completions_menu_height),
-            tips_completed,
             editor,
             model,
             server_api,
@@ -2197,15 +2191,6 @@ impl Input {
             .active_block()
             .has_received_precmd()
         {
-            self.tips_completed.update(ctx, |tips, ctx| {
-                mark_feature_used_and_write_to_user_defaults(
-                    Tip::Hint(TipHint::CreateBlock),
-                    tips,
-                    ctx,
-                );
-                ctx.notify();
-            });
-
             if !command.is_empty() {
                 IgnoredSuggestionsModel::handle(ctx).update(ctx, |model, ctx| {
                     model.remove_ignored_suggestion(
@@ -6264,22 +6249,6 @@ impl Input {
         feature_item: VoltronItem,
         ctx: &mut ViewContext<Input>,
     ) {
-        let welcome_tip_feature = match feature_item {
-            VoltronItem::AiCommands => Some(Tip::Action(TipAction::AiCommandSearch)),
-            VoltronItem::History => Some(Tip::Action(TipAction::HistorySearch)),
-            VoltronItem::Workflows => None,
-        };
-
-        if let Some(welcome_tip_feature) = welcome_tip_feature {
-            self.tips_completed.update(ctx, |tips_completed, ctx| {
-                mark_feature_used_and_write_to_user_defaults(
-                    welcome_tip_feature,
-                    tips_completed,
-                    ctx,
-                );
-                ctx.notify();
-            });
-        }
         // If input suggestions are opened we should close them when opening voltron
         if self.suggestions_mode_model.as_ref(ctx).is_visible() {
             self.close_input_suggestions_and_restore_buffer(true, true, ctx);

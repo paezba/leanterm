@@ -47,7 +47,6 @@ use crate::terminal::view::{
     BlockEntity, BlockSelectionDetails, NotificationsDiscoveryBannerAction,
     NotificationsErrorBannerAction, NotificationsTrigger, PromptPart,
 };
-use crate::tips::WelcomeTipFeature;
 #[cfg(feature = "local_fs")]
 use crate::util::file::external_editor::settings::EditorLayout;
 #[cfg(feature = "local_fs")]
@@ -632,12 +631,6 @@ pub enum TelemetryEvent {
     WorkflowSelected(WorkflowTelemetryMetadata),
     OpenWorkflowSearch,
     OpenQuakeModeWindow,
-    OpenWelcomeTips,
-    CompleteWelcomeTipFeature {
-        total_completed_count: usize,
-        tip_name: WelcomeTipFeature,
-    },
-    DismissWelcomeTips,
     ShowNotificationsDiscoveryBanner,
     NotificationsDiscoveryBannerAction(NotificationsDiscoveryBannerAction),
     ShowNotificationsErrorBanner,
@@ -754,10 +747,8 @@ pub enum TelemetryEvent {
     SetLineHeight {
         new_value: f32,
     },
-    ResourceCenterOpened,
     ResourceCenterTipsCompleted,
     ResourceCenterTipsSkipped,
-    KeybindingsPageOpened,
     CommandSearchOpened {
         has_initial_query: bool,
     },
@@ -1397,12 +1388,6 @@ impl TelemetryEvent {
             }
             TelemetryEvent::WorkflowExecuted(metadata) => Some(json!(metadata)),
             TelemetryEvent::WorkflowSelected(metadata) => Some(json!(metadata)),
-            TelemetryEvent::CompleteWelcomeTipFeature {
-                total_completed_count,
-                tip_name,
-            } => Some(
-                json!({ "total_completed_count": total_completed_count, "tip_name": tip_name }),
-            ),
             TelemetryEvent::NotificationsDiscoveryBannerAction(action) => {
                 Some(json!({ "action": action }))
             }
@@ -1817,8 +1802,6 @@ impl TelemetryEvent {
             | TelemetryEvent::LoggedOutStartup
             | TelemetryEvent::OpenWorkflowSearch
             | TelemetryEvent::OpenQuakeModeWindow
-            | TelemetryEvent::OpenWelcomeTips
-            | TelemetryEvent::DismissWelcomeTips
             | TelemetryEvent::ShowNotificationsDiscoveryBanner
             | TelemetryEvent::ShowNotificationsErrorBanner
             | TelemetryEvent::NotificationClicked
@@ -1844,10 +1827,8 @@ impl TelemetryEvent {
             | TelemetryEvent::ToggleApprovalsModal
             | TelemetryEvent::ChangedInviteViewOption(_)
             | TelemetryEvent::SendEmailInvites
-            | TelemetryEvent::ResourceCenterOpened
             | TelemetryEvent::ResourceCenterTipsCompleted
             | TelemetryEvent::ResourceCenterTipsSkipped
-            | TelemetryEvent::KeybindingsPageOpened
             | TelemetryEvent::OpenedAltScreenFind
             | TelemetryEvent::QuitModalDisabled
             | TelemetryEvent::UserInitiatedLogOut
@@ -2136,9 +2117,6 @@ impl TelemetryEvent {
             | TelemetryEvent::WorkflowSelected(_)
             | TelemetryEvent::OpenWorkflowSearch
             | TelemetryEvent::OpenQuakeModeWindow
-            | TelemetryEvent::OpenWelcomeTips
-            | TelemetryEvent::CompleteWelcomeTipFeature { .. }
-            | TelemetryEvent::DismissWelcomeTips
             | TelemetryEvent::ShowNotificationsDiscoveryBanner
             | TelemetryEvent::NotificationsDiscoveryBannerAction(_)
             | TelemetryEvent::ShowNotificationsErrorBanner
@@ -2194,10 +2172,8 @@ impl TelemetryEvent {
             | TelemetryEvent::ChangedInviteViewOption(_)
             | TelemetryEvent::SendEmailInvites
             | TelemetryEvent::SetLineHeight { .. }
-            | TelemetryEvent::ResourceCenterOpened
             | TelemetryEvent::ResourceCenterTipsCompleted
             | TelemetryEvent::ResourceCenterTipsSkipped
-            | TelemetryEvent::KeybindingsPageOpened
             | TelemetryEvent::GlobalSearchOpened
             | TelemetryEvent::GlobalSearchQueryStarted
             | TelemetryEvent::GlobalSearchQueryCompleted { .. }
@@ -2458,9 +2434,6 @@ impl TelemetryEventDesc for TelemetryEventDiscriminants {
             Self::WorkflowSelected => EnablementState::Always,
             Self::OpenWorkflowSearch => EnablementState::Always,
             Self::OpenQuakeModeWindow => EnablementState::Always,
-            Self::OpenWelcomeTips => EnablementState::Always,
-            Self::CompleteWelcomeTipFeature => EnablementState::Always,
-            Self::DismissWelcomeTips => EnablementState::Always,
             Self::ShowNotificationsDiscoveryBanner => EnablementState::Always,
             Self::NotificationsDiscoveryBannerAction => EnablementState::Always,
             Self::ShowNotificationsErrorBanner => EnablementState::Always,
@@ -2512,10 +2485,8 @@ impl TelemetryEventDesc for TelemetryEventDiscriminants {
             Self::ChangedInviteViewOption => EnablementState::Always,
             Self::SendEmailInvites => EnablementState::Always,
             Self::SetLineHeight => EnablementState::Always,
-            Self::ResourceCenterOpened => EnablementState::Always,
             Self::ResourceCenterTipsCompleted => EnablementState::Always,
             Self::ResourceCenterTipsSkipped => EnablementState::Always,
-            Self::KeybindingsPageOpened => EnablementState::Always,
             Self::GlobalSearchOpened => EnablementState::Always,
             Self::GlobalSearchQueryStarted => EnablementState::Always,
             Self::GlobalSearchQueryCompleted => EnablementState::Always,
@@ -2744,9 +2715,6 @@ impl TelemetryEventDesc for TelemetryEventDiscriminants {
             Self::WorkflowSelected => "Workflow Selected",
             Self::FeaturesPageAction => "Features Page Action",
             Self::OpenQuakeModeWindow => "Open Quake Mode Window",
-            Self::OpenWelcomeTips => "Open Welcome Tips",
-            Self::CompleteWelcomeTipFeature => "Complete Welcome Tip",
-            Self::DismissWelcomeTips => "Dismiss Welcome Tips",
             Self::ShowNotificationsDiscoveryBanner => "ShowNotificationsDiscoveryBanner",
             Self::NotificationsDiscoveryBannerAction => "Notifications Discovery Banner Action",
             Self::ShowNotificationsErrorBanner => "ShowNotificationsErrorBanner",
@@ -2790,10 +2758,8 @@ impl TelemetryEventDesc for TelemetryEventDiscriminants {
             Self::LogOut => "Log Out",
             Self::SelectNavigationPaletteItem => "Select Navigation Palette Item",
             Self::SetLineHeight => "Set Line Height",
-            Self::ResourceCenterOpened => "Resource Center Opened",
             Self::ResourceCenterTipsCompleted => "Resource Center Tips Completed",
             Self::ResourceCenterTipsSkipped => "Resource Center Tips Skipped",
-            Self::KeybindingsPageOpened => "Resource Center Keybindings Page Opened",
             Self::GlobalSearchOpened => "Global Search Opened",
             Self::GlobalSearchQueryStarted => "Global Search Query Started",
             Self::GlobalSearchQueryCompleted => "Global Search Query Completed",
@@ -3074,9 +3040,6 @@ impl TelemetryEventDesc for TelemetryEventDiscriminants {
             Self::OpenQuakeModeWindow => {
                 "Toggled quake mode window when previously hidden or closed"
             }
-            Self::OpenWelcomeTips => "Opened welcome tips in app",
-            Self::CompleteWelcomeTipFeature => "Completed all welcome tips items",
-            Self::DismissWelcomeTips => "Dismissed Welcome tips",
             Self::ShowNotificationsDiscoveryBanner => {
                 "Showed notifications discovery banner in the block list"
             }
@@ -3157,10 +3120,8 @@ impl TelemetryEventDesc for TelemetryEventDiscriminants {
             Self::ChangedInviteViewOption => "Toggled between link and invite for invite",
             Self::SendEmailInvites => "Sent email invites for Warp Drive team",
             Self::SetLineHeight => "Set line height through Settings -> Appearance",
-            Self::ResourceCenterOpened => "Opened Resource Center pane",
             Self::ResourceCenterTipsCompleted => "Completed resource center tips",
             Self::ResourceCenterTipsSkipped => "Skipped welcome tips for new users",
-            Self::KeybindingsPageOpened => "Opened the keybinding page within the resource center",
             Self::CommandSearchOpened => "Opened command search (universal search panel to search)",
             Self::CommandSearchExited => {
                 "Exited command search (universal search panel to search) without accepting a result"

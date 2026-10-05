@@ -10,9 +10,7 @@ cfg_if::cfg_if! {
         use parking_lot::FairMutex;
         use warpui::{ViewContext};
 
-        use crate::{ pane_group::TerminalViewResources,
-            resource_center::TipsCompleted,
-        };
+        use crate::pane_group::TerminalViewResources;
         use crate::terminal::model::session::Sessions;
         use crate::terminal::model_events::ModelEventDispatcher;
         use crate::terminal::view::WARP_PROMPT_HEIGHT_LINES;
@@ -28,16 +26,14 @@ use super::TerminalView;
 impl TerminalView {
     #[cfg(test)]
     pub fn new_for_test(
-        tips_model: ModelHandle<TipsCompleted>,
         restored_blocks: Option<&[SerializedBlockListItem]>,
         ctx: &mut ViewContext<Self>,
     ) -> Self {
-        Self::new_for_test_with_cloud_mode(tips_model, restored_blocks, false, ctx)
+        Self::new_for_test_with_cloud_mode(restored_blocks, false, ctx)
     }
 
     #[cfg(test)]
     pub fn new_for_test_with_cloud_mode(
-        tips_model: ModelHandle<TipsCompleted>,
         restored_blocks: Option<&[SerializedBlockListItem]>,
         _is_cloud_mode: bool,
         ctx: &mut ViewContext<Self>,
@@ -82,7 +78,6 @@ impl TerminalView {
 
         let server_api = ServerApiProvider::new_for_test().get();
         let terminal_view_resources = TerminalViewResources {
-            tips_completed: tips_model,
             server_api: server_api.clone(),
             model_event_sender: None,
         };

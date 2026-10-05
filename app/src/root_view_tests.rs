@@ -1,13 +1,8 @@
-use onboarding::AgentOnboardingView;
-use warpui::elements::Empty;
-use warpui::{
-    App, AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewHandle,
-};
+use warpui::{App, SingletonEntity};
 
 use super::RootView;
 use crate::auth::AuthStateProvider;
 use crate::auth::auth_manager::AuthManager;
-use crate::auth::login_slide::LoginSlideView;
 use crate::server::server_api::ServerApiProvider;
 
 fn initialize_app(app: &mut App) {
@@ -42,27 +37,4 @@ fn test_sync_noop_when_local_onboarding_not_completed() {
             );
         });
     });
-}
-
-struct SsoLinkTestHarnessView {
-    login_slide_view: ViewHandle<LoginSlideView>,
-    onboarding_view: ViewHandle<AgentOnboardingView>,
-}
-
-impl Entity for SsoLinkTestHarnessView {
-    type Event = ();
-}
-
-impl View for SsoLinkTestHarnessView {
-    fn ui_name() -> &'static str {
-        "SsoLinkTestHarnessView"
-    }
-
-    fn render(&self, _app: &AppContext) -> Box<dyn Element> {
-        Empty::new().finish()
-    }
-}
-
-impl TypedActionView for SsoLinkTestHarnessView {
-    type Action = ();
 }

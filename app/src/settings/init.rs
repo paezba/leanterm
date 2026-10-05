@@ -24,7 +24,6 @@ use super::{
 use crate::appearance;
 use crate::banner::BannerState;
 use crate::drive::settings::WarpDriveSettings;
-use crate::resource_center::TipsCompleted;
 use crate::search::command_search::settings::CommandSearchSettings;
 use crate::terminal::BlockListSettings;
 use crate::terminal::alt_screen_reporting::AltScreenReporting;
@@ -42,7 +41,6 @@ use crate::workspace::tab_settings::TabSettings;
 
 pub struct UserDefaultsOnStartup {
     pub should_restore_session: bool,
-    pub tips_data: TipsCompleted,
     pub user_default_shell_unsupported_banner_state: BannerState,
     pub settings_file_error: Option<super::SettingsFileError>,
 }
@@ -129,8 +127,6 @@ pub fn init(
     let use_thin_strokes = *FontSettings::as_ref(ctx).use_thin_strokes;
 
     let general_settings = GeneralSettings::as_ref(ctx);
-    let tips_features_used = general_settings.welcome_tips_features_used.clone();
-    let tips_skipped_or_completed = *general_settings.welcome_tips_skipped_or_completed;
     let user_default_shell_unsupported_banner_state =
         *general_settings.user_default_shell_unsupported_banner_state;
     let should_restore_session = *general_settings.restore_session;
@@ -167,7 +163,6 @@ pub fn init(
 
     let user_defaults_on_startup = UserDefaultsOnStartup {
         should_restore_session,
-        tips_data: TipsCompleted::new(tips_features_used, tips_skipped_or_completed),
         user_default_shell_unsupported_banner_state,
         settings_file_error,
     };

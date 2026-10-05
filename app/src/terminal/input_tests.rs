@@ -64,13 +64,11 @@ use crate::test_util::assert_eventually;
 use crate::test_util::settings::initialize_settings_for_tests;
 use crate::themes::theme::AnsiColorIdentifier;
 use crate::warp_managed_paths_watcher::WarpManagedPathsWatcher;
-use crate::workspace::{ActiveSession, OneTimeModalModel, ToastStack, WorkspaceRegistry};
+use crate::workspace::{ActiveSession, ToastStack, WorkspaceRegistry};
 use crate::workspaces::team_tester::TeamTesterStatus;
 use crate::workspaces::update_manager::TeamUpdateManager;
 use crate::workspaces::user_workspaces::UserWorkspaces;
-use crate::{
-    GlobalResourceHandles, GlobalResourceHandlesProvider, ReferralThemeStatus, experiments,
-};
+use crate::{GlobalResourceHandles, GlobalResourceHandlesProvider, experiments};
 
 fn pending_ctrl_r_handoff() -> PendingShellWidgetHandoff {
     PendingShellWidgetHandoff {
@@ -266,15 +264,11 @@ pub fn initialize_app(app: &mut App) {
     app.add_singleton_model(WarpManagedPathsWatcher::new_for_testing);
 
     // Add GlobalResourceHandlesProvider for persistence
-    let tips_handle = app.add_model(|_| TipsCompleted::default());
-    let referral_theme_status = app.add_model(ReferralThemeStatus::new);
     let user_default_shell_unsupported_banner_model_handle =
         app.add_model(|_| UserDefaultShellUnsupportedBannerState::default_value());
     app.add_singleton_model(move |_ctx| {
         GlobalResourceHandlesProvider::new(GlobalResourceHandles {
             model_event_sender: None, // No persistence in tests
-            tips_completed: tips_handle,
-            referral_theme_status,
             user_default_shell_unsupported_banner_model_handle,
             settings_file_error: None,
         })
@@ -287,7 +281,6 @@ pub fn initialize_app(app: &mut App) {
 
     app.update(experiments::init);
     AltScreenReporting::register(app);
-    app.add_singleton_model(OneTimeModalModel::new);
     app.add_singleton_model(|_| WorkspaceRegistry::new());
     app.add_singleton_model(|_| ToastStack);
     app.add_singleton_model(|_| PricingInfoModel::new());
@@ -353,8 +346,6 @@ pub async fn add_window_with_bootstrapped_terminal_and_window_id(
     history_file_commands: Option<Vec<String>>,
     session_info: Option<SessionInfo>,
 ) -> (WindowId, ViewHandle<TerminalView>) {
-    let tips_model = app.add_model(|_| TipsCompleted::default());
-
     let shell_starter_source =
         ShellStarter::init(crate::terminal::available_shells::AvailableShell::default())
             .expect("Could not create a shell starter source or wsl name")
@@ -370,7 +361,7 @@ pub async fn add_window_with_bootstrapped_terminal_and_window_id(
     let history_file_commands = history_file_commands.unwrap_or_default();
 
     let (window_id, terminal) = app.add_window(WindowStyle::NotStealFocus, move |ctx| {
-        TerminalView::new_for_test(tips_model, None, ctx)
+        TerminalView::new_for_test(None, ctx)
     });
 
     // TODO(vorporeal): There's a lot of fuckiness here.  `TerminalView::new_for_test`

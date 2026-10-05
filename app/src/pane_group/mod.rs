@@ -62,9 +62,6 @@ use crate::pane_group::focus_state::PaneGroupFocusEvent;
 use crate::pane_group::pane::ActionOrigin;
 use crate::persistence::ModelEvent;
 use crate::quit_warning::UnsavedStateSummary;
-use crate::resource_center::{
-    Tip, TipAction, TipsCompleted, mark_feature_used_and_write_to_user_defaults,
-};
 #[cfg(target_family = "wasm")]
 use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::ids::{ObjectUid, SyncId};
@@ -707,7 +704,6 @@ pub enum PaneDragDropLocation {
 }
 
 pub struct PaneGroup {
-    tips_completed: ModelHandle<TipsCompleted>,
     user_default_shell_unsupported_banner_model_handle: ModelHandle<BannerState>,
     model_event_sender: Option<SyncSender<ModelEvent>>,
     panes: PaneData,
@@ -762,7 +758,6 @@ pub enum SplitPaneState {
 // Helper to group together certain structs necessary to instantiate a new terminal view.
 #[derive(Clone)]
 pub struct TerminalViewResources {
-    pub tips_completed: ModelHandle<TipsCompleted>,
     pub server_api: Arc<ServerApi>,
     pub model_event_sender: Option<SyncSender<ModelEvent>>,
 }
@@ -1839,7 +1834,6 @@ impl PaneGroup {
     }
 
     fn new_internal(
-        tips_completed: ModelHandle<TipsCompleted>,
         user_default_shell_unsupported_banner_model_handle: ModelHandle<BannerState>,
         server_api: Arc<ServerApi>,
         model_event_sender: Option<SyncSender<ModelEvent>>,
@@ -1852,7 +1846,6 @@ impl PaneGroup {
         let mut pane_contents = HashMap::new();
 
         let resources = TerminalViewResources {
-            tips_completed: tips_completed.clone(),
             server_api: server_api.clone(),
             model_event_sender: model_event_sender.clone(),
         };
@@ -1943,7 +1936,6 @@ impl PaneGroup {
         let active_file_model = ctx.add_model(|_| ActiveFileModel::new());
 
         let mut pane_group = Self {
-            tips_completed,
             user_default_shell_unsupported_banner_model_handle,
             model_event_sender,
             panes: pane_data,
@@ -2020,7 +2012,6 @@ impl PaneGroup {
     /// to the specification of the provided [`PanesLayout`].
     #[allow(clippy::too_many_arguments)]
     pub fn new_with_panes_layout(
-        tips_completed: ModelHandle<TipsCompleted>,
         user_default_shell_unsupported_banner_model_handle: ModelHandle<BannerState>,
         server_api: Arc<ServerApi>,
         panes_layout: PanesLayout,
@@ -2091,7 +2082,6 @@ impl PaneGroup {
         };
 
         Self::new_internal(
-            tips_completed,
             user_default_shell_unsupported_banner_model_handle,
             server_api,
             model_event_sender.clone(),
@@ -2102,7 +2092,6 @@ impl PaneGroup {
 
     pub fn new_from_existing_pane(
         pane: Box<dyn AnyPaneContent>,
-        tips_completed: ModelHandle<TipsCompleted>,
         user_default_shell_unsupported_banner_model_handle: ModelHandle<BannerState>,
         server_api: Arc<ServerApi>,
         model_event_sender: Option<SyncSender<ModelEvent>>,
@@ -2124,7 +2113,6 @@ impl PaneGroup {
             (PaneData::new(pane_id), initial_focus)
         };
         Self::new_internal(
-            tips_completed,
             user_default_shell_unsupported_banner_model_handle,
             server_api,
             model_event_sender,
@@ -3726,7 +3714,6 @@ impl PaneGroup {
     ) -> (TerminalPane, ViewHandle<TerminalView>) {
         let uuid = Uuid::new_v4();
         let resources = TerminalViewResources {
-            tips_completed: self.tips_completed.clone(),
             server_api: self.server_api.clone(),
             model_event_sender: self.model_event_sender.clone(),
         };
@@ -3885,14 +3872,6 @@ impl PaneGroup {
             send_telemetry_from_ctx!(TelemetryEvent::SplitPane, ctx);
         }
 
-        self.tips_completed.update(ctx, |tips_completed, ctx| {
-            mark_feature_used_and_write_to_user_defaults(
-                Tip::Action(TipAction::SplitPane),
-                tips_completed,
-                ctx,
-            );
-            ctx.notify();
-        });
         self.add_pane_with_options(
             new_pane,
             AddPaneOptions {

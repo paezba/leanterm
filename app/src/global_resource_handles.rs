@@ -4,8 +4,6 @@ use warpui::{Entity, ModelHandle, SingletonEntity};
 
 use crate::banner::BannerState;
 use crate::persistence::ModelEvent;
-use crate::referral_theme_status::ReferralThemeStatus;
-use crate::resource_center::TipsCompleted;
 use crate::settings::SettingsFileError;
 
 /// Interfaces that allow us to interact with global resources owned by the main
@@ -51,8 +49,6 @@ use crate::settings::SettingsFileError;
 #[derive(Clone)]
 pub struct GlobalResourceHandles {
     pub model_event_sender: Option<SyncSender<ModelEvent>>,
-    pub tips_completed: ModelHandle<TipsCompleted>,
-    pub referral_theme_status: ModelHandle<ReferralThemeStatus>,
     pub user_default_shell_unsupported_banner_model_handle: ModelHandle<BannerState>,
     pub settings_file_error: Option<SettingsFileError>,
 }
@@ -60,15 +56,11 @@ pub struct GlobalResourceHandles {
 impl GlobalResourceHandles {
     #[cfg(any(test, feature = "integration_tests", feature = "test-util"))]
     pub fn mock(app: &mut warpui::App) -> Self {
-        let referral_theme_status = app.add_model(ReferralThemeStatus::new);
         let user_default_shell_unsupported_banner_model_handle =
             app.add_model(|_| BannerState::default());
-        let tips_completed = app.add_model(|_| TipsCompleted::default());
 
         GlobalResourceHandles {
             model_event_sender: None,
-            tips_completed,
-            referral_theme_status,
             user_default_shell_unsupported_banner_model_handle,
             settings_file_error: None,
         }
