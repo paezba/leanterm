@@ -12,26 +12,6 @@ fn app_scope_database_path_matches_app_database_path() {
     );
 }
 
-#[test]
-fn tui_scope_database_path_is_tui_subdirectory_of_app_database_dir() {
-    let tui_path = database_file_path_for_scope(&PersistenceScope::Tui);
-    let app_path = database_file_path_for_scope(&PersistenceScope::App);
-
-    assert_ne!(tui_path, app_path);
-    assert_eq!(
-        tui_path,
-        warp_core::paths::tui_state_dir().join("warp.sqlite")
-    );
-
-    // The TUI database lives in a `tui` subdirectory of the same base
-    // directory that holds the GUI database, so the two front-ends never
-    // share (or migrate) each other's database.
-    let tui_dir = tui_path
-        .parent()
-        .expect("TUI database path should have a parent");
-    assert_eq!(tui_dir.file_name(), Some(OsStr::new("tui")));
-    assert_eq!(tui_dir.parent(), app_path.parent());
-}
 
 #[test]
 fn remote_server_daemon_scope_database_path_uses_identity_data_dir() {

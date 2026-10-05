@@ -10,8 +10,6 @@ static GLOBAL_EXECUTION_MODE: OnceLock<ExecutionMode> = OnceLock::new();
 pub enum ExecutionMode {
     /// Warp is running as a normal desktop app.
     App,
-    /// Warp is running as the headless terminal UI.
-    Tui,
     /// Warp is running as a CLI.
     Sdk,
     /// Warp is running as the remote server daemon.
@@ -24,7 +22,6 @@ impl ExecutionMode {
     pub fn client_id(&self) -> &'static str {
         match self {
             ExecutionMode::App => "warp-app",
-            ExecutionMode::Tui => "warp-tui",
             ExecutionMode::Sdk => "warp-cli",
             ExecutionMode::RemoteServerDaemon => "warp-remote-server-daemon",
         }
@@ -46,7 +43,7 @@ impl ExecutionMode {
     pub fn can_inherit_process_path_for_mcp(&self) -> bool {
         match self {
             ExecutionMode::App => false,
-            ExecutionMode::Tui | ExecutionMode::Sdk | ExecutionMode::RemoteServerDaemon => true,
+            ExecutionMode::Sdk | ExecutionMode::RemoteServerDaemon => true,
         }
     }
 }
@@ -69,13 +66,8 @@ impl AppExecutionMode {
 
     /// True if running as an interactive app client.
     fn is_app(&self) -> bool {
-        matches!(self.mode, ExecutionMode::App | ExecutionMode::Tui)
+        matches!(self.mode, ExecutionMode::App)
     }
-    /// Whether Warp is running as the headless terminal UI.
-    pub fn is_tui(&self) -> bool {
-        matches!(self.mode, ExecutionMode::Tui)
-    }
-
     /// Whether Active AI features are allowed in this execution mode.
     ///
     /// Active AI should only run in interactive clients, where there's a user
@@ -124,7 +116,7 @@ impl AppExecutionMode {
     pub fn send_telemetry_at_shutdown(&self) -> bool {
         matches!(
             self.mode,
-            ExecutionMode::Tui | ExecutionMode::Sdk | ExecutionMode::RemoteServerDaemon
+            ExecutionMode::Sdk | ExecutionMode::RemoteServerDaemon
         )
     }
 

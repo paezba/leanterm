@@ -409,7 +409,6 @@ fn setup_database(database_path: &Path) -> Result<SqliteConnection> {
 pub fn database_file_path_for_scope(scope: &PersistenceScope) -> PathBuf {
     match scope {
         PersistenceScope::App => app_database_file_path(),
-        PersistenceScope::Tui => tui_database_file_path(),
         PersistenceScope::RemoteServerDaemon { identity_key } => {
             remote_server_daemon_database_file_path(identity_key)
         }

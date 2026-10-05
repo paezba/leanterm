@@ -185,8 +185,6 @@ pub enum RespectUserSyncSetting {
 pub enum SettingsMode {
     /// The full desktop GUI application.
     Gui,
-    /// The headless terminal-UI front-end (the `warp_tui` crate).
-    Tui,
 }
 
 impl SettingsMode {
@@ -196,7 +194,6 @@ impl SettingsMode {
     pub fn should_sync_to_cloud(self) -> bool {
         match self {
             SettingsMode::Gui => true,
-            SettingsMode::Tui => false,
         }
     }
 
@@ -207,7 +204,6 @@ impl SettingsMode {
     pub fn should_migrate_native_settings(self) -> bool {
         match self {
             SettingsMode::Gui => true,
-            SettingsMode::Tui => false,
         }
     }
 }
@@ -256,7 +252,6 @@ impl SettingSurfaces {
     pub fn includes(self, mode: SettingsMode) -> bool {
         let bit = match mode {
             SettingsMode::Gui => Self::GUI.0,
-            SettingsMode::Tui => Self::TUI.0,
         };
         self.0 & bit != 0
     }
