@@ -1352,20 +1352,16 @@ impl PaneGroup {
             LeafContents::Code(_) => Err(anyhow::anyhow!(
                 "Code pane restoration not supported on this platform"
             )),
-            LeafContents::EnvVarCollection(snapshot) => {
-                match snapshot {
-                    EnvVarCollectionPaneSnapshot::CloudEnvVarCollection { .. } => Err(
-                        anyhow::anyhow!("Environment variable collection panes are not supported"),
-                    ),
+            LeafContents::EnvVarCollection(snapshot) => match snapshot {
+                EnvVarCollectionPaneSnapshot::CloudEnvVarCollection { .. } => Err(anyhow::anyhow!(
+                    "Environment variable collection panes are not supported"
+                )),
+            },
+            LeafContents::Workflow(snapshot) => match snapshot {
+                WorkflowPaneSnapshot::CloudWorkflow { .. } => {
+                    Err(anyhow::anyhow!("Workflow panes are not supported"))
                 }
-            }
-            LeafContents::Workflow(snapshot) => {
-                match snapshot {
-                    WorkflowPaneSnapshot::CloudWorkflow { .. } => {
-                        Err(anyhow::anyhow!("Workflow panes are not supported"))
-                    }
-                }
-            }
+            },
             LeafContents::Settings(snapshot) => {
                 let pane: Box<dyn AnyPaneContent + 'static> = match snapshot {
                     SettingsPaneSnapshot::Local {

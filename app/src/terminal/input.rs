@@ -146,9 +146,7 @@ use crate::workflows::command_parser::{
     compute_workflow_display_data_for_history_command,
     compute_workflow_display_data_with_overrides,
 };
-use crate::workflows::info_box::{
-    WORKFLOW_PARAMETER_HIGHLIGHT_COLOR, WorkflowsMoreInfoView,
-};
+use crate::workflows::info_box::{WORKFLOW_PARAMETER_HIGHLIGHT_COLOR, WorkflowsMoreInfoView};
 use crate::workflows::local_workflows::LocalWorkflows;
 use crate::workflows::workflow_enum::EnumVariants;
 use crate::workflows::{self, WorkflowSelectionSource, WorkflowSource, WorkflowType};

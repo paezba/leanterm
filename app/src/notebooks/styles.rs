@@ -6,7 +6,6 @@ use warpui::elements::{
 };
 use warpui::platform::Cursor;
 use warpui::ui_components::components::UiComponent as _;
-use warpui::units::{IntoPixels, Pixels};
 use warpui::{Element, fonts};
 
 use crate::appearance::Appearance;

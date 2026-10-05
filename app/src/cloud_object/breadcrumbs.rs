@@ -47,5 +47,4 @@ pub enum ContainingObjectKind {
     Object(CloudObjectTypeAndId),
 }
 
-impl ContainingObjectKind {
-}
+impl ContainingObjectKind {}

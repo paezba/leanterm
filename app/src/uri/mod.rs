@@ -23,9 +23,7 @@ use crate::event_sources::LaunchConfigUiLocation;
 use crate::features::FeatureFlag;
 use crate::launch_configs::launch_config::LaunchConfig;
 use crate::root_view::{OpenLaunchConfigArg, open_new_window_get_handles};
-use crate::settings_view::{
-    SettingsSection, settings_widget_deeplink_target,
-};
+use crate::settings_view::{SettingsSection, settings_widget_deeplink_target};
 use crate::tab_configs::TabConfig;
 use crate::user_config::{load_launch_configs, load_tab_configs, tab_configs_dir};
 use crate::util::openable_file_type::{
@@ -984,28 +982,6 @@ fn execute_file(window_id: WindowId, path_str: &str, ctx: &mut AppContext) {
             input.set_pending_command(&path_str, i_ctx);
         })
     });
-}
-
-fn open_window_with_action(active_window_id: Option<WindowId>, action: &str, ctx: &mut AppContext) {
-    if let Some(primary_window_id) = active_window_id {
-        // Dispatch action to primary window
-        if let Some(root_view_id) = ctx.root_view_id(primary_window_id) {
-            ctx.dispatch_action(
-                primary_window_id,
-                &[root_view_id],
-                action,
-                &(),
-                log::Level::Info,
-            );
-        }
-    } else {
-        log::warn!("no primary window id to dispatch action to");
-
-        // Open a new window and dispatch action there
-        ctx.dispatch_global_action("root_view:open_new", &());
-        // TODO: Note we cannot just dispatch here as it will be a no-op.
-        // Need to send a callback once window is fully open.
-    }
 }
 
 /// Helper function to dispatch an action to an existing window

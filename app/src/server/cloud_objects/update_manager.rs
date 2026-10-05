@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::future::Future;
 use std::sync::Arc;
 use std::sync::mpsc::SyncSender;
@@ -14,12 +13,11 @@ use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex::Regex;
 use warp_errors::report_error;
-use warp_graphql::object_permissions::AccessLevel;
 use warp_graphql::scalars::time::ServerTimestamp;
 use warp_util::sync::Condition;
 use warpui::r#async::{FutureId, Timer};
 use warpui::{
-    AppContext, Entity, ModelContext, ModelHandle, RequestState, RetryOption, SingletonEntity,
+    Entity, ModelContext, ModelHandle, RequestState, RetryOption, SingletonEntity,
     duration_with_jitter,
 };
 
@@ -32,26 +30,16 @@ use crate::cloud_object::model::generic_string_model::{
     GenericStringModel, GenericStringObjectId, Serializer, StringModel,
 };
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent, UpdateSource};
-use crate::cloud_object::model::view::{CloudViewModel, Editor, EditorState};
 use crate::cloud_object::{
-    CloudLinkSharing, CloudModelType, CloudObject, CloudObjectEventEntrypoint, CloudObjectLocation,
-    CloudObjectSyncStatus, GenericCloudObject, GenericServerObject, GenericStringObjectFormat,
-    JsonObjectType, NumInFlightRequests, ObjectDeleteResult, ObjectIdType,
-    ObjectMetadataUpdateResult, ObjectPermissionsUpdateData, ObjectType, Owner, Revision,
-    RevisionAndLastEditor, ServerCloudObject, ServerEnvVarCollection, ServerMetadata,
-    ServerPermissions, ServerPreference, ServerWorkflowEnum, Space,
+    CloudModelType, CloudObject, CloudObjectEventEntrypoint, CloudObjectSyncStatus,
+    GenericCloudObject, GenericServerObject, GenericStringObjectFormat, JsonObjectType,
+    NumInFlightRequests, ObjectDeleteResult, ObjectIdType, Owner, Revision, RevisionAndLastEditor,
+    ServerCloudObject, ServerEnvVarCollection, ServerMetadata, ServerPermissions, ServerPreference,
+    ServerWorkflowEnum, Space,
 };
 use crate::drive::CloudObjectTypeAndId;
-use crate::drive::drive_helpers::{
-    is_feature_gated_anonymous_user_past_env_var_limit,
-    is_feature_gated_anonymous_user_past_notebook_limit,
-    is_feature_gated_anonymous_user_past_workflow_limit,
-};
-use crate::drive::folders::{CloudFolderModel, FolderId};
-use crate::drive::sharing::SharingAccessLevel;
-use crate::env_vars::{CloudEnvVarCollectionModel, EnvVarCollection};
+use crate::env_vars::CloudEnvVarCollectionModel;
 use crate::network::{NetworkStatus, NetworkStatusEvent, NetworkStatusKind};
-use crate::notebooks::{CloudNotebookModel, NotebookId};
 use crate::persistence::ModelEvent;
 use crate::server::ids::{
     ClientId, HashableId, HashedSqliteId, ObjectUid, ServerId, SyncId, ToServerId,
@@ -60,14 +48,12 @@ use crate::server::ids::{
 use crate::server::retry_strategies::{
     OUT_OF_BAND_REQUEST_RETRY_STRATEGY, PERIODIC_POLL, PERIODIC_POLL_RETRY_STRATEGY,
 };
-use crate::server::server_api::object::{GuestIdentifier, ObjectClient};
+use crate::server::server_api::object::ObjectClient;
 use crate::server::sync_queue::{
     CreationFailureReason, GenericStringObjectToCreate, QueueItem, SyncQueue, SyncQueueEvent,
 };
 use crate::settings::cloud_preferences::Preference;
-use crate::workflows::workflow::Workflow;
-use crate::workflows::workflow_enum::{CloudWorkflowEnum, CloudWorkflowEnumModel, WorkflowEnum};
-use crate::workflows::{CloudWorkflowModel, WorkflowId};
+use crate::workflows::workflow_enum::CloudWorkflowEnumModel;
 use crate::workspaces::team_tester::{TeamTesterStatus, TeamTesterStatusEvent};
 use crate::workspaces::update_manager::TeamUpdateManager;
 use crate::workspaces::user_profiles::{UserProfileWithUID, UserProfiles};
@@ -237,42 +223,6 @@ impl UpdateManager {
                 }
             }
         }
-    }
-
-    /// Remove team-owned objects in response to leaving a team.
-    pub fn remove_team_objects(&mut self, left_team_uid: ServerId, ctx: &mut ModelContext<Self>) {
-        let cloud_model = CloudModel::handle(ctx);
-        let objects_to_remove = cloud_model
-            .as_ref(ctx)
-            .all_cloud_objects_in_space(
-                Space::Team {
-                    team_uid: left_team_uid,
-                },
-                ctx,
-            )
-            .map(|object| object.cloud_object_type_and_id())
-            .collect_vec();
-
-        // First, delete in-memory from CloudModel and object actions.
-        cloud_model.update(ctx, |cloud_model, ctx| {
-            for object in objects_to_remove.iter() {
-                cloud_model.delete_object(object.sync_id(), ctx);
-            }
-        });
-        ObjectActions::handle(ctx).update(ctx, |object_actions, ctx| {
-            for object in objects_to_remove.iter() {
-                object_actions.delete_actions_for_object(&object.uid(), ctx);
-            }
-        });
-
-        // Then, delete from SQLite.
-        let object_ids_and_types = objects_to_remove
-            .into_iter()
-            .map(|object| (object.sync_id(), object.object_id_type()))
-            .collect();
-        self.save_to_db([ModelEvent::DeleteObjects {
-            ids: object_ids_and_types,
-        }]);
     }
 
     fn handle_team_tester_status_changed(
@@ -1958,7 +1908,6 @@ impl UpdateManager {
 
         num_deleted_objects
     }
-
 }
 
 impl Entity for UpdateManager {
@@ -1966,4 +1915,3 @@ impl Entity for UpdateManager {
 }
 
 impl SingletonEntity for UpdateManager {}
-

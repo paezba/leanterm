@@ -116,7 +116,6 @@ impl WorkflowViewMode {
             Self::View
         }
     }
-
 }
 
 /// Wrapper type for a workflow that may be saved locally or using cloud sync.

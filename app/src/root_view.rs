@@ -29,7 +29,6 @@ use crate::interval_timer::IntervalTimer;
 use crate::launch_configs::launch_config;
 use crate::pane_group::{NewTerminalOptions, PanesLayout};
 use crate::persistence::ModelEvent;
-use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::ids::ServerId;
 use crate::server::server_api::{ServerApi, ServerApiProvider};
 use crate::settings::QuakeModeSettings;
@@ -43,10 +42,8 @@ use crate::terminal::view::cell_size_and_padding;
 use crate::themes::theme::AnsiColorIdentifier;
 use crate::uri::OpenSettingsArgs;
 use crate::util::bindings::{self, is_binding_pty_compliant};
-use crate::view_components::DismissibleToast;
 use crate::window_settings::WindowSettings;
 use crate::workspace::{PaneViewLocator, Workspace, WorkspaceAction, WorkspaceRegistry};
-use crate::workspaces::team_tester::TeamTesterStatus;
 use crate::workspaces::user_workspaces::UserWorkspaces;
 use crate::{
     ChannelState, GlobalResourceHandles, GlobalResourceHandlesProvider, UpdateQuakeModeEventArg,
@@ -1127,8 +1124,7 @@ impl NewWorkspaceSource {
             } => Some(*source_window_id),
             Self::FromTemplate { .. }
             | Self::Session { .. }
-            | Self::NotebookFromFilePath { .. }
-            => None,
+            | Self::NotebookFromFilePath { .. } => None,
             Self::TeamSwitched { team_uid } => return Some(*team_uid),
             Self::Restored {
                 window_snapshot, ..

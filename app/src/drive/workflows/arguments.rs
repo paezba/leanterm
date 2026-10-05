@@ -57,10 +57,6 @@ impl ArgumentsState {
         Self::new(prev_state, input_string, false)
     }
 
-    pub fn for_saved_prompt(prev_state: &ArgumentsState, input_string: String) -> Self {
-        Self::new(prev_state, input_string, true)
-    }
-
     fn new(prev_state: &ArgumentsState, input_string: String, is_for_saved_prompt: bool) -> Self {
         let mut arg_name_word_index_pairs: Vec<(String, usize)> = Vec::new();
         let mut arg_names = HashSet::new();

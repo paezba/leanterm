@@ -27,7 +27,6 @@ mod drive;
 mod dynamic_libraries;
 mod env_vars;
 mod event_sources;
-mod experiments;
 mod external_secrets;
 #[cfg(target_family = "wasm")]
 mod font_fallback;
@@ -191,7 +190,6 @@ use crate::context_chips::prompt::Prompt;
 use crate::default_terminal::DefaultTerminal;
 use crate::drive::CloudObjectTypeAndId;
 use crate::event_sources::PaletteSource;
-use crate::experiments::ImprovedPaletteSearch;
 pub use crate::global_resource_handles::{GlobalResourceHandles, GlobalResourceHandlesProvider};
 use crate::gpu_state::GPUState;
 use crate::network::NetworkStatus;
@@ -859,9 +857,7 @@ fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
             pre_sentry_errors,
         );
 
-        if ImprovedPaletteSearch::improved_search_enabled(ctx) {
-            FeatureFlag::UseTantivySearch.set_enabled(true);
-        }
+        FeatureFlag::UseTantivySearch.set_enabled(true);
 
         launch(ctx, app_state, launch_mode);
     })
@@ -1039,8 +1035,6 @@ pub(crate) fn initialize_app(
     ctx.set_fallback_font_source_provider(|url| ::asset_cache::url_source(url));
 
     ctx.set_default_binding_validator(is_binding_cross_platform);
-
-    experiments::init(ctx);
 
     // Initialize timestamp for session id and last active event
     App::record_last_active_timestamp();
@@ -1382,7 +1376,6 @@ pub(crate) fn initialize_app(
 
     // Add a singleton model for resizable modals whose size should be persisted through restarts.
     ctx.add_singleton_model(|_| ResizableData::default());
-
 
     ctx.add_singleton_model(LocalWorkflows::new);
 

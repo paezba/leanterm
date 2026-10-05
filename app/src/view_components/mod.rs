@@ -15,7 +15,6 @@ pub mod find;
 mod markdown_toggle_view;
 mod submittable_text_input;
 
-pub use clickable_text_input::*;
 pub use compact_dropdown::{CompactDropdown, CompactDropdownEvent, CompactDropdownItem};
 pub use dismissible_toast::*;
 pub use dropdown::{Dropdown, DropdownItem, DropdownItemAction};

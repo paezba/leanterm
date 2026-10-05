@@ -4,7 +4,6 @@ pub use cloud_object_models::{
 use itertools::Itertools;
 use warp_util::path::ShellFamily;
 
-
 use crate::cloud_object::model::generic_string_model::StringModel;
 use crate::cloud_object::model::json_model::JsonModel;
 use crate::cloud_object::{
@@ -148,7 +147,6 @@ impl StringModel for EnvVarCollection {
     fn supports_linking(&self) -> bool {
         true
     }
-
 }
 
 impl JsonModel for EnvVarCollection {

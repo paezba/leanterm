@@ -1,7 +1,5 @@
 // Re-export types from cloud_objects.
-pub use cloud_objects::drive::sharing::{
-    LinkSharingSubjectType, SharingAccessLevel, Subject, TeamKind, UserKind,
-};
+pub use cloud_objects::drive::sharing::SharingAccessLevel;
 
 /// Whether not a shared object's contents are editable by the current user.
 ///

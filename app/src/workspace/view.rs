@@ -125,8 +125,8 @@ use crate::auth::auth_manager::AuthManager;
 use crate::auth::auth_state::AuthState;
 use crate::banner::BannerState;
 use crate::channel::ChannelState;
-use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::CloudObject;
+use crate::cloud_object::model::persistence::CloudModel;
 use crate::code::editor::{add_color, remove_color};
 #[cfg(feature = "local_fs")]
 use crate::code::editor_management::CodeManager;
@@ -137,14 +137,12 @@ use crate::code_review::telemetry_event::CodeReviewPaneEntrypoint;
 use crate::coding_panel_enablement_state::CodingPanelEnablementState;
 use crate::context_chips::ChipRuntimeCapabilities;
 use crate::default_terminal::DefaultTerminal;
-use crate::drive::{CloudObjectTypeAndId, DriveObjectType};
+use crate::drive::CloudObjectTypeAndId;
 use crate::editor::{
     EditorView, Event as EditorEvent, PropagateAndNoOpNavigationKeys, SingleLineEditorOptions,
     TextOptions,
 };
-use crate::event_sources::{
-    AddTabWithShellSource, LaunchConfigUiLocation, PaletteSource,
-};
+use crate::event_sources::{AddTabWithShellSource, LaunchConfigUiLocation, PaletteSource};
 use crate::launch_configs::launch_config::WindowTemplate;
 use crate::launch_configs::save_modal::{LaunchConfigModalEvent, LaunchConfigSaveModal};
 use crate::menu::{
@@ -280,9 +278,7 @@ use crate::view_components::{DismissibleToast, DismissibleToastStack, ToastLink}
 #[cfg(target_family = "wasm")]
 use crate::wasm_nux_dialog::WasmNUXDialog;
 use crate::window_settings::{WindowSettings, WindowSettingsChangedEvent, ZoomLevel};
-use crate::workflows::{
-    WorkflowSelectionSource, WorkflowSource, WorkflowType,
-};
+use crate::workflows::{WorkflowSelectionSource, WorkflowSource, WorkflowType};
 use crate::workspace::action::CommandSearchOptions;
 #[cfg(target_os = "macos")]
 use crate::workspace::cli_install;
@@ -302,7 +298,6 @@ use crate::workspace::view::left_panel::{
     LeftPanelAction, LeftPanelEvent, LeftPanelView, ToolPanelView,
 };
 use crate::workspace::view::right_panel::{RightPanelEvent, RightPanelView};
-use crate::workspaces::update_manager::TeamUpdateManager;
 use crate::workspaces::user_workspaces::UserWorkspaces;
 use crate::workspaces::workspace::AdminEnablementSetting;
 

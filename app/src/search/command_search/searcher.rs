@@ -46,7 +46,6 @@ pub enum CommandSearchItemAction {
 
     /// The user accepted a workflow search item.
     AcceptWorkflow(AcceptedWorkflow),
-
 }
 
 #[cfg(test)]

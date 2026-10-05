@@ -1,6 +1,6 @@
+mod context_menu;
 pub mod editor;
 pub mod file;
-mod context_menu;
 pub mod link;
 mod styles;
 

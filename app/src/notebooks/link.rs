@@ -254,9 +254,7 @@ impl NotebookLinks {
     /// * Other files are opened in the configured editor or system-default application.
     pub fn open(&self, link: LinkTarget, ctx: &mut ModelContext<Self>) {
         match link {
-            LinkTarget::Url(url) => {
-                ctx.open_url(url.as_str())
-            }
+            LinkTarget::Url(url) => ctx.open_url(url.as_str()),
             LinkTarget::LocalFile {
                 path,
                 line_and_column,

@@ -59,7 +59,6 @@ use crate::workspace::WorkspaceAction;
 use crate::workspaces::workspace::{BillingMetadata, CustomerType};
 
 mod about_page;
-mod admin_actions;
 mod appearance_page;
 mod code_editor_review_page;
 mod directory_color_add_picker;
@@ -211,8 +210,6 @@ pub enum SettingsSection {
     Privacy,
     Scripting,
     SharedBlocks,
-    Teams,
-    WarpDrive,
     Warpify,
     EditorAndCodeReview,
 }
@@ -221,7 +218,7 @@ impl SettingsSection {
     /// Whether this section is removed from settings in lean terminal builds.
     fn is_hidden_in_lean_terminal(self) -> bool {
         match self {
-            Self::Account | Self::SharedBlocks | Self::Teams | Self::WarpDrive => true,
+            Self::Account | Self::SharedBlocks => true,
             Self::About
             | Self::Appearance
             | Self::Features
@@ -244,7 +241,6 @@ impl Display for SettingsSection {
             SettingsSection::Keybindings => write!(f, "Keyboard shortcuts"),
             SettingsSection::SharedBlocks => write!(f, "Shared blocks"),
             SettingsSection::Scripting => write!(f, "Scripting"),
-            SettingsSection::WarpDrive => write!(f, "Warp Drive"),
             SettingsSection::EditorAndCodeReview => write!(f, "Editor and Code Review"),
             _ => write!(f, "{self:?}"),
         }
@@ -275,8 +271,6 @@ impl SettingsSection {
             Self::Privacy => "Privacy",
             Self::Scripting => "Scripting",
             Self::SharedBlocks => "Shared blocks",
-            Self::Teams => "Teams",
-            Self::WarpDrive => "Warp Drive",
             Self::Warpify => "Warpify",
             Self::EditorAndCodeReview => "Editor and Code Review",
         }
@@ -299,8 +293,6 @@ impl SettingsSection {
             "Privacy" => Self::Privacy,
             "Scripting" => Self::Scripting,
             "Shared blocks" => Self::SharedBlocks,
-            "Teams" => Self::Teams,
-            "Warp Drive" | "WarpDrive" => Self::WarpDrive,
             "Warpify" => Self::Warpify,
             // "Code" named the combined page before indexing settings were removed.
             "Editor and Code Review" | "EditorAndCodeReview" | "Code" => Self::EditorAndCodeReview,

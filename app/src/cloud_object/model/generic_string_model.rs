@@ -303,5 +303,4 @@ where
     fn renders_in_warp_drive(&self) -> bool {
         self.string_model.renders_in_warp_drive()
     }
-
 }

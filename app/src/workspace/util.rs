@@ -3,15 +3,11 @@ use warpui::elements::MouseStateHandle;
 use warpui::{AppContext, EntityId, SingletonEntity, ViewContext, ViewHandle, WindowId};
 
 use crate::appearance::Appearance;
-use crate::menu::{MenuItem, MenuItemFields};
 use crate::pane_group::PaneId;
-use crate::server::ids::ServerId;
 use crate::terminal::TerminalView;
-use crate::ui_components::icons::Icon;
 use crate::window_settings::WindowSettings;
+use crate::workspace::Workspace;
 use crate::workspace::tab_group::TabGroupId;
-use crate::workspace::{Workspace, WorkspaceAction};
-use crate::workspaces::team::Team;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 /// What composes a pane (i.e. the pane group and the pane itself).

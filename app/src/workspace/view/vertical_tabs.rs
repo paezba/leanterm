@@ -44,9 +44,7 @@ use crate::drive::DriveObjectType;
 use crate::drive::cloud_object_styling::warp_drive_icon_color;
 use crate::editor::EditorView;
 use crate::pane_group::pane::IPaneType;
-use crate::pane_group::{
-    CodePane, PaneGroup, PaneId, TabBarHoverIndex, TerminalPane,
-};
+use crate::pane_group::{CodePane, PaneGroup, PaneId, TabBarHoverIndex, TerminalPane};
 use crate::safe_triangle::SafeTriangle;
 use crate::tab::{
     SelectedTabColor, TAB_INDICATOR_SYNCED_COLOR, TabData, reveals_tab_shortcut_hints,
