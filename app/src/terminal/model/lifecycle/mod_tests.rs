@@ -4,7 +4,7 @@ use instant::Instant;
 use warp_core::features::FeatureFlag;
 
 use super::transition::{
-    IgnoreReason, LifecycleAction, LifecycleInput, LifecycleInputKind, LifecyclePhase,
+    IgnoreReason, LifecycleAction, LifecycleInput, LifecyclePhase,
     LifecycleSnapshot, NextBlockIdDisposition, plan, reconcile_phase,
 };
 use crate::terminal::model::block::BlockState;

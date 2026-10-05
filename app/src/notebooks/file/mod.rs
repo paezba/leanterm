@@ -50,7 +50,6 @@ use crate::pane_group::pane::view::header::components::{
     render_three_column_header,
 };
 use crate::pane_group::{BackingView, PaneConfiguration, PaneEvent};
-use crate::event_sources::NotebookTelemetryMetadata;
 use crate::settings::FontSettings;
 use crate::terminal::model::session::Session;
 use crate::ui_components::icons::Icon;

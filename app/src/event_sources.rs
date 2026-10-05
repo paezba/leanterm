@@ -1,54 +1,16 @@
-use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
-use serde_json::{Value, json};
-use strum_macros::{EnumDiscriminants, EnumIter};
-use warp_completer::completer::MatchType;
-use warp_core::command::ExitCode;
 use warp_core::interval_timer::TimingDataPoint;
 pub use warp_terminal::ImageProtocol;
-use warpui::keymap::Keystroke;
-use warpui::notification::{NotificationSendError, RequestPermissionsOutcome};
-use warpui::rendering::ThinStrokes;
 
-use crate::auth::auth_manager::LoginGatedFeature;
-use crate::channel::Channel;
 use crate::cloud_object::model::generic_string_model::GenericStringObjectId;
 use crate::cloud_object::{GenericStringObjectFormat, Space};
-#[cfg(feature = "local_fs")]
-use crate::code::editor_management::CodeSource;
-use crate::drive::{CloudObjectTypeAndId, DriveSortOrder};
-use crate::features::FeatureFlag;
-use crate::launch_configs::save_modal::SaveState;
+use crate::drive::CloudObjectTypeAndId;
 use crate::notebooks::{NotebookId, NotebookLocation};
-use crate::palette::PaletteMode;
-use crate::pane_group::PaneDragDropLocation;
-use crate::prompt::editor_modal::OpenSource as PromptEditorOpenSource;
-use crate::search::QueryFilter;
 use crate::search::command_search::searcher::CommandSearchItemAction;
-use crate::server::block::DisplaySetting;
 use crate::server::ids::ServerId;
-use crate::settings::import::config::ParsedTerminalSetting;
-use crate::settings::import::model::TerminalType;
-use crate::settings_view::TeamsInviteOption;
-use crate::terminal::ShareBlockType;
-use crate::terminal::block_list_viewport::InputMode;
-use crate::terminal::input::TelemetryInputSuggestionsMode;
 use crate::terminal::model::session::SessionId;
-use crate::terminal::model::terminal_model::BlockSelectionCardinality;
-use crate::terminal::settings::AltScreenPaddingMode;
-use crate::terminal::shell::ShellType;
-use crate::terminal::view::{
-    BlockEntity, BlockSelectionDetails, NotificationsDiscoveryBannerAction,
-    NotificationsErrorBannerAction, NotificationsTrigger, PromptPart,
-};
-#[cfg(feature = "local_fs")]
-use crate::util::file::external_editor::settings::EditorLayout;
-#[cfg(feature = "local_fs")]
-use crate::util::openable_file_type::FileTarget;
 use crate::workflows::{WorkflowId, WorkflowSelectionSource, WorkflowSource};
-use crate::workspace::TabMovement;
-use crate::workspace::tab_settings::{TabCloseButtonPosition, WorkspaceDecorationVisibility};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct BootstrappingInfo {

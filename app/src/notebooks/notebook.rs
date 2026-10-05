@@ -67,7 +67,7 @@ use crate::pane_group::{BackingView, PaneConfiguration, PaneEvent};
 use crate::server::cloud_objects::update_manager::{FetchSingleObjectOption, UpdateManager};
 use crate::server::ids::{ClientId, ServerId, SyncId};
 use crate::event_sources::{
-    CloudObjectTelemetryMetadata, NotebookTelemetryMetadata,
+    CloudObjectTelemetryMetadata,
     SharingDialogSource, TelemetryCloudObjectType,
 };
 use crate::settings::app_installation_detection::{

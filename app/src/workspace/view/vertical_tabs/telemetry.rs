@@ -1,6 +1,4 @@
 use serde_json::{Value, json};
-use strum_macros::{EnumDiscriminants, EnumIter};
-use warp_core::features::FeatureFlag;
 
 use crate::workspace::tab_settings::{
     VerticalTabsCompactSubtitle, VerticalTabsDisplayGranularity, VerticalTabsPrimaryInfo,

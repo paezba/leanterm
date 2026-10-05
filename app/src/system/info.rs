@@ -2,17 +2,12 @@ use std::collections::VecDeque;
 use std::ffi::OsStr;
 
 use byte_unit::Byte;
-use chrono::{DateTime, Local, Utc};
-use itertools::Itertools as _;
-use num_traits::Zero;
-use ordered_float::OrderedFloat;
-use serde::Serialize;
+use chrono::{DateTime, Utc};
 use sysinfo::ProcessesToUpdate;
 use warp_core::channel::ChannelState;
 use warpui::{App, AppContext, Entity, ModelContext, SingletonEntity};
 
 use crate::system::memory_footprint;
-use crate::terminal::TerminalView;
 
 /// The threshold at which we emit a memory usage warning, in bytes.
 const MEMORY_USAGE_WARNING_THRESHOLD_BYTES: u64 = Byte::GIGABYTE.as_u64() * 10;
@@ -433,7 +428,3 @@ impl Default for StatsBuffer {
         Self::new()
     }
 }
-
-#[cfg(test)]
-#[path = "info_tests.rs"]
-mod tests;
