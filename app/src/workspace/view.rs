@@ -110,7 +110,7 @@ use super::tab_settings::{
 };
 use super::util::{
     PaneViewLocator, TabMovement, TerminalSessionFallbackBehavior, WorkspaceMouseStates,
-    WorkspaceState, team_switcher_menu_items,
+    WorkspaceState,
 };
 use super::{ActiveSession, TabBarDropTargetData, TabBarLocation, WorkspaceRegistry, util};
 use crate::GlobalResourceHandles;
@@ -348,30 +348,6 @@ const THEME_CHOOSER_RATIO: f32 = 3.5;
 
 /// Save position for the tab bar.
 pub(crate) const TAB_BAR_POSITION_ID: &str = "workspace_view:tab_bar";
-const TEAM_SWITCHER_PILL_POSITION_ID: &str = "workspace_view:team_switcher_pill";
-const TEAM_SWITCHER_DOT_ALPHA: u8 = 204;
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum TeamNavigationMode {
-    Hidden,
-    BrowseTeams,
-    TeamSwitcher,
-}
-
-fn team_navigation_mode(
-    has_current_team: bool,
-    has_teams: bool,
-    can_switch_teams: bool,
-    has_joinable_teams: bool,
-) -> TeamNavigationMode {
-    if has_current_team && (can_switch_teams || has_joinable_teams) {
-        TeamNavigationMode::TeamSwitcher
-    } else if !has_teams && has_joinable_teams {
-        TeamNavigationMode::BrowseTeams
-    } else {
-        TeamNavigationMode::Hidden
-    }
-}
-
 /// Save position for the vertical tabs panel.
 /// HOA onboarding callouts anchor relative to this position, so whichever code
 /// path renders the vertical tabs panel must wrap it in a `SavePosition` with
@@ -732,8 +708,6 @@ pub struct Workspace {
     header_toolbar_context_menu: ViewHandle<Menu<WorkspaceAction>>,
     show_header_toolbar_context_menu: Option<Vector2F>,
     /// Dropdown menu for the title-bar team-switcher pill.
-    team_switcher_menu: ViewHandle<Menu<WorkspaceAction>>,
-    show_team_switcher_menu: bool,
     theme_creator_modal: ViewHandle<ThemeCreatorModal>,
     theme_deletion_modal: ViewHandle<ThemeDeletionModal>,
     toast_stack: ViewHandle<DismissibleToastStack<WorkspaceAction>>,
@@ -2121,8 +2095,6 @@ impl Workspace {
             header_toolbar_editor_modal: Self::build_header_toolbar_editor_modal(ctx),
             header_toolbar_context_menu: Self::build_header_toolbar_context_menu(ctx),
             show_header_toolbar_context_menu: None,
-            team_switcher_menu: Self::build_team_switcher_menu(ctx),
-            show_team_switcher_menu: false,
             is_user_menu_open: false,
             tab_bar_pinned_by_popup: false,
             user_menu,
@@ -3780,162 +3752,6 @@ impl Workspace {
             }
         });
         menu
-    }
-
-    fn build_team_switcher_menu(ctx: &mut ViewContext<Self>) -> ViewHandle<Menu<WorkspaceAction>> {
-        let menu = ctx.add_typed_action_view(|_| {
-            Menu::new()
-                .with_drop_shadow()
-                .prevent_interaction_with_other_elements()
-        });
-        ctx.subscribe_to_view(&menu, |me, _, event, ctx| {
-            if let MenuEvent::Close { .. } = event {
-                me.show_team_switcher_menu = false;
-                ctx.notify();
-            }
-        });
-        menu
-    }
-
-    fn show_team_switcher_dropdown(&mut self, ctx: &mut ViewContext<Self>) {
-        let window_id = self.window_id;
-        let user_workspaces = UserWorkspaces::as_ref(ctx);
-        let Some(workspace) = user_workspaces.current_workspace() else {
-            return;
-        };
-        let joinable_team_count = if workspace.is_native_workspaces_enabled() {
-            workspace.joinable_teams().count()
-        } else {
-            0
-        };
-        if !user_workspaces.can_switch_teams() && joinable_team_count == 0 {
-            return;
-        }
-        if user_workspaces.team_for_window(window_id).is_none() {
-            return;
-        }
-        let current_team_uid = user_workspaces.team_uid_for_window(window_id);
-        let mut items = team_switcher_menu_items(&workspace.teams, current_team_uid);
-        if joinable_team_count > 0 {
-            items.push(MenuItem::Separator);
-            items.push(
-                MenuItemFields::new("Browse teams")
-                    .with_icon(icons::Icon::Search)
-                    .with_right_side_label(
-                        format!("{joinable_team_count} available"),
-                        Properties::default(),
-                    )
-                    .with_on_select_action(WorkspaceAction::BrowseTeams)
-                    .into_item(),
-            );
-        }
-        self.team_switcher_menu
-            .update(ctx, |menu, ctx| menu.set_items(items, ctx));
-        self.show_team_switcher_menu = true;
-        ctx.focus(&self.team_switcher_menu);
-        ctx.notify();
-    }
-
-    fn render_team_switcher_pill(
-        &self,
-        appearance: &Appearance,
-        ctx: &AppContext,
-    ) -> Option<Box<dyn Element>> {
-        let user_workspaces = UserWorkspaces::as_ref(ctx);
-        let current_team = user_workspaces.team_for_window(self.window_id);
-        let has_joinable_teams = user_workspaces
-            .current_workspace()
-            .is_some_and(|workspace| {
-                workspace.is_native_workspaces_enabled()
-                    && workspace.joinable_teams().next().is_some()
-            });
-        let mode = team_navigation_mode(
-            current_team.is_some(),
-            user_workspaces.has_teams(),
-            user_workspaces.can_switch_teams(),
-            has_joinable_teams,
-        );
-        let theme = appearance.theme();
-        let text_color = theme.foreground();
-        let pill_bg_normal = internal_colors::fg_overlay_1(theme);
-        let pill_bg_hover = internal_colors::fg_overlay_2(theme);
-        let (label, dot_color, action) = match mode {
-            TeamNavigationMode::Hidden => return None,
-            TeamNavigationMode::BrowseTeams => (
-                "Browse teams".to_string(),
-                None,
-                WorkspaceAction::BrowseTeams,
-            ),
-            TeamNavigationMode::TeamSwitcher => {
-                let current_team = current_team?;
-                let mut dot_color = current_team
-                    .color
-                    .as_deref()
-                    .and_then(|hex| {
-                        warp_core::ui::color::hex_color::coloru_from_hex_string(hex).ok()
-                    })
-                    .unwrap_or_else(|| internal_colors::neutral_5(theme));
-                dot_color.a = TEAM_SWITCHER_DOT_ALPHA;
-                (
-                    current_team.name.clone(),
-                    Some(dot_color),
-                    WorkspaceAction::ShowTeamSwitcherMenu,
-                )
-            }
-        };
-
-        let pill = Hoverable::new(self.mouse_states.team_switcher_pill.clone(), move |state| {
-            let name_text = Text::new_inline(
-                label.clone(),
-                appearance.ui_font_family(),
-                appearance.ui_font_size(),
-            )
-            .with_color(text_color.into())
-            .with_clip(ClipConfig::ellipsis())
-            .finish();
-
-            let mut row = Flex::row()
-                .with_cross_axis_alignment(CrossAxisAlignment::Center)
-                .with_spacing(4.);
-            if let Some(dot_color) = dot_color {
-                row.add_child(
-                    ConstrainedBox::new(
-                        Rect::new()
-                            .with_background(Fill::Solid(dot_color))
-                            .with_corner_radius(CornerRadius::with_all(Radius::Percentage(50.)))
-                            .finish(),
-                    )
-                    .with_width(8.)
-                    .with_height(8.)
-                    .finish(),
-                );
-            }
-            row.add_child(ConstrainedBox::new(name_text).with_max_width(120.).finish());
-
-            Container::new(row.finish())
-                .with_background(if state.is_hovered() {
-                    pill_bg_hover
-                } else {
-                    pill_bg_normal
-                })
-                .with_corner_radius(CornerRadius::with_all(Radius::Pixels(6.)))
-                .with_padding_left(8.)
-                .with_padding_right(8.)
-                .with_padding_top(4.)
-                .with_padding_bottom(4.)
-                .finish()
-        })
-        .with_cursor(Cursor::PointingHand)
-        .on_click(move |ctx, _, _| {
-            ctx.dispatch_typed_action(action.clone());
-        })
-        .finish();
-
-        Some(
-            Container::new(SavePosition::new(pill, TEAM_SWITCHER_PILL_POSITION_ID).finish())
-                .with_margin_left(TAB_BAR_PADDING_LEFT)
-                .finish(),
-        )
     }
 
     fn show_header_toolbar_context_menu(
@@ -10838,31 +10654,6 @@ impl Workspace {
         self.close_all_overlays(ctx);
         self.open_settings_pane(section, Some(search_query), ctx);
     }
-    fn browse_teams(&mut self, ctx: &mut ViewContext<Self>) {
-        let show_join_modal = UserWorkspaces::as_ref(ctx)
-            .team_for_window(self.window_id)
-            .is_some();
-        self.show_settings_with_section(Some(SettingsSection::Teams), ctx);
-        if show_join_modal {
-            self.settings_pane.update(ctx, |view, ctx| {
-                view.open_teams_page_join_modal(ctx);
-            });
-        }
-    }
-
-    /// Opens the team settings page and fills the invite field with the given email. This is used when linking directing to
-    /// settings with the intent of inviting a user.
-    pub fn show_team_settings_page_with_email_invite(
-        &mut self,
-        email_invite: Option<&String>,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        self.show_settings_with_section(Some(SettingsSection::Teams), ctx);
-
-        self.settings_pane.update(ctx, |view, ctx| {
-            view.open_teams_page_email_invite(email_invite, ctx);
-        });
-    }
 
     /// Shows the theme chooser so the user can change the active theme.
     pub fn show_theme_chooser_for_active_theme(&mut self, ctx: &mut ViewContext<Self>) {
@@ -12503,10 +12294,6 @@ impl Workspace {
             if let Some(button) = self.render_header_toolbar_button(&item, appearance, ctx) {
                 target.add_child(button);
             }
-        }
-
-        if let Some(pill) = self.render_team_switcher_pill(appearance, ctx) {
-            target.add_child(pill);
         }
 
         target.add_child(
@@ -15185,47 +14972,6 @@ impl TypedActionView for Workspace {
             SyncTrafficLights => {
                 self.sync_window_button_visibility(ctx);
             }
-            OpenNewWindowForTeam { team_uid } => {
-                let team_uid = *team_uid;
-                TeamUpdateManager::handle(ctx).update(ctx, |manager, ctx| {
-                    std::mem::drop(manager.refresh_workspace_metadata(ctx));
-                });
-                #[cfg(target_family = "wasm")]
-                {
-                    // WASM hosts a single window; creating another replaces #wasm-container
-                    // and orphans the live session.
-                    UserWorkspaces::handle(ctx).update(ctx, |user_workspaces, ctx| {
-                        user_workspaces.switch_window_to_team(self.window_id, team_uid, ctx);
-                    });
-                    ctx.notify();
-                }
-                #[cfg(not(target_family = "wasm"))]
-                {
-                    let existing_window_id = ctx
-                        .windows()
-                        .ordered_window_ids()
-                        .into_iter()
-                        .chain(ctx.window_ids())
-                        .find(|window_id| {
-                            UserWorkspaces::as_ref(ctx).team_uid_for_window(*window_id)
-                                == Some(team_uid)
-                        });
-                    if let Some(window_id) = existing_window_id {
-                        ctx.windows().show_window_and_focus_app(window_id);
-                    } else {
-                        crate::root_view::open_new_with_workspace_source(
-                            NewWorkspaceSource::TeamSwitched { team_uid },
-                            ctx,
-                        );
-                    }
-                }
-            }
-            BrowseTeams => {
-                self.browse_teams(ctx);
-            }
-            ShowTeamSwitcherMenu => {
-                self.show_team_switcher_dropdown(ctx);
-            }
         };
         if action.should_save_app_state_on_action() {
             ctx.dispatch_global_action("workspace:save_app", ());
@@ -15611,19 +15357,6 @@ impl View for Workspace {
                     position,
                     ParentOffsetBounds::WindowByPosition,
                     ParentAnchor::TopLeft,
-                    ChildAnchor::TopLeft,
-                ),
-            );
-        }
-
-        if self.show_team_switcher_menu {
-            stack.add_positioned_overlay_child(
-                ChildView::new(&self.team_switcher_menu).finish(),
-                OffsetPositioning::offset_from_save_position_element(
-                    TEAM_SWITCHER_PILL_POSITION_ID,
-                    vec2f(0., 4.),
-                    PositionedElementOffsetBounds::WindowByPosition,
-                    PositionedElementAnchor::BottomLeft,
                     ChildAnchor::TopLeft,
                 ),
             );

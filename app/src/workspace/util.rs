@@ -357,30 +357,3 @@ fn get_terminal_background_opacity(window_id: WindowId, app: &AppContext) -> u8 
         _ => background_opacity,
     }
 }
-
-/// Builds the team-switcher dropdown items: a "Teams" header followed by one entry per team,
-/// marking the current team with a check icon.
-pub fn team_switcher_menu_items(
-    teams: &[Team],
-    current_team_uid: Option<ServerId>,
-) -> Vec<MenuItem<WorkspaceAction>> {
-    let mut items = vec![
-        MenuItem::Header {
-            fields: MenuItemFields::new("Teams"),
-            clickable: false,
-            right_side_fields: None,
-        },
-        MenuItem::Separator,
-    ];
-    items.extend(teams.iter().map(|team| {
-        let mut fields = MenuItemFields::new(team.name.clone())
-            .with_on_select_action(WorkspaceAction::OpenNewWindowForTeam { team_uid: team.uid });
-        fields = if Some(team.uid) == current_team_uid {
-            fields.with_icon(Icon::Check)
-        } else {
-            fields.with_indent()
-        };
-        fields.into_item()
-    }));
-    items
-}

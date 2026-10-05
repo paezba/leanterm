@@ -528,13 +528,6 @@ pub enum WorkspaceAction {
     /// Opens (or focuses) the in-app network log pane as a right-split of the
     /// active pane group. Gated on `ContextFlag::NetworkLogConsole`.
     OpenNetworkLogPane,
-    /// Opens or focuses a window scoped to the specified team.
-    OpenNewWindowForTeam {
-        team_uid: ServerId,
-    },
-    BrowseTeams,
-    /// Shows (toggles) the team-switcher dropdown menu in the title bar.
-    ShowTeamSwitcherMenu,
 }
 
 impl From<&WorkspaceAction> for LoginGatedFeature {
@@ -744,10 +737,7 @@ impl WorkspaceAction {
             | TabConfigSidecarEditConfig { .. }
             | TabConfigSidecarRemoveConfig { .. }
             | OpenSettingsFile
-            | OpenNetworkLogPane
-            | OpenNewWindowForTeam { .. }
-            | BrowseTeams
-            | ShowTeamSwitcherMenu => false,
+            | OpenNetworkLogPane => false,
             #[cfg(not(target_family = "wasm"))]
             ViewLogs => false,
             #[cfg(target_os = "macos")]
