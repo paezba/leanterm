@@ -421,10 +421,6 @@ fn app_database_file_path() -> PathBuf {
         .join(WARP_SQLITE_FILE_NAME)
 }
 
-fn tui_database_file_path() -> PathBuf {
-    warp_core::paths::tui_state_dir().join(WARP_SQLITE_FILE_NAME)
-}
-
 fn remote_server_daemon_database_file_path(identity_key: &str) -> PathBuf {
     let data_dir = remote_server::setup::remote_server_daemon_data_dir(identity_key);
     let expanded_data_dir = shellexpand::tilde(&data_dir).into_owned();
