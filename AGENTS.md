@@ -8,21 +8,6 @@ This file provides guidance when working with code in this repository.
 - `cargo run` / `./script/run` - Build and run the GUI desktop app locally
 - `cargo bundle --bin warp-oss` - Bundle the app
 
-### Running with local warp-server
-To connect Warp client to a local warp-server instance:
-
-```bash
-# Connect to server on default port 8080
-WITH_LOCAL_SERVER=1 ./script/run
-
-# Connect to server on custom port (e.g., 8082)
-WITH_LOCAL_SERVER=1 SERVER_ROOT_URL=http://localhost:8082 WS_SERVER_URL=ws://localhost:8082/graphql/v2 ./script/run
-```
-
-Environment variables:
-- `SERVER_ROOT_URL` - HTTP endpoint (default: `http://localhost:8080`)
-- `WS_SERVER_URL` - WebSocket endpoint (default: `ws://localhost:8080/graphql/v2`)
-
 ### Testing
 - `cargo nextest run --no-fail-fast --workspace` - Run tests with nextest
 - `cargo test --doc` - Run doc tests
@@ -73,9 +58,9 @@ The `app/` crate is a GUI desktop app on the WarpUI pixel/GPU framework (`warpui
 
 **Main app** (`app/`):
 - Terminal emulation and shell management (`terminal/`)
-- AI integration including Agent Mode (`ai/`)
-- Cloud synchronization and Drive features (`drive/`)
-- Authentication and user management (`auth/`)
+- Code editor and code review (`code/`, `code_review/`)
+- Local notebooks and workflows (`notebooks/`, `workflows/`)
+- Local control / `warpctrl` (`local_control/`)
 - Settings and preferences (`settings/`)
 - Workspace and session management (`workspace/`)
 
@@ -84,15 +69,13 @@ The `app/` crate is a GUI desktop app on the WarpUI pixel/GPU framework (`warpui
 - `crates/editor/` - Text editing functionality
 - `crates/warpui/` and `crates/warpui_core/` - Custom UI framework
 - `crates/ipc/` - Inter-process communication
-- `crates/graphql/` - GraphQL client and schema
+- `crates/code_diff/` - Diff validation and workspace metadata used by the code editor
 
 ### Key Architectural Patterns
 
 1. **Entity-Handle System**: Views reference other views via handles, not direct ownership
 2. **Modular Structure**: Workspace contains multiple workspace configurations, each with terminals, notebooks, etc.
 3. **Cross-Platform**: Native implementations for macOS, Windows, Linux, plus WASM target
-4. **AI Integration**: Built-in AI assistant with context awareness and codebase indexing
-5. **Cloud Sync**: Objects can be synchronized across devices via Warp Drive
 
 ### Development Guidelines
 
@@ -186,10 +169,6 @@ for itself.
 - Uses Diesel ORM with SQLite
 - Migrations in `crates/persistence/migrations/`
 - Schema defined in `crates/persistence/src/schema.rs`
-
-**GraphQL**:
-- Schema and client code generation from `crates/warp_graphql_schema/api/schema.graphql`
-- TypeScript types generated for frontend integration
 
 ### Feature Flags
 

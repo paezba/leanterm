@@ -12,8 +12,6 @@ pub(in crate::terminal) use transition::{
     LifecycleSnapshot, LifecycleTransition, NextBlockIdDisposition, PreexecObservation,
 };
 
-use super::block::BlockState;
-
 /// Describes whether a command-start intent was accepted or conservatively ignored.
 ///
 /// Callers must perform start-dependent side effects, such as writing PTY bytes or attaching
@@ -69,34 +67,7 @@ impl BlockLifecycleCoordinator {
         input: LifecycleInput,
     ) -> LifecycleTransition {
         let previous_phase = transition::reconcile_phase(self.phase, snapshot);
-        let (planned_next_phase, planned_action) = transition::plan(previous_phase, input);
-        let recovers_command_finished = matches!(
-            (input, planned_action),
-            (
-                LifecycleInput::CommandFinished(NextBlockIdDisposition::Novel),
-                LifecycleAction::AcceptCommandFinished,
-            )
-        ) && match previous_phase {
-            LifecyclePhase::AwaitingPrecmd | LifecyclePhase::Unknown => true,
-            LifecyclePhase::AtPrompt => snapshot.is_bootstrap_done,
-            LifecyclePhase::Submitted | LifecyclePhase::Executing | LifecyclePhase::Terminated => {
-                false
-            }
-        };
-        let _is_gated_recovery = recovers_command_finished
-            || matches!(
-                planned_action,
-                LifecycleAction::ReconcileCompletionThenApplyPrecmd
-            );
-        let (next_phase, action) = (planned_next_phase, planned_action);
-        let _reconciles_missing_execution = matches!(
-            (input, planned_action),
-            (
-                LifecycleInput::CommandFinished(NextBlockIdDisposition::Novel),
-                LifecycleAction::AcceptCommandFinished,
-            )
-        ) && !snapshot.finished
-            && snapshot.block_state != BlockState::Executing;
+        let (next_phase, action) = transition::plan(previous_phase, input);
         LifecycleTransition {
             previous_phase,
             next_phase,
