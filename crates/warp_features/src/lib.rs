@@ -15,19 +15,11 @@ pub enum FeatureFlag {
     WithSandboxTelemetry,
     RecordAppActiveEvents,
 
-    WelcomeTips,
-    ThinStrokes,
-    WelcomeBlock,
     KnowledgeSidebar,
 
     RuntimeFeatureFlags,
 
-    /// Enables cloud object related features for an explicit allowlist of team testers.
-    CloudObjects,
 
-    /// If `true`, fetch updated Warp channel versions from the Warp server endpoint instead of
-    /// from GCP directly.
-    FetchChannelVersionsFromWarpServer,
 
     /// Does grid storage go forwards or backwards
     SequentialStorage,
@@ -57,8 +49,6 @@ pub enum FeatureFlag {
     /// Enables the joining / viewing of shared sessions (_not_ creation).
     ViewingSharedSessions,
 
-    /// Enabling context chips functionality for prompt
-    ContextChips,
 
     /// Ligature Support in the Editor and Grid
     Ligatures,
@@ -72,12 +62,7 @@ pub enum FeatureFlag {
     /// to get a sense of PTY throughput over time.
     RecordPtyThroughput,
 
-    /// Whether to fetch generic string objects from the server.
-    FetchGenericStringObjects,
 
-    /// Enables a setting on Intel Dual-GPU Macs to enable use of the integrated GPU over the
-    /// discrete GPU.
-    IntegratedGPU,
 
     /// Warp Agent Mode.
     AgentMode,
@@ -127,8 +112,6 @@ pub enum FeatureFlag {
     /// Enable dynamic enum parameter types for workflow arguments
     DynamicWorkflowEnums,
 
-    /// Enables next action prediction within Warp, powered by AI.
-    AgentPredict,
 
     /// Enables receiving shared Warp Drive objects.
     SharedWithMe,
@@ -146,9 +129,6 @@ pub enum FeatureFlag {
     /// Enables writing to long-running commands in shared sessions.
     SharedSessionWriteToLongRunningCommands,
 
-    /// Lazily builds scenes at render time instead of eagerly when a view
-    /// changes.
-    LazySceneBuilding,
 
     /// Enables support for ACLs in Session Sharing. Should be disabled if the
     /// corresponding `use_acls` flag in the session sharing server is disabled.
@@ -175,8 +155,6 @@ pub enum FeatureFlag {
     SshDragAndDrop,
     DragTabsToWindows,
 
-    /// Enables the overflow menu on AI blocks.
-    AIBlockOverflowMenu,
 
     /// Enables cycling through the next command suggestions with down arrow.
     CycleNextCommandSuggestion,
@@ -196,7 +174,6 @@ pub enum FeatureFlag {
     /// Enables partial next command suggestions with a prefix.
     PartialNextCommandSuggestions,
 
-    AIGeneratedOnboardingSuggestions,
 
     /// Enables iTerm image rendering
     ITermImages,
@@ -230,8 +207,6 @@ pub enum FeatureFlag {
     /// Enables actual collection of AI analytics data per the revised AI analytics policy.
     GlobalAIAnalyticsCollection,
 
-    /// Enables auto-generated AI memories.
-    AIMemories,
 
     /// Enables the XML output system prompt for the primary (terminal) agent in Agent Mode.
     AgentModePrimaryXML,
@@ -331,8 +306,6 @@ pub enum FeatureFlag {
     /// Enables the AI context menu nesting and commands
     AIContextMenuCommands,
 
-    /// Enables sending stderr warnings in FileGlobV2 results.
-    FileGlobV2Warnings,
 
     /// Enables code symbols in AI context menu
     AIContextMenuCode,
@@ -472,8 +445,6 @@ pub enum FeatureFlag {
     /// Enables the /create-environment slash command for setting up Warp Environments
     CreateEnvironmentSlashCommand,
 
-    /// Enables the local docker sandbox entrypoints in the client.
-    LocalDockerSandbox,
 
     /// Enables the /compact slash command.
     SummarizationConversationCommand,
@@ -499,8 +470,6 @@ pub enum FeatureFlag {
     /// Displays debugging IDs for MCP servers, installations, and gallery items.
     McpDebuggingIds,
 
-    /// Enables rendering of images in markdown files and AI responses.
-    MarkdownImages,
     /// Enables rendering Mermaid diagrams in markdown notebooks.
     MarkdownMermaid,
     /// Enables editable Mermaid diagrams to behave atomically in notebook and plan editors.
@@ -566,8 +535,6 @@ pub enum FeatureFlag {
     /// Enables starting cloud mode from a local session.
     CloudModeFromLocalSession,
 
-    /// Enables host selection in cloud mode.
-    CloudModeHostSelector,
 
     /// Enables Warp Managed Secrets functionality.
     WarpManagedSecrets,
@@ -581,11 +548,7 @@ pub enum FeatureFlag {
     /// Enables agent tips displayed below the warping indicator in Agent Mode.
     AgentTips,
 
-    /// Allows agent mode to use computer use tools.
-    AgentModeComputerUse,
 
-    /// Enables computer use functionality in local clients.
-    LocalComputerUse,
 
     /// Enables background, per-window computer use: driving a specific window directly without
     /// raising it or moving the cursor.  Currently only supported on macOS.
@@ -594,10 +557,6 @@ pub enum FeatureFlag {
     /// Enables video recording of computer-use sessions for cloud agents.
     VideoRecording,
 
-    /// Gates the Windows `gdigrab` recorder behind its own switch, on top of
-    /// [`FeatureFlag::VideoRecording`]. Windows capture is newer and less proven than the
-    /// macOS/Linux ffmpeg paths, so it rolls out and can be killed independently of them.
-    WindowsVideoRecording,
 
     /// Enables team API key creation in the API key management UI.
     TeamApiKeys,
@@ -872,8 +831,6 @@ pub enum FeatureFlag {
     /// Enables configurable expanded context windows for eligible GPT models.
     GPTConfigurableContextWindow,
 
-    /// Replaces the raw harness CLI command with a styled header showing CLI name + status icon.
-    HarnessSessionHeader,
 
     /// Enables the code review view for remote sessions.
     RemoteCodeReview,
@@ -920,10 +877,6 @@ pub enum FeatureFlag {
     /// compute (docker image, instance shape, setup commands) by runner ID.
     CloudRunners,
 
-    /// Renders MCP tool-call request and response JSON as an interactive
-    /// collapsible tree with typed colors and per-row Copy JSON, instead of
-    /// a flat pretty-printed blob.
-    McpJsonTreeView,
 
     /// Renders supported solid box-drawing characters (`U+2500..=U+257F`)
     /// procedurally as cell-filling rectangles instead of from the font,
@@ -951,24 +904,7 @@ pub enum FeatureFlag {
     /// setup or API key required.
     FactoryMcp,
 
-    /// Gates client-side display of the real dollar cost (from `RequestCost.cost_in_cents`)
-    /// alongside credits in the GUI footer and TUI. Mirrors the server-side
-    /// `PricingTransparencyEnabled` flag in warp-server, but is a fully independent
-    /// flag — the two do not sync automatically. Consolidated from the former
-    /// `TuiCostTransparency` flag: when enabled (dogfood/staging and local/dev
-    /// builds), the TUI footer usage entry follows the persisted
-    /// `agents.usage_display_mode` setting and is click-to-toggleable between
-    /// credits and dollars; when disabled (prod/stable), it falls back to a
-    /// static, non-interactive credits total. Will also gate the GUI footer's
-    /// dollar display once that's built.
-    PricingTransparency,
 
-    /// Enables periodic workspace-handoff checkpoints during a cloud agent run,
-    /// rather than only uploading a workspace snapshot once at end-of-run.
-    /// Requires `OzHandoff` to also be enabled; a no-op for local runs and when
-    /// `--no-snapshot` is set. Enabled for dogfood and preview builds while the
-    /// coordinator bakes ahead of a stable rollout.
-    PeriodicHandoffCheckpoints,
 
     /// Observes Ctrl-C (`0x03`) written on the shared-session viewer input
     /// path to a terminal with a working, rich-status-capable CLI agent
@@ -982,10 +918,6 @@ pub enum FeatureFlag {
     /// Uses fzf or atuin for history search instead of Warp's command search.
     ShellWidgetHandoff,
 
-    /// Attaches process-tree liveness signals to long-running command
-    /// snapshots, giving the agent evidence that a silent command is still
-    /// doing work before it decides to cancel.
-    LrcActivitySignal,
 
     /// Gates Ctrl+R / Command Search history ranking on match quality and usage priors (recency,
     /// session, exit status) plus whitespace space-AND tokenization, instead of Skim's raw
@@ -1028,7 +960,6 @@ pub const DOGFOOD_FLAGS: &[FeatureFlag] = &[
     FeatureFlag::ResizeFix,
     FeatureFlag::AgentModeWorkflows,
     FeatureFlag::AgentModeAnalytics,
-    FeatureFlag::LazySceneBuilding,
     FeatureFlag::SshDragAndDrop,
     FeatureFlag::MultiWorkspace,
     FeatureFlag::ImeMarkedText,
@@ -1038,13 +969,9 @@ pub const DOGFOOD_FLAGS: &[FeatureFlag] = &[
     FeatureFlag::RunGeneratorsWithCmdExe,
     FeatureFlag::Projects,
     FeatureFlag::ProviderCommand,
-    FeatureFlag::MarkdownImages,
     FeatureFlag::FileAndDiffSetComments,
-    FeatureFlag::FileGlobV2Warnings,
     FeatureFlag::SummarizationViaMessageReplacement,
-    FeatureFlag::LocalComputerUse,
     FeatureFlag::VideoRecording,
-    FeatureFlag::WindowsVideoRecording,
     FeatureFlag::OzLaunchModal,
     // These are enabled via 100% experiment on prod warp-server,
     // but we need to enable here for dogfood builds.
@@ -1057,7 +984,6 @@ pub const DOGFOOD_FLAGS: &[FeatureFlag] = &[
     FeatureFlag::CodeReviewScrollPreservation,
     FeatureFlag::RememberFastForwardState,
     FeatureFlag::GeminiNotifications,
-    FeatureFlag::LocalDockerSandbox,
     #[cfg(not(windows))]
     FeatureFlag::SshRemoteServer,
     FeatureFlag::RemoteCodebaseIndexing,
@@ -1067,18 +993,15 @@ pub const DOGFOOD_FLAGS: &[FeatureFlag] = &[
     FeatureFlag::PromptCacheExpiryWarning,
     FeatureFlag::JupyterNotebookRendering,
     FeatureFlag::MultiLevelOrchestration,
-    FeatureFlag::McpJsonTreeView,
     FeatureFlag::BoxDrawingGlyphs,
-    FeatureFlag::PricingTransparency,
     FeatureFlag::CtrlCCancelsThirdPartyHarness,
     FeatureFlag::WarpingModelName,
-    FeatureFlag::LrcActivitySignal,
     FeatureFlag::StoredScreenshots,
 ];
 
 /// Features enabled for feature preview build users (e.g.: Friends of Warp).
 /// All PREVIEW_FLAGS are also automatically added to dogfood builds (WarpDev).
-pub const PREVIEW_FLAGS: &[FeatureFlag] = &[FeatureFlag::PeriodicHandoffCheckpoints];
+pub const PREVIEW_FLAGS: &[FeatureFlag] = &[];
 
 /// Features enabled for all release builds (i.e.: everything but WarpLocal).
 /// NOTE: if you are promoting a feature from Preview to launch, you'll likely
@@ -1088,7 +1011,6 @@ pub const RELEASE_FLAGS: &[FeatureFlag] = &[
     FeatureFlag::Changelog,
     FeatureFlag::CrashReporting,
     FeatureFlag::VideoRecording,
-    FeatureFlag::WindowsVideoRecording,
     FeatureFlag::ImeMarkedText,
     // Remote server binary is not yet supported on Windows.
     #[cfg(not(windows))]
