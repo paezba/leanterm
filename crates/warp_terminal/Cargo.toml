@@ -21,7 +21,6 @@ command.workspace = true
 command-corrections.workspace = true
 enum-iterator.workspace = true
 flate2 = "1.0.17"
-futures.workspace = true
 futures-lite.workspace = true
 get-size.workspace = true
 hex.workspace = true
@@ -45,7 +44,6 @@ secret_redaction.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 shellexpand.workspace = true
-smallvec.workspace = true
 smol_str.workspace = true
 string-offset.workspace = true
 static_assertions.workspace = true
@@ -113,7 +111,6 @@ winreg.workspace = true
 
 [dev-dependencies]
 serial_test = "0.8.0"
-tempfile.workspace = true
 unicode-segmentation = "1.11.0"
 warp_core = { workspace = true, features = ["test-util"] }
 

@@ -22,4 +22,3 @@ diesel_migrations = "2.2.0"
 serde.workspace = true
 
 [dev-dependencies]
-serde_json.workspace = true

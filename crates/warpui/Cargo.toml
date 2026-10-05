@@ -65,7 +65,6 @@ wgpu = { workspace = true, optional = true }
 [dev-dependencies]
 asset_cache.workspace = true
 env_logger.workspace = true
-futures-timer = "3.0.2"
 image = { workspace = true, default-features = false, features = ["png"] }
 libtest-mimic.workspace = true
 rust-embed.workspace = true
@@ -146,7 +145,6 @@ dispatch2 = { workspace = true }
 rand.workspace = true
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
-async-io.workspace = true
 ctrlc.workspace = true
 font-kit.workspace = true
 

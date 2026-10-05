@@ -18,10 +18,8 @@ test-util = ["dep:mockito", "warp_features/test-util"]
 anyhow.workspace = true
 cfg-if.workspace = true
 command-corrections.workspace = true
-dashmap.workspace = true
 dirs.workspace = true
 directories.workspace = true
-shellexpand.workspace = true
 enum-iterator.workspace = true
 futures-lite.workspace = true
 warp_errors.workspace = true
@@ -33,7 +31,6 @@ lazy_static.workspace = true
 log.workspace = true
 parking_lot.workspace = true
 pin-project.workspace = true
-reqwest.workspace = true
 serde.workspace = true
 settings.workspace = true
 serde_json.workspace = true
@@ -46,11 +43,9 @@ tracing.workspace = true
 concat-idents.workspace = true
 url.workspace = true
 regex.workspace = true
-websocket.workspace = true
 instant.workspace = true
 schemars = "1"
 settings_value = { workspace = true, features = ["derive"] }
-warp_util.workspace = true
 async-broadcast.workspace = true
 futures.workspace = true
 line-ending.workspace = true
@@ -59,7 +54,6 @@ warpui_extras = { workspace = true, features = ["default"] }
 mockito = { workspace = true, optional = true }
 string-offset.workspace = true
 inventory = "0.3.20"
-chrono.workspace = true
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 tokio.workspace = true
