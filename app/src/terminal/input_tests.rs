@@ -2607,18 +2607,6 @@ fn test_alias_expansion_with_abbreviations() {
 }
 
 #[test]
-
-macro_rules! input_mode_prefix_tests {
-    ($($name:ident: ($udi_enabled:literal, $input_mode:expr_2021),)*) => {
-        $(
-            #[test]
-            fn $name() {
-            }
-        )*
-    };
-}
-
-#[test]
 #[test]
 fn test_remove_ignored_suggestion_on_command_execution() {
     App::test((), |mut app| async move {
