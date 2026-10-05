@@ -27,7 +27,7 @@ use serde::{Deserialize, Serialize};
 use settings::{Setting as _, ToggleableSetting};
 use string_offset::{ByteOffset, CharOffset};
 use vec1::Vec1;
-use vim::vim::{VimHandler, VimMode};
+use vim::vim::VimMode;
 use warp_completer::completer::{
     self, CompleterOptions, CompletionContext, CompletionsFallbackStrategy, Description,
     ExplicitTabCompletion, MatchStrategy, MatchType, PathSeparators, PreparedSuggestion,
@@ -90,7 +90,6 @@ use super::{History, HistoryEntry, SizeInfo, TerminalModel, prompt, should_right
 use crate::ASSETS;
 use crate::appearance::{Appearance, AppearanceEvent};
 use crate::channel::{Channel, ChannelState};
-use crate::cloud_object::CloudObject;
 use crate::cloud_object::model::persistence::CloudModel;
 #[cfg(feature = "local_fs")]
 use crate::code::editor_management::CodeSource;

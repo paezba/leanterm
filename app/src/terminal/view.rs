@@ -73,7 +73,7 @@ use regex::Regex;
 use repo_metadata::repositories::RepoDetectionSource;
 use serde::Serialize;
 use serde_json::json;
-use settings::{Setting, ToggleableSetting};
+use settings::Setting;
 use ssh_file_upload::{FileUpload, FileUploadEvent};
 use uuid::Uuid;
 use vec1::vec1;

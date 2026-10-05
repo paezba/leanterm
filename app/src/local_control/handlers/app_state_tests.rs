@@ -3,7 +3,6 @@ use ::local_control::{ActionKind, ErrorCode};
 #[cfg(feature = "local_fs")]
 use super::resolve_against_working_directory;
 use super::{ensure_surface_available, validate_staged_input_text};
-use crate::features::FeatureFlag;
 use crate::local_control::handlers::metadata::SurfaceDestination;
 
 #[test]

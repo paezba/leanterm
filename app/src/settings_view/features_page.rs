@@ -6,7 +6,6 @@ use std::time::Duration;
 
 use ::settings::{Setting, ToggleableSetting};
 use lazy_static::lazy_static;
-use strum::IntoEnumIterator;
 use warp_core::channel::ChannelState;
 use warp_core::semantic_selection::{
     SemanticSelection, SemanticSelectionChangedEvent, SmartSelectEnabled,

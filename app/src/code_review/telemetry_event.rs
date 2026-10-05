@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use serde::{Serialize, Serializer};
+use serde::Serialize;
 use serde_with::SerializeDisplay;
 
 /// Terminal status of a `GitDialog`. Captures both async-op outcomes and

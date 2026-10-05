@@ -6,9 +6,7 @@ pub use overrides::{get_overrides, set_overrides};
 
 #[derive(Copy, Clone, Hash, PartialEq, Eq, Debug, Sequence)]
 pub enum FeatureFlag {
-    Changelog,
     DebugMode,
-    Autoupdate,
     WithSandboxTelemetry,
     RecordAppActiveEvents,
 
@@ -155,9 +153,6 @@ pub enum FeatureFlag {
     /// If enabled, the default theme is set to Adeberry for new users.
     DefaultAdeberryTheme,
 
-    /// New, less intrusive autoupdate UI.
-    AutoupdateUIRevamp,
-
     /// Enables Kitty image rendering
     KittyImages,
 
@@ -290,9 +285,6 @@ pub enum FeatureFlag {
 
     /// Enables the tabbed file viewer
     TabbedEditorView,
-
-    /// Enables sending telemetry data to a file in addition to the server
-    SendTelemetryToFile,
 
     /// Enables multiple agent profiles in settings for managing different AI agent configurations.
     MultiProfile,
@@ -830,8 +822,6 @@ pub const PREVIEW_FLAGS: &[FeatureFlag] = &[];
 /// NOTE: if you are promoting a feature from Preview to launch, you'll likely
 /// want to enable the feature by default in app/Cargo.toml, rather than add it to RELEASE_FLAGS.
 pub const RELEASE_FLAGS: &[FeatureFlag] = &[
-    FeatureFlag::Autoupdate,
-    FeatureFlag::Changelog,
     FeatureFlag::VideoRecording,
     FeatureFlag::ImeMarkedText,
     #[cfg(any(target_os = "macos", target_os = "windows"))]

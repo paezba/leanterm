@@ -51,7 +51,7 @@ use crate::terminal::keys::TerminalKeybindings;
 use crate::terminal::local_shell::LocalShellState;
 use crate::terminal::local_tty::shell::ShellStarter;
 use crate::terminal::model::ansi::{Handler, PromptMetadata};
-use crate::terminal::model::block::{BlockId, SerializedBlock};
+use crate::terminal::model::block::BlockId;
 use crate::terminal::model::session::command_executor::{CommandExecutor, ExecuteCommandOptions};
 use crate::terminal::model::session::{BootstrapSessionType, SessionInfo};
 use crate::terminal::model_events::ModelEvent;

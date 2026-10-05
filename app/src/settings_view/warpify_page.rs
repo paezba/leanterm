@@ -5,7 +5,6 @@ use std::fmt::Display;
 use markdown_parser::{FormattedText, FormattedTextFragment, FormattedTextLine};
 use regex::Regex;
 use settings::{Setting, ToggleableSetting};
-use strum::IntoEnumIterator;
 use warp_errors::report_if_error;
 use warpui::elements::{
     Container, Flex, FormattedTextElement, HighlightedHyperlink, MouseStateHandle, ParentElement,

@@ -1,6 +1,4 @@
 use pathfinder_color::ColorU;
-use warp_core::channel::ChannelState;
-use warp_core::features::FeatureFlag;
 use warp_core::ui::appearance::Appearance;
 use warp_core::ui::builder::UiBuilder;
 use warp_core::ui::color::{darken, lighten};
@@ -321,8 +319,6 @@ pub struct PrivacySettingsHandles {
 
 /// Actions dispatched by the privacy settings overlay toggles.
 pub struct PrivacySettingsActions<A: Action + Clone> {
-    pub toggle_telemetry: A,
-    pub toggle_crash_reporting: A,
     pub toggle_cloud_conversation_storage: A,
     pub hide_overlay: A,
 }
@@ -442,80 +438,6 @@ pub fn render_privacy_settings_toggles<A: Action + Clone + 'static>(
             .finish()
     }
 
-    let toggle_telemetry = actions.toggle_telemetry.clone();
-    let telemetry_toggle = Flex::row()
-        .with_main_axis_size(MainAxisSize::Max)
-        .with_main_axis_alignment(MainAxisAlignment::SpaceBetween)
-        .with_child(
-            Shrinkable::new(
-                1.,
-                render_privacy_settings_section_header("Help improve Warp", appearance).finish(),
-            )
-            .finish(),
-        )
-        .with_child(
-            appearance
-                .ui_builder()
-                .switch(handles.telemetry_switch.clone())
-                .check(PrivacySettings::as_ref(app).is_telemetry_enabled)
-                .build()
-                .on_click(move |ctx, _, _| {
-                    ctx.dispatch_typed_action(toggle_telemetry.clone());
-                })
-                .finish(),
-        )
-        .finish();
-
-    let telemetry_description = render_description(
-        appearance,
-        "High-level feature usage data helps Warp's product team prioritize the roadmap.".into(),
-    );
-
-    let telemetry_link = Flex::row()
-        .with_child(
-            appearance
-                .ui_builder()
-                .link(
-                    "Learn more".into(),
-                    Some(PRIVACY_URL.into()),
-                    None,
-                    handles.telemetry_docs_mouse.clone(),
-                )
-                .soft_wrap(false)
-                .build()
-                .finish(),
-        )
-        .finish();
-
-    let toggle_crash = actions.toggle_crash_reporting.clone();
-    let crash_reporting_toggle = Flex::row()
-        .with_main_axis_size(MainAxisSize::Max)
-        .with_main_axis_alignment(MainAxisAlignment::SpaceBetween)
-        .with_child(
-            Shrinkable::new(
-                1.,
-                render_privacy_settings_section_header("Send crash reports", appearance).finish(),
-            )
-            .finish(),
-        )
-        .with_child(
-            appearance
-                .ui_builder()
-                .switch(handles.crash_reporting_switch.clone())
-                .check(PrivacySettings::as_ref(app).is_crash_reporting_enabled)
-                .build()
-                .on_click(move |ctx, _, _| {
-                    ctx.dispatch_typed_action(toggle_crash.clone());
-                })
-                .finish(),
-        )
-        .finish();
-
-    let crash_reporting_description = render_description(
-        appearance,
-        "Crash reporting helps Warp's engineering team understand stability and improve performance.".into(),
-    );
-
     let toggle_cloud = actions.toggle_cloud_conversation_storage.clone();
     let _cloud_conversation_storage_toggle = Flex::row()
         .with_main_axis_size(MainAxisSize::Max)
@@ -555,35 +477,6 @@ pub fn render_privacy_settings_toggles<A: Action + Clone + 'static>(
     );
 
     let mut col = Flex::column().with_cross_axis_alignment(CrossAxisAlignment::Stretch);
-
-    // Builds without a telemetry/crash reporting config (e.g. OpenWarp) cannot
-    // ship the corresponding events, so the toggles would be no-ops. Hide each
-    // one independently based on whether its backing config is present.
-    if ChannelState::is_telemetry_available() && !FeatureFlag::GlobalAIAnalyticsBanner.is_enabled()
-    {
-        col.add_children(vec![
-            Container::new(telemetry_toggle)
-                .with_margin_bottom(AUTH_MODAL_GAP)
-                .finish(),
-            Container::new(telemetry_description)
-                .with_margin_bottom(AUTH_MODAL_GAP)
-                .finish(),
-            Container::new(telemetry_link)
-                .with_margin_bottom(AUTH_MODAL_GAP)
-                .finish(),
-        ]);
-    }
-
-    if ChannelState::is_crash_reporting_available() {
-        col.add_children(vec![
-            Container::new(crash_reporting_toggle)
-                .with_margin_bottom(AUTH_MODAL_GAP)
-                .finish(),
-            Container::new(crash_reporting_description)
-                .with_margin_bottom(AUTH_MODAL_GAP)
-                .finish(),
-        ]);
-    }
 
     // Hide the cloud conversation storage toggle entirely when AI is disabled:
     // the setting has no effect without AI, and showing it is confusing.

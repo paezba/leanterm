@@ -3,7 +3,6 @@
 
 use std::rc::Rc;
 
-use settings::Setting;
 use warpui::{AppContext, Entity, SingletonEntity, ViewContext, WeakViewHandle, WindowId};
 
 use super::UserWorkspaces;
@@ -57,43 +56,6 @@ impl sealed::Sealed for TeamContext<'_> {}
 impl TeamScope for TeamContext<'_> {
     fn team_uid(&self) -> Option<ServerId> {
         self.team_uid.copied()
-    }
-}
-
-#[cfg(not(target_family = "wasm"))]
-impl HeadlessTeamScope {}
-
-#[cfg(not(target_family = "wasm"))]
-impl sealed::Sealed for HeadlessTeamScope {}
-
-#[cfg(not(target_family = "wasm"))]
-impl TeamScope for HeadlessTeamScope {
-    fn team_uid(&self) -> Option<ServerId> {
-        match self {
-            HeadlessTeamScope::Personal => None,
-            HeadlessTeamScope::Team(team_uid) => Some(*team_uid),
-        }
-    }
-}
-
-pub struct ResolvedTeamScope(Option<ServerId>);
-
-impl ResolvedTeamScope {
-    pub fn from_scope(scope: &(impl TeamScope + ?Sized)) -> Self {
-        Self(scope.team_uid())
-    }
-
-    #[cfg(feature = "agent_mode_evals")]
-    pub(crate) fn teamless() -> Self {
-        Self(None)
-    }
-}
-
-impl sealed::Sealed for ResolvedTeamScope {}
-
-impl TeamScope for ResolvedTeamScope {
-    fn team_uid(&self) -> Option<ServerId> {
-        self.0
     }
 }
 
@@ -241,17 +203,4 @@ impl UserWorkspaces {
             true,
         )
     }
-}
-
-/// The team a headless invocation acts as, resolved without a window.
-///
-/// It has two minting roots. [`UserWorkspaces::team_scope_for_cli`] resolves the command-line
-/// selection against the user's memberships and rejects a team they are not on.
-/// [`Self::from_task_scope`] takes the server's record of which team owns a task and performs no
-/// membership check: a service-account worker resuming a run may belong to none of the task's
-/// teams, and the server has already decided the task's ownership.
-#[cfg(not(target_family = "wasm"))]
-pub enum HeadlessTeamScope {
-    Personal,
-    Team(ServerId),
 }

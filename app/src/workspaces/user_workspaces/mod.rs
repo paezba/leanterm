@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use anyhow::Result;
-use warp_core::settings::{ChangeEventReason, Setting};
+use warp_core::settings::ChangeEventReason;
 use warp_errors::report_error;
 use warpui::{
     AppContext, Entity, ModelContext, SingletonEntity, Tracked, ViewContext, WeakViewHandle,
@@ -30,9 +30,9 @@ use crate::workspaces::workspace::{
     AiOverages, PurchaseAddOnCreditsPolicy, UsageBasedPricingSettings,
 };
 pub(crate) mod team_workspace_settings;
+pub use team_workspace_settings::TeamContext;
 #[cfg(test)]
 pub(crate) use team_workspace_settings::TeamlessScopeForTest;
-pub use team_workspace_settings::{TeamContext, TeamScope};
 
 const STRIPE_SUBSCRIPTION_INTERVAL_PAGE_PREFIX: &str = "/upgrade";
 

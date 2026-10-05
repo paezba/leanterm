@@ -18,8 +18,6 @@ use warpui_core::{App, ModelHandle};
 #[cfg(feature = "local_fs")]
 use watcher::BulkFilesystemWatcherEvent;
 
-#[cfg(all(unix, feature = "local_fs"))]
-use crate::StandingQueryResults;
 use crate::entry::{
     BudgetExceededBehavior, BuildTreeOptions, DirectoryEntry, Entry, FileMetadata,
     IgnoredPathStrategy,

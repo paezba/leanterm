@@ -4,7 +4,6 @@ use std::sync::Arc;
 use std::sync::mpsc::SyncSender;
 
 use cfg_if::cfg_if;
-use itertools::Itertools;
 use lazy_static::lazy_static;
 use parking_lot::Mutex;
 use pathfinder_geometry::rect::RectF;

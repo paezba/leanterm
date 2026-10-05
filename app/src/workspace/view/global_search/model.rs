@@ -10,7 +10,7 @@ use string_offset::ByteOffset;
 use warp_errors::report_error;
 use warp_ripgrep::search::{Match as RipgrepMatch, Submatch};
 use warpui::r#async::SpawnedFutureHandle;
-use warpui::{Entity, ModelContext, ModelSpawner, SingletonEntity};
+use warpui::{Entity, ModelContext, ModelSpawner};
 
 use crate::workspace::view::global_search::view::GlobalSearchEvent;
 use crate::workspace::view::global_search::{GlobalSearchMatch, SearchConfig};

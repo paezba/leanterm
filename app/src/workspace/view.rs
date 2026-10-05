@@ -30,7 +30,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use ::settings::{Setting, ToggleableSetting};
 #[cfg(not(target_family = "wasm"))]
-use anyhow::Context as _;
 #[cfg(target_os = "macos")]
 use anyhow::Result;
 #[cfg(target_os = "macos")]
@@ -165,7 +164,6 @@ use crate::event_sources::{
     AddTabWithShellSource, AnonymousUserSignupEntrypoint, LaunchConfigUiLocation, PaletteSource,
     SharingDialogSource,
 };
-use crate::experiments::Experiment;
 use crate::launch_configs::launch_config::WindowTemplate;
 use crate::launch_configs::save_modal::{LaunchConfigModalEvent, LaunchConfigSaveModal};
 use crate::menu::{
@@ -15409,10 +15407,6 @@ impl Workspace {
             context.set.insert(flags::SYNTAX_HIGHLIGHTING_FLAG);
         }
 
-        if privacy_settings.is_telemetry_enabled {
-            context.set.insert(flags::TELEMETRY_FLAG);
-        }
-
         let cloud_preferences_settings = CloudPreferencesSettings::as_ref(app);
         if *cloud_preferences_settings.settings_sync_enabled.value() {
             context.set.insert(flags::SETTINGS_SYNC_FLAG);
@@ -15446,10 +15440,6 @@ impl Workspace {
         }
         if privacy_settings.is_cloud_conversation_storage_enabled {
             context.set.insert(flags::CLOUD_CONVERSATION_STORAGE_FLAG);
-        }
-
-        if privacy_settings.is_crash_reporting_enabled {
-            context.set.insert(flags::CRASH_REPORTING_FLAG);
         }
 
         if editor_settings.cursor_blink.value() == &CursorBlink::Enabled {

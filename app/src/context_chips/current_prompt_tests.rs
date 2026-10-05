@@ -6,10 +6,9 @@ use itertools::Itertools;
 use parking_lot::Mutex;
 #[cfg(feature = "local_fs")]
 use repo_metadata::DirectoryWatcher;
-use settings::Setting as _;
 use warp_completer::completer::{CommandExitStatus, CommandOutput};
 use warp_core::command::ExitCode;
-use warpui::{App, SingletonEntity};
+use warpui::App;
 use warpui_extras::user_preferences;
 
 use super::{ChipUpdateStatus, CurrentPrompt, PromptContext};
@@ -22,7 +21,6 @@ use crate::context_chips::context_chip::{Environment, PromptGenerator};
 #[cfg(feature = "local_fs")]
 use crate::context_chips::display_chip::GitBranchTrackingStatus;
 use crate::context_chips::prompt::Prompt;
-use crate::features::FeatureFlag;
 use crate::menu::MenuItem;
 use crate::settings::WarpPromptSeparator;
 #[cfg(windows)]
