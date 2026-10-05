@@ -10,7 +10,7 @@ use warp_editor::content::text::{
     BlockHeaderSize, BlockType as ContentBlockType, BufferBlockStyle, CodeBlockType,
 };
 use warp_editor::render::model::{
-    BrokenLinkStyle, CheckBoxStyle, EmbeddedItem, HorizontalRuleStyle, InlineCodeStyle,
+    BrokenLinkStyle, CheckBoxStyle, HorizontalRuleStyle, InlineCodeStyle,
     ParagraphStyles, RichTextStyles, TableStyle,
 };
 use warp_util::user_input::UserInput;

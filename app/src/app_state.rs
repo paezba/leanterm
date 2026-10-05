@@ -9,7 +9,7 @@ use warpui::{AppContext, SingletonEntity as _};
 
 use crate::code::editor_management::CodeSource;
 use crate::root_view::quake_mode_window_id;
-use crate::server::ids::{ServerId, SyncId};
+use crate::server::ids::ServerId;
 use crate::settings_view::SettingsSection;
 use crate::tab::SelectedTabColor;
 use crate::terminal::ShellLaunchData;

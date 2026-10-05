@@ -1117,7 +1117,7 @@ impl RootView {
         workspace_setting: NewWorkspaceSource,
         ctx: &mut ViewContext<Self>,
     ) -> Self {
-        let window_id = ctx.window_id();
+        let _window_id = ctx.window_id();
         let model_event_sender = global_resource_handles.model_event_sender.clone();
         let workspace = ctx.add_typed_action_view(|ctx| {
             Workspace::new(global_resource_handles, workspace_setting, ctx)

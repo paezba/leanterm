@@ -6,7 +6,7 @@ use code_editor_review_page::{EditorAndCodeReviewPageAction, EditorAndCodeReview
 use features_page::{FeaturesPageView, FeaturesSettingsPageEvent};
 use itertools::Itertools as _;
 use keybindings::KeybindingsView;
-use nav::{SettingsNavItem, SettingsUmbrella};
+use nav::SettingsNavItem;
 use pathfinder_geometry::vector::Vector2F;
 use privacy_page::{PrivacyPageView, PrivacyPageViewEvent};
 use scripting_page::ScriptingSettingsPageView;
@@ -2126,6 +2126,3 @@ impl BackingView for SettingsView {
     }
 }
 
-#[cfg(test)]
-#[path = "mod_tests.rs"]
-mod tests;

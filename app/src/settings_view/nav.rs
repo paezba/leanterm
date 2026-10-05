@@ -26,19 +26,6 @@ pub struct SettingsUmbrella {
 }
 
 impl SettingsUmbrella {
-    pub fn new(label: &'static str, subpages: Vec<SettingsSection>) -> Self {
-        let subpage_count = subpages.len();
-        Self {
-            label,
-            subpages,
-            expanded: false,
-            pre_search_expanded: None,
-            button_state_handle: MouseStateHandle::default(),
-            subpage_button_states: (0..subpage_count)
-                .map(|_| MouseStateHandle::default())
-                .collect(),
-        }
-    }
 
     pub fn toggle(&mut self) {
         self.expanded = !self.expanded;

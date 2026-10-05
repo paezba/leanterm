@@ -75,7 +75,6 @@ mod vim_registers;
 mod voltron;
 mod warp_managed_paths_watcher;
 mod window_settings;
-mod word_block_editor;
 
 // PLEASE DO NOT ADD MORE PUBLIC MODULES!
 //
@@ -132,7 +131,6 @@ use watcher::HomeDirectoryWatcher;
 use crate::persisted_workspace::PersistedWorkspace;
 use crate::settings::{AccessibilitySettings, ScrollSettings, SelectionSettings};
 use crate::uri::web_intent_parser::maybe_rewrite_web_url_to_intent;
-use crate::view_components::DismissibleToast;
 pub mod workflows;
 pub mod workspace;
 
@@ -929,7 +927,7 @@ pub(crate) fn initialize_app(
     // in `initialize_cloud_preferences_syncer`; InvalidSettings means TOML
     // parsed but individual values were wrong, which doesn't mean local
     // state is unusable.
-    let startup_toml_parse_error_for_syncer = user_defaults_on_startup
+    let _startup_toml_parse_error_for_syncer = user_defaults_on_startup
         .settings_file_error
         .as_ref()
         .and_then(|err| match err {

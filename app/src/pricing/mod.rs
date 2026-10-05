@@ -13,12 +13,6 @@ impl PricingInfoModel {
         Self { pricing_info: None }
     }
 
-    /// Updates the model with the latest pricing information from the server.
-    pub fn update_pricing_info(&mut self, pricing_info: PricingInfo, ctx: &mut ModelContext<Self>) {
-        self.pricing_info = Some(pricing_info);
-        ctx.emit(PricingInfoModelEvent::PricingInfoUpdated);
-    }
-
     /// Returns the current overage pricing information.
     #[allow(dead_code)]
     fn overage_pricing(&self) -> Option<&OveragesPricing> {

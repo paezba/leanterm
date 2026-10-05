@@ -17,7 +17,7 @@ use warp_completer::completer::{
 use warp_completer::signatures::CommandRegistry;
 use warp_core::features::FeatureFlag;
 use warp_util::path::{EscapeChar, ShellFamily};
-use warpui::{AppContext, SingletonEntity};
+use warpui::AppContext;
 
 use crate::safe_warn;
 use crate::terminal::model::session::{ExecuteCommandOptions, Session, SessionType};
@@ -328,7 +328,7 @@ impl SessionContext {
         session: impl Into<Arc<Session>>,
         command_registry: Arc<CommandRegistry>,
         current_working_directory: TypedPathBuf,
-        ctx: &AppContext,
+        _ctx: &AppContext,
     ) -> Self {
         let workflow_aliases = Default::default();
 

@@ -11,7 +11,6 @@ use crate::test_util::settings::initialize_settings_for_tests;
 
 fn initialize_app(app: &mut App) {
     initialize_settings_for_tests(app);
-    app.add_singleton_model(UserWorkspaces::default_mock);
     app.add_singleton_model(|_| AuthStateProvider::new_for_test());
 }
 

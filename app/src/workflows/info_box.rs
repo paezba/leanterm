@@ -13,7 +13,7 @@ use warpui::elements::{
 use warpui::fonts::{Properties, Weight};
 use warpui::geometry::vector::Vector2F;
 use warpui::keymap::Keystroke;
-use warpui::text_layout::{ClipConfig, TextStyle};
+use warpui::text_layout::TextStyle;
 use warpui::ui_components::button::ButtonVariant;
 use warpui::ui_components::components::{UiComponent, UiComponentStyles};
 use warpui::{
@@ -455,7 +455,7 @@ impl WorkflowsMoreInfoView {
         &self,
         appearance: &Appearance,
         input_mode: &InputMode,
-        app: &AppContext,
+        _app: &AppContext,
     ) -> Box<dyn Element> {
         let content_and_args = self.render_content_and_arguments(appearance);
 

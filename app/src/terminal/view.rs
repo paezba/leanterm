@@ -166,7 +166,6 @@ use crate::pane_group::{
 #[cfg(feature = "local_fs")]
 use crate::persisted_workspace::PersistedWorkspace;
 use crate::persistence::{self, FinishedCommandMetadata};
-use crate::server::ids::SyncId;
 use crate::session_management::{CommandContext, SessionNavigationPromptElements};
 use crate::settings::import::view::{SettingsImportEvent, SettingsImportView};
 use crate::settings::{
@@ -1914,7 +1913,7 @@ impl TerminalView {
 
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        resources: TerminalViewResources,
+        _resources: TerminalViewResources,
         wakeups_rx: Receiver<()>,
         model_events_handle: ModelHandle<ModelEventDispatcher>,
         model: Arc<FairMutex<TerminalModel>>,
@@ -5122,7 +5121,7 @@ impl TerminalView {
                     self.did_notify_long_running = false;
                     self.set_current_state(terminal_view_state, ctx);
 
-                    let exit_code_data =
+                    let _exit_code_data =
                         &json!({"exit_code": serialized_block.exit_code}).to_string();
 
                     if let (
@@ -6658,10 +6657,10 @@ impl TerminalView {
                 };
 
                 let is_single_selection = self.selected_blocks.is_singleton();
-                let is_active_block_selected = self
+                let _is_active_block_selected = self
                     .selected_blocks
                     .is_selected(model.block_list().active_block_index());
-                let is_active_block_running = model
+                let _is_active_block_running = model
                     .block_list()
                     .active_block()
                     .is_active_and_long_running();

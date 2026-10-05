@@ -14,15 +14,14 @@ use warp_errors::{report_error, report_if_error};
 use warpui::r#async::{SpawnedFutureHandle, Timer};
 use warpui::elements::{
     Align, ChildView, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Empty, Expanded,
-    Flex, Hoverable, MainAxisAlignment, MainAxisSize, MouseStateHandle, ParentElement, Radius,
+    Flex, MainAxisAlignment, MainAxisSize, MouseStateHandle, ParentElement, Radius,
     Rect, Shrinkable, Text,
 };
 use warpui::fonts::Weight;
 use warpui::keymap::ContextPredicate;
-use warpui::platform::Cursor;
 use warpui::ui_components::button::{ButtonVariant, TextAndIcon, TextAndIconAlignment};
 use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
-use warpui::ui_components::switch::{SwitchStateHandle, TooltipConfig};
+use warpui::ui_components::switch::SwitchStateHandle;
 use warpui::{
     Action, AppContext, Element, Entity, ModelHandle, SingletonEntity, TypedActionView,
     UpdateModel, View, ViewContext, ViewHandle,
@@ -771,46 +770,6 @@ impl SecretRedactionWidget {
         }
 
         column.finish()
-    }
-
-    fn render_info(&self, text: String, appearance: &Appearance) -> Box<dyn Element> {
-        let info_icon = Container::new(
-            ConstrainedBox::new(
-                Icon::Info
-                    .to_warpui_icon(
-                        appearance
-                            .theme()
-                            .hint_text_color(appearance.theme().background()),
-                    )
-                    .finish(),
-            )
-            .with_width(appearance.ui_font_size() * 1.2)
-            .with_height(appearance.ui_font_size() * 1.2)
-            .finish(),
-        )
-        .with_padding_right(4.)
-        .finish();
-
-        Flex::row()
-            .with_child(info_icon)
-            .with_child(
-                appearance
-                    .ui_builder()
-                    .span(text)
-                    .with_style(UiComponentStyles {
-                        font_color: Some(
-                            appearance
-                                .theme()
-                                .hint_text_color(appearance.theme().background())
-                                .into_solid(),
-                        ),
-                        font_size: Some(FONT_SIZE),
-                        ..Default::default()
-                    })
-                    .build()
-                    .finish(),
-            )
-            .finish()
     }
 
     fn add_button(text: impl Into<Cow<'static, str>>, appearance: &Appearance) -> TextAndIcon {

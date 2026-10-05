@@ -34,12 +34,6 @@ impl AuthManager {
         Self::new(ctx)
     }
 
-    /// Sets whether the current user needs to reauthenticate, emitting an event when that changes.
-    pub fn set_needs_reauth(&self, needs_reauth: bool, ctx: &mut ModelContext<Self>) {
-        if self.auth_state.set_needs_reauth(needs_reauth) {
-            ctx.emit(AuthManagerEvent::NeedsReauth);
-        }
-    }
 }
 
 impl Entity for AuthManager {

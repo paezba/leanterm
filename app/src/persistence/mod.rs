@@ -22,7 +22,7 @@ use std::sync::{Arc, OnceLock};
 use std::thread::JoinHandle;
 
 use ai::workspace::WorkspaceMetadata as CodeWorkspaceMetadata;
-use chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Local};
 use instant::Instant;
 use lsp::supported_servers::LSPServerType;
 // Only re-exported for integration tests (via `integration_testing::persistence`);
@@ -32,12 +32,10 @@ use lsp::supported_servers::LSPServerType;
 pub use sqlite::database_file_path_for_scope;
 use warp_core::command::ExitCode;
 use warp_errors::report_error;
-use warp_graphql::scalars::time::ServerTimestamp;
 use warpui::{AppContext, Entity, SingletonEntity};
 
 use crate::app_state::AppState;
 use crate::persisted_workspace::EnablementState;
-use crate::server::ids::SyncId;
 use crate::suggestions::ignored_suggestions_model::SuggestionType;
 use crate::terminal::history::PersistedCommand;
 use crate::terminal::model::block::SerializedBlock;
