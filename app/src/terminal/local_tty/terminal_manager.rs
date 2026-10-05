@@ -21,7 +21,6 @@ use warpui::{AppContext, Entity, ModelContext, ModelHandle, SingletonEntity, Vie
 
 use super::event_loop::EventLoop;
 use super::shell::{ShellStarter, ShellStarterSource};
-use super::spawner::PtySpawnHooks;
 #[cfg(unix)]
 use super::terminal_attributes::TerminalAttributesPoller;
 use super::{mio_channel, recorder};
@@ -64,24 +63,6 @@ use crate::terminal::{
 type PtyController = writeable_pty::PtyController<mio_channel::Sender<Message>>;
 type RemoteServerController =
     writeable_pty::remote_server_controller::RemoteServerController<mio_channel::Sender<Message>>;
-
-struct AppPtySpawnHooks {
-    is_crash_reporting_enabled: bool,
-}
-
-impl PtySpawnHooks for AppPtySpawnHooks {
-    fn before_spawn(&self) {
-        #[cfg(feature = "crash_reporting")]
-        crate::crash_reporting::uninit_cocoa_sentry();
-    }
-
-    fn after_spawn(&self) {
-        if self.is_crash_reporting_enabled {
-            #[cfg(feature = "crash_reporting")]
-            crate::crash_reporting::init_cocoa_sentry();
-        }
-    }
-}
 
 /// Owns a local terminal session: the terminal model, PTY event loop, PTY
 /// controller, and a terminal surface.
@@ -737,12 +718,8 @@ impl<S> TerminalManager<S> {
             close_fds: true,
         };
 
-        let hooks = AppPtySpawnHooks {
-            is_crash_reporting_enabled,
-        };
         Pty::new(
             options,
-            &hooks,
             #[cfg(windows)]
             event_loop_tx,
             ctx,

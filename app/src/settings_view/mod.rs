@@ -1701,10 +1701,6 @@ impl SettingsView {
             }
         }
 
-        #[cfg(feature = "crash_reporting")]
-        {
-            crate::crash_reporting::set_tag("warp.settings_page", section.to_string());
-        }
 
         if let Some(settings_page) = self.current_settings_page() {
             update_page!(

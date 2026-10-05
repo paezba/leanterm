@@ -24,7 +24,5 @@ impl AnyhowErrorExt for anyhow::Error {
     }
 
     fn report_error(&self) {
-        #[cfg(feature = "crash_reporting")]
-        sentry::integrations::anyhow::capture_anyhow(self);
     }
 }
