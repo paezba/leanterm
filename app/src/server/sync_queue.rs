@@ -348,6 +348,7 @@ impl SyncQueue {
         sync_queue
     }
 
+    #[cfg(test)]
     pub fn is_dequeueing(&self) -> bool {
         self.should_dequeue
     }

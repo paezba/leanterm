@@ -74,7 +74,6 @@ use serde::Serialize;
 use serde_json::json;
 use settings::Setting;
 use ssh_file_upload::{FileUpload, FileUploadEvent};
-use uuid::Uuid;
 use vec1::vec1;
 use warp_completer::meta::Span;
 use warp_core::r#async::debounce;
@@ -129,7 +128,7 @@ use super::available_shells::AvailableShell;
 use super::block_list_viewport::FindMatchScrollLocation;
 use super::event::SshLoginStatus;
 use super::find::FindOptions;
-use super::model::block::{BlockSection, BlocklistEnvVarMetadata};
+use super::model::block::BlockSection;
 use super::model::completions::ShellCompletion;
 use super::model::rich_content::RichContentType;
 use super::model::selection::ExpandedSelectionRange;
@@ -158,10 +157,9 @@ use crate::context_chips::ContextChipKind;
 use crate::context_chips::prompt::Prompt;
 use crate::context_chips::prompt_type::PromptType;
 use crate::drive::CloudObjectTypeAndId;
-use crate::drive::settings::WarpDriveSettings;
 use crate::editor::{AutosuggestionType, EditorAction};
 use crate::env_vars::EnvVar;
-use crate::event_sources::{PaletteSource, SaveAsWorkflowModalSource, ToggleBlockFilterSource};
+use crate::event_sources::{PaletteSource, ToggleBlockFilterSource};
 use crate::features::FeatureFlag;
 use crate::menu::{Event as MenuEvent, Menu, MenuItem, MenuItemFields};
 use crate::pane_group::focus_state::PaneFocusHandle;
@@ -172,7 +170,7 @@ use crate::pane_group::{
 #[cfg(feature = "local_fs")]
 use crate::persisted_workspace::PersistedWorkspace;
 use crate::persistence::{self, FinishedCommandMetadata};
-use crate::server::ids::{ObjectUid, SyncId};
+use crate::server::ids::SyncId;
 use crate::server::server_api::ServerApi;
 use crate::session_management::{CommandContext, SessionNavigationPromptElements};
 use crate::settings::import::view::{SettingsImportEvent, SettingsImportView};
@@ -298,7 +296,6 @@ use crate::util::openable_file_type::{
 use crate::util::repo_detection::detect_possible_git_repo;
 use crate::view_components::find::{Event as FindEvent, Find, FindDirection, FindWithinBlockState};
 use crate::view_components::{DismissibleToast, ToastFlavor};
-use crate::workflows::workflow::Workflow;
 use crate::workspace::sync_inputs::SyncedInputState;
 use crate::workspace::{CommandSearchOptions, ToastStack, WorkspaceAction, WorkspaceRegistry};
 use crate::workspaces::user_workspaces::{UserWorkspaces, UserWorkspacesEvent};
@@ -3072,7 +3069,7 @@ impl TerminalView {
         &self.pane_configuration
     }
 
-    pub fn is_input_box_visible(&self, model: &TerminalModel, app: &AppContext) -> bool {
+    pub fn is_input_box_visible(&self, model: &TerminalModel, _app: &AppContext) -> bool {
         if model.is_read_only() {
             return false;
         }
@@ -11534,58 +11531,6 @@ impl TerminalView {
 
         self.input.update(ctx, |input, ctx| {
             input.replace_buffer_content(command, ctx);
-        });
-    }
-
-    fn reset_focus_after_rich_block(&mut self, ctx: &mut ViewContext<Self>) {
-        self.redetermine_terminal_focus(ctx);
-        self.input.update(ctx, |input, ctx| {
-            input.editor().update(ctx, |editor, ctx| {
-                editor.clear_autosuggestion(ctx);
-            });
-        });
-    }
-
-    #[allow(unused_variables)]
-    fn get_shell_starter_local(&self, ctx: &mut ViewContext<Self>) -> Option<(String, ShellType)> {
-        #[cfg(feature = "local_tty")]
-        {
-            // TODO(CORE-2300): This appears to be used for invoking env vars.
-            // Before we close out CORE-2300, we should evaluate if we need to add
-            // shell info here.
-            let shell_starter = get_shell_starter(None, &self.auth_state, ctx)?;
-            let shell_path = match &shell_starter {
-                ShellStarter::Direct(direct_shell_starter)
-                | ShellStarter::MSYS2(direct_shell_starter) => direct_shell_starter
-                    .shell_path()
-                    .to_string_lossy()
-                    .to_string(),
-                ShellStarter::DockerSandbox(docker_shell_starter) => docker_shell_starter
-                    .direct
-                    .shell_path()
-                    .to_string_lossy()
-                    .to_string(),
-                ShellStarter::Wsl(wsl_shell_starter) => wsl_shell_starter.shell_path(),
-            };
-            Some((shell_path, shell_starter.shell_type()))
-        }
-
-        #[cfg(not(feature = "local_tty"))]
-        None
-    }
-
-    fn set_and_execute_subshell_command(
-        &mut self,
-        shell_command: &str,
-        shell_type: ShellType,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        // Attempt to auto warpify the subshell when bootstrapped
-        self.pending_auto_bootstrap_shell_type = Some(shell_type);
-
-        self.input.update(ctx, |input, ctx| {
-            input.set_pending_command(shell_command, ctx);
-            input.execute_pending_command(ctx);
         });
     }
 

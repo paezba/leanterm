@@ -32,7 +32,7 @@ impl DataSourceStore {
     pub fn new(
         binding_source: ModelHandle<BindingSource>,
         active_session_handle: ModelHandle<SessionSource>,
-        window_id: WindowId,
+        _window_id: WindowId,
         ctx: &mut ModelContext<Self>,
     ) -> Self {
         let actions_data_source =
@@ -268,7 +268,3 @@ impl DataSourceStore {
 impl Entity for DataSourceStore {
     type Event = ();
 }
-
-#[cfg(test)]
-#[path = "data_sources_tests.rs"]
-mod tests;

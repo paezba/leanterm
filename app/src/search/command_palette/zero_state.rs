@@ -11,7 +11,6 @@ use warpui::{
 };
 
 use crate::appearance::Appearance;
-use crate::drive::settings::WarpDriveSettings;
 use crate::search::QueryFilter;
 use crate::search::command_palette::FilterChipRenderer;
 
@@ -76,7 +75,7 @@ impl ZeroState {
 
     /// Returns the set of valid query filters for this zero state view.
     fn valid_query_filters(
-        app: &AppContext,
+        _app: &AppContext,
         _window_id: WindowId,
     ) -> impl Iterator<Item = QueryFilter> + use<> {
         let mut valid_filters = vec![];

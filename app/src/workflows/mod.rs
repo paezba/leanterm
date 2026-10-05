@@ -20,7 +20,6 @@ pub mod workflow_enum;
 use async_trait::async_trait;
 pub use categories::{CategoriesView, CategoriesViewEvent, WorkflowsViewAction};
 
-use crate::appearance::Appearance;
 use crate::cloud_object::model::view::CloudViewModel;
 use crate::cloud_object::{
     CloudModelType, CloudObjectEventEntrypoint, CloudObjectUpsertParams, CreateCloudObjectResult,
@@ -118,12 +117,6 @@ impl WorkflowViewMode {
         }
     }
 
-    fn is_editable(&self) -> bool {
-        match self {
-            Self::View => false,
-            Self::Edit | Self::Create => true,
-        }
-    }
 }
 
 /// Wrapper type for a workflow that may be saved locally or using cloud sync.

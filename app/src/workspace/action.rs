@@ -17,12 +17,11 @@ use super::tab_settings::{
 };
 use super::view::WorkspaceBanner;
 use crate::auth::auth_manager::LoginGatedFeature;
-use crate::drive::CloudObjectTypeAndId;
-use crate::event_sources::{AddTabWithShellSource, PaletteSource, SharingDialogSource};
+use crate::event_sources::{AddTabWithShellSource, PaletteSource};
 use crate::palette::PaletteMode;
 use crate::prompt::editor_modal::OpenSource as PromptEditorOpenSource;
 use crate::search;
-use crate::server::ids::{ServerId, SyncId};
+use crate::server::ids::ServerId;
 use crate::settings_view::{SettingsAction as SettingsTabAction, SettingsSection};
 use crate::tab::{NewSessionMenuItem, SelectedTabColor};
 use crate::tab_configs::TabConfig;
@@ -540,7 +539,7 @@ pub enum WorkspaceAction {
 
 impl From<&WorkspaceAction> for LoginGatedFeature {
     fn from(val: &WorkspaceAction) -> LoginGatedFeature {
-        use WorkspaceAction::*;
+        
         match val {
             _ => "Unknown reason",
         }

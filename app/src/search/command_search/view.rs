@@ -26,13 +26,11 @@ use warpui::{
 };
 
 use super::history::history_data_source_for_session;
-use super::workflows::{WorkflowsDataSource, cloud_workflows_data_source};
 use super::zero_state::{CommandSearchZeroStateEvent, CommandSearchZeroStateView};
 use crate::appearance::Appearance;
 use crate::auth::AuthStateProvider;
 use crate::auth::auth_state::AuthState;
 use crate::completer::SessionContext;
-use crate::drive::settings::WarpDriveSettings;
 use crate::search::QueryFilter;
 use crate::search::command_search::searcher::{CommandSearchItemAction, CommandSearchMixer};
 use crate::search::mixer::AddAsyncSourceOptions;
@@ -201,10 +199,10 @@ impl CommandSearchView {
     fn reset_command_search_mixer(
         &mut self,
         session_id: SessionId,
-        session_context: Option<SessionContext>,
+        _session_context: Option<SessionContext>,
         ctx: &mut ViewContext<Self>,
     ) {
-        let window_id = ctx.window_id();
+        let _window_id = ctx.window_id();
         self.mixer.update(ctx, |mixer, ctx| {
             mixer.reset(ctx);
 

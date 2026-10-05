@@ -20,33 +20,3 @@ pub fn green_check_icon(appearance: &Appearance) -> warpui::elements::Icon {
         AnsiColorIdentifier::Green.to_ansi_color(&appearance.theme().terminal_colors().normal),
     )
 }
-
-pub fn red_x_icon(appearance: &Appearance) -> warpui::elements::Icon {
-    warpui::elements::Icon::new(
-        Icon::X.into(),
-        AnsiColorIdentifier::Red.to_ansi_color(&appearance.theme().terminal_colors().normal),
-    )
-}
-
-pub fn cancelled_icon(appearance: &Appearance) -> warpui::elements::Icon {
-    warpui::elements::Icon::new(
-        Icon::Cancelled.into(),
-        blended_colors::neutral_6(appearance.theme()),
-    )
-}
-
-/// To be used for actions that are waiting on user input.
-pub fn yellow_stop_icon(appearance: &Appearance) -> warpui::elements::Icon {
-    warpui::elements::Icon::new(
-        Icon::StopFilled.into(),
-        AnsiColorIdentifier::Yellow.to_ansi_color(&appearance.theme().terminal_colors().normal),
-    )
-}
-
-/// To be used for actions that are long-running and executing.
-pub fn yellow_running_icon(appearance: &Appearance) -> warpui::elements::Icon {
-    warpui::elements::Icon::new(
-        Icon::Circle.into(),
-        AnsiColorIdentifier::Yellow.to_ansi_color(&appearance.theme().terminal_colors().normal),
-    )
-}

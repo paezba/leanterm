@@ -52,11 +52,4 @@ impl WarpDriveSettings {
                 .get()
                 .is_anonymous_or_logged_out()
     }
-    /// Returns whether Warp Drive should be considered enabled.
-    /// Returns `false` when the user is anonymous or fully logged out,
-    /// regardless of the user setting.
-    pub fn is_warp_drive_enabled(app: &warpui::AppContext) -> bool {
-        use warpui::SingletonEntity as _;
-        *Self::as_ref(app).enable_warp_drive && Self::is_warp_drive_available(app)
-    }
 }

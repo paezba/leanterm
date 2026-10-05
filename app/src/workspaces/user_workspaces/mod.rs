@@ -30,7 +30,6 @@ use crate::workspaces::workspace::{
     AiOverages, PurchaseAddOnCreditsPolicy, UsageBasedPricingSettings,
 };
 pub(crate) mod team_workspace_settings;
-pub use team_workspace_settings::TeamContext;
 #[cfg(test)]
 pub(crate) use team_workspace_settings::TeamlessScopeForTest;
 

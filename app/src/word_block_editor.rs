@@ -152,38 +152,6 @@ impl WordBlockEditorView {
         ctx.notify();
     }
 
-    pub fn with_layout(mut self, layout: WordBlockLayout) -> Self {
-        // No need for ctx.notify - because this takes `self`, it can only be called when adding
-        // the view.
-        self.layout = layout;
-        self
-    }
-
-    pub fn with_styles(
-        mut self,
-        ctx: &mut ViewContext<Self>,
-        styles: impl Fn(&AppContext) -> WordBlockEditorStyles + 'static,
-    ) -> Self {
-        let initial_styles = styles(ctx);
-        self.editor_view.update(ctx, |editor, ctx| {
-            editor.set_font_family(initial_styles.font_family, ctx);
-        });
-        self.style_fn = Box::new(styles);
-        self
-    }
-
-    /// Set the word input's [PropagateAndNoOpNavigationKeys] behavior. This allows navigation in
-    /// form-like views that include a [WordBlockEditorView].
-    pub fn set_propagate_navigation_keys(
-        &mut self,
-        propagate_navigation_keys: PropagateAndNoOpNavigationKeys,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        self.editor_view.update(ctx, |editor, _| {
-            editor.set_propagate_vertical_navigation_keys(propagate_navigation_keys);
-        })
-    }
-
     pub fn clear_list_of_words(&mut self, ctx: &mut ViewContext<Self>) {
         self.list_of_words = Vec::new();
         self.editor_view.update(ctx, |editor, ctx| {
@@ -198,13 +166,6 @@ impl WordBlockEditorView {
             mouse_state_handle: Default::default(),
         });
         ctx.emit(WordBlockEditorViewEvent::WordListValidityChanged);
-        ctx.notify();
-    }
-
-    pub fn set_editor_buffer_text(&mut self, word: &str, ctx: &mut ViewContext<Self>) {
-        self.editor_view.update(ctx, |editor, ctx| {
-            editor.set_buffer_text(word, ctx);
-        });
         ctx.notify();
     }
 

@@ -267,8 +267,8 @@ impl TypedActionView for CommandSearchZeroStateView {
     }
 }
 
-fn valid_query_filters(app: &AppContext) -> Vec<QueryFilter> {
-    let mut filters = vec![QueryFilter::History];
+fn valid_query_filters(_app: &AppContext) -> Vec<QueryFilter> {
+    let filters = vec![QueryFilter::History];
 
     filters
 }

@@ -7,7 +7,6 @@ pub use cloud_object_models::{CloudFolder, CloudFolderModel};
 pub use warp_server_client::ids::FolderId;
 
 use super::CloudObjectTypeAndId;
-use crate::appearance::Appearance;
 use crate::cloud_object::{
     CloudModelType, CloudObjectEventEntrypoint, CloudObjectUpsertParams, CreateCloudObjectResult,
     CreateObjectRequest, GenericServerObject, ObjectType, Revision, Space, UpdateCloudObjectResult,

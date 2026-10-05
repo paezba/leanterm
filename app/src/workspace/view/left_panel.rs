@@ -73,7 +73,7 @@ pub(crate) enum ToolPanelAvailability {
 }
 
 impl ToolPanelView {
-    fn availability(self, app: &AppContext) -> ToolPanelAvailability {
+    fn availability(self, _app: &AppContext) -> ToolPanelAvailability {
         match self {
             ToolPanelView::ProjectExplorer | ToolPanelView::GlobalSearch { .. } => {
                 ToolPanelAvailability::Available

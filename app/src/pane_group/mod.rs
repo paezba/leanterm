@@ -44,15 +44,12 @@ use crate::app_state::{
 use crate::appearance::Appearance;
 use crate::banner::{Banner, BannerEvent, BannerState, BannerTextContent, DismissalType};
 use crate::channel::{Channel, ChannelState};
-use crate::cloud_object::Space;
 use crate::cmd_or_ctrl_shift;
 use crate::code::active_file::ActiveFileModel;
 #[cfg(feature = "local_fs")]
 use crate::code::editor_management::CodeSource;
 use crate::code::view::{CodeView, CodeViewAction};
-use crate::drive::{CloudObjectTypeAndId, OpenWarpDriveObjectArgs};
-use crate::env_vars::EnvVarCollectionType;
-use crate::event_sources::{PaletteSource, SharingDialogSource};
+use crate::event_sources::PaletteSource;
 use crate::features::FeatureFlag;
 use crate::launch_configs::launch_config::{self, PaneTemplateType};
 use crate::notebooks::file::FileNotebookView;
@@ -63,7 +60,6 @@ use crate::persistence::ModelEvent;
 use crate::quit_warning::UnsavedStateSummary;
 #[cfg(target_family = "wasm")]
 use crate::server::cloud_objects::update_manager::UpdateManager;
-use crate::server::ids::{ObjectUid, SyncId};
 use crate::server::server_api::{ServerApi, ServerApiProvider};
 use crate::session_management::SessionNavigationData;
 use crate::settings::PaneSettings;
@@ -95,7 +91,6 @@ use crate::util::bindings::{CustomAction, is_binding_pty_compliant};
 #[cfg(feature = "local_fs")]
 use crate::util::openable_file_type::FileTarget;
 use crate::view_components::ToastFlavor;
-use crate::workflows::workflow::Workflow;
 use crate::workflows::{WorkflowSelectionSource, WorkflowSource, WorkflowType};
 use crate::workspace::tab_group::TabGroupId;
 use crate::workspace::{self, CommandSearchOptions, PaneViewLocator, TabBarLocation};
