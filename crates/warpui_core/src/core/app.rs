@@ -65,7 +65,6 @@ use crate::{
     assets, rendering,
 };
 
-
 lazy_static! {
     static ref LAST_USER_ACTION_UNIX_TIMESTAMP: AtomicI64 = AtomicI64::new(0);
 }
