@@ -66,8 +66,8 @@ use crate::quit_warning::UnsavedStateSummary;
 use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::ids::{ObjectUid, SyncId};
 use crate::server::server_api::{ServerApi, ServerApiProvider};
-use crate::server::telemetry::{
-    AnonymousUserSignupEntrypoint, PaletteSource, SharingDialogSource, TelemetryEvent,
+use crate::event_sources::{
+    AnonymousUserSignupEntrypoint, PaletteSource, SharingDialogSource,
 };
 use crate::session_management::SessionNavigationData;
 use crate::settings::PaneSettings;
@@ -103,7 +103,7 @@ use crate::workflows::workflow::Workflow;
 use crate::workflows::{WorkflowSelectionSource, WorkflowSource, WorkflowType};
 use crate::workspace::tab_group::TabGroupId;
 use crate::workspace::{self, CommandSearchOptions, PaneViewLocator, TabBarLocation};
-use crate::{cmd_or_ctrl_shift, send_telemetry_from_ctx};
+use crate::cmd_or_ctrl_shift;
 
 pub mod focus_state;
 pub mod pane;
@@ -3869,7 +3869,6 @@ impl PaneGroup {
     ) -> Option<PaneId> {
         if self.pane_count() == 1 {
             // Only sending telemetry event the first time a user enters split pane in a session.
-            send_telemetry_from_ctx!(TelemetryEvent::SplitPane, ctx);
         }
 
         self.add_pane_with_options(

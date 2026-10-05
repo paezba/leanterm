@@ -13,17 +13,9 @@ use super::PseudoConsoleChild;
 use super::{PtyOptions, PtySpawnResult};
 use crate::local_tty::{self};
 
-#[derive(Clone, Copy, Debug)]
-pub enum PtySpawnMode {
-    TerminalServer,
-    FallbackToDirect,
-    Direct,
-}
-
 pub trait PtySpawnHooks {
     fn before_spawn(&self);
     fn after_spawn(&self);
-    fn spawned(&self, mode: PtySpawnMode, ctx: &mut AppContext);
 }
 /// A handle that can be used to interact with a pty process.
 pub trait PtyHandle: Send + Sync {
@@ -181,7 +173,6 @@ impl PtySpawner {
         #[cfg(not(unix))]
         let is_fallback = false;
         #[cfg(unix)]
-        let mut is_fallback = false;
 
         #[cfg(unix)]
         if let Some(server) = &self.server {
@@ -206,19 +197,10 @@ impl PtySpawner {
                 report_error!(err.context(
                     "Failed to spawn pty via terminal server; falling back to spawning locally...",
                 ));
-                is_fallback = true;
             } else {
-                hooks.spawned(PtySpawnMode::TerminalServer, ctx);
                 return result;
             }
         }
-
-        let mode = if is_fallback {
-            PtySpawnMode::FallbackToDirect
-        } else {
-            PtySpawnMode::Direct
-        };
-        hooks.spawned(mode, ctx);
 
         Self::spawn_pty_directly(
             options,

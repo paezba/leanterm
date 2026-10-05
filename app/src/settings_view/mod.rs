@@ -81,7 +81,6 @@ pub(crate) mod settings_page;
 mod show_blocks_view;
 mod tab_menu;
 mod teams_page;
-mod telemetry;
 mod transfer_ownership_confirmation_modal;
 mod warp_drive_page;
 mod warpify_page;

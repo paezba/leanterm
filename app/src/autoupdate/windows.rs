@@ -15,7 +15,7 @@ use warp_core::channel::{Channel, ChannelState};
 use warpui::AppContext;
 
 use super::{DownloadReady, release_assets_directory_url};
-use crate::server::telemetry::TelemetryEvent;
+use crate::event_sources::TelemetryEvent;
 use crate::util::windows::install_dir;
 
 lazy_static! {
@@ -155,10 +155,6 @@ pub(super) fn check_and_report_update_errors(ctx: &mut AppContext) {
     )
     .is_some();
     if has_unable_to_close {
-        crate::send_telemetry_sync_from_app_ctx!(
-            TelemetryEvent::AutoupdateUnableToCloseApplications,
-            ctx
-        );
     }
 
     let has_file_in_use = memchr::memmem::find(
@@ -167,14 +163,12 @@ pub(super) fn check_and_report_update_errors(ctx: &mut AppContext) {
     )
     .is_some();
     if has_file_in_use {
-        crate::send_telemetry_sync_from_app_ctx!(TelemetryEvent::AutoupdateFileInUse, ctx);
     }
 
     // Fired when the mutex polling loop timed out and a force-kill was attempted.
     let has_mutex_timeout =
         memchr::memmem::find(&contents_lowercase, b"warp mutex still held after timeout").is_some();
     if has_mutex_timeout {
-        crate::send_telemetry_sync_from_app_ctx!(TelemetryEvent::AutoupdateMutexTimeout, ctx);
     }
 
     // Fired when taskkill returned non-zero after the mutex timeout.
@@ -183,19 +177,11 @@ pub(super) fn check_and_report_update_errors(ctx: &mut AppContext) {
     if let Some(exit_code) = parse_forcekill_exit_code(&contents_lowercase)
         && exit_code != 128
     {
-        crate::send_telemetry_sync_from_app_ctx!(
-            TelemetryEvent::AutoupdateForcekillFailed { exit_code },
-            ctx
-        );
     }
 
     // Fired when the PowerShell cleanup of the orphaned minidump server process
     // returned a non-zero exit code.
     if let Some(exit_code) = parse_minidump_cleanup_exit_code(&contents_lowercase) {
-        crate::send_telemetry_sync_from_app_ctx!(
-            TelemetryEvent::AutoupdateMinidumpCleanupFailed { exit_code },
-            ctx
-        );
     }
 
     #[cfg(feature = "crash_reporting")]

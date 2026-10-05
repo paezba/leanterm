@@ -21,7 +21,6 @@ use crate::settings::PrivacySettings;
 use crate::terminal::model::session::{IsSSHWrapperSession, SessionInfo};
 use crate::terminal::model_events::{ModelEvent, ModelEventDispatcher};
 use crate::terminal::warpify::settings::{SshExtensionInstallMode, WarpifySettings};
-use crate::{TelemetryEvent, send_telemetry_from_ctx};
 
 /// Per-SSH-init state machine. Encoding the state as an enum makes invalid
 /// transitions unrepresentable and ensures the `SessionInfo` stash cannot be
@@ -407,7 +406,7 @@ impl<T: EventLoopSender> RemoteServerController<T> {
 
         let SshInitState::AwaitingConnect {
             session_info,
-            setup_start,
+            setup_start: _,
             ..
         } = std::mem::replace(&mut self.state, SshInitState::Idle)
         else {
@@ -419,11 +418,7 @@ impl<T: EventLoopSender> RemoteServerController<T> {
         // subsequently initializes, so it picks `RemoteServerCommandExecutor`.
         self.flush_stashed_bootstrap(session_info, ctx);
 
-        let duration_ms = Instant::now()
-            .duration_since(setup_start)
-            .as_millis()
-            .min(u64::MAX as u128) as u64;
-        let (remote_os, remote_arch) = self
+        let (_remote_os, _remote_arch) = self
             .remote_platform
             .as_ref()
             .map(|p| {
@@ -433,20 +428,6 @@ impl<T: EventLoopSender> RemoteServerController<T> {
                 )
             })
             .unwrap_or((None, None));
-        let remote_libc = self
-            .preinstall_check
-            .as_ref()
-            .map(|check| describe_libc(&check.libc));
-        send_telemetry_from_ctx!(
-            TelemetryEvent::RemoteServerSetupDuration {
-                duration_ms,
-                installed_binary: self.did_install,
-                remote_os,
-                remote_arch,
-                remote_libc,
-            },
-            ctx
-        );
     }
 
     /// Called when the remote server connection failed. Flushes the stashed
@@ -618,22 +599,14 @@ fn connection_label_from_ssh_host(host: &str) -> String {
         .map_or(host, |(_user, host)| host)
         .to_string()
 }
-/// Describes a [`RemoteLibc`] as a short string for telemetry.
-fn describe_libc(libc: &RemoteLibc) -> String {
-    match libc {
-        RemoteLibc::Glibc(version) => format!("glibc {version}"),
-        RemoteLibc::NonGlibc { name } => name.clone(),
-        RemoteLibc::Unknown => "unknown".to_string(),
-    }
-}
 
 fn send_unsupported_telemetry<T: EventLoopSender>(
     remote_platform: Option<&RemotePlatform>,
-    unsupported_reason: &UnsupportedReason,
-    detected_libc: Option<&RemoteLibc>,
-    ctx: &mut ModelContext<RemoteServerController<T>>,
+    _unsupported_reason: &UnsupportedReason,
+    _detected_libc: Option<&RemoteLibc>,
+    _ctx: &mut ModelContext<RemoteServerController<T>>,
 ) {
-    let (remote_os, remote_arch) = remote_platform
+    let (_remote_os, _remote_arch) = remote_platform
         .map(|p| {
             (
                 Some(p.os.as_str().to_owned()),
@@ -641,18 +614,6 @@ fn send_unsupported_telemetry<T: EventLoopSender>(
             )
         })
         .unwrap_or((None, None));
-    let detected_libc = detected_libc
-        .map(describe_libc)
-        .unwrap_or_else(|| "unknown".to_string());
-    send_telemetry_from_ctx!(
-        TelemetryEvent::RemoteServerHostUnsupported {
-            remote_os,
-            remote_arch,
-            unsupported_reason: unsupported_reason.clone(),
-            detected_libc,
-        },
-        ctx
-    );
 }
 
 #[cfg(test)]

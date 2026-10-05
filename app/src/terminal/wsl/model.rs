@@ -6,7 +6,7 @@ use windows_registry::CURRENT_USER;
 use windows_result::Error as WindowsError;
 
 use crate::send_telemetry_from_ctx;
-use crate::server::telemetry::TelemetryEvent;
+use crate::event_sources::TelemetryEvent;
 
 const DOCKER_DESKTOP_WSL_DISTRO_PREFIX: &str = "docker-desktop";
 const RANCHER_DESKTOP_WSL_DISTRO_PREFIX: &str = "rancher-desktop";
@@ -36,7 +36,6 @@ impl WslInfo {
             // This error merely occurs when the user doesn't have WSL installed/enabled.
             Err(Error::MainKey(err)) => {
                 log::info!("{err:#}");
-                send_telemetry_from_ctx!(TelemetryEvent::WSLRegistryError, ctx);
                 Vec::new()
             }
             Err(err @ Error::DistributionIterator(_)) => {

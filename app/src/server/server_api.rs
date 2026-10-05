@@ -8,7 +8,6 @@ pub mod team;
 pub mod workspace;
 
 use std::ops::Deref;
-use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -27,7 +26,6 @@ use serde::{Deserialize, Serialize};
 use team::TeamClient;
 use url::Url;
 use warp_core::context_flag::ContextFlag;
-use warp_core::telemetry::TelemetryEvent;
 use warp_errors::{AnyhowErrorExt, ErrorExt, register_error, report_error};
 use warp_server_client::HttpStatusError;
 use warp_server_client::auth::{AuthClientImpl, AuthEvent, EXPERIMENT_ID_HEADER};
@@ -43,15 +41,9 @@ use workspace::WorkspaceClient;
 use super::experiments::{ServerExperiment, ServerExperiments};
 use crate::auth::auth_manager::AuthManager;
 use crate::auth::auth_state::AuthState;
-use crate::server::telemetry::TelemetryApi;
-use crate::settings::PrivacySettingsSnapshot;
 use crate::{ChannelState, settings_view};
 
 pub const FETCH_CHANNEL_VERSIONS_TIMEOUT: std::time::Duration = Duration::from_secs(60);
-#[derive(Serialize)]
-struct AgentTipShownAnalyticsRequest {
-    tip: String,
-}
 
 /// We use a special error code header `X-Warp-Error-Code` to allow the server to send
 /// more specific error code information, so that the client can discern between different
@@ -63,9 +55,6 @@ const WARP_ERROR_CODE_HEADER: &str = "X-Warp-Error-Code";
 /// state, but if Cloud Run is overloaded, it can also send 429s that aren't credit-related.
 /// So we use this to distinguish between the two cases.
 const WARP_ERROR_CODE_OUT_OF_CREDITS: &str = "OUT_OF_CREDITS";
-
-/// Error code indicating the user has reached their cloud agent concurrency limit.
-const WARP_ERROR_CODE_AT_CAPACITY: &str = "AT_CLOUD_AGENT_CAPACITY";
 
 /// ResponseType received by Client
 #[derive(thiserror::Error, Debug, Serialize, Deserialize)]
@@ -85,14 +74,6 @@ impl Deref for ServerApi {
     fn deref(&self) -> &Self::Target {
         &self.base_client
     }
-}
-
-/// Error when the user is at their cloud agent concurrency limit.
-#[derive(thiserror::Error, Debug, Clone, Deserialize)]
-#[error("{error} (running agents: {running_agents})")]
-pub struct CloudAgentCapacityError {
-    pub error: String,
-    pub running_agents: i32,
 }
 
 #[derive(Deserialize, Debug)]
@@ -321,8 +302,6 @@ register_error!(AIApiError);
 /// with disparate types of calls, and allows you to mock methods in tests.
 pub struct ServerApi {
     base_client: Arc<BaseClient>,
-    // TODO(jeff): Make `TelemetryApi` another type of client, and move it off `ServerApi`.
-    telemetry_api: TelemetryApi,
     last_server_time: Arc<Mutex<Option<ServerTime>>>,
 }
 
@@ -338,10 +317,9 @@ impl ServerApi {
             client.set_iap_token_provider(state.clone());
             state as Arc<dyn http_client::iap::IapTokenProvider>
         });
-        let mut telemetry_api = TelemetryApi::new();
         if ContextFlag::NetworkLogConsole.is_enabled() {
             NetworkLogModel::handle(ctx).update(ctx, |model, model_ctx| {
-                model.install_on_clients([&mut client, &mut telemetry_api.client], model_ctx);
+                model.install_on_clients([&mut client], model_ctx);
             });
         }
         Self::new_with_parts(
@@ -349,7 +327,6 @@ impl ServerApi {
             auth_state,
             event_sender,
             iap_token_provider,
-            telemetry_api,
         )
     }
 
@@ -358,7 +335,6 @@ impl ServerApi {
         auth_state: Arc<AuthState>,
         event_sender: async_channel::Sender<AuthEvent>,
         iap_token_provider: Option<Arc<dyn http_client::iap::IapTokenProvider>>,
-        telemetry_api: TelemetryApi,
     ) -> Self {
         let graphql_routing = GraphqlRoutingConfig {
             #[cfg(feature = "agent_mode_evals")]
@@ -379,7 +355,6 @@ impl ServerApi {
 
         Self {
             base_client,
-            telemetry_api,
             last_server_time: Arc::new(Mutex::new(None)),
         }
     }
@@ -390,7 +365,7 @@ impl ServerApi {
         let auth_state = Arc::new(AuthState::new_for_test());
         let client = Arc::new(http_client::Client::new_for_test());
 
-        Self::new_with_parts(client, auth_state, tx, None, TelemetryApi::new())
+        Self::new_with_parts(client, auth_state, tx, None)
     }
 
     #[cfg(all(test, feature = "skip_login"))]
@@ -407,7 +382,6 @@ impl ServerApi {
             auth_state,
             event_sender,
             None,
-            TelemetryApi::new(),
         )
     }
 
@@ -513,52 +487,6 @@ impl ServerApi {
         Ok(self.wrap_eventsource_with_iap_detection(request.eventsource()))
     }
 
-    /// Converts a non-success public API response into the most specific client error
-    /// available. The returned error always carries an [`HttpStatusError`] in its chain
-    /// (via [`anyhow::Error::context`]) so callers retrying through
-    /// [`is_transient_http_error`](super::retry_strategies::is_transient_http_error) fail
-    /// fast on a deterministic 4xx instead of defaulting to a transient retry.
-    async fn error_from_response(response: http_client::Response) -> anyhow::Error {
-        let status = response.status();
-        let is_at_capacity = response
-            .headers()
-            .get(WARP_ERROR_CODE_HEADER)
-            .and_then(|v| v.to_str().ok())
-            == Some(WARP_ERROR_CODE_AT_CAPACITY);
-        let is_out_of_credits = response
-            .headers()
-            .get(WARP_ERROR_CODE_HEADER)
-            .and_then(|v| v.to_str().ok())
-            == Some(WARP_ERROR_CODE_OUT_OF_CREDITS);
-
-        // Get the response text first since we may need to try multiple deserializations.
-        let response_text = response.text().await.unwrap_or_default();
-        let status_error = HttpStatusError::new(status.as_u16(), response_text.clone());
-
-        // Check for AT_CAPACITY error code header.
-        if is_at_capacity
-            && let Ok(capacity_error) =
-                serde_json::from_str::<CloudAgentCapacityError>(&response_text)
-        {
-            return anyhow::Error::new(status_error).context(capacity_error);
-        }
-        if status == StatusCode::TOO_MANY_REQUESTS && is_out_of_credits {
-            let user_display_message = serde_json::from_str::<OutOfCreditsResponse>(&response_text)
-                .ok()
-                .and_then(|r| r.user_display_message);
-            return anyhow::Error::new(status_error).context(AIApiError::QuotaLimit {
-                user_display_message,
-            });
-        }
-
-        // Try to deserialize error response as { "error": "message" }
-        match serde_json::from_str::<ClientError>(&response_text) {
-            Ok(error_response) => anyhow::Error::new(status_error).context(error_response),
-            Err(_) => anyhow::Error::new(status_error)
-                .context(format!("API request failed with status {status}")),
-        }
-    }
-
     /// Sends an authenticated empty POST request to /client/login, which signals to the server
     /// that the user is logged in.
     pub async fn notify_login(&self) {
@@ -591,94 +519,6 @@ impl ServerApi {
                 );
             }
         }
-    }
-
-    /// Synchronously sends a [`TelemetryEvent`] to the Rudderstack API. Prefer not to call this
-    /// directly, use the macros defined in crate::server::telemetry::macros. If telemetry is
-    /// disabled, this is a no-op.
-    pub async fn send_telemetry_event(
-        &self,
-        event: impl TelemetryEvent,
-        settings_snapshot: PrivacySettingsSnapshot,
-    ) -> Result<()> {
-        let user_id = self.user_id();
-        let anonymous_id = self.anonymous_id();
-        self.telemetry_api
-            .send_telemetry_event(user_id, anonymous_id, event, settings_snapshot)
-            .await
-    }
-
-    pub async fn send_agent_tip_shown_analytics_event(&self, tip: String) -> Result<()> {
-        let auth_token = self
-            .get_or_refresh_access_token()
-            .await
-            .context("Failed to get access token for API request")?;
-        let url = format!(
-            "{}/analytics/agent-tip-shown",
-            ChannelState::server_root_url()
-        );
-        let mut request = self
-            .base_client
-            .http_client()
-            .post(&url)
-            .json(&AgentTipShownAnalyticsRequest { tip });
-        if let Some(token) = auth_token.as_bearer_token() {
-            request = request.bearer_auth(token);
-        }
-
-        for (name, value) in self.ambient_agent_headers().await? {
-            request = request.header(name, value);
-        }
-
-        let response = request
-            .send()
-            .await
-            .with_context(|| format!("Failed to send API request to {url}"))?;
-
-        if response.status().is_success() {
-            Ok(())
-        } else {
-            self.observe_iap_challenge(&response);
-            Err(Self::error_from_response(response).await)
-        }
-    }
-
-    /// Drains all queued [`TelemetryEvent`]s into Rudderstack requests containing the corresponding
-    /// batch of events. Events are queued using the [`send_telemetry_from_ctx`] or
-    /// [`send_telemetry_from_app_ctx`] macros. If telemetry is disabled for the user, this flushes
-    /// the UI framework event queue and does nothing with them (no request is made).
-    ///
-    /// Returns the number of events that were flushed.
-    pub async fn flush_telemetry_events(
-        &self,
-        settings_snapshot: PrivacySettingsSnapshot,
-    ) -> Result<usize> {
-        self.telemetry_api.flush_events(settings_snapshot).await
-    }
-
-    /// Sends a batched Rudder request containing events written to the file at `path`. This is a
-    /// no-op if telemetry is disabled.
-    pub async fn flush_persisted_events_to_rudder(
-        &self,
-        path: &Path,
-        settings_snapshot: PrivacySettingsSnapshot,
-    ) -> Result<()> {
-        self.telemetry_api
-            .flush_persisted_events_to_rudder(path, settings_snapshot)
-            .await
-    }
-
-    /// Writes all queued [`TelemetryEvent`]s to a file, limiting the number of written
-    /// events to `max_events`. Events are queued using the [`send_telemetry_from_ctx`] or
-    /// [`send_telemetry_from_app_ctx`] macros. If telemetry is disabled, no events are written to
-    /// disk.
-    pub fn persist_telemetry_events(
-        &self,
-        max_event_count: usize,
-        settings_snapshot: PrivacySettingsSnapshot,
-    ) -> Result<()> {
-        self.telemetry_api
-            .flush_and_persist_events(max_event_count, settings_snapshot)
     }
 
     fn set_server_time(&self, server_time: ServerTime) {

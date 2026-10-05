@@ -6,7 +6,6 @@ pub mod link;
 pub mod manager;
 pub mod notebook;
 mod styles;
-pub mod telemetry;
 
 use std::sync::Arc;
 
@@ -218,3 +217,5 @@ pub fn export_notebook(data: &str, ctx: &AppContext) -> anyhow::Result<String> {
         },
     ))
 }
+
+pub mod telemetry;

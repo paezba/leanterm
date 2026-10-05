@@ -30,10 +30,9 @@ use crate::appearance::Appearance;
 use crate::auth::AuthStateProvider;
 use crate::editor::{EditorView, Event as EditorEvent, SingleLineEditorOptions, TextOptions};
 use crate::server::server_api::referral::{ReferralInfo, ReferralsClient};
-use crate::server::telemetry::TelemetryEvent;
 use crate::ui_components::blended_colors;
 use crate::view_components::ToastFlavor;
-use crate::{safe_info, send_telemetry_from_ctx};
+use crate::safe_info;
 
 const HEADER_FONT_SIZE: f32 = 18.;
 const HEADER_MARGIN_BOTTOM: f32 = 32.;
@@ -277,7 +276,6 @@ impl ReferralsPageView {
                 log::warn!("Attempting to copy link before API request is complete");
             }
             ApiState::Ready { referral_info, .. } => {
-                send_telemetry_from_ctx!(TelemetryEvent::CopyInviteLink, ctx);
                 ctx.clipboard()
                     .write(ClipboardContent::plain_text(referral_info.url.to_string()));
                 ctx.emit(ReferralsPageEvent::ShowToast {

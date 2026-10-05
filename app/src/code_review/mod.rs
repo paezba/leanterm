@@ -11,9 +11,8 @@ pub mod git_repo_model;
 mod git_repo_models;
 pub mod github_repo_model;
 mod hidden_lines;
-pub mod telemetry_event;
 #[cfg_attr(not(feature = "local_fs"), allow(unused_imports))]
-pub use telemetry_event::CodeReviewTelemetryEvent;
+
 
 use crate::terminal::view::TerminalView;
 
@@ -176,3 +175,5 @@ impl SingletonEntity for GlobalCodeReviewModel {}
 impl Entity for GlobalCodeReviewModel {
     type Event = GlobalCodeReviewEvent;
 }
+
+pub mod telemetry_event;

@@ -4,7 +4,7 @@ use std::fmt;
 use warpui::Action;
 
 use crate::WorkspaceAction;
-use crate::server::telemetry::AddTabWithShellSource;
+use crate::event_sources::AddTabWithShellSource;
 use crate::terminal::available_shells::AvailableShell;
 use crate::terminal::view::TerminalAction;
 

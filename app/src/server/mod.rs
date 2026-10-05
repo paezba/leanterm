@@ -12,7 +12,4 @@ pub mod retry_strategies;
 pub mod server_api;
 pub mod sync_queue;
 pub mod team_scope;
-pub mod telemetry;
-pub(crate) mod telemetry_ext;
 
-pub use warp_core::operating_system_info::OperatingSystemInfo;

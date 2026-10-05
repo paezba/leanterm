@@ -8,16 +8,6 @@ pub fn memory_footprint_bytes() -> u64 {
     platform::memory_footprint_bytes()
 }
 
-/// Returns a platform-specific JSON object with a detailed breakdown of the
-/// current process's memory usage.
-///
-/// Each platform populates whichever fields it can natively provide.  The
-/// returned value is an opaque JSON blob suitable for attaching to Sentry
-/// events and telemetry payloads.
-pub fn memory_breakdown() -> serde_json::Value {
-    platform::memory_breakdown()
-}
-
 // ---------------------------------------------------------------------------
 // macOS
 // ---------------------------------------------------------------------------
@@ -56,37 +46,6 @@ mod platform {
             .unwrap_or(0)
     }
 
-    pub fn memory_breakdown() -> serde_json::Value {
-        let Some(info) = query_task_vm_info() else {
-            return serde_json::json!({});
-        };
-
-        // Copy fields out of the packed struct into locals to avoid
-        // unaligned references (task_vm_info is repr(C, packed(4))).
-        let total_footprint = info.phys_footprint;
-        let resident = info.resident_size;
-        let compressed = info.compressed;
-        let internal = info.internal;
-        let device = info.device;
-        let gpu_memory = info.ledger_tag_graphics_footprint;
-        let gpu_memory_compressed = info.ledger_tag_graphics_footprint_compressed;
-        let media_memory = info.ledger_tag_media_footprint;
-        let neural_memory = info.ledger_tag_neural_footprint;
-        let purgeable = info.ledger_purgeable_nonvolatile;
-
-        serde_json::json!({
-            "total_footprint": total_footprint,
-            "resident": resident,
-            "compressed": compressed,
-            "internal": internal,
-            "device": device,
-            "gpu_memory": gpu_memory,
-            "gpu_memory_compressed": gpu_memory_compressed,
-            "media_memory": media_memory,
-            "neural_memory": neural_memory,
-            "purgeable": purgeable,
-        })
-    }
 }
 
 // ---------------------------------------------------------------------------
