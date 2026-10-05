@@ -35,9 +35,7 @@ use super::{
     SettingsAction, SettingsSection, ToggleSettingActionPair, flags, plan_header_presentation,
 };
 use crate::appearance::Appearance;
-use crate::auth::auth_manager::{AuthManager, LoginGatedFeature};
 use crate::auth::auth_state::AuthState;
-use crate::auth::auth_view_modal::AuthViewVariant;
 use crate::auth::{AuthStateProvider, UserUid};
 use crate::server::ids::ServerId;
 use crate::settings::cloud_preferences::CloudPreferencesSettings;
@@ -49,7 +47,6 @@ use crate::workspaces::workspace::CustomerType;
 const PHOTO_SIZE: f32 = 40.;
 const REGULAR_TEXT_FONT_SIZE: f32 = 12.;
 const VERTICAL_MARGIN: f32 = 24.;
-const LOG_OUT_TEXT: &str = "Log out";
 lazy_static! {
     static ref SETTINGS_SYNC_BINDINGS_ADDED: Arc<Mutex<bool>> = Default::default();
 }
@@ -117,7 +114,6 @@ pub enum MainPageAction {
     GenerateStripeBillingPortalLink {
         team_uid: ServerId,
     },
-    SignupAnonymousUser,
     OpenUrl(String),
     #[cfg(not(target_family = "wasm"))]
     RefreshIapCredentials,
@@ -133,23 +129,10 @@ impl MainPageAction {
     }
 }
 
-impl From<&MainPageAction> for LoginGatedFeature {
-    fn from(val: &MainPageAction) -> LoginGatedFeature {
-        use MainPageAction::*;
-        match val {
-            Upgrade { .. } => "Upgrade Plan",
-            GenerateStripeBillingPortalLink { .. } => "Generate Stripe Billing Portal Link",
-            ToggleSettingsSync => "Toggle Settings Sync",
-            _ => "Unknown reason",
-        }
-    }
-}
-
 #[derive(Clone, Copy)]
 pub enum MainSettingsPageEvent {
     #[allow(dead_code)]
     OpenWarpDrive,
-    SignupAnonymousUser,
 }
 
 pub struct MainSettingsPageView {
@@ -172,13 +155,6 @@ impl TypedActionView for MainSettingsPageView {
             .is_anonymous_or_logged_out()
             && action.blocked_for_anonymous_user()
         {
-            AuthManager::handle(ctx).update(ctx, |auth_manager, ctx| {
-                auth_manager.attempt_login_gated_feature(
-                    action.into(),
-                    AuthViewVariant::RequireLoginCloseable,
-                    ctx,
-                )
-            });
             return;
         }
 
@@ -198,9 +174,6 @@ impl TypedActionView for MainSettingsPageView {
                 UserWorkspaces::handle(ctx).update(ctx, |user_workspaces, ctx| {
                     user_workspaces.generate_stripe_billing_portal_link(*team_uid, ctx);
                 });
-            }
-            MainPageAction::SignupAnonymousUser => {
-                ctx.emit(MainSettingsPageEvent::SignupAnonymousUser);
             }
             MainPageAction::OpenUrl(url) => {
                 ctx.open_url(url);
@@ -232,11 +205,6 @@ impl MainSettingsPageView {
             ctx.notify();
         });
 
-        let auth_manager_handle = AuthManager::handle(ctx);
-        ctx.subscribe_to_model(&auth_manager_handle, |_, _, _, ctx| {
-            ctx.notify();
-        });
-
         let mut widgets: Vec<Box<dyn SettingsWidget<View = Self>>> = vec![
             Box::new(AccountWidget::default()),
             Box::new(DividerWidget {}),
@@ -259,7 +227,6 @@ impl MainSettingsPageView {
             widgets.push(Box::new(VersionInfoWidget::default()));
         }
 
-        widgets.push(Box::new(LogoutWidget::default()));
 
         let page = PageType::new_uncategorized(widgets, Some(PageTitle::new("Account")));
 
@@ -312,9 +279,6 @@ impl AccountWidget {
             .with_style(button_styles)
             .with_text_label("Sign up".to_owned())
             .build()
-            .on_click(move |ctx, _, _| {
-                ctx.dispatch_typed_action(MainPageAction::SignupAnonymousUser);
-            })
             .finish();
 
         let mut plan_info = Flex::column()
@@ -808,30 +772,6 @@ impl SettingsWidget for VersionInfoWidget {
     }
 }
 
-#[derive(Default)]
-struct LogoutWidget {
-    mouse_state: MouseStateHandle,
-}
-
-impl LogoutWidget {
-    fn render_logout_button(&self, appearance: &Appearance) -> Box<dyn Element> {
-        appearance
-            .ui_builder()
-            .button(ButtonVariant::Secondary, self.mouse_state.clone())
-            .with_text_label(LOG_OUT_TEXT.into())
-            .with_style(UiComponentStyles {
-                font_size: Some(14.),
-                padding: Some(Coords::uniform(8.).left(32.).right(32.)),
-                ..Default::default()
-            })
-            .build()
-            .on_click(|ctx, _, _| {
-                ctx.dispatch_typed_action(WorkspaceAction::LogOut);
-            })
-            .finish()
-    }
-}
-
 /// Widget displaying IAP credential state and a refresh button. Only
 /// visible on staging channels where IAP is active.
 #[cfg(not(target_family = "wasm"))]
@@ -936,35 +876,6 @@ impl SettingsWidget for IapCredentialsWidget {
                 .with_child(label)
                 .with_child(status)
                 .with_child(button_row)
-                .finish(),
-        )
-        .with_margin_top(VERTICAL_MARGIN)
-        .finish()
-    }
-}
-
-impl SettingsWidget for LogoutWidget {
-    type View = MainSettingsPageView;
-
-    fn search_terms(&self) -> &str {
-        "sign out log out logout"
-    }
-
-    fn should_render(&self, app: &AppContext) -> bool {
-        !AuthStateProvider::as_ref(app)
-            .get()
-            .is_anonymous_or_logged_out()
-    }
-
-    fn render(
-        &self,
-        _view: &Self::View,
-        appearance: &Appearance,
-        _app: &AppContext,
-    ) -> Box<dyn Element> {
-        Container::new(
-            Align::new(self.render_logout_button(appearance))
-                .left()
                 .finish(),
         )
         .with_margin_top(VERTICAL_MARGIN)

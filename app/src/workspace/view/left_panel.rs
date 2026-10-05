@@ -12,7 +12,6 @@ use warpui::elements::{
 };
 use warpui::fonts::Weight;
 use warpui::platform::Cursor;
-use warpui::ui_components::button::ButtonVariant;
 use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
 use warpui::{
     AppContext, Entity, FocusContext, ModelHandle, SingletonEntity, TypedActionView, View,
@@ -68,7 +67,6 @@ pub enum LeftPanelAction {
     ProjectExplorer,
     GlobalSearch { entry_focus: GlobalSearchEntryFocus },
     WarpDrive,
-    SignIn,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -106,7 +104,6 @@ pub enum LeftPanelEvent {
         target: FileTarget,
         line_col: Option<LineAndColumnArg>,
     },
-    SignInRequested,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -254,26 +251,11 @@ impl LeftPanelView {
             })
             .build()
             .finish();
-        let mut content = Flex::column()
+        let content = Flex::column()
             .with_main_axis_size(MainAxisSize::Min)
             .with_cross_axis_alignment(CrossAxisAlignment::Center)
             .with_child(title)
             .with_child(Container::new(description).with_margin_top(8.).finish());
-        if availability == ToolPanelAvailability::RequiresAccount {
-            let sign_in = appearance
-                .ui_builder()
-                .button(
-                    ButtonVariant::Accent,
-                    self.mouse_state_handles.sign_in_button.clone(),
-                )
-                .with_text_label("Sign in".to_string())
-                .build()
-                .on_click(|ctx, _, _| {
-                    ctx.dispatch_typed_action(LeftPanelAction::SignIn);
-                })
-                .finish();
-            content = content.with_child(Container::new(sign_in).with_margin_top(16.).finish());
-        }
         let content = ConstrainedBox::new(content.finish())
             .with_max_width(280.)
             .finish();
@@ -862,7 +844,6 @@ impl LeftPanelView {
                     matches!(self.active_view.get(), ToolPanelView::GlobalSearch { .. })
                 }
                 LeftPanelAction::WarpDrive => self.active_view.get() == ToolPanelView::WarpDrive,
-                LeftPanelAction::SignIn => false,
             };
         }
     }
@@ -969,9 +950,6 @@ impl LeftPanelView {
                     } else {
                     }
                 }
-            }
-            LeftPanelAction::SignIn => {
-                ctx.emit(LeftPanelEvent::SignInRequested);
             }
         }
     }

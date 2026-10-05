@@ -474,7 +474,6 @@ fn handle_terminal_view_event(
             Event::OpenWarpDriveObjectInPane(uid) => {
                 ctx.emit(pane_group::Event::OpenWarpDriveObjectInPane(uid.clone()));
             }
-            Event::AnonymousUserSignup => ctx.emit(pane_group::Event::AnonymousUserSignup),
             #[cfg(feature = "local_fs")]
             Event::OpenFileWithTarget {
                 path,
@@ -547,11 +546,6 @@ fn handle_terminal_view_event(
                     remote_pane_id: terminal_pane_id,
                     upload_id: *upload_id,
                 })
-            }
-            Event::SignupAnonymousUser { entrypoint } => {
-                ctx.emit(pane_group::Event::SignupAnonymousUser {
-                    entrypoint: *entrypoint,
-                });
             }
             Event::OpenThemeChooser => {
                 ctx.emit(pane_group::Event::OpenThemeChooser);

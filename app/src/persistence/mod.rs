@@ -36,7 +36,6 @@ use warp_graphql::scalars::time::ServerTimestamp;
 use warpui::{AppContext, Entity, SingletonEntity};
 
 use crate::app_state::AppState;
-use crate::auth::auth_manager::PersistedCurrentUserInformation;
 use crate::cloud_object::model::actions::ObjectAction;
 use crate::cloud_object::model::generic_string_model::CloudStringObject;
 use crate::cloud_object::{
@@ -317,9 +316,6 @@ pub enum ModelEvent {
     /// Close the SQLite writer thread when the app is about to quit.
     Terminate,
 
-    UpsertCurrentUserInformation {
-        user_information: PersistedCurrentUserInformation,
-    },
     UpsertWorkspaceMetadata {
         metadata: Box<CodeWorkspaceMetadata>,
     },

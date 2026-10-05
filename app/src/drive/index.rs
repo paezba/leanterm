@@ -52,9 +52,7 @@ use super::{CloudObjectTypeAndId, DriveObjectType, DriveSortOrder};
 use crate::ObjectActions;
 use crate::appearance::Appearance;
 use crate::auth::AuthStateProvider;
-use crate::auth::auth_manager::{AuthManager, LoginGatedFeature};
 use crate::auth::auth_state::AuthState;
-use crate::auth::auth_view_modal::AuthViewVariant;
 use crate::banner::BannerState;
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::model::view::{CloudViewModel, CloudViewModelEvent, UpdateTimestamp};
@@ -65,7 +63,7 @@ use crate::cloud_object::{
 use crate::drive::panel::DrivePanelAction;
 use crate::editor::{EditorView, Event as EditorEvent, SingleLineEditorOptions};
 use crate::env_vars::CloudEnvVarCollection;
-use crate::event_sources::{AnonymousUserSignupEntrypoint, SharingDialogSource};
+use crate::event_sources::{SharingDialogSource};
 use crate::features::FeatureFlag;
 use crate::menu::{Event, Menu, MenuItem, MenuItemFields};
 use crate::network::NetworkStatus;
@@ -358,7 +356,6 @@ pub enum DriveIndexAction {
     ManageBilling {
         team_uid: ServerId,
     },
-    SignupAnonymousUser,
     DismissPersonalObjectLimits,
     /// Dismiss (and remember dismissing) the shared object limit banner shown
     /// in the Warp Drive sidebar when a plan's notebook/workflow limit is hit.
@@ -402,18 +399,6 @@ impl DriveIndexAction {
             self,
             OpenTeamSettingsPage | ViewPlans { .. } | ManageBilling { .. }
         )
-    }
-}
-
-impl From<&DriveIndexAction> for LoginGatedFeature {
-    fn from(val: &DriveIndexAction) -> LoginGatedFeature {
-        use DriveIndexAction::*;
-        match val {
-            OpenTeamSettingsPage => "Open Team Settings",
-            ViewPlans { .. } => "View Plans",
-            ManageBilling { .. } => "Manage Billing",
-            _ => "Unknown reason",
-        }
     }
 }
 
@@ -3961,7 +3946,6 @@ impl DriveIndex {
             .with_active_styles(hovered_and_clicked_styles)
             .with_centered_text_label("Sign up".to_string())
             .build()
-            .on_click(|ctx, _, _| ctx.dispatch_typed_action(DriveIndexAction::SignupAnonymousUser))
             .with_cursor(Cursor::PointingHand)
             .finish();
 
@@ -4762,13 +4746,6 @@ impl DriveIndex {
         };
 
         if self.auth_state.is_anonymous_or_logged_out() {
-            AuthManager::handle(ctx).update(ctx, |auth_manager, ctx| {
-                auth_manager.attempt_login_gated_feature(
-                    "Share Object",
-                    AuthViewVariant::ShareRequirementCloseable,
-                    ctx,
-                )
-            });
             return;
         }
 
@@ -5090,13 +5067,6 @@ impl TypedActionView for DriveIndex {
     fn handle_action(&mut self, action: &DriveIndexAction, ctx: &mut ViewContext<Self>) {
         // Block anonymous users from performing team actions
         if self.auth_state.is_anonymous_or_logged_out() && action.blocked_for_anonymous_user() {
-            AuthManager::handle(ctx).update(ctx, |auth_manager, ctx| {
-                auth_manager.attempt_login_gated_feature(
-                    action.into(),
-                    AuthViewVariant::RequireLoginCloseable,
-                    ctx,
-                )
-            });
             return;
         }
 
@@ -5467,12 +5437,6 @@ impl TypedActionView for DriveIndex {
                     SharingDialogSource::DriveIndex,
                     ctx,
                 );
-            }
-            DriveIndexAction::SignupAnonymousUser => {
-                let entrypoint = AnonymousUserSignupEntrypoint::SignUpButton;
-                AuthManager::handle(ctx).update(ctx, |auth_manager, ctx| {
-                    auth_manager.initiate_anonymous_user_linking(entrypoint, ctx);
-                });
             }
             DriveIndexAction::DismissPersonalObjectLimits => {
                 self.dismiss_personal_object_limit_status(ctx);

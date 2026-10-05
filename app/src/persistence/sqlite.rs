@@ -44,7 +44,7 @@ use warpui::{AppContext, SingletonEntity};
 
 use super::block_list::{delete_blocks, save_block};
 use super::model::{
-    self, CODE_PANE_KIND, CurrentUserInformation, ENV_VAR_COLLECTION_PANE_KIND,
+    self, CODE_PANE_KIND, ENV_VAR_COLLECTION_PANE_KIND,
     MCP_SERVER_PANE_KIND, NOTEBOOK_PANE_KIND, NewApp, NewCommand, NewServerExperiment, NewTab,
     NewTabGroup, NewTeam, NewWindow, NewWorkspace, NewWorkspaceMetadata, NewWorkspaceTeam,
     SETTINGS_PANE_KIND, TERMINAL_PANE_KIND, Tab, TabGroup, WORKFLOW_PANE_KIND, Window,
@@ -62,7 +62,6 @@ use crate::app_state::{
     WorkflowPaneSnapshot,
 };
 use crate::auth::UserUid;
-use crate::auth::auth_manager::PersistedCurrentUserInformation;
 use crate::auth::auth_state::AuthStateProvider;
 use crate::cloud_object::model::actions::{
     ObjectAction, ObjectActionSubtype, object_action_from_persisted,
@@ -586,10 +585,6 @@ fn handle_model_event(event: ModelEvent, connection: &mut SqliteConnection) -> a
         }
         ModelEvent::SaveExperiments { experiments } => {
             save_experiments(connection, experiments).context("error saving experiments")
-        }
-        ModelEvent::UpsertCurrentUserInformation { user_information } => {
-            upsert_current_user_information(connection, user_information)
-                .context("error upserting user information")
         }
         ModelEvent::AddIgnoredSuggestion {
             suggestion,
@@ -2345,23 +2340,6 @@ fn clear_user_profiles(conn: &mut SqliteConnection) -> Result<(), Error> {
     conn.transaction::<(), Error, _>(|conn| {
         diesel::delete(schema::user_profiles::dsl::user_profiles).execute(conn)?;
 
-        Ok(())
-    })
-}
-
-fn upsert_current_user_information(
-    conn: &mut SqliteConnection,
-    user_information: PersistedCurrentUserInformation,
-) -> Result<(), Error> {
-    conn.transaction::<(), Error, _>(|conn| {
-        diesel::delete(schema::current_user_information::dsl::current_user_information)
-            .execute(conn)?;
-
-        diesel::insert_into(schema::current_user_information::dsl::current_user_information)
-            .values(CurrentUserInformation {
-                email: user_information.email,
-            })
-            .execute(conn)?;
         Ok(())
     })
 }

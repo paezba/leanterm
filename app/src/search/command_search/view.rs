@@ -31,9 +31,7 @@ use super::workflows::{WorkflowsDataSource, cloud_workflows_data_source};
 use super::zero_state::{CommandSearchZeroStateEvent, CommandSearchZeroStateView};
 use crate::appearance::Appearance;
 use crate::auth::AuthStateProvider;
-use crate::auth::auth_manager::AuthManager;
 use crate::auth::auth_state::AuthState;
-use crate::auth::auth_view_modal::AuthViewVariant;
 use crate::completer::SessionContext;
 use crate::drive::settings::WarpDriveSettings;
 use crate::search::QueryFilter;
@@ -728,15 +726,7 @@ impl TypedActionView for CommandSearchView {
             OpenUpgradeLink(upgrade_link) => {
                 ctx.open_url(upgrade_link);
             }
-            AttemptLoginGatedUpgrade => {
-                AuthManager::handle(ctx).update(ctx, |auth_manager, ctx| {
-                    auth_manager.attempt_login_gated_feature(
-                        "Upgrade AI Usage",
-                        AuthViewVariant::RequireLoginCloseable,
-                        ctx,
-                    )
-                });
-            }
+            AttemptLoginGatedUpgrade => {}
         }
     }
 }

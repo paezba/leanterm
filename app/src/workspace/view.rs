@@ -48,7 +48,6 @@ use serde_json;
 #[cfg(target_family = "wasm")]
 use url::Url;
 use warp_core::context_flag::ContextFlag;
-use warp_core::execution_mode::AppExecutionMode;
 use warp_core::features::FeatureFlag;
 use warp_core::semantic_selection::SemanticSelection;
 use warp_core::ui::Icon;
@@ -123,12 +122,8 @@ use crate::app_state::{
 };
 use crate::appearance::{Appearance, AppearanceManager};
 use crate::auth::AuthStateProvider;
-use crate::auth::auth_manager::{AuthManager, AuthManagerEvent};
-use crate::auth::auth_override_warning_modal::{
-    AuthOverrideWarningModal, AuthOverrideWarningModalEvent, AuthOverrideWarningModalVariant,
-};
+use crate::auth::auth_manager::{AuthManager};
 use crate::auth::auth_state::AuthState;
-use crate::auth::auth_view_modal::{AuthRedirectPayload, AuthView, AuthViewEvent, AuthViewVariant};
 use crate::banner::BannerState;
 use crate::channel::ChannelState;
 use crate::cloud_object::model::persistence::CloudModel;
@@ -161,7 +156,7 @@ use crate::editor::{
 use crate::env_vars::CloudEnvVarCollection;
 use crate::env_vars::manager::{EnvVarCollectionManager, EnvVarCollectionSource};
 use crate::event_sources::{
-    AddTabWithShellSource, AnonymousUserSignupEntrypoint, LaunchConfigUiLocation, PaletteSource,
+    AddTabWithShellSource, LaunchConfigUiLocation, PaletteSource,
     SharingDialogSource,
 };
 use crate::launch_configs::launch_config::WindowTemplate;
@@ -496,8 +491,6 @@ enum TabConfigsMenuOpenSource {
 /// This enumerates the different kinds of banners we show to the user.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum WorkspaceBanner {
-    /// to display when the user needs to reauthenticate
-    Reauth,
     // to display an anonymous user has X days left to sign in
     AnonymousUserAuth,
     /// to display when recovering from a crash that may have been due to use
@@ -515,7 +508,6 @@ impl WorkspaceBanner {
     fn is_dismissible(&self) -> bool {
         match self {
             Self::AnonymousUserAuth => false,
-            Self::Reauth => true,
             #[cfg(target_os = "linux")]
             Self::WaylandCrashRecovery => true,
             Self::InvalidSettings => true,
@@ -760,11 +752,8 @@ pub struct Workspace {
     show_session_config_tab_config_chip: bool,
     new_worktree_modal: ModalViewState<Modal<NewWorktreeModal>>,
     command_search_view: ViewHandle<CommandSearchView>,
-    reauth_banner_dismissed: bool,
     settings_file_error: Option<crate::settings::SettingsFileError>,
     settings_error_banner_dismissed: bool,
-    auth_override_warning_modal: ViewHandle<AuthOverrideWarningModal>,
-    require_login_modal: ViewHandle<AuthView>,
     workflow_modal: ViewHandle<WorkflowModal>,
     prompt_editor_modal: ViewHandle<PromptEditorModal>,
     header_toolbar_editor_modal: ViewHandle<HeaderToolbarEditorModal>,
@@ -1321,47 +1310,6 @@ impl Workspace {
         });
 
         (settings_pane, theme_chooser_view)
-    }
-
-    fn build_require_login_modal(ctx: &mut ViewContext<Self>) -> ViewHandle<AuthView> {
-        let require_login_modal = ctx.add_typed_action_view(|ctx| {
-            AuthView::new(AuthViewVariant::RequireLoginCloseable, ctx)
-        });
-        ctx.subscribe_to_view(&require_login_modal, move |me, _, event, ctx| {
-            me.handle_require_login_modal_event(event, ctx);
-        });
-
-        require_login_modal
-    }
-
-    fn build_auth_override_warning_modal(
-        ctx: &mut ViewContext<Self>,
-    ) -> ViewHandle<AuthOverrideWarningModal> {
-        let auth_override_warning_modal = ctx.add_typed_action_view(|ctx| {
-            AuthOverrideWarningModal::new(ctx, AuthOverrideWarningModalVariant::WorkspaceModal)
-        });
-
-        ctx.subscribe_to_view(&auth_override_warning_modal, |me, _, event, ctx| {
-            me.handle_auth_override_warning_modal_event(event, ctx);
-        });
-
-        auth_override_warning_modal
-    }
-
-    fn handle_auth_override_warning_modal_event(
-        &mut self,
-        event: &AuthOverrideWarningModalEvent,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        match event {
-            AuthOverrideWarningModalEvent::Close => {
-                self.current_workspace_state.is_auth_override_modal_open = false;
-                ctx.notify();
-            }
-            AuthOverrideWarningModalEvent::BulkExport => {
-                self.export_all_warp_drive_objects(ctx);
-            }
-        }
     }
 
     fn build_workflow_modal(ctx: &mut ViewContext<Self>) -> ViewHandle<WorkflowModal> {
@@ -2067,7 +2015,6 @@ impl Workspace {
         });
 
         let auth_manager = AuthManager::handle(ctx);
-        ctx.subscribe_to_model(&auth_manager, Self::handle_auth_manager_event);
 
         // Handle theme updates when there is a cloud update to themes while the picker is open.
         ctx.subscribe_to_model(&ThemeSettings::handle(ctx), |me, _, _, ctx| {
@@ -2094,9 +2041,7 @@ impl Workspace {
         let (settings_pane, theme_chooser_view) =
             Self::build_settings_views(global_resource_handles, ctx);
 
-        let require_login_modal = Self::build_require_login_modal(ctx);
 
-        let auth_override_warning_modal = Self::build_auth_override_warning_modal(ctx);
 
         let workflow_modal = Self::build_workflow_modal(ctx);
 
@@ -2286,11 +2231,8 @@ impl Workspace {
             show_session_config_tab_config_chip: false,
             new_worktree_modal,
             command_search_view,
-            reauth_banner_dismissed: false,
             settings_file_error,
             settings_error_banner_dismissed: false,
-            auth_override_warning_modal,
-            require_login_modal,
             workflow_modal,
             theme_creator_modal,
             theme_deletion_modal,
@@ -2740,11 +2682,9 @@ impl Workspace {
                 }
 
                 self.activate_tab_internal(active_tab_index, ctx);
-                self.check_and_trigger_onboarding(ctx);
             }
             NewWorkspaceSource::FromTemplate { window_template } => {
                 self.open_launch_config_window(window_template, ctx);
-                self.check_and_trigger_onboarding(ctx);
             }
             NewWorkspaceSource::Session { options, .. } => {
                 self.add_tab_with_pane_layout(
@@ -2753,7 +2693,6 @@ impl Workspace {
                     None,
                     ctx,
                 );
-                self.check_and_trigger_onboarding(ctx);
             }
             NewWorkspaceSource::TeamSwitched { .. } => {
                 self.configure_empty_workspace(
@@ -2961,7 +2900,6 @@ impl Workspace {
                 false, /* hide_homepage */
                 ctx,
             );
-            self.check_and_trigger_onboarding(ctx);
             false
         } else {
             let home_pane = super::home::create_home_pane(ctx);
@@ -4428,12 +4366,6 @@ impl Workspace {
                     ctx,
                 );
             }
-            LeftPanelEvent::SignInRequested => {
-                self.open_require_login_modal(AuthViewVariant::RequireLoginCloseable, ctx);
-                self.require_login_modal.update(ctx, |modal, ctx| {
-                    modal.start_sign_in(ctx);
-                });
-            }
         }
     }
 
@@ -5771,26 +5703,6 @@ impl Workspace {
             })
     }
 
-    /// If the user is new and therefore has not seen the in app onboarding,
-    /// triggers the welcome block to be shown after bootstrapping is completed.
-    fn check_and_trigger_onboarding(&mut self, ctx: &mut ViewContext<Self>) -> bool {
-        // Onboarding requires a real user to interact with it; suppress when
-        // running in a headless mode like the SDK/CLI.
-        if !AppExecutionMode::as_ref(ctx).can_show_onboarding() {
-            return false;
-        }
-
-        if !self.auth_state.is_onboarded().unwrap_or_default() {
-            // Mark the user as onboarded
-            AuthManager::handle(ctx).update(ctx, |auth_manager, ctx| {
-                auth_manager.set_user_onboarded(ctx);
-            });
-            return true;
-        }
-
-        false
-    }
-
     /// Opens the Warp Drive object identified by `uid` in a new pane
     /// if it has a pane representation.
     fn open_warp_drive_object_in_new_pane(&mut self, uid: &ObjectUid, ctx: &mut ViewContext<Self>) {
@@ -6978,21 +6890,6 @@ impl Workspace {
             MenuItem::Separator,
         ]);
 
-        if self.auth_state.is_anonymous_or_logged_out() {
-            items.push(
-                MenuItemFields::new("Sign up")
-                    .with_on_select_action(WorkspaceAction::SignupAnonymousUser)
-                    .into_item(),
-            );
-        }
-
-        if !self.auth_state.is_anonymous_or_logged_out() {
-            items.push(
-                MenuItemFields::new("Log out")
-                    .with_on_select_action(WorkspaceAction::LogOut)
-                    .into_item(),
-            );
-        }
         items
     }
 
@@ -8250,19 +8147,6 @@ impl Workspace {
         }
     }
 
-    fn handle_require_login_modal_event(
-        &mut self,
-        event: &AuthViewEvent,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        match event {
-            AuthViewEvent::Close => {
-                self.current_workspace_state.is_require_login_modal_open = false;
-                ctx.notify();
-            }
-        }
-    }
-
     fn handle_theme_creator_modal_event(
         &mut self,
         event: &ThemeCreatorModalEvent,
@@ -8331,35 +8215,6 @@ impl Workspace {
         ctx: &mut ViewContext<Self>,
     ) {
         ctx.notify();
-    }
-
-    fn handle_auth_manager_event(
-        &mut self,
-        _handle: ModelHandle<AuthManager>,
-        event: &AuthManagerEvent,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        match event {
-            AuthManagerEvent::AttemptedLoginGatedFeature { auth_view_variant } => {
-                self.open_require_login_modal(*auth_view_variant, ctx)
-            }
-            AuthManagerEvent::LoginOverrideDetected(interrupted_auth_payload) => {
-                self.open_auth_override_warning_modal(interrupted_auth_payload.clone(), ctx);
-            }
-            AuthManagerEvent::AuthComplete => {
-                // This workspace can survive an anonymous user signing up from
-                // inside the app. Refresh the cached auth state and recompute
-                // effective toolbelt availability so onboarding preferences
-                // (for example, Warp Drive and conversation history) take
-                // effect without requiring an off/on toggle.
-                self.auth_state = AuthStateProvider::as_ref(ctx).get().clone();
-                self.update_left_panel_available_views(ctx);
-                ctx.notify();
-            }
-            _ => {
-                ctx.notify();
-            }
-        }
     }
 
     pub fn toggle_block_snackbar(&mut self, ctx: &mut ViewContext<Self>) {
@@ -10033,31 +9888,6 @@ impl Workspace {
         }
     }
 
-    fn open_require_login_modal(&mut self, variant: AuthViewVariant, ctx: &mut ViewContext<Self>) {
-        self.require_login_modal.update(ctx, |modal, ctx| {
-            modal.set_variant(ctx, variant);
-        });
-
-        self.close_all_overlays(ctx);
-        self.current_workspace_state.is_require_login_modal_open = true;
-        ctx.focus(&self.require_login_modal);
-        ctx.notify();
-    }
-
-    fn open_auth_override_warning_modal(
-        &mut self,
-        auth_payload: AuthRedirectPayload,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        self.close_all_overlays(ctx);
-        self.auth_override_warning_modal.update(ctx, |modal, _| {
-            modal.set_interrupted_auth_payload(auth_payload);
-        });
-        self.current_workspace_state.is_auth_override_modal_open = true;
-        ctx.focus(&self.auth_override_warning_modal);
-        ctx.notify();
-    }
-
     fn open_palette(
         &mut self,
         mode: PaletteMode,
@@ -10345,9 +10175,6 @@ impl Workspace {
                     ctx,
                 );
                 ctx.notify();
-            }
-            SettingsViewEvent::SignupAnonymousUser => {
-                self.initiate_user_signup(AnonymousUserSignupEntrypoint::SignUpButton, ctx);
             }
             SettingsViewEvent::Pane(_) | SettingsViewEvent::StartResize => {}
             SettingsViewEvent::ShowToast { message, flavor } => {
@@ -11097,9 +10924,6 @@ impl Workspace {
             pane_group::Event::OpenWarpDriveObjectInPane(uid) => {
                 self.open_warp_drive_object_in_new_pane(uid, ctx);
             }
-            pane_group::Event::AnonymousUserSignup => {
-                self.initiate_user_signup(AnonymousUserSignupEntrypoint::RenotificationBlock, ctx);
-            }
             pane_group::Event::OpenDriveObjectShareDialog {
                 cloud_object_type_and_id,
                 invitee_email,
@@ -11261,9 +11085,6 @@ impl Workspace {
                     }
                     toast_stack.add_ephemeral_toast(toast, ctx);
                 });
-            }
-            pane_group::Event::SignupAnonymousUser { entrypoint } => {
-                self.initiate_user_signup(*entrypoint, ctx);
             }
             pane_group::Event::OpenThemeChooser => {
                 self.show_theme_chooser_for_custom_theme(ctx);
@@ -11833,13 +11654,6 @@ impl Workspace {
         if self.auth_state.is_anonymous_or_logged_out()
             && workflow.as_workflow().is_agent_mode_workflow()
         {
-            AuthManager::handle(ctx).update(ctx, |auth_manager, ctx| {
-                auth_manager.attempt_login_gated_feature(
-                    "Run Agent Mode Workflow",
-                    AuthViewVariant::RequireLoginCloseable,
-                    ctx,
-                )
-            });
             return;
         }
         if let Some(terminal_view_handle) =
@@ -14687,13 +14501,7 @@ impl Workspace {
     // warning on mac)
     #[allow(clippy::let_and_return)]
     fn banner_fields(&self, app: &AppContext) -> Option<WorkspaceBannerFields> {
-        // The settings error banner sits just below reauth in priority — it's
-        // more important that users are notified their settings file is broken
-        // than that they continue to see any of the autoupdate or crash recovery
-        // banners.
-        let banner_fields = self
-            .render_reauth_banner_element()
-            .or_else(|| self.render_settings_error_banner(app));
+        let banner_fields = self.render_settings_error_banner(app);
 
         #[cfg(enable_crash_recovery)]
         let banner_fields = banner_fields.or_else(|| crash_recovery::banner_metadata(app));
@@ -14730,27 +14538,6 @@ impl Workspace {
     ) -> Option<Box<dyn Element>> {
         self.banner_fields(app)
             .map(|fields| self.render_workspace_banner(fields, appearance))
-    }
-
-    fn render_reauth_banner_element(&self) -> Option<WorkspaceBannerFields> {
-        if self.reauth_banner_dismissed || !self.auth_state.needs_reauth() {
-            return None;
-        }
-
-        Some(WorkspaceBannerFields {
-            banner_type: WorkspaceBanner::Reauth,
-            severity: BannerSeverity::Warning,
-            heading: Some("Your login has expired.".into()),
-            description: "Please sign in again to restore access to cloud-based features.".into(),
-            secondary_button: None,
-            button: Some(WorkspaceBannerButtonDetails {
-                text: "Sign in".into(),
-                action: WorkspaceAction::Reauth,
-                variant: BannerButtonVariant::Outlined,
-                icon: None,
-                more_info_button_action: None,
-            }),
-        })
     }
 
     fn render_workspace_banner(
@@ -14976,9 +14763,6 @@ impl Workspace {
     ) {
         match banner_type {
             WorkspaceBanner::AnonymousUserAuth => {}
-            WorkspaceBanner::Reauth => {
-                self.reauth_banner_dismissed = true;
-            }
             #[cfg(all(enable_crash_recovery, target_os = "linux"))]
             WorkspaceBanner::WaylandCrashRecovery => {
                 crash_recovery::dismiss_workspace_banner(ctx);
@@ -15757,49 +15541,6 @@ impl Workspace {
             .map(|team| team.uid)
     }
 
-    fn initiate_user_signup(
-        &mut self,
-        entrypoint: AnonymousUserSignupEntrypoint,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        if self.auth_state.is_user_anonymous().unwrap_or_default() {
-            // User has a Firebase anonymous account — use the linking flow.
-            AuthManager::handle(ctx).update(ctx, |auth_manager, ctx| {
-                auth_manager.initiate_anonymous_user_linking(entrypoint, ctx);
-            });
-        } else {
-            // User is fully logged out (no Firebase user) — open the regular sign-up page.
-            AuthManager::handle(ctx).update(ctx, |auth_manager, ctx| {
-                let sign_up_url = auth_manager.sign_up_url();
-                ctx.open_url(&sign_up_url);
-            });
-        }
-        self.require_login_modal.update(ctx, |auth_modal, ctx| {
-            auth_modal.skip_to_browser_open_step(ctx);
-        });
-        self.open_require_login_modal(AuthViewVariant::RequireLoginCloseable, ctx);
-    }
-
-    fn redirect_to_sign_in(&mut self) {
-        #[cfg(target_family = "wasm")]
-        if let Some(current_url) = parse_current_url() {
-            update_browser_url(
-                Url::parse(&format!(
-                    "{}/login?redirect_to={}",
-                    ChannelState::server_root_url(),
-                    current_url.path()
-                ))
-                .ok(),
-                true,
-            );
-        } else {
-            update_browser_url(
-                Url::parse(&format!("{}/login", ChannelState::server_root_url())).ok(),
-                true,
-            );
-        }
-    }
-
     /// Triggers the necessary cleanup for when a user logs out.
     pub fn on_log_out(&mut self, ctx: &mut ViewContext<Self>) {
         // Logging out should mimic the same behaviour as closing a window.
@@ -15929,13 +15670,6 @@ impl TypedActionView for Workspace {
         let window_id = ctx.window_id();
 
         if self.auth_state.is_anonymous_or_logged_out() && action.blocked_for_anonymous_user() {
-            AuthManager::handle(ctx).update(ctx, |auth_manager, ctx| {
-                auth_manager.attempt_login_gated_feature(
-                    action.into(),
-                    AuthViewVariant::RequireLoginCloseable,
-                    ctx,
-                )
-            });
             return;
         }
 
@@ -16233,11 +15967,6 @@ impl TypedActionView for Workspace {
             OpenWorktreeAddRepoPicker => {
                 self.close_new_session_dropdown_menu(ctx);
                 self.open_folder_picker_for_worktree_submenu(ctx);
-            }
-            LogOut => {
-                // Need to dispatch global action, or else we will not be able to retrieve
-                // the currently active session in the log out modal.
-                ctx.dispatch_global_action("app:maybe_log_out", ());
             }
             ExportAllWarpDriveObjects => {
                 self.export_all_warp_drive_objects(ctx);
@@ -16781,18 +16510,6 @@ impl TypedActionView for Workspace {
                         DismissibleToast::success("Disabled all synchronized inputs.".to_string());
                     view.add_ephemeral_toast(new_toast, ctx);
                 });
-            }
-            Reauth => {
-                AuthManager::handle(ctx).update(ctx, |auth_manager, ctx| {
-                    let sign_in_url = auth_manager.sign_in_url();
-                    ctx.open_url(&sign_in_url);
-                });
-            }
-            SignupAnonymousUser => {
-                self.initiate_user_signup(AnonymousUserSignupEntrypoint::SignUpButton, ctx);
-            }
-            SignInAnonymousWebUser => {
-                self.redirect_to_sign_in();
             }
             HandleConflictingWorkflow(workflow_id) => {
                 self.toast_stack.update(ctx, |view, ctx| {
@@ -17973,14 +17690,6 @@ impl View for Workspace {
 
         if self.current_workspace_state.is_ctrl_tab_palette_open {
             stack.add_child(ChildView::new(&self.ctrl_tab_palette).finish());
-        }
-
-        if self.current_workspace_state.is_require_login_modal_open {
-            stack.add_child(ChildView::new(&self.require_login_modal).finish());
-        }
-
-        if self.current_workspace_state.is_auth_override_modal_open {
-            stack.add_child(ChildView::new(&self.auth_override_warning_modal).finish());
         }
 
         if self.current_workspace_state.is_theme_creator_modal_open {

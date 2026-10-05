@@ -53,7 +53,7 @@ use crate::code::view::{CodeView, CodeViewAction};
 use crate::drive::items::WarpDriveItemId;
 use crate::drive::{CloudObjectTypeAndId, OpenWarpDriveObjectArgs};
 use crate::env_vars::EnvVarCollectionType;
-use crate::event_sources::{AnonymousUserSignupEntrypoint, PaletteSource, SharingDialogSource};
+use crate::event_sources::{PaletteSource, SharingDialogSource};
 use crate::features::FeatureFlag;
 use crate::launch_configs::launch_config::{self, PaneTemplateType};
 use crate::notebooks::file::FileNotebookView;
@@ -516,7 +516,6 @@ pub enum Event {
     /// Clears the hovered tab index so it no longer appears as highlighted drop target
     ClearHoveredTabIndex,
     OpenWarpDriveObjectInPane(ObjectUid),
-    AnonymousUserSignup,
     /// Request that the workspace open the command palette.
     OpenPalette {
         mode: PaletteMode,
@@ -552,9 +551,6 @@ pub enum Event {
         message: String,
         flavor: ToastFlavor,
         pane_id: Option<PaneId>,
-    },
-    SignupAnonymousUser {
-        entrypoint: AnonymousUserSignupEntrypoint,
     },
     OpenThemeChooser,
     OpenFilesPalette {

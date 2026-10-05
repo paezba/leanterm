@@ -245,7 +245,6 @@ pub enum WorkspaceAction {
         anchor: NewSessionMenuAnchor,
     },
     SelectNewSessionMenuItem(NewSessionMenuItem),
-    LogOut,
     CopyVersion(&'static str),
     ConfigureKeybindingSettings {
         keybinding_name: Option<String>,
@@ -399,9 +398,6 @@ pub enum WorkspaceAction {
     ShowHeaderToolbarContextMenu {
         position: Vector2F,
     },
-    Reauth,
-    SignupAnonymousUser,
-    SignInAnonymousWebUser,
     OpenLink(String),
     /// On WASM, opens a given URL in the desktop Warp app (if installed) or redirects to download page.
     #[cfg(target_family = "wasm")]
@@ -773,9 +769,6 @@ impl WorkspaceAction {
             | OpenPromptEditor { .. }
             | OpenHeaderToolbarEditor
             | ShowHeaderToolbarContextMenu { .. }
-            | Reauth
-            | SignupAnonymousUser
-            | LogOut
             | OpenLink(_)
             | ReopenClosedSession
             | FocusLeftPanel
@@ -791,7 +784,6 @@ impl WorkspaceAction {
             | ViewObjectInWarpDrive(_)
             | OpenObjectSharingSettings { .. }
             | TerminateApp
-            | SignInAnonymousWebUser
             | TabHoverWidthStart { .. }
             | TabHoverWidthEnd
             | FocusTerminalViewInWorkspace { .. }

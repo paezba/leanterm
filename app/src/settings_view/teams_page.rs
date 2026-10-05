@@ -46,9 +46,7 @@ use super::transfer_ownership_confirmation_modal::{
     TransferOwnershipConfirmationEvent, TransferOwnershipConfirmationModal,
 };
 use crate::appearance::Appearance;
-use crate::auth::auth_manager::{AuthManager, LoginGatedFeature};
 use crate::auth::auth_state::AuthState;
-use crate::auth::auth_view_modal::AuthViewVariant;
 use crate::auth::{AuthStateProvider, UserUid};
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::{CloudObjectEventEntrypoint, Space};
@@ -298,35 +296,6 @@ impl TeamsPageAction {
                 | ShowWorkspaceTeams { .. }
                 | JoinWorkspaceFromDiscovery { .. }
         )
-    }
-}
-
-impl From<&TeamsPageAction> for LoginGatedFeature {
-    fn from(val: &TeamsPageAction) -> LoginGatedFeature {
-        use TeamsPageAction::*;
-        match val {
-            LeaveTeam => "Leave Team",
-            ShowDeleteTeamConfirmationDialog => "Delete Team",
-            CreateTeam => "Create Team",
-            DeletePendingEmailInvitation { .. } => "Delete Pending Email Invitation",
-            RemoveUserFromTeam { .. } => "Remove User From Team",
-            RemoveUserFromWorkspace { .. } => "Remove User From Workspace",
-            AddDomainRestrictions { .. } => "Add Domain Restrictions",
-            DeleteDomainRestriction { .. } => "Delete Domain Restriction",
-            SendEmailInvites { .. } => "Send Email Invites",
-            GenerateUpgradeLink { .. } => "Generate Upgrade Link",
-            GenerateStripeBillingPortalLink { .. } => "Generate Stripe Billing Portal Link",
-            OpenAdminPanel { .. } | OpenWorkspaceAdminPanel => "Open Admin Panel",
-            ContactSupport => "Contact Support",
-            ContactSales => "Contact Sales",
-            ToggleTeamDiscoverability { .. } | ToggleTeamDiscoverabilityBeforeCreation => {
-                "Toggle Team Discoverability"
-            }
-            JoinTeamWithTeamDiscovery { .. } => "Join Team With Team Discovery",
-            ShowWorkspaceTeams { .. } => "Show Workspace Teams",
-            JoinWorkspaceFromDiscovery { .. } => "Join Workspace From Discovery",
-            _ => "Unknown reason",
-        }
     }
 }
 
@@ -667,13 +636,6 @@ impl TypedActionView for TeamsPageView {
             .is_anonymous_or_logged_out()
             && action.blocked_for_anonymous_user()
         {
-            AuthManager::handle(ctx).update(ctx, |auth_manager, ctx| {
-                auth_manager.attempt_login_gated_feature(
-                    action.into(),
-                    AuthViewVariant::RequireLoginCloseable,
-                    ctx,
-                )
-            });
             return;
         }
 

@@ -61,19 +61,6 @@ pub fn is_worker_invocation(arg: &str) -> bool {
         })
 }
 
-/// Global options that apply to all CLI commands.
-#[derive(Debug, Default, Clone, clap::Args)]
-pub struct GlobalOptions {
-    /// API key for server authentication.
-    #[arg(
-        long = "api-key",
-        global = true,
-        env = "WARP_API_KEY",
-        hide_env_values = true
-    )]
-    pub api_key: Option<String>,
-}
-
 /// Argument parser for the shared Warp executable across all channels.
 ///
 // Warp Control uses its separate [`local_control::ControlArgs`] parser, selected before this one.
@@ -81,9 +68,6 @@ pub struct GlobalOptions {
 #[command(name = "warp", about = "Warp terminal")]
 #[clap(subcommand_precedence_over_arg = true)]
 pub struct Args {
-    #[clap(flatten)]
-    global_options: GlobalOptions,
-
     /// Enable debug mode.
     #[arg(long = "debug", global = true, help = "Enable debug logging")]
     debug: bool,
@@ -183,16 +167,6 @@ impl Args {
     /// Extract the main Warp application args.
     pub fn into_app_args(self) -> AppArgs {
         self.args
-    }
-
-    /// Returns the global options.
-    pub fn global_options(&self) -> &GlobalOptions {
-        &self.global_options
-    }
-
-    /// Returns the API key if provided.
-    pub fn api_key(&self) -> Option<&String> {
-        self.global_options.api_key.as_ref()
     }
 
     /// Returns true if debug logging is enabled.

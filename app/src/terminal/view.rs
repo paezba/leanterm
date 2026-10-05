@@ -8,7 +8,6 @@ pub mod inline_banner;
 use repo_metadata::CanonicalizedPath;
 
 use super::{GridType, should_right_click_paste};
-use crate::event_sources::AnonymousUserSignupEntrypoint;
 use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::settings::DebugSettingsChangedEvent;
 #[cfg(feature = "local_fs")]
@@ -142,9 +141,7 @@ use super::warpify::success_block::{WarpifySuccessBlock, WarpifySuccessBlockEven
 use super::warpify::trigger_state::{SshBlockState, WarpifyState};
 use crate::appearance::{Appearance, AppearanceEvent};
 use crate::auth::AuthStateProvider;
-use crate::auth::auth_manager::AuthManager;
 use crate::auth::auth_state::AuthState;
-use crate::auth::auth_view_modal::AuthViewVariant;
 use crate::banner::{
     Banner, BannerAction, BannerEvent, BannerState, BannerTextButton, BannerTextContent,
     DismissalType,
@@ -1188,7 +1185,6 @@ pub enum Event {
     /// been submitted and its block has completed.
     PendingCommandCompleted,
     SessionBootstrapped,
-    AnonymousUserSignup,
     ShellSpawned(ShellType),
     /// Emitted when the PTY failed to spawn. Carries a human-readable reason
     /// string (not secret values) so the terminal driver can surface a
@@ -1217,9 +1213,6 @@ pub enum Event {
     RunNativeShellCompletions {
         buffer_text: String,
         results_tx: async_channel::Sender<(Vec<ShellCompletion>, Option<Span>)>,
-    },
-    SignupAnonymousUser {
-        entrypoint: AnonymousUserSignupEntrypoint,
     },
 
     OpenThemeChooser,
@@ -9142,13 +9135,6 @@ impl TerminalView {
             .get()
             .is_anonymous_or_logged_out()
         {
-            AuthManager::handle(ctx).update(ctx, |auth_manager, ctx| {
-                auth_manager.attempt_login_gated_feature(
-                    "Share Block",
-                    AuthViewVariant::ShareRequirementCloseable,
-                    ctx,
-                )
-            });
             return;
         }
 
@@ -9424,11 +9410,6 @@ impl TerminalView {
             InputEvent::EditorFocused => {
                 ctx.dispatch_typed_action(&PaneGroupAction::HandleFocusChange);
                 ctx.notify();
-            }
-            InputEvent::SignupAnonymousUser { entrypoint } => {
-                ctx.emit(Event::SignupAnonymousUser {
-                    entrypoint: *entrypoint,
-                });
             }
             InputEvent::OpenSettings(section) => {
                 ctx.emit(Event::OpenSettings(*section));
@@ -12900,15 +12881,7 @@ impl TypedActionView for TerminalView {
             HyperlinkClick(hyperlink) => {
                 self.open_hyperlink_uri(&hyperlink.url, ctx);
             }
-            AttemptLoginGatedFeature => {
-                AuthManager::handle(ctx).update(ctx, |auth_manager, ctx| {
-                    auth_manager.attempt_login_gated_feature(
-                        "Upgrade AI Usage",
-                        AuthViewVariant::RequireLoginCloseable,
-                        ctx,
-                    )
-                });
-            }
+            AttemptLoginGatedFeature => {}
             StartFileDropTarget => {
                 let Some(session) = self
                     .active_block_session_id()

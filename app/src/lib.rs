@@ -164,7 +164,7 @@ pub use warp_core::r#async::debounce;
 use warp_core::execution_mode::{AppExecutionMode, ExecutionMode};
 // Re-export the safe logging macros at the crate root level for backwards compatibility
 pub use warp_core::{safe_debug, safe_error, safe_info, safe_warn};
-use warp_errors::{report_error, report_if_error};
+use warp_errors::{report_if_error};
 #[cfg(feature = "local_fs")]
 use warp_files::FileModel;
 use warp_logging::{LogDestination, LogFrontend};
@@ -246,11 +246,7 @@ pub static ASSETS: warp_assets::Assets = warp_assets::Assets;
 #[allow(clippy::large_enum_variant)]
 pub(crate) enum LaunchMode {
     /// Run the regular GUI application.
-    App {
-        args: warp_cli::AppArgs,
-        /// API key for server authentication, if provided via `--api-key` or `WARP_API_KEY`.
-        api_key: Option<String>,
-    },
+    App { args: warp_cli::AppArgs },
 
     /// Run a test - this may be an integration test or an eval.
     Test {
@@ -259,30 +255,11 @@ pub(crate) enum LaunchMode {
     },
 }
 
-enum AuthInitialization {
-    Persisted,
-    PendingApiKey(String),
-}
-
 impl LaunchMode {
     fn args(&self) -> Cow<'_, warp_cli::AppArgs> {
         match self {
             LaunchMode::App { args, .. } => Cow::Borrowed(args),
             LaunchMode::Test { .. } => Cow::Owned(warp_cli::AppArgs::default()),
-        }
-    }
-
-    fn api_key(&self) -> Option<String> {
-        match self {
-            LaunchMode::App { api_key, .. } => api_key.clone(),
-            LaunchMode::Test { .. } => None,
-        }
-    }
-
-    fn auth_initialization(&self) -> AuthInitialization {
-        match self.api_key() {
-            Some(api_key) => AuthInitialization::PendingApiKey(api_key),
-            None => AuthInitialization::Persisted,
         }
     }
 
@@ -504,10 +481,8 @@ pub fn run() -> Result<()> {
         return Ok(());
     }
 
-    let api_key = args.api_key().cloned();
     run_internal(LaunchMode::App {
         args: args.into_app_args(),
-        api_key,
     })
 }
 
@@ -902,52 +877,6 @@ pub struct UpdateQuakeModeEventArg {
     active_window_id: Option<WindowId>,
 }
 
-#[derive(Clone)]
-enum StartupUserAuthentication {
-    RefreshUser,
-    ApiKey(String),
-}
-
-impl StartupUserAuthentication {
-    fn start(self, ctx: &mut AppContext) {
-        AuthManager::handle(ctx).update(ctx, |auth_manager, ctx| match self {
-            Self::RefreshUser => auth_manager.refresh_user(ctx),
-            Self::ApiKey(api_key) => auth_manager.authenticate_api_key(api_key, ctx),
-        });
-    }
-}
-
-fn authenticate_user_after_iap_access(
-    authentication: StartupUserAuthentication,
-    ctx: &mut AppContext,
-) {
-    let iap_manager = IapManager::handle(ctx);
-    if !iap_manager.as_ref(ctx).is_enabled() || iap_manager.as_ref(ctx).has_valid_token() {
-        authentication.start(ctx);
-        return;
-    }
-
-    let mut pending_authentication = Some(authentication);
-    ctx.subscribe_to_model(&iap_manager, move |iap_manager, event, ctx| match event {
-        IapManagerEvent::StateChanged => {
-            if !iap_manager.as_ref(ctx).has_valid_token() {
-                return;
-            }
-            if let Some(authentication) = pending_authentication.take() {
-                authentication.start(ctx);
-            }
-        }
-        IapManagerEvent::AccessUnavailable => {
-            report_error!("Staging IAP access unavailable before startup user authentication");
-        }
-        IapManagerEvent::RefreshFailed {
-            message: _,
-            is_first_failure_of_streak: _,
-        } => {}
-    });
-    iap_manager.update(ctx, |manager, ctx| manager.ensure_access(ctx));
-}
-
 #[::tracing::instrument(skip_all, fields(tags.cloud_agent = true))]
 pub(crate) fn initialize_app(
     launch_mode: &LaunchMode,
@@ -996,13 +925,7 @@ pub(crate) fn initialize_app(
         ctx.set_zoom_factor(WindowSettings::as_ref(ctx).zoom_level.as_zoom_factor());
     }
 
-    let (auth_state, pending_api_key) = match launch_mode.auth_initialization() {
-        AuthInitialization::Persisted => (AuthState::initialize(ctx), None),
-        AuthInitialization::PendingApiKey(api_key) => (
-            AuthState::initialize_for_credential_validation(ctx),
-            Some(api_key),
-        ),
-    };
+    let auth_state = AuthState::initialize(ctx);
     let auth_state = Arc::new(auth_state);
     timer.mark_interval_end("AUTH_MANAGER_SET_USER");
 
@@ -1031,13 +954,7 @@ pub(crate) fn initialize_app(
     // runner-context IAP WIF mint below.
     ctx.add_singleton_model(|_ctx| AuthStateProvider::new(auth_state.clone()));
 
-    ctx.add_singleton_model(|ctx| {
-        AuthManager::new(
-            server_api.clone(),
-            server_api_provider.as_ref(ctx).get_auth_client(),
-            ctx,
-        )
-    });
+    ctx.add_singleton_model(AuthManager::new);
 
     ctx.add_singleton_model(|_ctx| GPUState::new());
 
@@ -1276,7 +1193,6 @@ pub(crate) fn initialize_app(
     themes::theme_deletion_modal::init(ctx);
     root_view::init(ctx);
     voltron::init(ctx);
-    auth::init(ctx);
     crate::view_components::find::init(ctx);
     prompt::editor_modal::init(ctx);
     undo_close::init(ctx);
@@ -1481,20 +1397,6 @@ pub(crate) fn initialize_app(
             _ => {}
         };
     });
-
-    // CLI commands establish IAP access and refresh auth in their dispatch path so they can
-    // surface failures synchronously. Other interactive clients gate startup user authentication
-    // on IAP here, since the request itself calls the IAP-gated warp-server.
-    let startup_authentication = if false {
-        None
-    } else {
-        pending_api_key
-            .map(StartupUserAuthentication::ApiKey)
-            .or_else(|| user_is_logged_in.then_some(StartupUserAuthentication::RefreshUser))
-    };
-    if let Some(authentication) = startup_authentication {
-        authenticate_user_after_iap_access(authentication, ctx);
-    }
 
     // Add a singleton model that holds the current prompt configuration.
     ctx.add_singleton_model(Prompt::new);

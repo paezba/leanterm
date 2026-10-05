@@ -109,10 +109,8 @@ impl AuthState {
         }
     }
 
-    /// Creates and initializes auth state. Checks, in order:
-    /// 1. Test user (test/integration/skip_login builds)
-    /// 2. WARP_USER_SECRET environment variable
-    /// 3. Persisted user from secure storage
+    /// Creates and initializes auth state. The user is logged out unless this is a
+    /// test/integration/skip_login build.
     #[cfg_attr(target_family = "wasm", allow(dead_code))]
     pub fn initialize(ctx: &AppContext) -> Self {
         let state = Self::new(ctx);
@@ -127,58 +125,6 @@ impl AuthState {
             ))]
             state.set_credentials(Some(Self::test_credentials()));
             return state;
-        }
-
-        // Try WARP_USER_SECRET environment variable.
-        if let Some(persisted) = option_env!("WARP_USER_SECRET")
-            .and_then(|s| serde_json::from_str::<PersistedUser>(s).ok())
-        {
-            state.apply_persisted_user(persisted);
-            return state;
-        }
-
-        // Try reading from secure storage.
-        match PersistedUser::from_secure_storage(ctx) {
-            Ok(persisted) => {
-                if persisted.auth_tokens.refresh_token.is_empty() {
-                    log::warn!(
-                        "Found persisted user with empty refresh token; clearing secure storage entry"
-                    );
-                    let _ = PersistedUser::remove_from_secure_storage(ctx).map_err(|err| {
-                        log::warn!("Unable to clear invalid user from secure storage: {err:?}");
-                    });
-                } else {
-                    state.apply_persisted_user(persisted);
-                }
-            }
-            Err(err) => {
-                log::info!("Unable to read user from secure storage: {err:?}");
-            }
-        }
-
-        state
-    }
-
-    /// Creates auth state for a client that must validate an explicit credential
-    /// before making it available to shared authenticated clients.
-    ///
-    /// This installs neither the pending credential nor persisted identity. The
-    /// credential remains outside [`AuthState`] until its user fetch succeeds,
-    /// so failed validation leaves the client fully logged out. Persisted state
-    /// is skipped because an explicit credential takes precedence over secure
-    /// storage.
-    pub fn initialize_for_credential_validation(ctx: &AppContext) -> Self {
-        let state = Self::new(ctx);
-
-        if Self::should_use_test_user() {
-            state.set_user(Some(User::test()));
-            #[cfg(any(
-                test,
-                feature = "integration_tests",
-                feature = "skip_login",
-                feature = "test-util"
-            ))]
-            state.set_credentials(Some(Self::test_credentials()));
         }
 
         state

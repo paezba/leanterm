@@ -36,7 +36,6 @@ use super::settings_page::{
 };
 use super::{SettingsAction, SettingsSection, ToggleSettingActionPair, flags};
 use crate::appearance::Appearance;
-use crate::auth::auth_manager::AuthManager;
 use crate::channel::ChannelState;
 use crate::modal::{Modal, ModalEvent, ModalViewState};
 use crate::settings::{CustomSecretRegex, PrivacySettings, RegexDisplayInfo};
@@ -545,12 +544,7 @@ impl TypedActionView for PrivacyPageView {
             PrivacyPageAction::RemoveCustomRegex(idx) => {
                 self.queue_regex_removal(*idx, ctx);
             }
-            PrivacyPageAction::OpenDataManagementWebpage => {
-                AuthManager::handle(ctx).update(ctx, |auth_manager, ctx| {
-                    auth_manager
-                        .open_url_maybe_with_anonymous_token(ctx, Box::new(data_management_url));
-                });
-            }
+            PrivacyPageAction::OpenDataManagementWebpage => {}
             PrivacyPageAction::AddAllRecommendedRegexes => {
                 // First process any pending removals
                 if !self.pending_regex_removals.is_empty() {

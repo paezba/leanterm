@@ -107,7 +107,7 @@ use crate::editor::{
     position_id_for_cursor, position_id_for_first_cursor,
 };
 use crate::env_vars::EnvVarCollectionExt;
-use crate::event_sources::{AnonymousUserSignupEntrypoint, CommandXRayTrigger, PaletteSource};
+use crate::event_sources::{CommandXRayTrigger, PaletteSource};
 use crate::features::FeatureFlag;
 use crate::input_suggestions::{
     Event as InputSuggestionsEvent, HistoryInputSuggestion, InputSuggestions,
@@ -490,9 +490,6 @@ pub enum Event {
     EmacsBindingUsed,
     InputFocusedFromMiddleClick,
     EditorFocused,
-    SignupAnonymousUser {
-        entrypoint: AnonymousUserSignupEntrypoint,
-    },
     OpenSettings(SettingsSection),
     #[cfg(feature = "local_fs")]
     OpenCodeInWarp {

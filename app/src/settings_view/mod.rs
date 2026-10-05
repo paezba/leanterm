@@ -198,7 +198,6 @@ pub enum SettingsViewEvent {
     StartResize,
     LaunchNetworkLogging,
     OpenWarpDrive,
-    SignupAnonymousUser,
     ShowToast {
         message: String,
         flavor: ToastFlavor,
@@ -1502,9 +1501,6 @@ impl SettingsView {
         ctx: &mut ViewContext<Self>,
     ) {
         match event {
-            MainSettingsPageEvent::SignupAnonymousUser => {
-                ctx.emit(SettingsViewEvent::SignupAnonymousUser)
-            }
             _ => (),
         }
     }
@@ -1592,9 +1588,7 @@ impl SettingsView {
         ctx: &mut ViewContext<Self>,
     ) {
         match event {
-            warp_drive_page::WarpDriveSettingsPageEvent::SignUp => {
-                ctx.emit(SettingsViewEvent::SignupAnonymousUser)
-            }
+            warp_drive_page::WarpDriveSettingsPageEvent::SignUp => {}
         }
     }
 
