@@ -8,7 +8,6 @@ use crate::context_chips::prompt::{PromptConfiguration, PromptSelection};
 use crate::settings::WarpPromptSeparator;
 use crate::terminal::session_settings::SessionSettings;
 use crate::test_util::settings::initialize_settings_for_tests;
-use crate::workspaces::user_workspaces::UserWorkspaces;
 
 fn initialize_app(app: &mut App) {
     initialize_settings_for_tests(app);

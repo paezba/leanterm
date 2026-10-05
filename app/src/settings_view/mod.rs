@@ -6,7 +6,6 @@ use code_editor_review_page::{EditorAndCodeReviewPageAction, EditorAndCodeReview
 use features_page::{FeaturesPageView, FeaturesSettingsPageEvent};
 use itertools::Itertools as _;
 use keybindings::KeybindingsView;
-use main_page::{MainPageAction, MainSettingsPageEvent, MainSettingsPageView};
 use nav::{SettingsNavItem, SettingsUmbrella};
 use pathfinder_geometry::vector::Vector2F;
 use privacy_page::{PrivacyPageView, PrivacyPageViewEvent};
@@ -16,7 +15,6 @@ use settings_page::{
     HEADER_PADDING, MatchData, SettingsPage, SettingsPageEvent, SettingsPageMeta,
     SettingsPageViewHandle,
 };
-use show_blocks_view::{ShowBlocksEvent, ShowBlocksView};
 use warp_core::channel::ChannelState;
 use warp_core::context_flag::ContextFlag;
 use warp_core::features::FeatureFlag;
@@ -56,7 +54,6 @@ use crate::ui_components::icons;
 use crate::util::bindings::{BindingGroup, CustomAction, keybinding_name_to_display_string};
 use crate::view_components::ToastFlavor;
 use crate::workspace::WorkspaceAction;
-use crate::workspaces::workspace::{BillingMetadata, CustomerType};
 
 mod about_page;
 mod appearance_page;
@@ -65,7 +62,6 @@ mod directory_color_add_picker;
 mod features;
 mod features_page;
 pub mod keybindings;
-mod main_page;
 mod nav;
 pub mod pane_manager;
 mod privacy;
@@ -73,11 +69,9 @@ mod privacy_page;
 mod scripting_page;
 mod settings_file_footer;
 pub(crate) mod settings_page;
-mod show_blocks_view;
 mod warpify_page;
 
 pub use features_page::FeaturesPageAction;
-pub use main_page::handle_experiment_change;
 pub use privacy_page::PrivacyPageAction;
 pub use settings_page::{
     AdditionalInfo, InputListItem, LocalOnlyIconState, ToggleState, render_body_item_label,
@@ -112,32 +106,6 @@ fn sidebar_width() -> f32 {
 const SECTION_BORDER_WIDTH: f32 = 1.;
 
 const POSITION_ID: &str = "settings_pane";
-
-struct PlanHeaderPresentation {
-    badge_label: Option<String>,
-    show_personal_upgrade: bool,
-}
-
-fn plan_header_presentation(
-    billing_metadata: Option<&BillingMetadata>,
-    has_team: bool,
-    is_anonymous: bool,
-) -> PlanHeaderPresentation {
-    let badge_label = if is_anonymous || billing_metadata.is_none() {
-        Some("Free".to_string())
-    } else {
-        billing_metadata
-            .filter(|billing_metadata| billing_metadata.customer_type != CustomerType::Unknown)
-            .map(|billing_metadata| billing_metadata.customer_type.to_display_string())
-    };
-
-    PlanHeaderPresentation {
-        badge_label,
-        show_personal_upgrade: is_anonymous
-            || (!has_team
-                && billing_metadata.is_none_or(BillingMetadata::can_upgrade_to_build_plan)),
-    }
-}
 
 /// Saved-position id for the settings search input.
 pub const SEARCH_EDITOR_POSITION_ID: &str = "settings_search_editor";
@@ -203,32 +171,13 @@ pub enum SettingsViewEvent {
 pub enum SettingsSection {
     About,
     #[default]
-    Account,
     Appearance,
     Features,
     Keybindings,
     Privacy,
     Scripting,
-    SharedBlocks,
     Warpify,
     EditorAndCodeReview,
-}
-
-impl SettingsSection {
-    /// Whether this section is removed from settings in lean terminal builds.
-    fn is_hidden_in_lean_terminal(self) -> bool {
-        match self {
-            Self::Account | Self::SharedBlocks => true,
-            Self::About
-            | Self::Appearance
-            | Self::Features
-            | Self::Keybindings
-            | Self::Privacy
-            | Self::Scripting
-            | Self::Warpify
-            | Self::EditorAndCodeReview => false,
-        }
-    }
 }
 
 use std::fmt::{self, Display};
@@ -239,7 +188,6 @@ impl Display for SettingsSection {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             SettingsSection::Keybindings => write!(f, "Keyboard shortcuts"),
-            SettingsSection::SharedBlocks => write!(f, "Shared blocks"),
             SettingsSection::Scripting => write!(f, "Scripting"),
             SettingsSection::EditorAndCodeReview => write!(f, "Editor and Code Review"),
             _ => write!(f, "{self:?}"),
@@ -264,13 +212,11 @@ impl SettingsSection {
     pub fn slug(self) -> &'static str {
         match self {
             Self::About => "About",
-            Self::Account => "Account",
             Self::Appearance => "Appearance",
             Self::Features => "Features",
             Self::Keybindings => "Keyboard shortcuts",
             Self::Privacy => "Privacy",
             Self::Scripting => "Scripting",
-            Self::SharedBlocks => "Shared blocks",
             Self::Warpify => "Warpify",
             Self::EditorAndCodeReview => "Editor and Code Review",
         }
@@ -286,13 +232,11 @@ impl SettingsSection {
     pub fn from_slug(slug: &str) -> Option<Self> {
         let section = match slug {
             "About" => Self::About,
-            "Account" => Self::Account,
             "Appearance" => Self::Appearance,
             "Features" => Self::Features,
             "Keyboard shortcuts" => Self::Keybindings,
             "Privacy" => Self::Privacy,
             "Scripting" => Self::Scripting,
-            "Shared blocks" => Self::SharedBlocks,
             "Warpify" => Self::Warpify,
             // "Code" named the combined page before indexing settings were removed.
             "Editor and Code Review" | "EditorAndCodeReview" | "Code" => Self::EditorAndCodeReview,
@@ -524,7 +468,6 @@ pub fn init_actions_from_parent_view<T: Action + Clone>(
     context: &ContextPredicate,
     builder: fn(SettingsAction) -> T,
 ) {
-    main_page::init_actions_from_parent_view(app, context, builder);
     appearance_page::init_actions_from_parent_view(app, context, builder);
     features_page::init_actions_from_parent_view(app, context, builder);
     warpify_page::init_actions_from_parent_view(app, context, builder);
@@ -821,7 +764,6 @@ pub enum DebugSettingsAction {
 pub enum SettingsAction {
     SelectAndRefresh(SettingsSection),
     ToggleUmbrella(usize),
-    MainPageToggle(MainPageAction),
     AppearancePageToggle(AppearancePageAction),
     FeaturesPageToggle(FeaturesPageAction),
     PrivacyPageToggle(PrivacyPageAction),
@@ -966,10 +908,8 @@ fn next_stop_index(current: usize, len: usize, direction: CycleDirection) -> usi
 macro_rules! update_page {
     ($handle:expr_2021, $update:expr_2021, $ctx:expr_2021) => {
         match $handle {
-            SettingsPageViewHandle::Main(handle) => $ctx.update_view(handle, $update),
             SettingsPageViewHandle::Appearance(handle) => $ctx.update_view(handle, $update),
             SettingsPageViewHandle::Features(handle) => $ctx.update_view(handle, $update),
-            SettingsPageViewHandle::SharedBlocks(handle) => $ctx.update_view(handle, $update),
             SettingsPageViewHandle::Keybindings(handle) => $ctx.update_view(handle, $update),
             SettingsPageViewHandle::Warpify(handle) => $ctx.update_view(handle, $update),
             SettingsPageViewHandle::Privacy(handle) => $ctx.update_view(handle, $update),
@@ -1013,12 +953,6 @@ impl SettingsView {
         let pane_configuration = ctx.add_model(|_ctx| PaneConfiguration::new("Settings"));
 
         let global_resource_handles = GlobalResourceHandlesProvider::as_ref(ctx).get().clone();
-        // Main settings page with accounts info
-        let main_page_handle = ctx.add_typed_action_view(MainSettingsPageView::new);
-        ctx.subscribe_to_view(&main_page_handle, |me, _, event, ctx| {
-            me.handle_main_page_event(event, ctx);
-        });
-
         // Appearance & themes page
         let appearance_page_handle = ctx.add_typed_action_view(AppearanceSettingsPageView::new);
         ctx.subscribe_to_view(&appearance_page_handle, |me, _, event, ctx| {
@@ -1032,20 +966,6 @@ impl SettingsView {
 
         ctx.subscribe_to_view(&features_page_handle, |me, _, event, ctx| {
             me.handle_features_page_event(event, ctx);
-        });
-
-        // Shared blocks page
-        let block_client = ServerApiProvider::as_ref(ctx).get_block_client();
-        let show_blocks_view_handle =
-            ctx.add_typed_action_view(|ctx| ShowBlocksView::new(block_client, ctx));
-
-        ctx.subscribe_to_view(&show_blocks_view_handle, |_, _, event, ctx| match event {
-            ShowBlocksEvent::ShowToast { message, flavor } => {
-                ctx.emit(SettingsViewEvent::ShowToast {
-                    message: message.clone(),
-                    flavor: *flavor,
-                })
-            }
         });
 
         // About page
@@ -1102,13 +1022,11 @@ impl SettingsView {
         });
 
         let mut settings_pages = vec![
-            SettingsPage::new(main_page_handle),
             SettingsPage::new(editor_review_page_handle),
             SettingsPage::new(appearance_page_handle),
             SettingsPage::new(features_page_handle),
             SettingsPage::new(keybindings_handle),
             SettingsPage::new(warpify_page_handle),
-            SettingsPage::new(show_blocks_view_handle),
         ];
 
         if let Some(scripting_page_handle) = scripting_page_handle {
@@ -1123,60 +1041,31 @@ impl SettingsView {
         // Build sidebar nav items. Umbrellas group their subpages here and
         // nowhere else, so this list is the only place membership is declared.
         let mut nav_items = vec![
-            SettingsNavItem::Page(SettingsSection::Account),
             SettingsNavItem::Page(SettingsSection::EditorAndCodeReview),
             SettingsNavItem::Page(SettingsSection::Appearance),
             SettingsNavItem::Page(SettingsSection::Features),
             SettingsNavItem::Page(SettingsSection::Keybindings),
             SettingsNavItem::Page(SettingsSection::Warpify),
-            SettingsNavItem::Page(SettingsSection::SharedBlocks),
             SettingsNavItem::Page(SettingsSection::Privacy),
             SettingsNavItem::Page(SettingsSection::About),
         ];
 
         if FeatureFlag::WarpControlCli.is_enabled() {
-            let shared_blocks_index = nav_items
+            let privacy_index = nav_items
                 .iter()
-                .position(|item| {
-                    matches!(item, SettingsNavItem::Page(SettingsSection::SharedBlocks))
-                })
+                .position(|item| matches!(item, SettingsNavItem::Page(SettingsSection::Privacy)))
                 .unwrap_or(nav_items.len());
             nav_items.insert(
-                shared_blocks_index,
+                privacy_index,
                 SettingsNavItem::Page(SettingsSection::Scripting),
             );
         }
 
-        settings_pages.retain(|page| !page.section.is_hidden_in_lean_terminal());
-        nav_items = nav_items
-            .into_iter()
-            .filter_map(|item| match item {
-                SettingsNavItem::Page(section) => {
-                    (!section.is_hidden_in_lean_terminal()).then_some(item)
-                }
-                SettingsNavItem::Umbrella(umbrella) => {
-                    let subpages = umbrella
-                        .subpages
-                        .into_iter()
-                        .filter(|section| !section.is_hidden_in_lean_terminal())
-                        .collect_vec();
-                    (!subpages.is_empty()).then(|| {
-                        SettingsNavItem::Umbrella(SettingsUmbrella::new(umbrella.label, subpages))
-                    })
-                }
-            })
-            .collect();
-
         let initial_page = match page {
             Some(SettingsSection::Scripting) if !FeatureFlag::WarpControlCli.is_enabled() => {
-                SettingsSection::Account
+                SettingsSection::Appearance
             }
             other => other.unwrap_or_default(),
-        };
-        let initial_page = if initial_page.is_hidden_in_lean_terminal() {
-            SettingsSection::Appearance
-        } else {
-            initial_page
         };
 
         // Auto-expand the umbrella if the initial page is one of its subpages.
@@ -1448,16 +1337,6 @@ impl SettingsView {
             .collect();
     }
 
-    fn handle_main_page_event(
-        &mut self,
-        event: &MainSettingsPageEvent,
-        _ctx: &mut ViewContext<Self>,
-    ) {
-        match event {
-            _ => (),
-        }
-    }
-
     fn handle_appearance_page_event(
         &mut self,
         event: &SettingsPageEvent,
@@ -1625,8 +1504,6 @@ impl SettingsView {
 
     fn should_render_page(&self, settings_page: &SettingsPage, app: &AppContext) -> bool {
         match &settings_page.view_handle {
-            SettingsPageViewHandle::Main(v) => v.as_ref(app).should_render(app),
-            SettingsPageViewHandle::SharedBlocks(v) => v.as_ref(app).should_render(app),
             SettingsPageViewHandle::Keybindings(v) => v.as_ref(app).should_render(app),
             SettingsPageViewHandle::Features(v) => v.as_ref(app).should_render(app),
             SettingsPageViewHandle::Appearance(v) => v.as_ref(app).should_render(app),
@@ -2138,15 +2015,6 @@ impl TypedActionView for SettingsView {
                 {
                     umbrella.toggle();
                     ctx.notify();
-                }
-            }
-            SettingsAction::MainPageToggle(main_page_action) => {
-                if let Some(main_page) = self.settings_page(SettingsSection::Account)
-                    && let SettingsPageViewHandle::Main(view) = &main_page.view_handle
-                {
-                    view.update(ctx, |view, ctx| {
-                        view.handle_action(main_page_action, ctx);
-                    })
                 }
             }
             SettingsAction::AppearancePageToggle(appearance_action) => {

@@ -1,10 +1,6 @@
 pub mod auth;
-pub mod block;
 #[cfg(not(target_family = "wasm"))]
 pub(crate) mod download;
-pub mod object;
-pub mod team;
-pub mod workspace;
 
 use std::ops::Deref;
 use std::sync::Arc;
@@ -13,14 +9,11 @@ use std::time::Duration;
 use ::http::header::CONTENT_LENGTH;
 use anyhow::{Context, Result, anyhow};
 use auth::AuthClient;
-use block::BlockClient;
 use chrono::{DateTime, FixedOffset};
 use instant::Instant;
-use object::ObjectClient;
 use parking_lot::Mutex;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
-use team::TeamClient;
 use warp_core::context_flag::ContextFlag;
 use warp_errors::{AnyhowErrorExt, ErrorExt, register_error, report_error};
 use warp_server_client::auth::{AuthClientImpl, AuthEvent, EXPERIMENT_ID_HEADER};
@@ -31,9 +24,7 @@ use warp_server_client::iap::{IapManager, IapState};
 use warp_server_client::network_logging::NetworkLogModel;
 use warpui::r#async::BoxFuture;
 use warpui::{Entity, ModelContext, SingletonEntity};
-use workspace::WorkspaceClient;
 
-use super::experiments::{ServerExperiment, ServerExperiments};
 use crate::auth::auth_manager::AuthManager;
 use crate::auth::auth_state::AuthState;
 use crate::{ChannelState, settings_view};
@@ -620,19 +611,6 @@ impl ServerApiProvider {
         }
     }
 
-    /// Handles fetching server-side experiments by updating the appropriate app state.
-    pub fn handle_experiments_fetched(
-        &self,
-        experiments: Vec<ServerExperiment>,
-        ctx: &mut ModelContext<Self>,
-    ) {
-        ServerExperiments::handle(ctx).update(ctx, |state, ctx| {
-            state.apply_latest_state(experiments, ctx);
-        });
-
-        settings_view::handle_experiment_change(ctx);
-    }
-
     /// Constructs a new SeverApiProvider for tests.
     #[cfg(any(test, feature = "test-util"))]
     pub fn new_for_test() -> Self {
@@ -652,22 +630,6 @@ impl ServerApiProvider {
 
     pub fn get_auth_client(&self) -> Arc<dyn AuthClient> {
         self.auth_client.clone()
-    }
-
-    pub fn get_block_client(&self) -> Arc<dyn BlockClient> {
-        self.server_api.clone()
-    }
-
-    pub fn get_workspace_client(&self) -> Arc<dyn WorkspaceClient> {
-        self.server_api.clone()
-    }
-
-    pub fn get_team_client(&self) -> Arc<dyn TeamClient> {
-        self.server_api.clone()
-    }
-
-    pub fn get_cloud_objects_client(&self) -> Arc<dyn ObjectClient> {
-        self.server_api.clone()
     }
 
     /// Returns the shared HTTP client. This client is wired into network logging

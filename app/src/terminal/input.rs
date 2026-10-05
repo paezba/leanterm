@@ -90,7 +90,6 @@ use super::{History, HistoryEntry, SizeInfo, TerminalModel, prompt, should_right
 use crate::ASSETS;
 use crate::appearance::{Appearance, AppearanceEvent};
 use crate::channel::{Channel, ChannelState};
-use crate::cloud_object::model::persistence::CloudModel;
 #[cfg(feature = "local_fs")]
 use crate::code::editor_management::CodeSource;
 use crate::completer::SessionContext;
@@ -106,7 +105,6 @@ use crate::editor::{
     TextColors, TextRun, default_cursor_colors, position_id_for_cached_point,
     position_id_for_cursor, position_id_for_first_cursor,
 };
-use crate::env_vars::EnvVarCollectionExt;
 use crate::event_sources::{CommandXRayTrigger, PaletteSource};
 use crate::features::FeatureFlag;
 use crate::input_suggestions::{
@@ -140,7 +138,6 @@ use crate::voltron::{
     Voltron, VoltronEvent, VoltronFeatureView, VoltronFeatureViewHandle, VoltronFeatureViewMeta,
     VoltronItem, VoltronMetadata,
 };
-use crate::workflows::aliases::WorkflowAliases;
 use crate::workflows::command_parser::{
     WorkflowArgumentIndex, WorkflowDisplayData, compute_workflow_display_data,
     compute_workflow_display_data_for_history_command,
@@ -2142,13 +2139,6 @@ impl Input {
             .active_block_mut()
             .set_home_dir(home_dir);
 
-        let env_var_collection_id = self.env_var_collection_state.selected_env_vars;
-        self.model
-            .lock()
-            .block_list_mut()
-            .active_block_mut()
-            .set_cloud_env_var_state(env_var_collection_id);
-
         let did_execute: bool;
         if self
             .model
@@ -2347,17 +2337,6 @@ impl Input {
         self.workflows_state.selected_workflow_state.is_some()
     }
 
-    pub fn workflows_info_box_open_workflow_cloud_id(&self) -> Option<SyncId> {
-        if let Some(state) = &self.workflows_state.selected_workflow_state {
-            match &state.workflow_type {
-                WorkflowType::Cloud(workflow) => Some(workflow.id),
-                _ => None,
-            }
-        } else {
-            None
-        }
-    }
-
     pub fn show_workflows_info_box_on_workflow_selection(
         &mut self,
         workflow_type: WorkflowType,
@@ -2447,19 +2426,6 @@ impl Input {
             editor.clear_buffer(ctx);
         });
 
-        if let Some(env_vars_command) = selected_env_vars
-            .as_ref()
-            .and_then(|id| self.env_vars_command_prefix(id, ctx))
-        {
-            self.editor.update(ctx, |editor, ctx| {
-                editor.system_insert(
-                    &env_vars_command,
-                    PlainTextEditorViewAction::SystemInsert,
-                    ctx,
-                )
-            });
-        }
-
         // The workflow may or may not come from a history command. If it does, the history command may or may not match
         // the template of the original workflow. If it does match, we have extra display data to show (such as the indices in
         // the command to highlight as arguments). If it doesn't match, there's no additional display data to show. Then, in the
@@ -2495,7 +2461,6 @@ impl Input {
                 command_with_replaced_arguments,
                 replaced_ranges,
                 argument_index_to_highlight_index_map,
-                argument_index_to_object_id_map,
                 ..
             }) => {
                 let text_style_ranges = replaced_ranges
@@ -2519,19 +2484,7 @@ impl Input {
                     );
                 });
 
-                // Get enum variants
-                let cloud_model = CloudModel::as_ref(ctx);
-                let enum_variants_map = argument_index_to_object_id_map
-                    .iter()
-                    .filter_map(|(index, object_id)| {
-                        cloud_model
-                            .get_workflow_enum(object_id)
-                            .map(|workflow_enum| {
-                                workflow_enum.model().string_model.variants.clone()
-                            })
-                            .map(|variants| (*index, variants))
-                    })
-                    .collect();
+                let enum_variants_map = HashMap::new();
 
                 self.workflows_state.selected_workflow_state = Some(SelectedWorkflowState {
                     more_info_view: self.create_workflows_info_view(
@@ -2598,28 +2551,6 @@ impl Input {
             );
         }
         self.focus_input_box(ctx);
-    }
-
-    /// Builds a prefix for applying env vars to a command in the current session.
-    fn env_vars_command_prefix(&self, env_vars_id: &SyncId, ctx: &AppContext) -> Option<String> {
-        let shell_type = self.active_session(ctx)?.shell().shell_type();
-        let env_vars = &CloudModel::as_ref(ctx)
-            .get_env_var_collection(env_vars_id)?
-            .model()
-            .string_model;
-
-        if shell_type == ShellType::Fish {
-            // Warp currently doesn't support newlines in Fish, just prepend the vars
-            let mut command = env_vars.export_variables_for_shell(ShellType::Fish);
-            command.push(' ');
-            Some(command)
-        } else {
-            // Add newlines at the end to separate the vars from the comment/command
-            Some(format!(
-                "# Environment variables\n{}\n\n",
-                env_vars.export_variables(" ", shell_type.into())
-            ))
-        }
     }
 
     fn create_workflows_info_view(
@@ -5477,40 +5408,6 @@ impl Input {
                 suggestions.confirm(ctx);
             });
         } else {
-            if FeatureFlag::WorkflowAliases.is_enabled() {
-                let mut command_string = self.editor.as_ref(ctx).buffer_text(ctx);
-                // If the alias was inserted from the completions menu, it will have trailing
-                // whitespace - trim it in-place.
-                command_string.truncate(command_string.trim_end().len());
-
-                if let Some(alias) = WorkflowAliases::as_ref(ctx).match_alias(&command_string) {
-                    if let Some(workflow) = CloudModel::as_ref(ctx).get_workflow(&alias.workflow_id)
-                    {
-                        let owner = workflow.clone().permissions.owner.into();
-
-                        let workflow_type = WorkflowType::Cloud(Box::new(workflow.clone()));
-                        let env_vars = alias.env_vars.or(workflow.model().data.default_env_vars());
-
-                        self.insert_workflow_into_input(
-                            workflow_type,
-                            owner,
-                            WorkflowSelectionSource::Alias,
-                            alias.arguments,
-                            None,
-                            env_vars,
-                            true,
-                            ctx,
-                        );
-                        return;
-                    } else {
-                        log::warn!(
-                            "Tried to execute workflow for id {:?} but it does not exist",
-                            alias.workflow_id
-                        );
-                    };
-                }
-            }
-
             let command = self.get_command(ctx);
             if !self.try_execute_command(&command, ctx) {
                 return;
@@ -5797,34 +5694,20 @@ impl Input {
             .expect("session_id should be set (via bootstrap) before executing command");
 
         // If the SelectedWorkflowState is populated with a workflow, we count this as a workflow execution.
-        let (workflow_id, workflow_command) = {
-            match self.workflows_state.selected_workflow_state.as_ref() {
-                Some(selected_workflow_state) => {
-                    let workflow_type = &selected_workflow_state.workflow_type;
-                    let workflow_id = match workflow_type {
-                        WorkflowType::Cloud(workflow) => Some(workflow.id),
-                        _ => None,
-                    };
-
-                    // If the SelectedWorkflowState is populated, then we're always able to return the workflow command.
-                    // The case where workflow_id = None but workflow_command = Some() is when it's a local workflow, which
-                    // don't have ids and are tracked just by persisting the workflow contents. This is a little janky and would
-                    // be fixed if we could identify all workflows under a unified id system, not just cloud ones.
-                    (
-                        workflow_id,
-                        workflow_type
-                            .as_workflow()
-                            .command()
-                            .map(|command| command.to_owned()),
-                    )
-                }
-                None => (None, None),
-            }
-        };
+        let workflow_command = self
+            .workflows_state
+            .selected_workflow_state
+            .as_ref()
+            .and_then(|state| {
+                state
+                    .workflow_type
+                    .as_workflow()
+                    .command()
+                    .map(|command| command.to_owned())
+            });
 
         ctx.emit(Event::ExecuteCommand(Box::new(ExecuteCommandEvent {
             command: command.to_string(),
-            workflow_id,
             session_id,
             workflow_command,
             should_add_command_to_history,

@@ -9,7 +9,6 @@ use warpui::platform::Cursor;
 use warpui::{AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext};
 
 use crate::appearance::Appearance;
-use crate::drive::settings::{WarpDriveSettings, WarpDriveSettingsChangedEvent};
 use crate::search::{FilterChipRenderer, QueryFilter};
 
 lazy_static! {
@@ -40,12 +39,6 @@ pub struct CommandSearchZeroStateView {
 
 impl CommandSearchZeroStateView {
     pub fn new(ctx: &mut ViewContext<Self>) -> Self {
-        ctx.subscribe_to_model(&WarpDriveSettings::handle(ctx), |_, _, event, ctx| {
-            if let WarpDriveSettingsChangedEvent::EnableWarpDrive { .. } = event {
-                ctx.notify();
-            }
-        });
-
         Self {
             filter_chip_to_mouse_state_handle: QueryFilter::all()
                 .map(|filter| (filter, MouseStateHandle::default()))

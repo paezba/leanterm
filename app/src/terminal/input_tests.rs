@@ -24,7 +24,6 @@ use workflows::workflow::{Argument, ArgumentType, Workflow};
 use super::*;
 use crate::auth::AuthStateProvider;
 use crate::auth::auth_manager::AuthManager;
-use crate::cloud_object::model::persistence::CloudModel;
 use crate::context_chips::prompt::Prompt;
 use crate::editor::{DisplayPoint, EditorAction, TextStyleOperation};
 use crate::input_suggestions::Item;
@@ -32,10 +31,7 @@ use crate::network::NetworkStatus;
 use crate::persisted_workspace::PersistedWorkspace;
 use crate::pricing::PricingInfoModel;
 use crate::search::files::model::FileSearchModel;
-use crate::server::cloud_objects::listener::Listener;
-use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::server_api::ServerApiProvider;
-use crate::server::sync_queue::SyncQueue;
 use crate::settings::import::model::ImportedConfigModel;
 use crate::settings::{AliasExpansionSettings, AppEditorSettings, PrivacySettings};
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
@@ -63,9 +59,6 @@ use crate::test_util::settings::initialize_settings_for_tests;
 use crate::themes::theme::AnsiColorIdentifier;
 use crate::warp_managed_paths_watcher::WarpManagedPathsWatcher;
 use crate::workspace::{ActiveSession, ToastStack, WorkspaceRegistry};
-use crate::workspaces::team_tester::TeamTesterStatus;
-use crate::workspaces::update_manager::TeamUpdateManager;
-use crate::workspaces::user_workspaces::UserWorkspaces;
 use crate::{GlobalResourceHandles, GlobalResourceHandlesProvider};
 
 fn pending_ctrl_r_handoff() -> PendingShellWidgetHandoff {

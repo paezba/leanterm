@@ -13,7 +13,6 @@ use warpui::{App, Element as _, ModelHandle, ViewHandle};
 use super::*;
 use crate::NotebookKeybindings;
 use crate::auth::AuthStateProvider;
-use crate::cloud_object::model::persistence::CloudModel;
 use crate::code::editor::view::{CodeEditorRenderOptions, CodeEditorView};
 use crate::code::local_code_editor::LocalCodeEditorView;
 use crate::code_review::GlobalCodeReviewModel;
@@ -28,7 +27,6 @@ use crate::test_util::settings::initialize_settings_for_tests;
 use crate::vim_registers::VimRegisters;
 use crate::workspace::ActiveSession;
 use crate::workspace::sync_inputs::SyncedInputState;
-use crate::workspaces::user_workspaces::UserWorkspaces;
 
 #[derive(Default)]
 struct TestView;

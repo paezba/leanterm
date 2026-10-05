@@ -644,20 +644,14 @@ impl FileNotebookView {
                         .as_ref()
                         .map(|location| format!("Command from {}", location.name))
                 });
-                let source = workflow.source.unwrap_or(WorkflowSource::Notebook {
-                    notebook_id: None,
-                    team_uid: None,
-                    location: NotebookLocation::LocalFile,
-                });
+                let source = workflow.source.unwrap_or(WorkflowSource::Notebook);
                 ctx.emit(FileNotebookEvent::RunWorkflow {
                     workflow: workflow_type,
                     source,
                 });
             }
             EditorViewEvent::OpenedBlockInsertionMenu(_source) => {}
-            EditorViewEvent::OpenedEmbeddedObjectSearch => {}
             EditorViewEvent::OpenedFindBar => {}
-            EditorViewEvent::InsertedEmbeddedObject(_info) => {}
             EditorViewEvent::CopiedBlock {
                 block: _,
                 entrypoint: _,

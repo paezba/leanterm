@@ -34,13 +34,10 @@ use super::appearance_page::AppearanceSettingsPageView;
 use super::code_editor_review_page::EditorAndCodeReviewPageView;
 use super::features_page::FeaturesPageView;
 use super::keybindings::KeybindingsView;
-use super::main_page::MainSettingsPageView;
 use super::privacy_page::PrivacyPageView;
 use super::scripting_page::ScriptingSettingsPageView;
-use super::show_blocks_view::ShowBlocksView;
 use super::warpify_page::WarpifyPageView;
 use crate::appearance::Appearance;
-use crate::settings::CloudPreferencesSettings;
 use crate::themes::theme::Fill;
 use crate::ui_components::blended_colors;
 use crate::ui_components::icons::Icon;
@@ -95,10 +92,8 @@ pub trait SettingsPageMeta {
 /// It is required to allow for SettingsPage struct be put in the collection (ie. vector).
 #[derive(Clone)]
 pub enum SettingsPageViewHandle {
-    Main(ViewHandle<MainSettingsPageView>),
     Appearance(ViewHandle<AppearanceSettingsPageView>),
     Features(ViewHandle<FeaturesPageView>),
-    SharedBlocks(ViewHandle<ShowBlocksView>),
     Keybindings(ViewHandle<KeybindingsView>),
     About(ViewHandle<AboutPageView>),
     EditorAndCodeReview(ViewHandle<EditorAndCodeReviewPageView>),
@@ -111,10 +106,8 @@ impl SettingsPageViewHandle {
     pub fn child_view(&self) -> Box<dyn Element> {
         use SettingsPageViewHandle::*;
         match self {
-            Main(view_handle) => ChildView::new(view_handle).finish(),
             Appearance(view_handle) => ChildView::new(view_handle).finish(),
             Features(view_handle) => ChildView::new(view_handle).finish(),
-            SharedBlocks(view_handle) => ChildView::new(view_handle).finish(),
             Keybindings(view_handle) => ChildView::new(view_handle).finish(),
             About(view_handle) => ChildView::new(view_handle).finish(),
             EditorAndCodeReview(view_handle) => ChildView::new(view_handle).finish(),
@@ -379,29 +372,13 @@ impl LocalOnlyIconState {
     /// - `LocalOnlyIconState::Visible` with a `MouseStateHandle` if the setting is never synced to cloud.
     /// - `LocalOnlyIconState::Hidden` if the setting is synced to cloud.
     pub fn for_setting(
-        storage_key: &str,
-        sync_to_cloud: SyncToCloud,
-        mouse_states: &mut HashMap<String, MouseStateHandle>,
-        app: &AppContext,
+        _storage_key: &str,
+        _sync_to_cloud: SyncToCloud,
+        _mouse_states: &mut HashMap<String, MouseStateHandle>,
+        _app: &AppContext,
     ) -> Self {
-        if !*CloudPreferencesSettings::as_ref(app).settings_sync_enabled {
-            // Only show the local-only icon if settings sync is enabled.
-            return Self::Hidden;
-        }
-
-        match sync_to_cloud {
-            SyncToCloud::Never => {
-                let mouse_state = mouse_states
-                    .entry(storage_key.to_string())
-                    .or_default()
-                    .clone();
-                Self::Visible {
-                    mouse_state,
-                    custom_tooltip: None,
-                }
-            }
-            _ => Self::Hidden,
-        }
+        // Settings sync does not exist in this build, so the local-only icon is never shown.
+        Self::Hidden
     }
 }
 
@@ -1695,7 +1672,6 @@ const LEAN_TERMINAL_HIDDEN_WIDGETS: &[&str] = &[
     "PrivacyPolicyWidget",
     // Appearance
     "AIFontWidget",
-    "ToolsPanelWarpDriveWidget",
     "UseLatestUserPromptAsConversationTitleInTabNamesWidget",
     // Editor and Code Review
     "AutoOpenCodeReviewPaneCodeWidget",

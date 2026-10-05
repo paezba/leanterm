@@ -19,4 +19,3 @@ pub use result_renderer::ItemHighlightState;
 // Re-export core search types.
 pub use warp_search_core::*;
 pub use workflows::fuzzy_match::FuzzyMatchWorkflowResult;
-pub mod notebook_embedding;

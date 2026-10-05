@@ -8,7 +8,7 @@ pub mod inline_banner;
 use repo_metadata::CanonicalizedPath;
 
 use super::{GridType, should_right_click_paste};
-use crate::server::cloud_objects::update_manager::UpdateManager;
+use crate::env_vars::EnvVar;
 use crate::settings::DebugSettingsChangedEvent;
 #[cfg(feature = "local_fs")]
 use crate::settings::import::model::ImportedConfigModel;
@@ -145,8 +145,6 @@ use crate::banner::{
     Banner, BannerAction, BannerEvent, BannerState, BannerTextButton, BannerTextContent,
     DismissalType,
 };
-use crate::cloud_object::model::actions::ObjectActionType;
-use crate::cloud_object::{CloudObject, GenericStringObjectFormat, JsonObjectType};
 #[cfg(feature = "local_fs")]
 use crate::code::editor_management::CodeSource;
 use crate::code_review::diff_state::GitDeltaPreference;
@@ -156,9 +154,7 @@ use crate::code_review::telemetry_event::CodeReviewPaneEntrypoint;
 use crate::context_chips::ContextChipKind;
 use crate::context_chips::prompt::Prompt;
 use crate::context_chips::prompt_type::PromptType;
-use crate::drive::CloudObjectTypeAndId;
 use crate::editor::{AutosuggestionType, EditorAction};
-use crate::env_vars::EnvVar;
 use crate::event_sources::{PaletteSource, ToggleBlockFilterSource};
 use crate::features::FeatureFlag;
 use crate::menu::{Event as MenuEvent, Menu, MenuItem, MenuItemFields};
@@ -294,7 +290,6 @@ use crate::view_components::find::{Event as FindEvent, Find, FindDirection, Find
 use crate::view_components::{DismissibleToast, ToastFlavor};
 use crate::workspace::sync_inputs::SyncedInputState;
 use crate::workspace::{CommandSearchOptions, ToastStack, WorkspaceAction, WorkspaceRegistry};
-use crate::workspaces::user_workspaces::{UserWorkspaces, UserWorkspacesEvent};
 use crate::{ActiveSession as WindowActiveSession, safe_warn};
 
 lazy_static! {
@@ -928,9 +923,6 @@ pub enum ContextMenuAction {
     CopyBlockCommands,
     CopyBlockOutputs,
     CopyBlockFilteredOutputs,
-    OpenShareBlockModal {
-        block_index: BlockIndex,
-    },
     FindWithinBlock,
     ToggleBookmark,
     ScrollToBottomOfBlock,
@@ -964,9 +956,6 @@ impl fmt::Debug for ContextMenuAction {
             CopyBlocks => f.write_str("CopyBlocks"),
             CopyBlockCommands => f.write_str("CopyBlockCommands"),
             CopyBlockOutputs => f.write_str("CopyBlockOutputs"),
-            OpenShareBlockModal { block_index } => {
-                write!(f, "OpenShareModal {{ block_index: {block_index} }}")
-            }
             FindWithinBlock => f.write_str("FindWithinBlock"),
             ScrollToBottomOfBlock => f.write_str("ScrollToBottomOfBlock"),
             ScrollToTopOfBlock => f.write_str("ScrollToTopOfBlock"),
@@ -1068,9 +1057,7 @@ pub struct ExecuteCommandEvent {
     pub command: String,
     pub session_id: SessionId,
 
-    /// If the command was executed from a [`CloudWorkflow`], pass its ID here.
-    pub workflow_id: Option<SyncId>,
-    /// If the command was executed from a [`CloudWorkflow`] or WorkflowType::Local, store the
+    /// If the command was executed from a [`WorkflowType`], store the
     /// templated command here.
     pub workflow_command: Option<String>,
 
@@ -1108,7 +1095,6 @@ pub enum Event {
     Escape,
     Exited,
     BlockListCleared,
-    ShareModalOpened(BlockIndex),
     SendNotification(BlockNotification),
     BlockCompleted {
         block: Arc<SerializedBlock>,
@@ -2044,12 +2030,6 @@ impl TerminalView {
                 }
             },
         );
-
-        ctx.subscribe_to_model(&UserWorkspaces::handle(ctx), |_me, _, event, ctx| {
-            if matches!(event, UserWorkspacesEvent::TeamsChanged) {
-                ctx.notify();
-            }
-        });
 
         let (resize_tx, resize_rx) = async_channel::unbounded();
         let (find_link_tx, find_link_rx) = async_channel::unbounded();
@@ -4955,9 +4935,7 @@ impl TerminalView {
             ModelEvent::AfterBlockCompleted(AfterBlockCompletedEvent {
                 command_finished_to_precmd_delay,
                 block_type,
-                num_secrets_obfuscated: _,
-                cloud_workflow_id,
-                cloud_env_var_collection_id,
+                ..
             }) => {
                 // To automatically warpify a subshell, we run the relevant command to open the
                 // subshell and create a future to delay bootstrapping the subshell long enough for
@@ -5150,37 +5128,6 @@ impl TerminalView {
 
                     let exit_code_data =
                         &json!({"exit_code": serialized_block.exit_code}).to_string();
-
-                    // If the block was a cloud workflow, record the workflow execution as an object action.
-                    if let Some(cloud_workflow_id) = cloud_workflow_id {
-                        let id_and_type = CloudObjectTypeAndId::Workflow(*cloud_workflow_id);
-                        UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
-                            update_manager.record_object_action(
-                                id_and_type,
-                                ObjectActionType::Execute,
-                                Some(exit_code_data.clone()),
-                                ctx,
-                            )
-                        });
-                    }
-
-                    if let Some(cloud_env_var_collection_id) = cloud_env_var_collection_id {
-                        let id_and_type = CloudObjectTypeAndId::GenericStringObject {
-                            object_type: GenericStringObjectFormat::Json(
-                                JsonObjectType::EnvVarCollection,
-                            ),
-
-                            id: *cloud_env_var_collection_id,
-                        };
-                        UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
-                            update_manager.record_object_action(
-                                id_and_type,
-                                ObjectActionType::Execute,
-                                Some(exit_code_data.clone()),
-                                ctx,
-                            )
-                        });
-                    }
 
                     if let (
                         Some(active_session_id),
@@ -6745,16 +6692,10 @@ impl TerminalView {
                     "Scroll to bottom of blocks"
                 };
 
-                // currently, we don't support share for multi selections
-                let is_share_disabled =
-                    !is_single_selection || (is_active_block_selected && is_active_block_running);
-
                 let is_copy_commands_disabled =
                     is_single_selection && tail_block.command_to_string().trim().is_empty();
                 let is_copy_both_disabled =
                     is_copy_commands_disabled && tail_block.output_to_string().trim().is_empty();
-
-                let share_block_label = "Share...";
 
                 // Only right-click sources offer general terminal actions like "Paste";
                 // the overflow-button and keybinding menus are scoped to the selected block(s).
@@ -6833,20 +6774,6 @@ impl TerminalView {
                 }
 
                 items.push(MenuItem::Separator);
-                items.push(
-                    MenuItemFields::new(share_block_label)
-                        .with_on_select_action(TerminalAction::ContextMenu(
-                            ContextMenuAction::OpenShareBlockModal {
-                                block_index: tail_block_index,
-                            },
-                        ))
-                        .with_key_shortcut_label(keybinding_name_to_display_string(
-                            "terminal:open_share_block_modal",
-                            ctx,
-                        ))
-                        .with_disabled(is_share_disabled)
-                        .into_item(),
-                );
 
                 items.append(&mut vec![
                     MenuItem::Separator,
@@ -8926,29 +8853,6 @@ impl TerminalView {
             );
             self.input_command(ctx, commands.join("\n"));
             self.focus_input_box(ctx);
-        }
-    }
-
-    fn context_menu_open_share_block_modal(
-        &mut self,
-        block_index: BlockIndex,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        if AuthStateProvider::as_ref(ctx)
-            .get()
-            .is_anonymous_or_logged_out()
-        {
-            return;
-        }
-
-        ctx.emit(Event::ShareModalOpened(block_index));
-        self.close_context_menu(ctx, true);
-        ctx.notify();
-    }
-
-    fn open_share_block_modal(&mut self, ctx: &mut ViewContext<Self>) {
-        if let Some(selected_index) = self.selected_blocks.tail() {
-            self.context_menu_open_share_block_modal(selected_index, ctx);
         }
     }
 
@@ -11270,9 +11174,6 @@ impl TerminalView {
             CopyBlocks => self.context_menu_copy_blocks(ctx),
             CopyBlockCommands => self.context_menu_copy_block_commands(ctx),
             CopyBlockOutputs => self.context_menu_copy_block_outputs(ctx),
-            OpenShareBlockModal { block_index } => {
-                self.context_menu_open_share_block_modal(*block_index, ctx)
-            }
             FindWithinBlock => self.find_within_block(ctx),
             ScrollToBottomOfBlock => self.scroll_to_bottom_of_bottommost_selected_block(ctx),
             ScrollToTopOfBlock => self.scroll_to_top_of_topmost_selected_block(ctx),
@@ -12068,7 +11969,6 @@ impl TypedActionView for TerminalView {
             | CopyCommands
             | MaybeHoverSecret { .. }
             | CopyGitBranch
-            | OpenShareModal
             | ReinputCommands
             | ReinputCommandsWithSudo
             | ClearBuffer
@@ -12212,7 +12112,6 @@ impl TypedActionView for TerminalView {
                 };
                 self.copy_prompt(&prompt_position, &PromptPart::GitBranch, ctx)
             }
-            OpenShareModal => self.open_share_block_modal(ctx),
             ReinputCommands => self.reinput_commands(false, ctx),
             ReinputCommandsWithSudo => self.reinput_commands(true, ctx),
             ClearBuffer => self.clear_buffer(ctx),

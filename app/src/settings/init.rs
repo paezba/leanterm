@@ -10,7 +10,6 @@ use warpui_extras::user_preferences;
 
 use super::app_icon::AppIconSettings;
 use super::app_installation_detection::UserAppInstallDetectionSettings;
-use super::cloud_preferences::CloudPreferencesSettings;
 use super::initializer::SettingsInitializer;
 use super::native_preference::NativePreferenceSettings;
 use super::{
@@ -23,7 +22,6 @@ use super::{
 };
 use crate::appearance;
 use crate::banner::BannerState;
-use crate::drive::settings::WarpDriveSettings;
 use crate::search::command_search::settings::CommandSearchSettings;
 use crate::terminal::BlockListSettings;
 use crate::terminal::alt_screen_reporting::AltScreenReporting;
@@ -36,7 +34,6 @@ use crate::terminal::settings::TerminalSettings;
 use crate::terminal::warpify::settings::WarpifySettings;
 use crate::undo_close::UndoCloseSettings;
 use crate::window_settings::{WindowSettings, stage_legacy_background_backdrop};
-use crate::workflows::aliases::WorkflowAliases;
 use crate::workspace::tab_settings::TabSettings;
 
 pub struct UserDefaultsOnStartup {
@@ -75,7 +72,6 @@ pub fn register_all_settings(ctx: &mut AppContext) {
     ThemeSettings::register(ctx);
     AccessibilitySettings::register(ctx);
     NativePreferenceSettings::register(ctx);
-    CloudPreferencesSettings::register(ctx);
     WarpDrivePrivacySettings::register(ctx);
     UserAppInstallDetectionSettings::register(ctx);
     AppIconSettings::register(ctx);
@@ -87,8 +83,6 @@ pub fn register_all_settings(ctx: &mut AppContext) {
     SshSettings::register(ctx);
     VimBannerSettings::register(ctx);
     SharedObjectLimitBannerSettings::register(ctx);
-    WarpDriveSettings::register(ctx);
-    WorkflowAliases::register(ctx);
     EmacsBindingsSettings::register(ctx);
     SameLinePromptBlockSettings::register(ctx);
     SemanticSelection::register(ctx);

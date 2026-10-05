@@ -10,7 +10,6 @@ use warpui::{App, TypedActionView, ViewHandle, WindowId};
 
 use super::{CodeEditorRenderOptions, CodeEditorView, CodeEditorViewAction};
 use crate::AuthStateProvider;
-use crate::cloud_object::model::persistence::CloudModel;
 use crate::editor::InteractionState;
 use crate::notebooks::editor::keys::NotebookKeybindings;
 use crate::server::server_api::team::MockTeamClient;
@@ -20,7 +19,6 @@ use crate::test_util::settings::initialize_settings_for_tests;
 use crate::vim_registers::VimRegisters;
 use crate::workspace::ActiveSession;
 use crate::workspace::sync_inputs::SyncedInputState;
-use crate::workspaces::user_workspaces::UserWorkspaces;
 
 fn initialize_editor(app: &mut App) -> (WindowId, ViewHandle<CodeEditorView>) {
     initialize_settings_for_tests(app);

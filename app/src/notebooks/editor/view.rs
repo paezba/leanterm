@@ -62,7 +62,7 @@ use crate::notebooks::editor::find_bar::FindBarAction;
 use crate::notebooks::editor::model::word_unit;
 use crate::notebooks::file::MarkdownDisplayMode;
 use crate::notebooks::link::{LinkTarget, NotebookLinks, ResolveError};
-use crate::notebooks::telemetry::{ActionEntrypoint, BlockInfo, EmbeddedObjectInfo, SelectionMode};
+use crate::notebooks::telemetry::{ActionEntrypoint, BlockInfo, SelectionMode};
 use crate::server::ids::SyncId;
 use crate::settings::{AppEditorSettings, FontSettings, SelectionSettings};
 use crate::terminal::grid_renderer::URL_COLOR;
@@ -858,7 +858,6 @@ pub enum EditorViewAction {
         block: BlockInfo,
         entrypoint: ActionEntrypoint,
     },
-    OpenEmbeddedObjectSearch,
     RemoveEmbeddingAt(CharOffset),
     MiddleClickPaste,
     /// Open a file. If open_in_warp is true, open in Warp's code editor; otherwise use external editor.
@@ -948,13 +947,8 @@ pub enum EditorViewEvent {
     EditWorkflow(SyncId),
     /// The block insertion menu was opened.
     OpenedBlockInsertionMenu(BlockInsertionSource),
-    /// The embedded object search menu was opened.
-    OpenedEmbeddedObjectSearch,
     /// The find bar was opened.
     OpenedFindBar,
-    /// An embedded object was inserted (via the menu - this doesn't account for copy/pasting
-    /// embeds).
-    InsertedEmbeddedObject(EmbeddedObjectInfo),
     CopiedBlock {
         block: BlockInfo,
         entrypoint: ActionEntrypoint,
@@ -1075,9 +1069,6 @@ pub struct RichTextEditorConfig {
     pub gutter_width: Option<f32>,
     pub vertical_expansion_behavior: Option<VerticalExpansionBehavior>,
 
-    /// Enable or disable embedded objects (notebooks, workflows) in the block insertion menu.
-    pub embedded_objects_enabled: Option<bool>,
-
     /// Configure whether this editor can execute shell commands via Cmd/Ctrl+Enter.
     /// When disabled, Cmd/Ctrl+Enter emits a CmdEnter event instead, allowing parent views
     /// (like comment editors) to handle it for submitting comments.
@@ -1142,8 +1133,7 @@ impl RichTextEditorView {
         let find_bar = FindBarState::new(parent_position_id, model.clone(), ctx);
         ctx.subscribe_to_view(find_bar.view(), Self::handle_find_bar_event);
 
-        let insertion_menu_state =
-            BlockInsertionMenuState::new(ctx, config.embedded_objects_enabled.unwrap_or(true));
+        let insertion_menu_state = BlockInsertionMenuState::new(ctx);
 
         Self {
             omnibar,
@@ -1502,8 +1492,7 @@ impl RichTextEditorView {
     fn should_handle_user_input(&self, app: &AppContext) -> bool {
         !(self.link_editor.as_ref(app).editors_focused(app)
             || self.find_bar.is_focused(app)
-            || self.model.as_ref(app).has_command_selection(app)
-            || self.insertion_menu_state.embedded_object_search_open)
+            || self.model.as_ref(app).has_command_selection(app))
     }
 
     /// Whether or not the view is currently editable.
@@ -2613,34 +2602,6 @@ impl RichTextEditorView {
             && !matches!(self.ongoing_mouse_state, OngoingMouseEvent::Selecting)
             && !self.is_block_insertion_menu_open()
     }
-
-    /// Insert an embedded notebook inline link at the current insertion menu source.
-    /// For now, this looks like a regular hyperlink that opens the notebook in a new tab.
-    pub(super) fn insert_embedded_notebook_view(
-        &mut self,
-        title: String,
-        link: String,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        match self.insertion_menu_state.open_at_source {
-            Some(BlockInsertionSource::AtCursor) if self.selection_is_single_cursor(ctx) => {
-                self.model.update(ctx, |model, ctx| {
-                    // Remove slash
-                    model.backspace(ctx);
-                });
-            }
-            Some(BlockInsertionSource::BlockInsertionButton) if self.hovered_block.is_some() => {
-                self.model.update(ctx, |model, ctx| {
-                    model.newline(ctx);
-                });
-            }
-            _ => return,
-        };
-
-        self.model.update(ctx, |model, ctx| {
-            model.set_link(title, link, ctx);
-        });
-    }
 }
 
 impl Entity for RichTextEditorView {
@@ -3089,10 +3050,6 @@ impl TypedActionView for RichTextEditorView {
                     entrypoint: *entrypoint,
                 });
             }
-            OpenEmbeddedObjectSearch => {
-                self.open_embedded_object_search(ctx);
-                ctx.notify();
-            }
             RemoveEmbeddingAt(offset) => self
                 .model
                 .update(ctx, |model, ctx| model.remove_embedding_at(*offset, ctx)),
@@ -3234,12 +3191,6 @@ impl TypedActionView for RichTextEditorView {
                     WarpA11yRole::UserAction,
                 ))
             }
-            EditorViewAction::OpenEmbeddedObjectSearch => {
-                ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
-                    "Open embedded object search menu",
-                    WarpA11yRole::UserAction,
-                ))
-            }
             EditorViewAction::InsertBlock(block_type) => {
                 ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
                     format!("Insert {} block", BlockType::from(block_type).label()),
@@ -3363,10 +3314,8 @@ impl warp_editor::editor::EditorView for RichTextEditorView {
         block_offset: CharOffset,
         ctx: &'a AppContext,
     ) -> Option<&'a dyn EmbeddedItemModel> {
-        self.model
-            .as_ref(ctx)
-            .notebook_embed_for_block(block_offset)
-            .map(|model| model.as_ref(ctx) as &'a dyn EmbeddedItemModel)
+        let _ = (block_offset, ctx);
+        None
     }
 
     fn text_decorations<'a>(

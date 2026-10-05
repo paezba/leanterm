@@ -9,7 +9,6 @@ mod app_state;
 mod auth;
 mod banner;
 mod chip_configurator;
-mod cloud_object;
 mod code;
 mod code_review;
 mod coding_panel_enablement_state;
@@ -22,7 +21,6 @@ mod crash_recovery;
 mod debug_dump;
 mod default_terminal;
 mod download_method;
-mod drive;
 #[cfg(windows)]
 mod dynamic_libraries;
 mod env_vars;
@@ -78,7 +76,6 @@ mod voltron;
 mod warp_managed_paths_watcher;
 mod window_settings;
 mod word_block_editor;
-mod workspaces;
 
 // PLEASE DO NOT ADD MORE PUBLIC MODULES!
 //
@@ -180,15 +177,11 @@ use workspace::sync_inputs::SyncedInputState;
 use self::features::FeatureFlag;
 use crate::antivirus::AntivirusInfo;
 use crate::app_state::AppState;
-use crate::cloud_object::model::actions::{ObjectAction, ObjectActions};
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::model::view::CloudViewModel;
 use crate::code::global_buffer_model::GlobalBufferModel;
 #[cfg(feature = "local_fs")]
 use crate::code::language_server_shutdown_manager::LanguageServerShutdownManager;
 use crate::context_chips::prompt::Prompt;
 use crate::default_terminal::DefaultTerminal;
-use crate::drive::CloudObjectTypeAndId;
 use crate::event_sources::PaletteSource;
 pub use crate::global_resource_handles::{GlobalResourceHandles, GlobalResourceHandlesProvider};
 use crate::gpu_state::GPUState;
@@ -200,15 +193,7 @@ use crate::persistence::PersistenceWriter;
 use crate::root_view::{
     OpenFromRestoredArg, OpenPath, quake_mode_window_id, quake_mode_window_is_open,
 };
-use crate::server::cloud_objects::listener::Listener;
-use crate::server::cloud_objects::update_manager::UpdateManager;
-use crate::server::experiments::ServerExperiments;
-#[cfg(not(target_family = "wasm"))]
-use crate::server::sync_queue::{QueueItem, SyncQueue};
 use crate::session_management::{RunningSessionSummary, SessionNavigationData};
-use crate::settings::cloud_preferences_syncer::{
-    CloudPreferencesSyncerEvent, initialize_cloud_preferences_syncer,
-};
 use crate::settings::manager::SettingsManager;
 use crate::settings_view::DisplayCount;
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
@@ -223,13 +208,8 @@ use crate::user_config::WarpConfig;
 use crate::util::bindings::is_binding_cross_platform;
 use crate::vim_registers::VimRegisters;
 use crate::warp_managed_paths_watcher::{WarpManagedPathsWatcher, ensure_warp_watch_roots_exist};
-use crate::workflows::aliases::WorkflowAliases;
 use crate::workflows::local_workflows::LocalWorkflows;
 use crate::workspace::{ActiveSession, PaneViewLocator, ToastStack, Workspace, WorkspaceAction};
-use crate::workspaces::team_tester::TeamTesterStatus;
-use crate::workspaces::update_manager::TeamUpdateManager;
-use crate::workspaces::user_profiles::UserProfiles;
-use crate::workspaces::user_workspaces::UserWorkspaces;
 
 /// Our embedded application assets.
 pub static ASSETS: warp_assets::Assets = warp_assets::Assets;
@@ -984,51 +964,22 @@ pub(crate) fn initialize_app(
     });
 
     let (
-        cloud_objects,
-        cached_workspaces,
-        current_workspace_uid,
         app_state,
         command_history,
-        restored_user_profiles,
-        time_of_next_force_object_refresh,
-        object_actions,
-        experiments,
         persisted_workspaces,
         workspace_language_servers,
         persisted_ignored_suggestions,
     ) = sqlite_data
         .map(|sqlite_data| {
             (
-                sqlite_data.cloud_objects,
-                sqlite_data.workspaces,
-                sqlite_data.current_workspace_uid,
                 sqlite_data.app_state,
                 sqlite_data.command_history,
-                sqlite_data.user_profiles,
-                sqlite_data.time_of_next_force_object_refresh,
-                sqlite_data.object_actions,
-                sqlite_data.experiments,
                 sqlite_data.workspace_metadata,
                 sqlite_data.workspace_language_servers,
                 sqlite_data.ignored_suggestions,
             )
         })
         .unwrap_or_default();
-
-    // Initialize a global model to track server-side experiment state.
-    // This depends on the [`GlobalResourceHandlesProvider`] and so it must
-    // be initialized after it.
-    ctx.add_singleton_model(|ctx| ServerExperiments::new_from_cache(experiments, ctx));
-
-    ctx.add_singleton_model(|ctx| {
-        UserWorkspaces::new(
-            server_api_provider.as_ref(ctx).get_team_client(),
-            server_api_provider.as_ref(ctx).get_workspace_client(),
-            cached_workspaces,
-            current_workspace_uid,
-            ctx,
-        )
-    });
 
     ctx.add_singleton_model(AntivirusInfo::new);
 
@@ -1213,107 +1164,18 @@ pub(crate) fn initialize_app(
     #[cfg(feature = "local_fs")]
     ctx.add_singleton_model(|_| LanguageServerShutdownManager::new());
 
-    let mut all_queue_items = Vec::new();
-    let objects_with_pending_changes = cloud_objects
-        .iter()
-        .filter(|object| object.metadata().has_pending_content_changes())
-        .cloned()
-        .collect::<Vec<_>>();
-    all_queue_items.extend(QueueItem::from_cached_objects(
-        objects_with_pending_changes.into_iter(),
-    ));
-
-    let cloud_model = ctx.add_singleton_model(|_ctx| {
-        CloudModel::new(
-            persistence_writer.sender(),
-            cloud_objects,
-            time_of_next_force_object_refresh,
-        )
-    });
-
-    let unsynced_actions: Vec<(CloudObjectTypeAndId, ObjectAction)> = object_actions
-        .iter()
-        .filter(|action| action.is_pending())
-        .filter_map(|action| {
-            cloud_model.read(ctx, |model, _| {
-                let object = model.get_by_uid(&action.uid);
-                object.map(|o| (o.cloud_object_type_and_id(), action.clone()))
-            })
-        })
-        .collect::<Vec<_>>();
-
-    all_queue_items.extend(QueueItem::from_unsynced_actions(
-        unsynced_actions.into_iter(),
-    ));
-
-    ctx.add_singleton_model(|ctx| {
-        SyncQueue::new(
-            all_queue_items,
-            server_api_provider.as_ref(ctx).get_cloud_objects_client(),
-            ctx,
-        )
-    });
-
-    ctx.add_singleton_model(|_| UserProfiles::new(restored_user_profiles));
-
-    ctx.add_singleton_model(|_| ObjectActions::new(object_actions));
-
     ctx.add_singleton_model(|_| AudibleBell::new());
 
-    // This model has to be registered after the user workspaces model because it relies on it,
-    // and before the UpdateManager models because they rely on the TeamTester model.
-    ctx.add_singleton_model(|_| pricing::PricingInfoModel::new());
-
-    ctx.add_singleton_model(TeamTesterStatus::new);
-
-    ctx.add_singleton_model(|ctx| {
-        TeamUpdateManager::new(
-            server_api_provider.as_ref(ctx).get_team_client(),
-            persistence_writer.sender(),
-            ctx,
-        )
-    });
-
-    ctx.add_singleton_model(|ctx| {
-        UpdateManager::new(
-            persistence_writer.sender(),
-            server_api_provider.as_ref(ctx).get_cloud_objects_client(),
-            ctx,
-        )
-    });
-
-    let toml_file_path = settings::user_preferences_toml_file_path();
-    let cloud_preferences_syncer = ctx.add_singleton_model(move |ctx| {
-        initialize_cloud_preferences_syncer(
-            toml_file_path,
-            startup_toml_parse_error_for_syncer.as_deref(),
-            ctx,
-        )
-    });
-    ctx.subscribe_to_model(&cloud_preferences_syncer, |_, event, ctx| {
-        if let CloudPreferencesSyncerEvent::InitialLoadCompleted = event {
-            window_settings::migrate_legacy_background_backdrop(ctx);
-        }
-    });
+    window_settings::migrate_legacy_background_backdrop(ctx);
 
     // LogManager must be registered before any subsystem (e.g. MCP, LSP) that creates file-based loggers.
     ctx.add_singleton_model(|_| simple_logger::manager::LogManager::new());
-
-    // CloudViewModel subscribes to UpdateManager so that it can be notified when objects are
-    // created on the server.
-    ctx.add_singleton_model(CloudViewModel::new);
 
     ctx.add_singleton_model(|_| CodeManager::default());
     ctx.add_singleton_model(|_| OpenedFilesModel::new());
     ctx.add_singleton_model(NotebookKeybindings::new);
     ctx.add_singleton_model(TerminalKeybindings::new);
     ctx.add_singleton_model(|_| ActiveSession::default());
-    ctx.add_singleton_model(|ctx| {
-        Listener::new(
-            server_api_provider.as_ref(ctx).get_cloud_objects_client(),
-            ctx,
-        )
-    });
 
     #[cfg(all(not(target_family = "wasm"), feature = "local_tty"))]
     {
@@ -1396,12 +1258,6 @@ pub(crate) fn initialize_app(
     ctx.add_singleton_model(move |_| persistence_writer);
 
     ctx.add_singleton_model(move |_| IgnoredSuggestionsModel::new(persisted_ignored_suggestions));
-
-    // Subscribe WorkflowAliases to the UpdateManager so that it can be notified when objects are
-    // trashed.
-    WorkflowAliases::handle(ctx).update(ctx, |aliases, ctx| {
-        aliases.connect(ctx);
-    });
 
     #[cfg(not(target_family = "wasm"))]
     if launch_mode.should_start_local_http_server() {

@@ -44,7 +44,6 @@ use crate::uri::OpenSettingsArgs;
 use crate::util::bindings::{self, is_binding_pty_compliant};
 use crate::window_settings::WindowSettings;
 use crate::workspace::{PaneViewLocator, Workspace, WorkspaceAction, WorkspaceRegistry};
-use crate::workspaces::user_workspaces::UserWorkspaces;
 use crate::{
     ChannelState, GlobalResourceHandles, GlobalResourceHandlesProvider, UpdateQuakeModeEventArg,
 };
@@ -1106,38 +1105,6 @@ impl NewWorkspaceSource {
         }
     }
 
-    pub fn team_uid(&self, ctx: &AppContext) -> Option<ServerId> {
-        if let Self::Session {
-            initial_team_uid: Some(team_uid),
-            ..
-        } = self
-        {
-            return Some(*team_uid);
-        }
-        let source_window_id = match self {
-            Self::Empty {
-                previous_active_window,
-                ..
-            } => *previous_active_window,
-            Self::TransferredTab {
-                source_window_id, ..
-            } => Some(*source_window_id),
-            Self::FromTemplate { .. }
-            | Self::Session { .. }
-            | Self::NotebookFromFilePath { .. } => None,
-            Self::TeamSwitched { team_uid } => return Some(*team_uid),
-            Self::Restored {
-                window_snapshot, ..
-            } => {
-                if let Some(team_uid) = window_snapshot.team_uid {
-                    return Some(team_uid);
-                }
-                None
-            }
-        };
-
-        UserWorkspaces::as_ref(ctx).inherited_or_default_team_uid(source_window_id)
-    }
 }
 
 pub struct RootView {
@@ -1153,10 +1120,6 @@ impl RootView {
         ctx: &mut ViewContext<Self>,
     ) -> Self {
         let window_id = ctx.window_id();
-        let team_uid = workspace_setting.team_uid(ctx);
-        UserWorkspaces::handle(ctx).update(ctx, |user_workspaces, ctx| {
-            user_workspaces.register_window(window_id, team_uid, ctx);
-        });
         let server_api_provider = ServerApiProvider::as_ref(ctx);
         let server_api = server_api_provider.get();
 

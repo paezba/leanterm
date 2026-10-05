@@ -16,8 +16,6 @@ use warpui::{AddSingletonModel, App, ViewHandle};
 use watcher::HomeDirectoryWatcher;
 
 use super::*;
-use crate::cloud_object::model::persistence::CloudModel;
-use crate::cloud_object::model::view::CloudViewModel;
 use crate::context_chips::prompt::Prompt;
 use crate::editor::Event;
 use crate::gpu_state::GPUState;
@@ -26,13 +24,9 @@ use crate::notebooks::editor::keys::NotebookKeybindings;
 use crate::pane_group::{Direction, PaneGroupAction, PaneId};
 use crate::persisted_workspace::PersistedWorkspace;
 use crate::pricing::PricingInfoModel;
-use crate::server::cloud_objects::listener::Listener;
-use crate::server::cloud_objects::update_manager::UpdateManager;
-use crate::server::experiments::ServerExperiments;
 use crate::server::server_api::ServerApiProvider;
 use crate::server::server_api::team::{MockTeamClient, TeamClient};
 use crate::server::server_api::workspace::MockWorkspaceClient;
-use crate::server::sync_queue::SyncQueue;
 use crate::settings::PrivacySettings;
 use crate::settings::cloud_preferences_syncer::CloudPreferencesSyncer;
 use crate::settings_view::DisplayCount;
@@ -49,10 +43,6 @@ use crate::undo_close::UndoCloseSettings;
 use crate::util::traffic_lights::windows::RendererState;
 use crate::warp_managed_paths_watcher::WarpManagedPathsWatcher;
 use crate::workflows::local_workflows::LocalWorkflows;
-use crate::workspaces::team_tester::TeamTesterStatus;
-use crate::workspaces::update_manager::TeamUpdateManager;
-use crate::workspaces::user_profiles::UserProfiles;
-use crate::workspaces::user_workspaces::UserWorkspaces;
 use crate::{GlobalResourceHandlesProvider, ObjectActions, workspace};
 pub(crate) fn initialize_app(app: &mut App) {
     initialize_app_with_team_client(app, Arc::new(MockTeamClient::new()));
@@ -2370,7 +2360,6 @@ mod simplified_wasm_tab_bar {
 
     use super::*;
     use crate::auth::user::TEST_USER_UID;
-    use crate::cloud_object::{Owner, Revision, ServerMetadata, ServerPermissions};
     use crate::persistence::model::ConversationUsageMetadata;
     use crate::server::ids::ServerId;
 

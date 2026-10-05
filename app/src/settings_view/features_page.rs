@@ -61,7 +61,7 @@ use crate::search::command_search::settings::{
 use crate::settings::native_preference::{NativePreferenceSettings, UserNativePreference};
 use crate::settings::{
     AliasExpansionEnabled, AliasExpansionSettings, AppEditorSettings, AutocompleteSymbols,
-    AutosuggestionKeybindingHint, ChangelogSettings, CloudPreferencesSettings, CodeSettings,
+    AutosuggestionKeybindingHint, ChangelogSettings, CodeSettings,
     CommandCorrections, CompletionsOpenWhileTyping, CopyOnSelect, CtrlTabBehavior,
     DEFAULT_QUAKE_MODE_SIZE_PERCENTAGES, ErrorUnderliningEnabled, ExtraMetaKeys, GPUSettings,
     GlobalHotkeyMode, InputSettings, InputSettingsChangedEvent, LinuxSelectionClipboard,
@@ -5739,15 +5739,6 @@ impl SettingsWidget for TabKeyBehaviorWidget {
                     .build()
                     .finish(),
             );
-        if *CloudPreferencesSettings::as_ref(app).settings_sync_enabled {
-            tab_key_span.add_child(render_local_only_icon(
-                appearance,
-                view.button_mouse_states
-                    .tab_behavior_local_only_icon
-                    .clone(),
-                None,
-            ));
-        }
 
         let main_row = Flex::row()
             .with_cross_axis_alignment(CrossAxisAlignment::Center)

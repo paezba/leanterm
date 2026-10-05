@@ -18,7 +18,6 @@ use warpui::{App, SingletonEntity, View};
 use super::{FileNotebookAction, FileNotebookView, FileState, MarkdownDisplayMode, SourceFile};
 use crate::auth::AuthStateProvider;
 use crate::auth::auth_manager::AuthManager;
-use crate::cloud_object::model::persistence::CloudModel;
 use crate::notebooks::context_menu::MenuSource;
 use crate::notebooks::editor::keys::NotebookKeybindings;
 use crate::notebooks::file::is_markdown_file;
@@ -31,7 +30,6 @@ use crate::terminal::keys::TerminalKeybindings;
 use crate::terminal::model::session::Session;
 use crate::test_util::settings::initialize_settings_for_tests;
 use crate::workspace::ActiveSession;
-use crate::workspaces::user_workspaces::UserWorkspaces;
 use crate::{GlobalResourceHandles, GlobalResourceHandlesProvider};
 
 fn init_app(app: &mut App) {

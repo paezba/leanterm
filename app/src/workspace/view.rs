@@ -125,8 +125,6 @@ use crate::auth::auth_manager::AuthManager;
 use crate::auth::auth_state::AuthState;
 use crate::banner::BannerState;
 use crate::channel::ChannelState;
-use crate::cloud_object::CloudObject;
-use crate::cloud_object::model::persistence::CloudModel;
 use crate::code::editor::{add_color, remove_color};
 #[cfg(feature = "local_fs")]
 use crate::code::editor_management::CodeManager;
@@ -137,7 +135,6 @@ use crate::code_review::telemetry_event::CodeReviewPaneEntrypoint;
 use crate::coding_panel_enablement_state::CodingPanelEnablementState;
 use crate::context_chips::ChipRuntimeCapabilities;
 use crate::default_terminal::DefaultTerminal;
-use crate::drive::CloudObjectTypeAndId;
 use crate::editor::{
     EditorView, Event as EditorEvent, PropagateAndNoOpNavigationKeys, SingleLineEditorOptions,
     TextOptions,
@@ -184,7 +181,6 @@ use crate::server::ids::ServerId;
 use crate::server::network_log_pane_manager::NetworkLogPaneManager;
 use crate::server::server_api::{ServerApi, ServerApiProvider, ServerTime};
 use crate::session_management::{SessionNavigationData, SessionSource, TabNavigationData};
-use crate::settings::cloud_preferences::CloudPreferencesSettings;
 use crate::settings::{
     AccessibilitySettings, AliasExpansionSettings, AppEditorSettings, BlockVisibilitySettings,
     CodeSettings, CodeSettingsChangedEvent, CtrlTabBehavior, CursorBlink, DebugSettings,
@@ -298,8 +294,6 @@ use crate::workspace::view::left_panel::{
     LeftPanelAction, LeftPanelEvent, LeftPanelView, ToolPanelView,
 };
 use crate::workspace::view::right_panel::{RightPanelEvent, RightPanelView};
-use crate::workspaces::user_workspaces::UserWorkspaces;
-use crate::workspaces::workspace::AdminEnablementSetting;
 
 /// The padding that should be applied to the workspace as a whole.
 ///
@@ -7576,7 +7570,7 @@ impl Workspace {
         WindowSnapshot {
             tabs,
             active_tab_index,
-            team_uid: UserWorkspaces::as_ref(app).team_uid_for_window(window_id),
+            team_uid: None,
             bounds: window_bounds,
             fullscreen_state: window_fullscreen_state,
             quake_mode,
@@ -10225,7 +10219,6 @@ impl Workspace {
     /// terminal pane according to the [`UnavailableTerminalBehavior`].
     fn focus_terminal_input(
         &mut self,
-        object_id: Option<CloudObjectTypeAndId>,
         fallback_behavior: TerminalSessionFallbackBehavior,
         ctx: &mut ViewContext<Self>,
     ) -> Option<ViewHandle<TerminalView>> {
@@ -10254,12 +10247,9 @@ impl Workspace {
             // The active terminal exists but is busy, and the fallback behavior is
             // RequireExisting or OpenIfNone. In those cases, show a toast and no-op.
             self.toast_stack.update(ctx, |toast_stack, ctx| {
-                let mut toast = DismissibleToast::error(
+                let toast = DismissibleToast::error(
                     "A command in this session is still running.".to_string(),
                 );
-                if let Some(id) = object_id {
-                    toast = toast.with_object_id(id.uid());
-                }
                 toast_stack.add_ephemeral_toast(toast, ctx);
             });
             return None;
@@ -10328,7 +10318,7 @@ impl Workspace {
             return;
         }
         if let Some(terminal_view_handle) =
-            self.focus_terminal_input(workflow.object_id(), fallback_behavior, ctx)
+            self.focus_terminal_input(fallback_behavior, ctx)
         {
             let terminal_input =
                 terminal_view_handle.read(ctx, |terminal_view, _| terminal_view.input().clone());
@@ -10433,22 +10423,6 @@ impl Workspace {
                     }
                     AcceptWorkflow(accepted) => {
                         let (workflow, workflow_source) = match accepted {
-                            AcceptedWorkflow::Cloud { id, source } => {
-                                let Some(cloud_workflow) =
-                                    CloudModel::as_ref(ctx).get_workflow(id).cloned()
-                                else {
-                                    self.toast_stack.update(ctx, |view, ctx| {
-                                        view.add_ephemeral_toast(
-                                            DismissibleToast::error(
-                                                "This workflow is no longer available.".to_string(),
-                                            ),
-                                            ctx,
-                                        );
-                                    });
-                                    return;
-                                };
-                                (WorkflowType::Cloud(Box::new(cloud_workflow)), *source)
-                            }
                             AcceptedWorkflow::Local {
                                 workflow, source, ..
                             } => ((**workflow).clone(), *source),
@@ -13493,11 +13467,6 @@ impl Workspace {
             context.set.insert(flags::SYNTAX_HIGHLIGHTING_FLAG);
         }
 
-        let cloud_preferences_settings = CloudPreferencesSettings::as_ref(app);
-        if *cloud_preferences_settings.settings_sync_enabled.value() {
-            context.set.insert(flags::SETTINGS_SYNC_FLAG);
-        }
-
         if *block_list_settings
             .show_jump_to_bottom_of_block_button
             .value()
@@ -13513,16 +13482,6 @@ impl Workspace {
 
         if *safe_mode_settings.safe_mode_enabled.value() {
             context.set.insert(flags::SAFE_MODE_FLAG);
-        }
-        if !privacy_settings.is_telemetry_force_enabled()
-            && matches!(
-                UserWorkspaces::as_ref(app).get_cloud_conversation_storage_enablement_setting(),
-                AdminEnablementSetting::RespectUserSetting
-            )
-        {
-            context
-                .set
-                .insert(flags::CLOUD_CONVERSATION_STORAGE_EDITABLE_FLAG);
         }
         if privacy_settings.is_cloud_conversation_storage_enabled {
             context.set.insert(flags::CLOUD_CONVERSATION_STORAGE_FLAG);
@@ -13835,12 +13794,6 @@ impl Workspace {
 
     fn all_pane_group_ids(&self) -> impl Iterator<Item = EntityId> + '_ {
         self.tab_views().map(|tab| tab.id())
-    }
-
-    fn team_uid(&self, app: &AppContext) -> Option<ServerId> {
-        UserWorkspaces::as_ref(app)
-            .team_for_window(self.window_id)
-            .map(|team| team.uid)
     }
 
     /// Triggers the necessary cleanup for when a user logs out.
@@ -15082,10 +15035,6 @@ impl View for Workspace {
         }
         if *CodeSettings::as_ref(app).show_hidden_files {
             context.set.insert(flags::SHOW_HIDDEN_FILES);
-        }
-
-        if self.team_uid(app).is_some() {
-            context.set.insert("WarpDrive_BelongsToTeam");
         }
 
         if self.auth_state.is_anonymous_or_logged_out() {

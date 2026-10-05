@@ -4,7 +4,6 @@ use warpui::{AppContext, Element, Entity, View};
 
 use super::*;
 use crate::appearance::Appearance;
-use crate::workspaces::workspace::{BillingMetadata, CustomerType};
 
 fn billing_metadata(customer_type: CustomerType) -> BillingMetadata {
     BillingMetadata {

@@ -23,7 +23,6 @@ use crate::test_util::settings::initialize_settings_for_tests;
 use crate::vim_registers::VimRegisters;
 use crate::workspace::ToastStack;
 use crate::workspace::sync_inputs::SyncedInputState;
-use crate::workspaces::user_workspaces::UserWorkspaces;
 
 fn std_path(path: &std::path::Path) -> warp_util::standardized_path::StandardizedPath {
     warp_util::standardized_path::StandardizedPath::try_from_local(path).unwrap()
