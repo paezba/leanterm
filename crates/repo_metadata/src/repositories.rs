@@ -5,7 +5,6 @@ use std::path::{Path, PathBuf};
 use futures::future::{Either, ready};
 #[cfg(test)]
 use virtual_fs::{Stub, VirtualFS};
-use warp_util::local_or_remote_path::LocalOrRemotePath;
 use warp_util::standardized_path::StandardizedPath;
 #[cfg(test)]
 use warpui_core::r#async::FutureId;
@@ -36,7 +35,7 @@ pub enum DetectedRepositoriesEvent {
 /// Tracks the detected _git_ repositories during the lifetime of the application. This should be the canonical source of truth for repository information.
 #[derive(Default)]
 pub struct DetectedRepositories {
-    repository_roots: HashSet<LocalOrRemotePath>,
+    repository_roots: HashSet<PathBuf>,
     #[cfg(test)]
     /// List of spawned background tasks, for testing.
     spawned_futures: Vec<FutureId>,
@@ -49,9 +48,9 @@ impl DetectedRepositories {
         active_directory: &str,
         source: RepoDetectionSource,
         ctx: &mut ModelContext<Self>,
-    ) -> impl Future<Output = Option<LocalOrRemotePath>> + use<> {
+    ) -> impl Future<Output = Option<PathBuf>> + use<> {
         let fut = self.detect_possible_local_git_repo(active_directory, source, ctx);
-        async move { fut.await.map(LocalOrRemotePath::Local) }
+        async move { fut.await }
     }
 
     /// Given the active directory pwd, kick off a background job to detect the git project root and emit an event
@@ -72,7 +71,7 @@ impl DetectedRepositories {
                 return Either::Right(ready(None));
             };
 
-            let local_key = path.to_local_path().map(LocalOrRemotePath::Local);
+            let local_key = path.to_local_path();
             if let Some(ref key) = local_key
                 && self.repository_roots.contains(key)
             {
@@ -113,8 +112,7 @@ impl DetectedRepositories {
                             .and_then(|path| StandardizedPath::from_local_canonicalized(path).ok())
                         {
                             if let Some(local_path) = repo_root_path.to_local_path() {
-                                me.repository_roots
-                                    .insert(LocalOrRemotePath::Local(local_path));
+                                me.repository_roots.insert(local_path);
                             }
 
                             let external_git_dir = StandardizedPath::from_local_canonicalized(
@@ -181,12 +179,11 @@ impl DetectedRepositories {
         path: &Path,
         ctx: &AppContext,
     ) -> Option<ModelHandle<Repository>> {
-        let root = self.get_root_for_path(&LocalOrRemotePath::Local(path.to_path_buf()))?;
-        let local_path = root.to_local_path()?;
-        DirectoryWatcher::as_ref(ctx).get_watched_directory_for_path(local_path)
+        let root = self.get_root_for_path(path)?;
+        DirectoryWatcher::as_ref(ctx).get_watched_directory_for_path(&root)
     }
 
-    /// Given a local or remote path, return its corresponding repo root.
+    /// Given a local path, return its corresponding repo root.
     ///
     /// No git detection is performed; roots are looked up in our cached
     /// path-to-root mapping. Note that for local paths this still hits the
@@ -194,17 +191,12 @@ impl DetectedRepositories {
     /// requiring it to exist) so it can match the canonicalized cached roots.
     /// If the input is already canonicalized, prefer
     /// [`Self::get_root_for_canonical_path`], which performs no I/O.
-    pub fn get_root_for_path(&self, path: &LocalOrRemotePath) -> Option<LocalOrRemotePath> {
-        match path {
-            LocalOrRemotePath::Local(local_path) => {
-                let std_path = StandardizedPath::from_local_canonicalized(local_path).ok()?;
-                self.find_local_repository_root(&std_path)
-            }
-            LocalOrRemotePath::Remote(_) => None,
-        }
+    pub fn get_root_for_path(&self, path: &Path) -> Option<PathBuf> {
+        let std_path = StandardizedPath::from_local_canonicalized(path).ok()?;
+        self.find_local_repository_root(&std_path)
     }
 
-    /// Given a local or remote path, return its corresponding repo root.
+    /// Given a local path, return its corresponding repo root.
     /// This does not run the check against the actual file system.
     /// Instead it checks against our cached path to root mapping.
     ///
@@ -212,24 +204,16 @@ impl DetectedRepositories {
     /// are only normalized here, without any filesystem I/O. A
     /// non-canonical path may fail to match the canonicalized cached roots
     /// — use [`Self::get_root_for_path`] for such paths instead.
-    pub fn get_root_for_canonical_path(
-        &self,
-        path: &LocalOrRemotePath,
-    ) -> Option<LocalOrRemotePath> {
-        match path {
-            LocalOrRemotePath::Local(local_path) => {
-                let std_path = StandardizedPath::try_from_local(local_path).ok()?;
-                self.find_local_repository_root(&std_path)
-            }
-            LocalOrRemotePath::Remote(_) => None,
-        }
+    pub fn get_root_for_canonical_path(&self, path: &Path) -> Option<PathBuf> {
+        let std_path = StandardizedPath::try_from_local(path).ok()?;
+        self.find_local_repository_root(&std_path)
     }
 
     /// Find the local repository that contains the given path, if any.
-    fn find_local_repository_root(&self, path: &StandardizedPath) -> Option<LocalOrRemotePath> {
+    fn find_local_repository_root(&self, path: &StandardizedPath) -> Option<PathBuf> {
         for ancestor in path.ancestors() {
             if let Some(local_path) = ancestor.to_local_path() {
-                let key = LocalOrRemotePath::Local(local_path);
+                let key = local_path;
                 if self.repository_roots.contains(&key) {
                     return Some(key);
                 }
@@ -251,8 +235,7 @@ impl DetectedRepositories {
     /// Insert a local repository root path directly, bypassing git detection.
     pub fn insert_test_repo_root(&mut self, path: StandardizedPath) {
         if let Some(local_path) = path.to_local_path() {
-            self.repository_roots
-                .insert(LocalOrRemotePath::Local(local_path));
+            self.repository_roots.insert(local_path);
         }
     }
 }

@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 use warp_util::path::LineAndColumnArg;
 use warpui::{AppContext, Entity, EntityId, SingletonEntity, ViewHandle, WindowId};
 
-use super::buffer_location::LocalOrRemotePath;
 use super::view::CodeView;
 use crate::code_review::code_review_view::CodeReviewView;
 use crate::pane_group::{PaneGroup, PaneId};
@@ -109,9 +108,9 @@ pub enum CodeSource {
         range_end: Option<LineAndColumnArg>,
     },
     /// Opened from file tree (local or remote).
-    FileTree { location: LocalOrRemotePath },
+    FileTree { location: PathBuf },
     /// Opened from command palette file search (local or remote).
-    CommandPalette { location: LocalOrRemotePath },
+    CommandPalette { location: PathBuf },
     /// Opened from macOS Finder via "Open With".
     Finder { path: PathBuf },
 }
@@ -133,37 +132,32 @@ impl CodeSource {
         match self {
             Self::New { .. } => None,
             Self::FileTree { location, .. } | Self::CommandPalette { location, .. } => {
-                match location {
-                    LocalOrRemotePath::Local(path) => Some(path.clone()),
-                    LocalOrRemotePath::Remote(_) => None,
-                }
+                Some(location.clone())
             }
             Self::Link { path, .. } | Self::Finder { path } => Some(path.clone()),
         }
     }
 
-    /// Returns the `LocalOrRemotePath` for file tree sources.
-    pub fn file_location(&self) -> Option<&LocalOrRemotePath> {
+    /// Returns the `PathBuf` for file tree sources.
+    pub fn file_location(&self) -> Option<&PathBuf> {
         match self {
             Self::FileTree { location } | Self::CommandPalette { location } => Some(location),
             _ => None,
         }
     }
 
-    /// Returns the `LocalOrRemotePath` for any source that has a backing file.
+    /// Returns the `PathBuf` for any source that has a backing file.
     ///
     /// Unlike `path()` (which only returns local paths) and `file_location()`
     /// (which only covers `FileTree`), this covers every variant that maps to
     /// a file — local or remote.
-    pub fn location(&self) -> Option<LocalOrRemotePath> {
+    pub fn location(&self) -> Option<PathBuf> {
         match self {
             Self::New { .. } => None,
             Self::FileTree { location } | Self::CommandPalette { location } => {
                 Some(location.clone())
             }
-            Self::Link { path, .. } | Self::Finder { path } => {
-                Some(LocalOrRemotePath::Local(path.clone()))
-            }
+            Self::Link { path, .. } | Self::Finder { path } => Some(path.clone()),
         }
     }
 
@@ -184,28 +178,10 @@ impl CodeSource {
         match self {
             Self::New { .. } => "new",
             Self::Link { .. } => "link",
-            Self::FileTree {
-                location: LocalOrRemotePath::Remote(_),
-            } => "remote_file_tree",
             Self::FileTree { .. } => "file_tree",
-            Self::CommandPalette {
-                location: LocalOrRemotePath::Remote(_),
-            } => "remote_command_palette",
             Self::CommandPalette { .. } => "command_palette",
             Self::Finder { .. } => "finder",
         }
-    }
-
-    /// Returns `true` if this source should be restored across app restarts.
-    pub fn is_restorable(&self) -> bool {
-        !matches!(
-            self,
-            Self::FileTree {
-                location: LocalOrRemotePath::Remote(_),
-            } | Self::CommandPalette {
-                location: LocalOrRemotePath::Remote(_),
-            }
-        )
     }
 }
 
@@ -254,12 +230,12 @@ impl CodeManager {
         self.source_to_pane_data.remove(&source.omit_line_col());
     }
 
-    /// Returns the locator for a code pane that already has the given `LocalOrRemotePath`
+    /// Returns the locator for a code pane that already has the given `PathBuf`
     /// open in the given pane group. Works for both local and remote files.
     pub fn get_locator_for_location_in_tab(
         &self,
         pane_group_id: EntityId,
-        location: &LocalOrRemotePath,
+        location: &PathBuf,
     ) -> Option<PaneViewLocator> {
         self.source_to_pane_data
             .iter()

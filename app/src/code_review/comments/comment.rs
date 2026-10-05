@@ -1,10 +1,10 @@
 use std::fmt::{Display, Formatter};
+use std::path::PathBuf;
 
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use warp_editor::render::model::LineCount;
 
-use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code::editor::EditorReviewComment;
 use crate::code::editor::line::EditorLineLocation;
 
@@ -122,18 +122,18 @@ pub struct AttachedReviewComment {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum AttachedReviewCommentTarget {
     Line {
-        absolute_file_path: LocalOrRemotePath,
+        absolute_file_path: PathBuf,
         line: EditorLineLocation,
         content: LineDiffContent,
     },
     File {
-        absolute_file_path: LocalOrRemotePath,
+        absolute_file_path: PathBuf,
     },
     General,
 }
 
 impl AttachedReviewCommentTarget {
-    pub(crate) fn absolute_file_path(&self) -> Option<&LocalOrRemotePath> {
+    pub(crate) fn absolute_file_path(&self) -> Option<&PathBuf> {
         match self {
             AttachedReviewCommentTarget::Line {
                 absolute_file_path, ..
@@ -154,7 +154,7 @@ impl AttachedReviewCommentTarget {
 impl AttachedReviewComment {
     pub(crate) fn from_editor_review_comment(
         comment: EditorReviewComment,
-        absolute_file_path: LocalOrRemotePath,
+        absolute_file_path: PathBuf,
         base: Option<DiffBase>,
         head: Option<CurrentHead>,
     ) -> AttachedReviewComment {

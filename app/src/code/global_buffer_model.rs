@@ -18,8 +18,6 @@ use warp_util::content_version::ContentVersion;
 use warp_util::file::{FileId, FileLoadError, FileSaveError};
 use warpui::{Entity, ModelContext, ModelHandle, SingletonEntity, WeakModelHandle};
 
-use super::buffer_location::LocalOrRemotePath;
-
 cfg_if::cfg_if! {
     if #[cfg(feature = "local_fs")] {
         use lsp::LspManagerModelEvent;
@@ -125,7 +123,7 @@ impl GlobalBufferModelEvent {
 /// This allows multiple editors to share the same buffer when editing the same file,
 /// enabling consistent content synchronization and more efficient memory usage.
 pub struct GlobalBufferModel {
-    location_to_id: BiMap<LocalOrRemotePath, FileId>,
+    location_to_id: BiMap<PathBuf, FileId>,
     buffers: HashMap<FileId, InternalBufferState>,
 }
 
@@ -167,10 +165,7 @@ impl GlobalBufferModel {
         // Collect paths for didClose before removing entries.
         let paths_to_close: Vec<PathBuf> = ids_to_remove
             .iter()
-            .filter_map(|id| match self.location_to_id.get_by_right(id) {
-                Some(LocalOrRemotePath::Local(path)) => Some(path.clone()),
-                Some(LocalOrRemotePath::Remote(_)) | None => None,
-            })
+            .filter_map(|id| self.location_to_id.get_by_right(id).cloned())
             .collect();
 
         for path in &paths_to_close {
@@ -204,9 +199,7 @@ impl GlobalBufferModel {
 
     fn cleanup_file_id(&mut self, file_id: FileId, _ctx: &mut ModelContext<Self>) {
         // Send didClose before removing the entry.
-        if let Some((LocalOrRemotePath::Local(path), _)) =
-            self.location_to_id.remove_by_right(&file_id)
-        {
+        if let Some((path, _)) = self.location_to_id.remove_by_right(&file_id) {
             self.close_document_with_lsp(&path, _ctx);
         }
 
@@ -576,10 +569,9 @@ impl GlobalBufferModel {
 
     /// Look up the file path for a tracked buffer.
     pub fn file_path(&self, file_id: FileId) -> Option<&Path> {
-        match self.location_to_id.get_by_right(&file_id) {
-            Some(LocalOrRemotePath::Local(path)) => Some(path.as_path()),
-            _ => None,
-        }
+        self.location_to_id
+            .get_by_right(&file_id)
+            .map(PathBuf::as_path)
     }
 
     /// Get the base content version (last known on-disk version) for a tracked buffer.
@@ -594,7 +586,7 @@ impl GlobalBufferModel {
     pub fn discard_unsaved_changes(&mut self, path: &Path, ctx: &mut ModelContext<Self>) {
         if let Some(id) = self
             .location_to_id
-            .get_by_left(&LocalOrRemotePath::Local(path.to_path_buf()))
+            .get_by_left(&path.to_path_buf())
             .cloned()
         {
             let path_clone = path.to_path_buf();
@@ -653,9 +645,7 @@ impl GlobalBufferModel {
         // Internal state cleanup is synchronous; only the LSP didClose notification
         // is dispatched asynchronously (with a no-op callback), so there is no race
         // between state removal and the close completing.
-        if let Some((LocalOrRemotePath::Local(old_path), _)) =
-            self.location_to_id.remove_by_right(&old_file_id)
-        {
+        if let Some((old_path, _)) = self.location_to_id.remove_by_right(&old_file_id) {
             self.close_document_with_lsp(&old_path, ctx);
         }
 
@@ -707,11 +697,7 @@ impl GlobalBufferModel {
     ) -> BufferState {
         // If a buffer is already registered for this path, clean up the old entry
         // to avoid orphaning the previous FileId in `self.buffers`.
-        if let Some(old_file_id) = self
-            .location_to_id
-            .get_by_left(&LocalOrRemotePath::Local(path.clone()))
-            .copied()
-        {
+        if let Some(old_file_id) = self.location_to_id.get_by_left(&path.clone()).copied() {
             self.cleanup_file_id(old_file_id, ctx);
         }
 
@@ -722,8 +708,7 @@ impl GlobalBufferModel {
             id
         });
 
-        self.location_to_id
-            .insert(LocalOrRemotePath::Local(path.clone()), file_id);
+        self.location_to_id.insert(path.clone(), file_id);
         self.buffers.insert(
             file_id,
             InternalBufferState {
@@ -762,10 +747,7 @@ impl GlobalBufferModel {
             } = event
             {
                 let version_matches_initial = buffer.as_ref(ctx).version_match(&initial_version);
-                let fid = me
-                    .location_to_id
-                    .get_by_left(&LocalOrRemotePath::Local(path_clone.clone()))
-                    .cloned();
+                let fid = me.location_to_id.get_by_left(&path_clone.clone()).cloned();
                 let previous_version = fid
                     .and_then(|id| me.buffers.get(&id))
                     .and_then(|state| state.latest_buffer_version);
@@ -804,20 +786,13 @@ impl GlobalBufferModel {
     /// Dispatches to the appropriate private opener based on the location variant.
     /// If a buffer already exists for this location and is loaded, returns the
     /// existing `BufferState`.
-    pub fn open(
-        &mut self,
-        location: LocalOrRemotePath,
-        ctx: &mut ModelContext<Self>,
-    ) -> BufferState {
+    pub fn open(&mut self, location: PathBuf, ctx: &mut ModelContext<Self>) -> BufferState {
         match location {
             #[cfg(feature = "local_fs")]
-            LocalOrRemotePath::Local(path) => self.open_local(path, ctx),
+            path => self.open_local(path, ctx),
             #[cfg(not(feature = "local_fs"))]
-            LocalOrRemotePath::Local(_) => {
+            _ => {
                 unimplemented!("Local buffers require the local_fs feature")
-            }
-            LocalOrRemotePath::Remote(_) => {
-                unimplemented!("Remote buffers are not supported")
             }
         }
     }
@@ -829,11 +804,7 @@ impl GlobalBufferModel {
     /// File system updates are automatically subscribed to for all buffers.
     #[cfg(feature = "local_fs")]
     fn open_local(&mut self, path: PathBuf, ctx: &mut ModelContext<Self>) -> BufferState {
-        if let Some(id) = self
-            .location_to_id
-            .get_by_left(&LocalOrRemotePath::Local(path.clone()))
-            .cloned()
-        {
+        if let Some(id) = self.location_to_id.get_by_left(&path.clone()).cloned() {
             debug_assert!(self.buffers.contains_key(&id));
             if let Some(state) = self.buffers.get(&id)
                 && let Some(handle) = state.buffer.upgrade(ctx)
@@ -919,10 +890,7 @@ impl GlobalBufferModel {
 
                 // Read the previous latest_buffer_version before updating it.
                 // This is needed to determine if we need a full sync later.
-                let file_id = me
-                    .location_to_id
-                    .get_by_left(&LocalOrRemotePath::Local(path_clone.clone()))
-                    .cloned();
+                let file_id = me.location_to_id.get_by_left(&path_clone.clone()).cloned();
                 let previous_version = file_id
                     .and_then(|id| me.buffers.get(&id))
                     .and_then(|state| state.latest_buffer_version);
@@ -955,8 +923,7 @@ impl GlobalBufferModel {
             }
         });
 
-        self.location_to_id
-            .insert(LocalOrRemotePath::Local(path.to_path_buf()), file_id);
+        self.location_to_id.insert(path.to_path_buf(), file_id);
         self.buffers.insert(
             file_id,
             InternalBufferState {
@@ -1013,9 +980,7 @@ impl GlobalBufferModel {
             return Some(Vec::new());
         }
 
-        let file_id = self
-            .location_to_id
-            .get_by_left(&LocalOrRemotePath::Local(path.to_path_buf()))?;
+        let file_id = self.location_to_id.get_by_left(&path.to_path_buf())?;
         let buffer = self.buffer_handle_for_id(*file_id, ctx)?;
 
         let buffer_ref = buffer.as_ref(ctx);
@@ -1166,9 +1131,7 @@ impl GlobalBufferModel {
             .location_to_id
             .iter()
             .filter_map(|(location, id)| {
-                let LocalOrRemotePath::Local(path) = location else {
-                    return None;
-                };
+                let path = location;
                 if !path.starts_with(workspace_path) {
                     return None;
                 }

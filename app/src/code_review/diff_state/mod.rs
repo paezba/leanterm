@@ -136,7 +136,7 @@ pub struct DiffHunk {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct FileDiff {
     /// Repo-relative path for this diff file. Absolute file identities should use
-    /// `StandardizedPath` or `LocalOrRemotePath` at API boundaries.
+    /// `StandardizedPath` or `PathBuf` at API boundaries.
     pub file_path: String,
     pub status: GitFileStatus,
     pub hunks: Arc<Vec<DiffHunk>>,
@@ -478,20 +478,6 @@ impl DiffStateModel {
     pub(crate) fn get_uncommitted_stats(&self, ctx: &AppContext) -> Option<DiffStats> {
         match self {
             Self::Local(m) => m.as_ref(ctx).get_uncommitted_stats(),
-        }
-    }
-
-    /// Per-file entries for the uncommitted-vs-HEAD changes, sourced from
-    /// synced metadata (`against_head.files`). The per-file counterpart to
-    /// `get_uncommitted_stats`. Empty until metadata loads. Available for both
-    /// backends, so the commit dialog's Changes box works for remote repos
-    /// without reading the working tree.
-    pub(crate) fn uncommitted_file_entries<'a>(
-        &self,
-        ctx: &'a AppContext,
-    ) -> &'a [FileChangeEntry] {
-        match self {
-            Self::Local(m) => m.as_ref(ctx).uncommitted_file_entries(),
         }
     }
 

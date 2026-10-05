@@ -9,15 +9,14 @@ use repo_metadata::watcher::DirectoryWatcher;
 use warpui::{App, EntityId};
 
 use super::PaneGroupRepositoryRoots;
-use crate::code::buffer_location::LocalOrRemotePath;
 use crate::pane_group::WorkingDirectoriesModel;
 
-fn local(path: &std::path::Path) -> LocalOrRemotePath {
-    LocalOrRemotePath::Local(path.to_path_buf())
+fn local(path: &std::path::Path) -> PathBuf {
+    path.to_path_buf()
 }
 
-fn local_str(path: &str) -> LocalOrRemotePath {
-    LocalOrRemotePath::Local(PathBuf::from(path))
+fn local_str(path: &str) -> PathBuf {
+    PathBuf::from(path)
 }
 
 #[test]
@@ -51,25 +50,21 @@ fn refresh_working_directories_collapses_subroots_to_nearest_repo_root() {
         let terminal_2 = EntityId::new();
 
         let working_directories_handle = app.add_model(|_| WorkingDirectoriesModel::new());
-        let roots: Vec<LocalOrRemotePath> =
-            working_directories_handle.update(&mut app, |model, ctx| {
-                model.refresh_working_directories_for_pane_group(
-                    pane_group_id,
-                    vec![
-                        (terminal_1, LocalOrRemotePath::Local(repo_a.clone())),
-                        (terminal_2, LocalOrRemotePath::Local(repo_b.clone())),
-                    ],
-                    vec![],
-                    Some(terminal_1),
-                    ctx,
-                );
+        let roots: Vec<PathBuf> = working_directories_handle.update(&mut app, |model, ctx| {
+            model.refresh_working_directories_for_pane_group(
+                pane_group_id,
+                vec![(terminal_1, repo_a.clone()), (terminal_2, repo_b.clone())],
+                vec![],
+                Some(terminal_1),
+                ctx,
+            );
 
-                model
-                    .most_recent_directories_for_pane_group(pane_group_id)
-                    .expect("pane group exists")
-                    .map(|dir| dir.path)
-                    .collect()
-            });
+            model
+                .most_recent_directories_for_pane_group(pane_group_id)
+                .expect("pane group exists")
+                .map(|dir| dir.path)
+                .collect()
+        });
 
         assert_eq!(roots.len(), 1);
         assert_eq!(roots[0], local(&canonical_repo_root));
@@ -98,27 +93,26 @@ fn refresh_working_directories_preserves_non_repo_paths_and_dedupes() {
         let terminal_3 = EntityId::new();
 
         let working_directories_handle = app.add_model(|_| WorkingDirectoriesModel::new());
-        let roots: HashSet<LocalOrRemotePath> =
-            working_directories_handle.update(&mut app, |model, ctx| {
-                model.refresh_working_directories_for_pane_group(
-                    pane_group_id,
-                    vec![
-                        (terminal_1, LocalOrRemotePath::Local(dir_1.clone())),
-                        (terminal_2, LocalOrRemotePath::Local(dir_2.clone())),
-                        // Duplicate root should be deduped.
-                        (terminal_3, LocalOrRemotePath::Local(dir_1.clone())),
-                    ],
-                    vec![],
-                    Some(terminal_1),
-                    ctx,
-                );
+        let roots: HashSet<PathBuf> = working_directories_handle.update(&mut app, |model, ctx| {
+            model.refresh_working_directories_for_pane_group(
+                pane_group_id,
+                vec![
+                    (terminal_1, dir_1.clone()),
+                    (terminal_2, dir_2.clone()),
+                    // Duplicate root should be deduped.
+                    (terminal_3, dir_1.clone()),
+                ],
+                vec![],
+                Some(terminal_1),
+                ctx,
+            );
 
-                model
-                    .most_recent_directories_for_pane_group(pane_group_id)
-                    .expect("pane group exists")
-                    .map(|dir| dir.path)
-                    .collect()
-            });
+            model
+                .most_recent_directories_for_pane_group(pane_group_id)
+                .expect("pane group exists")
+                .map(|dir| dir.path)
+                .collect()
+        });
 
         assert_eq!(
             roots,
@@ -239,7 +233,7 @@ fn pane_group_repository_roots_set_paths_returns_only_truly_orphaned_paths() {
     assert!(orphans_b.is_empty());
 
     // A drops both of its paths.
-    let orphans = roots.set_paths(pane_a, Vec::<LocalOrRemotePath>::new());
+    let orphans = roots.set_paths(pane_a, Vec::<PathBuf>::new());
 
     // `shared` is still referenced by B, so it must not be reported as orphaned.
     // `only_a` was only referenced by A, so it must be.
@@ -280,7 +274,7 @@ fn pane_group_repository_roots_set_paths_preserves_insertion_order() {
     // Replace with y, z. y should keep its position; z is appended; x is removed.
     let _ = roots.set_paths(pane, vec![y.clone(), z.clone()]);
 
-    let forward: Vec<LocalOrRemotePath> = roots
+    let forward: Vec<PathBuf> = roots
         .get(pane)
         .expect("pane group present")
         .iter()
@@ -305,7 +299,7 @@ fn pane_group_repository_roots_remove_pane_group_returns_orphans() {
     let _ = roots.set_paths(pane_b, vec![shared.clone()]);
 
     // Removing A while B still references `shared` only orphans `only_a`.
-    let orphans: HashSet<LocalOrRemotePath> = roots
+    let orphans: HashSet<PathBuf> = roots
         .remove_pane_group(pane_a)
         .expect("pane group A was present")
         .into_iter()
@@ -389,14 +383,14 @@ fn shared_diff_state_model_survives_when_other_pane_group_still_references_repo(
         working_directories_handle.update(&mut app, |model, ctx| {
             model.refresh_working_directories_for_pane_group(
                 pane_group_a,
-                vec![(terminal_a, LocalOrRemotePath::Local(repo_path.clone()))],
+                vec![(terminal_a, repo_path.clone())],
                 vec![],
                 Some(terminal_a),
                 ctx,
             );
             model.refresh_working_directories_for_pane_group(
                 pane_group_b,
-                vec![(terminal_b, LocalOrRemotePath::Local(repo_path.clone()))],
+                vec![(terminal_b, repo_path.clone())],
                 vec![],
                 Some(terminal_b),
                 ctx,
@@ -454,7 +448,7 @@ fn diff_state_model_is_dropped_when_no_pane_group_references_repo() {
         working_directories_handle.update(&mut app, |model, ctx| {
             model.refresh_working_directories_for_pane_group(
                 pane_group,
-                vec![(terminal, LocalOrRemotePath::Local(repo_path.clone()))],
+                vec![(terminal, repo_path.clone())],
                 vec![],
                 Some(terminal),
                 ctx,
@@ -505,14 +499,14 @@ fn remove_pane_group_does_not_drop_diff_state_model_shared_with_other_pane_group
         working_directories_handle.update(&mut app, |model, ctx| {
             model.refresh_working_directories_for_pane_group(
                 pane_group_a,
-                vec![(terminal_a, LocalOrRemotePath::Local(repo_path.clone()))],
+                vec![(terminal_a, repo_path.clone())],
                 vec![],
                 Some(terminal_a),
                 ctx,
             );
             model.refresh_working_directories_for_pane_group(
                 pane_group_b,
-                vec![(terminal_b, LocalOrRemotePath::Local(repo_path.clone()))],
+                vec![(terminal_b, repo_path.clone())],
                 vec![],
                 Some(terminal_b),
                 ctx,

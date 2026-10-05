@@ -20,7 +20,6 @@ cfg_if::cfg_if! {
         use repo_metadata::repositories::DetectedRepositories;
         use std::cell::RefCell;
         use std::collections::HashMap;
-        use warp_util::local_or_remote_path::LocalOrRemotePath;
     }
 }
 
@@ -32,7 +31,7 @@ pub struct FileSearchModel {
     /// Cached flattened repo contents keyed by repo root location (local or remote).
     /// Populated lazily on first query, invalidated when the file tree changes.
     #[cfg(feature = "local_fs")]
-    repo_contents_cache: RefCell<HashMap<LocalOrRemotePath, Arc<Vec<FileSearchResult>>>>,
+    repo_contents_cache: RefCell<HashMap<PathBuf, Arc<Vec<FileSearchResult>>>>,
 }
 
 impl FileSearchModel {
@@ -45,14 +44,14 @@ impl FileSearchModel {
                 RepoMetadataEvent::FileTreeUpdated { ids } => {
                     let mut cache = me.repo_contents_cache.borrow_mut();
                     for id in ids {
-                        if let Some(key) = id.to_local_or_remote_path() {
+                        if let Some(key) = id.local_path_buf() {
                             cache.remove(&key);
                         }
                     }
                 }
                 RepoMetadataEvent::RepositoryRemoved { id }
                 | RepoMetadataEvent::RepositoryUpdated { id } => {
-                    if let Some(key) = id.to_local_or_remote_path() {
+                    if let Some(key) = id.local_path_buf() {
                         me.repo_contents_cache.borrow_mut().remove(&key);
                     }
                 }
@@ -79,18 +78,15 @@ impl FileSearchModel {
             .and_then(|loc| PathBuf::try_from(loc).ok())
     }
 
-    /// Returns the repo root as a `LocalOrRemotePath`, supporting both local and SSH sessions.
+    /// Returns the repo root as a `PathBuf`, supporting both local and SSH sessions.
     #[cfg(not(feature = "local_fs"))]
-    pub fn repo_root_location(
-        &self,
-        _app: &AppContext,
-    ) -> Option<warp_util::local_or_remote_path::LocalOrRemotePath> {
+    pub fn repo_root_location(&self, _app: &AppContext) -> Option<std::path::PathBuf> {
         None
     }
 
-    /// Returns the repo root as a `LocalOrRemotePath`, supporting both local and SSH sessions.
+    /// Returns the repo root as a `PathBuf`, supporting both local and SSH sessions.
     #[cfg(feature = "local_fs")]
-    pub fn repo_root_location(&self, app: &AppContext) -> Option<LocalOrRemotePath> {
+    pub fn repo_root_location(&self, app: &AppContext) -> Option<PathBuf> {
         let active_window_id = app.windows().state().active_window;
         let working_dir =
             active_window_id.and_then(|wid| ActiveSession::as_ref(app).working_directory(wid))?;
@@ -116,7 +112,7 @@ impl FileSearchModel {
 
         match working_dir {
             // Local session: read the filesystem directly.
-            Some(LocalOrRemotePath::Local(local_path)) => {
+            Some(local_path) => {
                 let current_dir: &Path = local_path.as_path();
                 let current_dir_string = current_dir.to_string_lossy().to_string();
 
@@ -143,7 +139,6 @@ impl FileSearchModel {
                     }
                 }
             }
-            Some(LocalOrRemotePath::Remote(_)) => Vec::new(),
             None => Vec::new(),
         }
     }
@@ -286,81 +281,67 @@ impl FileSearchModel {
     #[cfg(feature = "local_fs")]
     fn get_contents_from_repo(
         &self,
-        repo_root: &LocalOrRemotePath,
+        repo_root: &PathBuf,
         query: &str,
         include_folders: bool,
         app: &AppContext,
     ) -> Vec<FileSearchResult> {
         let repo_metadata = RepoMetadataModel::as_ref(app);
 
-        match repo_root {
-            LocalOrRemotePath::Local(local_path) => {
-                let Ok(canonical_repo_path) = dunce::canonicalize(local_path) else {
-                    return Vec::new();
+        let local_path = repo_root;
+        let Ok(canonical_repo_path) = dunce::canonicalize(local_path) else {
+            return Vec::new();
+        };
+        let Some(id) = RepositoryIdentifier::try_local(local_path) else {
+            return Vec::new();
+        };
+        let args = Self::contents_args(query, include_folders, {
+            let canonical_repo_path = canonical_repo_path.clone();
+            move |content| {
+                let local = match content {
+                    repo_metadata::RepoContent::File(file) => file.path.to_local_path_lossy(),
+                    repo_metadata::RepoContent::Directory(dir) => dir.path.to_local_path_lossy(),
                 };
-                let Some(id) = RepositoryIdentifier::try_local(local_path) else {
-                    return Vec::new();
-                };
-                let args = Self::contents_args(query, include_folders, {
-                    let canonical_repo_path = canonical_repo_path.clone();
-                    move |content| {
-                        let local = match content {
-                            repo_metadata::RepoContent::File(file) => {
-                                file.path.to_local_path_lossy()
-                            }
-                            repo_metadata::RepoContent::Directory(dir) => {
-                                dir.path.to_local_path_lossy()
-                            }
-                        };
-                        local
-                            .strip_prefix(&canonical_repo_path)
-                            .ok()
-                            .map(|relative| relative.to_string_lossy().to_string())
-                    }
-                });
-                // Truncated results (capped at the repo metadata budget) are
-                // intentionally used as-is to return partial matches rather
-                // than nothing.
-                let contents = match repo_metadata.get_repo_contents(&id, args, app) {
-                    Ok(repo_contents) => repo_contents.contents,
-                    Err(_) => return Vec::new(),
-                };
-                contents
-                    .iter()
-                    .filter_map(|content| match content {
-                        repo_metadata::RepoContent::File(file_metadata) => {
-                            let file_local = file_metadata.path.to_local_path_lossy();
-                            let relative_path =
-                                file_local.strip_prefix(&canonical_repo_path).ok()?;
-                            Some(FileSearchResult {
-                                path: relative_path.to_string_lossy().to_string(),
-                                project_directory: canonical_repo_path
-                                    .to_string_lossy()
-                                    .to_string(),
-                                is_directory: false,
-                            })
-                        }
-                        repo_metadata::RepoContent::Directory(dir_entry) => {
-                            let dir_local = dir_entry.path.to_local_path_lossy();
-                            let relative_path =
-                                dir_local.strip_prefix(&canonical_repo_path).ok()?;
-                            let mut path = relative_path.to_string_lossy().to_string();
-                            if !path.ends_with(std::path::MAIN_SEPARATOR) {
-                                path.push(std::path::MAIN_SEPARATOR);
-                            }
-                            Some(FileSearchResult {
-                                path,
-                                project_directory: canonical_repo_path
-                                    .to_string_lossy()
-                                    .to_string(),
-                                is_directory: true,
-                            })
-                        }
-                    })
-                    .collect()
+                local
+                    .strip_prefix(&canonical_repo_path)
+                    .ok()
+                    .map(|relative| relative.to_string_lossy().to_string())
             }
-            LocalOrRemotePath::Remote(_) => Vec::new(),
-        }
+        });
+        // Truncated results (capped at the repo metadata budget) are
+        // intentionally used as-is to return partial matches rather
+        // than nothing.
+        let contents = match repo_metadata.get_repo_contents(&id, args, app) {
+            Ok(repo_contents) => repo_contents.contents,
+            Err(_) => return Vec::new(),
+        };
+        contents
+            .iter()
+            .filter_map(|content| match content {
+                repo_metadata::RepoContent::File(file_metadata) => {
+                    let file_local = file_metadata.path.to_local_path_lossy();
+                    let relative_path = file_local.strip_prefix(&canonical_repo_path).ok()?;
+                    Some(FileSearchResult {
+                        path: relative_path.to_string_lossy().to_string(),
+                        project_directory: canonical_repo_path.to_string_lossy().to_string(),
+                        is_directory: false,
+                    })
+                }
+                repo_metadata::RepoContent::Directory(dir_entry) => {
+                    let dir_local = dir_entry.path.to_local_path_lossy();
+                    let relative_path = dir_local.strip_prefix(&canonical_repo_path).ok()?;
+                    let mut path = relative_path.to_string_lossy().to_string();
+                    if !path.ends_with(std::path::MAIN_SEPARATOR) {
+                        path.push(std::path::MAIN_SEPARATOR);
+                    }
+                    Some(FileSearchResult {
+                        path,
+                        project_directory: canonical_repo_path.to_string_lossy().to_string(),
+                        is_directory: true,
+                    })
+                }
+            })
+            .collect()
     }
 
     /// Performs a fuzzy search on the given path with the query

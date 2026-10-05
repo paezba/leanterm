@@ -63,7 +63,6 @@ use crate::appearance::Appearance;
 use crate::code::ShowCommentEditorProvider;
 #[cfg(not(target_family = "wasm"))]
 use crate::code::ShowFindReferencesCard;
-use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code::editor::comment_editor::DEFAULT_COMMENT_MAX_WIDTH;
 use crate::code::editor::line::EditorLineLocation;
 use crate::code::editor::view::{CodeEditorEvent, CodeEditorRenderOptions, CodeEditorView};
@@ -330,7 +329,7 @@ pub struct FileState {
 
 pub(crate) struct LoadedState {
     /// Repo-relative file paths keyed as Strings; absolute file identities use
-    /// StandardizedPath or LocalOrRemotePath at API boundaries.
+    /// StandardizedPath or PathBuf at API boundaries.
     pub(crate) file_states: IndexMap<String, FileState>,
     pub(crate) total_additions: usize,
     pub(crate) total_deletions: usize,
@@ -350,8 +349,8 @@ impl LoadedState {
     /// absolute paths of their underlying files.
     fn editor_absolute_file_paths(
         &self,
-        repo_path: &LocalOrRemotePath,
-    ) -> Vec<(ViewHandle<LocalCodeEditorView>, LocalOrRemotePath)> {
+        repo_path: &PathBuf,
+    ) -> Vec<(ViewHandle<LocalCodeEditorView>, PathBuf)> {
         self.file_states
             .values()
             .filter_map(|file_state| {
@@ -404,7 +403,7 @@ pub enum CodeReviewViewEvent {
     ReviewSubmitted,
     /// Request to open a file in a new tab (e.g. goto-definition).
     OpenFileInNewTab {
-        path: LocalOrRemotePath,
+        path: PathBuf,
         line_and_column: Option<LineAndColumnArg>,
     },
     /// Request to open LSP logs for the given log file path.
@@ -485,7 +484,7 @@ struct PendingPreciseScroll {
 
 /// Per-repository state container.
 struct RepositoryState {
-    repo_path: LocalOrRemotePath,
+    repo_path: PathBuf,
     state: CodeReviewViewState,
     available_branches: Vec<BranchEntry>,
 
@@ -494,7 +493,7 @@ struct RepositoryState {
 }
 
 impl RepositoryState {
-    fn new(repo_path: LocalOrRemotePath) -> Self {
+    fn new(repo_path: PathBuf) -> Self {
         Self {
             repo_path,
             state: CodeReviewViewState::None,
@@ -620,7 +619,7 @@ pub struct CodeReviewView {
 }
 
 impl CodeReviewView {
-    pub fn repo_path(&self) -> Option<&LocalOrRemotePath> {
+    pub fn repo_path(&self) -> Option<&PathBuf> {
         self.active_repo.as_ref().map(|repo| &repo.repo_path)
     }
 
@@ -632,7 +631,9 @@ impl CodeReviewView {
         } else {
             let repo_path = self.repo_path()?;
             let absolute_path = repo_path.join(repo_relative_path);
-            Some(absolute_path.path_component())
+            Some(StandardizedPath::from_local_absolute_unchecked(
+                &absolute_path,
+            ))
         }
     }
 
@@ -667,11 +668,7 @@ impl CodeReviewView {
 
         // Create global LSP footer for the code review panel
         // TODO: add support for remote repositories
-        if let Some(repo_path) = self
-            .repo_path()
-            .and_then(LocalOrRemotePath::to_local_path)
-            .map(Path::to_path_buf)
-        {
+        if let Some(repo_path) = self.repo_path().cloned() {
             let footer =
                 ctx.add_typed_action_view(|ctx| CodeFooterView::new_for_workspace(repo_path, ctx));
             ctx.subscribe_to_view(&footer, Self::handle_footer_event);
@@ -828,10 +825,7 @@ impl CodeReviewView {
             .map(|p| p.to_path_buf())
             .or_else(|| {
                 repo_metadata::repositories::DetectedRepositories::as_ref(ctx)
-                    .get_root_for_path(&warp_util::local_or_remote_path::LocalOrRemotePath::Local(
-                        path.to_path_buf(),
-                    ))
-                    .and_then(|r| r.to_local_path().map(std::path::Path::to_path_buf))
+                    .get_root_for_path(path)
             })
             .or_else(|| path.parent().map(|p| p.to_path_buf()));
 
@@ -873,10 +867,7 @@ impl CodeReviewView {
             .map(|p| p.to_path_buf())
             .or_else(|| {
                 repo_metadata::repositories::DetectedRepositories::as_ref(ctx)
-                    .get_root_for_path(&warp_util::local_or_remote_path::LocalOrRemotePath::Local(
-                        path.to_path_buf(),
-                    ))
-                    .and_then(|r| r.to_local_path().map(std::path::Path::to_path_buf))
+                    .get_root_for_path(path)
             })
             .or_else(|| path.parent().map(|p| p.to_path_buf()));
 
@@ -962,7 +953,7 @@ impl CodeReviewView {
 
     fn clear_comment_locations(
         &self,
-        editor_file_paths: &[(ViewHandle<LocalCodeEditorView>, LocalOrRemotePath)],
+        editor_file_paths: &[(ViewHandle<LocalCodeEditorView>, PathBuf)],
         ctx: &mut ViewContext<Self>,
     ) {
         for (editor, _) in editor_file_paths {
@@ -977,9 +968,9 @@ impl CodeReviewView {
     fn collect_comments_by_file(
         &self,
         model: &ModelHandle<ReviewCommentBatch>,
-        editor_file_paths: &[(ViewHandle<LocalCodeEditorView>, LocalOrRemotePath)],
+        editor_file_paths: &[(ViewHandle<LocalCodeEditorView>, PathBuf)],
         ctx: &mut ViewContext<Self>,
-    ) -> HashMap<LocalOrRemotePath, Vec<EditorReviewComment>> {
+    ) -> HashMap<PathBuf, Vec<EditorReviewComment>> {
         model.read(ctx, |batch, _| {
             editor_file_paths
                 .iter()
@@ -1053,7 +1044,7 @@ impl CodeReviewView {
     }
 
     pub fn new(
-        repo_path: Option<LocalOrRemotePath>,
+        repo_path: Option<PathBuf>,
         diff_state_model: ModelHandle<DiffStateModel>,
         comment_batch_model: Option<ModelHandle<ReviewCommentBatch>>,
         action_target_provider: Option<Box<dyn ReviewActionTargetProvider>>,
@@ -1702,7 +1693,7 @@ impl CodeReviewView {
                 else {
                     log::warn!(
                         "Couldn't find editor for file: {}",
-                        absolute_file_path.display_path()
+                        absolute_file_path.display().to_string()
                     );
                     return;
                 };
@@ -1772,7 +1763,7 @@ impl CodeReviewView {
                 else {
                     log::warn!(
                         "Couldn't find editor for file: {}",
-                        absolute_file_path.display_path()
+                        absolute_file_path.display().to_string()
                     );
                     return;
                 };
@@ -2464,7 +2455,7 @@ impl CodeReviewView {
         for file in files {
             let editor_state = {
                 // `LocalCodeEditorView::new_with_global_buffer` natively
-                // supports both `LocalOrRemotePath::Local` and `Remote`
+                // supports both `PathBuf::Local` and `Remote`
                 // (it sets language by extension and skips local-only
                 // wiring like LSP for remote files), so we always go
                 // through the global-buffer path when we have a repo.
@@ -2648,7 +2639,7 @@ impl CodeReviewView {
 
     pub fn editor_lens_for_location(
         &self,
-        path: &LocalOrRemotePath,
+        path: &PathBuf,
         line: Range<EditorLineLocation>,
         ctx: &AppContext,
     ) -> Option<Box<dyn Element>> {
@@ -2958,7 +2949,8 @@ impl CodeReviewView {
             });
 
             let full_file_location = repo_path.join(&file.file_diff.file_path);
-            let language_path = full_file_location.path_component();
+            let language_path =
+                StandardizedPath::from_local_absolute_unchecked(&full_file_location);
             code_editor_view.update(ctx, |editor, ctx| {
                 editor.set_language_with_path(&language_path, ctx);
             });
@@ -3005,7 +2997,7 @@ impl CodeReviewView {
         &mut self,
         editor: ViewHandle<LocalCodeEditorView>,
         event: &LocalCodeEditorEvent,
-        file_location: &LocalOrRemotePath,
+        file_location: &PathBuf,
         ctx: &mut ViewContext<Self>,
     ) {
         match event {
@@ -3029,7 +3021,7 @@ impl CodeReviewView {
             LocalCodeEditorEvent::CommentSaved { comment } => {
                 // Use `file_location()` to preserve host identity for
                 // remote editors. The comment batch is already host-scoped
-                // (keyed by the repo `LocalOrRemotePath` in
+                // (keyed by the repo `PathBuf` in
                 // `WorkingDirectoriesModel.comment_models`), but encoding
                 // the host on the comment target keeps later helpers
                 // honest.
@@ -3105,7 +3097,7 @@ impl CodeReviewView {
 
                 // LSP go-to-definition produces an absolute local filesystem path.
                 self.open_file_in_tab(
-                    LocalOrRemotePath::Local(path.clone()),
+                    path.clone(),
                     Some(LineAndColumnArg {
                         // LSP uses 0-indexed lines, but we display 1-indexed
                         line_num: *line + 1,
@@ -3132,7 +3124,7 @@ impl CodeReviewView {
 
     fn comment_line_numbers_for_file(
         &self,
-        file_path: &LocalOrRemotePath,
+        file_path: &PathBuf,
         app: &AppContext,
     ) -> Vec<LineCount> {
         self.active_comment_model
@@ -3145,7 +3137,7 @@ impl CodeReviewView {
             .unwrap_or_default()
     }
 
-    fn file_state_index_for_location(&self, file_location: &LocalOrRemotePath) -> Option<usize> {
+    fn file_state_index_for_location(&self, file_location: &PathBuf) -> Option<usize> {
         let repo_path = self.repo_path()?;
         let CodeReviewViewState::Loaded(loaded_state) = self.state() else {
             return None;
@@ -3160,7 +3152,7 @@ impl CodeReviewView {
     /// This is called when LocalCodeEditorEvent::DelayedRenderingFlushed or FailedToLoad fires.
     fn mark_editor_loaded_for_file(
         &mut self,
-        file_location: &LocalOrRemotePath,
+        file_location: &PathBuf,
         ctx: &mut ViewContext<Self>,
     ) {
         let Some(file_index) = self.file_state_index_for_location(file_location) else {
@@ -3301,7 +3293,7 @@ impl CodeReviewView {
     fn relocate_comments(
         comments: impl IntoIterator<Item = AttachedReviewComment>,
         state: &LoadedState,
-        repo_path: &LocalOrRemotePath,
+        repo_path: &PathBuf,
         ctx: &mut ViewContext<Self>,
     ) -> RelocateCommentsResult {
         let mut fallback_count = 0;
@@ -5873,12 +5865,12 @@ impl CodeReviewView {
     /// Emits an event to open the given absolute path in a new tab.
     ///
     /// The caller is responsible for resolving the path into a
-    /// [`LocalOrRemotePath`]. For example, LSP go-to-definition produces an
+    /// [`PathBuf`]. For example, LSP go-to-definition produces an
     /// absolute local filesystem path that the caller wraps in
-    /// [`LocalOrRemotePath::Local`].
+    /// [`PathBuf::Local`].
     pub fn open_file_in_tab(
         &self,
-        path: LocalOrRemotePath,
+        path: PathBuf,
         line_and_column: Option<LineAndColumnArg>,
         ctx: &mut ViewContext<Self>,
     ) {
@@ -5922,7 +5914,7 @@ impl CodeReviewView {
 
     pub(super) fn editor_for_path(
         &self,
-        path: &LocalOrRemotePath,
+        path: &PathBuf,
         ctx: &AppContext,
     ) -> Option<ViewHandle<LocalCodeEditorView>> {
         match self.state() {
@@ -6132,17 +6124,7 @@ impl TypedActionView for CodeReviewView {
                     return;
                 };
                 let full_path = repo_path.join(path);
-                match full_path {
-                    LocalOrRemotePath::Local(path) => {
-                        self.open_code_review_file(path, *line_and_column, ctx);
-                    }
-                    remote @ LocalOrRemotePath::Remote(_) => {
-                        ctx.emit(CodeReviewViewEvent::OpenFileInNewTab {
-                            path: remote,
-                            line_and_column: *line_and_column,
-                        });
-                    }
-                }
+                self.open_code_review_file(full_path, *line_and_column, ctx);
             }
             CodeReviewAction::ToggleFileExpanded(path) => {
                 let (file_index, now_expanded, chevron_button) = {
@@ -6423,8 +6405,9 @@ impl TypedActionView for CodeReviewView {
             CodeReviewAction::CopyFilePath(path) => {
                 if let Some(repo_path) = self.repo_path() {
                     let absolute_path = repo_path.join(path);
-                    ctx.clipboard()
-                        .write(ClipboardContent::plain_text(absolute_path.display_path()));
+                    ctx.clipboard().write(ClipboardContent::plain_text(
+                        absolute_path.display().to_string(),
+                    ));
                 }
             }
             CodeReviewAction::ShowFindBar => self.show_find_bar(ctx),

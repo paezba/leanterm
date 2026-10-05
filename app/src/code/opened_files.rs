@@ -2,9 +2,9 @@
 //! which tracks files that have been opened, organized by repository.
 
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 use instant::Instant;
-use warp_util::local_or_remote_path::LocalOrRemotePath;
 use warpui::{Entity, ModelContext, SingletonEntity};
 
 /// Tracks opened files within a single repository.
@@ -22,7 +22,7 @@ impl OpenedFilesInRepo {
 /// Maps repository root locations (local or remote) to their opened files.
 #[derive(Default)]
 pub struct OpenedFilesModel {
-    opened_files: HashMap<LocalOrRemotePath, OpenedFilesInRepo>,
+    opened_files: HashMap<PathBuf, OpenedFilesInRepo>,
 }
 
 impl Entity for OpenedFilesModel {
@@ -37,10 +37,7 @@ impl OpenedFilesModel {
     }
 
     /// Get all opened files for a specific repository.
-    pub fn opened_files_for_repo(
-        &self,
-        repo_root: &LocalOrRemotePath,
-    ) -> Option<&OpenedFilesInRepo> {
+    pub fn opened_files_for_repo(&self, repo_root: &PathBuf) -> Option<&OpenedFilesInRepo> {
         self.opened_files.get(repo_root)
     }
 
@@ -52,13 +49,14 @@ impl OpenedFilesModel {
     #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
     pub fn file_opened(
         &mut self,
-        repo_root: LocalOrRemotePath,
-        file_location: &LocalOrRemotePath,
+        repo_root: PathBuf,
+        file_location: &PathBuf,
         ctx: &mut ModelContext<Self>,
     ) {
-        let Some(relative_path) = repo_root.strip_repo_prefix(file_location) else {
+        let Ok(relative_path) = file_location.strip_prefix(&repo_root) else {
             return;
         };
+        let relative_path = relative_path.to_string_lossy().into_owned();
 
         let opened_at = Instant::now();
         self.opened_files

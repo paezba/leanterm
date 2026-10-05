@@ -14,7 +14,6 @@ use repo_metadata::repositories::DetectedRepositories;
 use warpui::{AppContext, SingletonEntity as _};
 use warpui::{Entity, EntityId, ModelContext, ModelHandle, ViewHandle};
 
-use crate::code::buffer_location::LocalOrRemotePath;
 #[cfg(feature = "local_fs")]
 use crate::code::file_tree::FileTreeView;
 use crate::code_review::code_review_view::CodeReviewView;
@@ -22,22 +21,22 @@ use crate::code_review::comments::ReviewCommentBatch;
 use crate::code_review::diff_state::DiffStateModel;
 use crate::workspace::view::global_search::view::GlobalSearchView;
 
-/// Type-safe wrapper around the map of `LocalOrRemotePath` → `DiffStateModel`.
+/// Type-safe wrapper around the map of `PathBuf` → `DiffStateModel`.
 ///
 /// Enforces that local keys are paired with local-backend models via a dedicated insertion method.
 #[cfg(feature = "local_fs")]
 #[derive(Default)]
 struct DiffStateModelMap {
-    models: HashMap<LocalOrRemotePath, ModelHandle<DiffStateModel>>,
+    models: HashMap<PathBuf, ModelHandle<DiffStateModel>>,
 }
 
 #[cfg(feature = "local_fs")]
 impl DiffStateModelMap {
-    fn get(&self, key: &LocalOrRemotePath) -> Option<&ModelHandle<DiffStateModel>> {
+    fn get(&self, key: &PathBuf) -> Option<&ModelHandle<DiffStateModel>> {
         self.models.get(key)
     }
 
-    /// Insert a model that was created from a `LocalOrRemotePath::Local` key.
+    /// Insert a model that was created from a `PathBuf::Local` key.
     fn insert_local(
         &mut self,
         path: PathBuf,
@@ -48,10 +47,10 @@ impl DiffStateModelMap {
             matches!(model.as_ref(ctx), DiffStateModel::Local(_)),
             "insert_local called with a non-local DiffStateModel",
         );
-        self.models.insert(LocalOrRemotePath::Local(path), model);
+        self.models.insert(path, model);
     }
 
-    fn remove(&mut self, key: &LocalOrRemotePath) -> Option<ModelHandle<DiffStateModel>> {
+    fn remove(&mut self, key: &PathBuf) -> Option<ModelHandle<DiffStateModel>> {
         self.models.remove(key)
     }
 }
@@ -70,17 +69,17 @@ impl DiffStateModelMap {
 struct PaneGroupRepositoryRoots {
     /// Forward: per-pane-group ordered set of repository roots.
     /// IndexSet maintains insertion order so most recently added repos appear later.
-    pane_group_to_paths: HashMap<EntityId, IndexSet<LocalOrRemotePath>>,
+    pane_group_to_paths: HashMap<EntityId, IndexSet<PathBuf>>,
     /// Reverse: which pane groups reference each repo path.
     /// Maintained in lockstep with `pane_group_to_paths`.
-    path_to_pane_groups: HashMap<LocalOrRemotePath, HashSet<EntityId>>,
+    path_to_pane_groups: HashMap<PathBuf, HashSet<EntityId>>,
 }
 
 #[cfg(feature = "local_fs")]
 impl PaneGroupRepositoryRoots {
     /// Read-only view of a pane group's repository roots, preserving the
     /// existing `HashMap::get(&pane_group_id)` semantics.
-    fn get(&self, pane_group_id: EntityId) -> Option<&IndexSet<LocalOrRemotePath>> {
+    fn get(&self, pane_group_id: EntityId) -> Option<&IndexSet<PathBuf>> {
         self.pane_group_to_paths.get(&pane_group_id)
     }
 
@@ -94,24 +93,24 @@ impl PaneGroupRepositoryRoots {
     fn set_paths(
         &mut self,
         pane_group_id: EntityId,
-        new_paths: impl IntoIterator<Item = LocalOrRemotePath>,
-    ) -> Vec<LocalOrRemotePath> {
-        let new_paths: Vec<LocalOrRemotePath> = new_paths.into_iter().collect();
-        let new_set: HashSet<&LocalOrRemotePath> = new_paths.iter().collect();
+        new_paths: impl IntoIterator<Item = PathBuf>,
+    ) -> Vec<PathBuf> {
+        let new_paths: Vec<PathBuf> = new_paths.into_iter().collect();
+        let new_set: HashSet<&PathBuf> = new_paths.iter().collect();
 
         // Update the forward map and capture which paths left this pane group
         // (`removed`) and which were newly inserted into it (`newly_added`).
         // Tracking `newly_added` separately lets us skip redundant reverse-map
         // updates for paths the pane group already referenced.
-        let (removed, newly_added): (Vec<LocalOrRemotePath>, Vec<LocalOrRemotePath>) = {
+        let (removed, newly_added): (Vec<PathBuf>, Vec<PathBuf>) = {
             let forward = self.pane_group_to_paths.entry(pane_group_id).or_default();
-            let removed: Vec<LocalOrRemotePath> = forward
+            let removed: Vec<PathBuf> = forward
                 .iter()
                 .filter(|item| !new_set.contains(*item))
                 .cloned()
                 .collect();
             forward.retain(|item| new_set.contains(item));
-            let mut newly_added: Vec<LocalOrRemotePath> = Vec::new();
+            let mut newly_added: Vec<PathBuf> = Vec::new();
             for item in &new_paths {
                 if forward.insert(item.clone()) {
                     newly_added.push(item.clone());
@@ -144,7 +143,7 @@ impl PaneGroupRepositoryRoots {
     /// longer have any pane group referencing them. Returns `None` when the
     /// pane group was not tracked, so callers can distinguish "present with
     /// no orphans" from "not present" in a single call.
-    fn remove_pane_group(&mut self, pane_group_id: EntityId) -> Option<Vec<LocalOrRemotePath>> {
+    fn remove_pane_group(&mut self, pane_group_id: EntityId) -> Option<Vec<PathBuf>> {
         let paths = self.pane_group_to_paths.remove(&pane_group_id)?;
         Some(
             paths
@@ -161,7 +160,7 @@ impl PaneGroupRepositoryRoots {
     /// This only mutates the reverse map; callers are responsible for
     /// removing `path` from `pane_group_id`'s forward entry before (or
     /// after) calling this.
-    fn remove_path(&mut self, pane_group_id: EntityId, path: &LocalOrRemotePath) -> bool {
+    fn remove_path(&mut self, pane_group_id: EntityId, path: &PathBuf) -> bool {
         let became_empty = self.path_to_pane_groups.get_mut(path).is_some_and(|set| {
             set.remove(&pane_group_id);
             set.is_empty()
@@ -175,7 +174,7 @@ impl PaneGroupRepositoryRoots {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct WorkingDirectory {
-    pub path: LocalOrRemotePath,
+    pub path: PathBuf,
     pub terminal_id: Option<EntityId>,
 }
 
@@ -194,7 +193,7 @@ pub enum WorkingDirectoriesEvent {
         /// The PaneGroup whose repositories changed
         pane_group_id: EntityId,
         /// All active repository roots (deduplicated) in most to least recently added order.
-        repositories: Vec<LocalOrRemotePath>,
+        repositories: Vec<PathBuf>,
     },
     /// The focused repository changed for a specific pane group.
     /// This fires when the user focuses a different pane or CDs within the focused pane.
@@ -202,9 +201,9 @@ pub enum WorkingDirectoriesEvent {
         /// The PaneGroup whose focused repo changed
         pane_group_id: EntityId,
         /// All active repository-terminal ID pairs (deduplicated)
-        repository_terminal_map: HashMap<LocalOrRemotePath, EntityId>,
+        repository_terminal_map: HashMap<PathBuf, EntityId>,
         /// The repository path of the focused terminal, if any
-        focused_repo: Option<LocalOrRemotePath>,
+        focused_repo: Option<PathBuf>,
     },
 }
 
@@ -224,7 +223,7 @@ pub struct WorkingDirectoriesModel {
     /// - otherwise, the normalized path itself (local) or the remote CWD/editor path
     ///
     /// IndexSet maintains insertion order - most recently added directories appear later.
-    pane_groups: HashMap<EntityId, IndexSet<LocalOrRemotePath>>,
+    pane_groups: HashMap<EntityId, IndexSet<PathBuf>>,
     /// Per-pane-group tracking of active repository roots as a deduplicated, ordered set.
     /// Covers both local and remote repositories in a single map.
     repository_roots: PaneGroupRepositoryRoots,
@@ -232,7 +231,7 @@ pub struct WorkingDirectoriesModel {
     /// This allows looking up which terminal is associated with each root path.
     /// Note, a single root path can be associated with multiple terminals.
     /// we're just storing an arbitrary terminal ID for each root path.
-    directory_to_terminal: HashMap<EntityId, HashMap<LocalOrRemotePath, EntityId>>,
+    directory_to_terminal: HashMap<EntityId, HashMap<PathBuf, EntityId>>,
     /// Global mapping from repository keys to their DiffStateModel.
     /// Since git state is inherently tied to a repository (not a pane group),
     /// this is stored globally and shared across all pane groups viewing the same repo.
@@ -240,17 +239,17 @@ pub struct WorkingDirectoriesModel {
     /// Global mapping from repository locations to their CommentBatch.
     /// Like the DiffStateModel mapping, comments are inherently tied to git diffs
     /// and are shared across all pane groups viewing the same repo.
-    comment_models: HashMap<LocalOrRemotePath, ModelHandle<ReviewCommentBatch>>,
+    comment_models: HashMap<PathBuf, ModelHandle<ReviewCommentBatch>>,
     /// Per-pane-group mapping from repository root locations to their CodeReviewView.
     /// This allows reusing code review views across multiple requests for the same repo.
-    code_review_views: HashMap<EntityId, HashMap<LocalOrRemotePath, ViewHandle<CodeReviewView>>>,
+    code_review_views: HashMap<EntityId, HashMap<PathBuf, ViewHandle<CodeReviewView>>>,
     /// Per-pane-group tracking of the focused repository root path.
-    focused_repo: HashMap<EntityId, Option<LocalOrRemotePath>>,
+    focused_repo: HashMap<EntityId, Option<PathBuf>>,
     /// Per-pane-group tracking of the repository the user has manually selected for the
     /// code review (right) panel. This is the repo that should be restored when the user
     /// leaves the pane group's session and returns to it later, even if the auto-selection
     /// logic would otherwise pick a different default.
-    selected_review_repo: HashMap<EntityId, LocalOrRemotePath>,
+    selected_review_repo: HashMap<EntityId, PathBuf>,
     global_search_views: HashMap<EntityId, ViewHandle<GlobalSearchView>>,
     file_tree_views: HashMap<EntityId, ViewHandle<FileTreeView>>,
 }
@@ -263,10 +262,10 @@ pub struct WorkingDirectoriesModel {}
 /// Index Sets are ordered by insertion order. This function updates an index set to match a new set of items.
 #[cfg(feature = "local_fs")]
 pub fn update_index_set(
-    index_set: &mut IndexSet<LocalOrRemotePath>,
-    new_items: impl IntoIterator<Item = LocalOrRemotePath>,
+    index_set: &mut IndexSet<PathBuf>,
+    new_items: impl IntoIterator<Item = PathBuf>,
 ) {
-    let new_items: Vec<LocalOrRemotePath> = new_items.into_iter().collect();
+    let new_items: Vec<PathBuf> = new_items.into_iter().collect();
     index_set.retain(|item| new_items.iter().any(|new_item| new_item == item));
     for item in new_items {
         index_set.insert(item);
@@ -283,7 +282,7 @@ impl WorkingDirectoriesModel {
     fn least_recent_directories_for_pane_group(
         &self,
         pane_group_id: EntityId,
-    ) -> Option<&IndexSet<LocalOrRemotePath>> {
+    ) -> Option<&IndexSet<PathBuf>> {
         self.pane_groups.get(&pane_group_id)
     }
 
@@ -305,7 +304,7 @@ impl WorkingDirectoriesModel {
     fn least_recent_repositories_for_pane_group(
         &self,
         pane_group_id: EntityId,
-    ) -> Option<&IndexSet<LocalOrRemotePath>> {
+    ) -> Option<&IndexSet<PathBuf>> {
         self.repository_roots.get(pane_group_id)
     }
 
@@ -313,7 +312,7 @@ impl WorkingDirectoriesModel {
     pub fn most_recent_repositories_for_pane_group(
         &self,
         pane_group_id: EntityId,
-    ) -> Option<impl Iterator<Item = LocalOrRemotePath> + '_> {
+    ) -> Option<impl Iterator<Item = PathBuf> + '_> {
         self.least_recent_repositories_for_pane_group(pane_group_id)
             .map(|repos| repos.iter().rev().cloned())
     }
@@ -322,7 +321,7 @@ impl WorkingDirectoriesModel {
     pub fn get_terminal_id_for_root_path(
         &self,
         pane_group_id: EntityId,
-        root_path: &LocalOrRemotePath,
+        root_path: &PathBuf,
     ) -> Option<EntityId> {
         self.directory_to_terminal
             .get(&pane_group_id)
@@ -335,28 +334,21 @@ impl WorkingDirectoriesModel {
     /// repositories, which have no backing model.
     pub fn get_or_create_diff_state_model(
         &mut self,
-        key: LocalOrRemotePath,
+        key: PathBuf,
         ctx: &mut ModelContext<Self>,
     ) -> Option<ModelHandle<DiffStateModel>> {
         if let Some(model) = self.diff_state_models.get(&key) {
             return Some(model.clone());
         }
 
-        let diff_state_model = match &key {
-            LocalOrRemotePath::Local(path) => {
-                let path = path.clone();
-                ctx.add_model(|ctx| DiffStateModel::new_local(path, ctx))
-            }
-            LocalOrRemotePath::Remote(_) => return None,
+        let diff_state_model = {
+            let path = key.clone();
+            ctx.add_model(|ctx| DiffStateModel::new_local(path, ctx))
         };
 
-        match key {
-            LocalOrRemotePath::Local(path) => {
-                self.diff_state_models
-                    .insert_local(path, diff_state_model.clone(), ctx);
-            }
-            LocalOrRemotePath::Remote(_) => {}
-        }
+        let path = key;
+        self.diff_state_models
+            .insert_local(path, diff_state_model.clone(), ctx);
 
         Some(diff_state_model)
     }
@@ -366,7 +358,7 @@ impl WorkingDirectoriesModel {
     /// method stops the watcher and removes stale model and view cache entries.
     fn drop_unused_diff_state_models(
         &mut self,
-        orphaned_repos: impl IntoIterator<Item = LocalOrRemotePath>,
+        orphaned_repos: impl IntoIterator<Item = PathBuf>,
         ctx: &mut ModelContext<Self>,
     ) {
         for repo_key in orphaned_repos {
@@ -385,7 +377,7 @@ impl WorkingDirectoriesModel {
     /// If the model doesn't exist, it will be created.
     pub fn get_or_create_code_review_comments(
         &mut self,
-        repo_path: &LocalOrRemotePath,
+        repo_path: &PathBuf,
         ctx: &mut ModelContext<Self>,
     ) -> Option<ModelHandle<ReviewCommentBatch>> {
         if let Some(existing) = self.comment_models.get(repo_path) {
@@ -400,7 +392,7 @@ impl WorkingDirectoriesModel {
     pub fn store_code_review_view(
         &mut self,
         pane_group_id: EntityId,
-        repo_path: LocalOrRemotePath,
+        repo_path: PathBuf,
         view: ViewHandle<CodeReviewView>,
     ) {
         let pane_group_views = self.code_review_views.entry(pane_group_id).or_default();
@@ -428,7 +420,7 @@ impl WorkingDirectoriesModel {
     pub fn get_code_review_view(
         &self,
         pane_group_id: EntityId,
-        repo_path: &LocalOrRemotePath,
+        repo_path: &PathBuf,
     ) -> Option<ViewHandle<CodeReviewView>> {
         self.code_review_views
             .get(&pane_group_id)
@@ -439,18 +431,14 @@ impl WorkingDirectoriesModel {
     /// Get the repository path the user has manually selected for the code review
     /// panel in a given pane group, if any. Used to restore the selection when the
     /// user navigates back to the pane group's session.
-    pub fn get_selected_review_repo(&self, pane_group_id: EntityId) -> Option<&LocalOrRemotePath> {
+    pub fn get_selected_review_repo(&self, pane_group_id: EntityId) -> Option<&PathBuf> {
         self.selected_review_repo.get(&pane_group_id)
     }
 
     /// Persist the repository the user manually selected for the code review panel
     /// in a given pane group. This is only called for explicit user-driven
     /// selections (e.g. via the dropdown), not for auto-selected defaults.
-    pub fn set_selected_review_repo(
-        &mut self,
-        pane_group_id: EntityId,
-        repo_path: LocalOrRemotePath,
-    ) {
+    pub fn set_selected_review_repo(&mut self, pane_group_id: EntityId, repo_path: PathBuf) {
         self.selected_review_repo.insert(pane_group_id, repo_path);
     }
 
@@ -541,8 +529,8 @@ impl WorkingDirectoriesModel {
     pub fn refresh_working_directories_for_pane_group(
         &mut self,
         pane_group_id: EntityId,
-        terminal_cwds: Vec<(EntityId, LocalOrRemotePath)>,
-        editor_paths: Vec<(EntityId, LocalOrRemotePath)>,
+        terminal_cwds: Vec<(EntityId, PathBuf)>,
+        editor_paths: Vec<(EntityId, PathBuf)>,
         focused_terminal_id: Option<EntityId>,
         ctx: &mut ModelContext<Self>,
     ) {
@@ -562,18 +550,17 @@ impl WorkingDirectoriesModel {
                     .collect()
             })
             .unwrap_or_default();
-        let old_repos: Vec<LocalOrRemotePath> = self
+        let old_repos: Vec<PathBuf> = self
             .least_recent_repositories_for_pane_group(pane_group_id)
             .map(|repos| repos.iter().cloned().collect())
             .unwrap_or_default();
-        let old_focused_repo: Option<LocalOrRemotePath> =
+        let old_focused_repo: Option<PathBuf> =
             self.focused_repo.get(&pane_group_id).cloned().flatten();
 
         // Resolve a local path to its detected repository root, or keep the path as-is if no repo is found.
         let root_for_path = |path: PathBuf| {
             DetectedRepositories::as_ref(ctx)
-                .get_root_for_path(&LocalOrRemotePath::Local(path.clone()))
-                .and_then(|r| PathBuf::try_from(r).ok())
+                .get_root_for_path(&path)
                 .unwrap_or(path)
         };
 
@@ -581,12 +568,7 @@ impl WorkingDirectoriesModel {
 
         let local_terminal_cwds: Vec<(EntityId, String)> = terminal_cwds
             .iter()
-            .filter_map(|(terminal_id, cwd)| {
-                Some((
-                    *terminal_id,
-                    cwd.to_local_path()?.to_string_lossy().into_owned(),
-                ))
-            })
+            .map(|(terminal_id, cwd)| (*terminal_id, cwd.to_string_lossy().into_owned()))
             .collect();
 
         // Collapse working directories to their nearest repository root (when detected).
@@ -597,12 +579,7 @@ impl WorkingDirectoriesModel {
 
         let local_editor_paths: Vec<(EntityId, String)> = editor_paths
             .iter()
-            .filter_map(|(view_id, path)| {
-                Some((
-                    *view_id,
-                    path.to_local_path()?.to_string_lossy().into_owned(),
-                ))
-            })
+            .map(|(view_id, path)| (*view_id, path.to_string_lossy().into_owned()))
             .collect();
 
         let local_cwds: Vec<(EntityId, String)> = local_editor_paths
@@ -628,11 +605,7 @@ impl WorkingDirectoriesModel {
             .filter_map(|(_, cwd)| root_for_raw_path(cwd))
             .collect();
 
-        let new_display_roots: Vec<LocalOrRemotePath> = new_local_root_paths
-            .iter()
-            .cloned()
-            .map(LocalOrRemotePath::Local)
-            .collect();
+        let new_display_roots: Vec<PathBuf> = new_local_root_paths.iter().cloned().collect();
 
         // Get or create the IndexSet for this pane group
         // (IndexSet maintains insertion order and auto-deduplicates)
@@ -646,27 +619,23 @@ impl WorkingDirectoriesModel {
             .get(&pane_group_id)
             .into_iter()
             .flat_map(|dirs| dirs.iter())
-            .filter_map(|lor| lor.to_local_path())
             .filter_map(|dir| self.get_repo_root_for_path(dir, ctx))
             .collect();
         let mut new_roots: HashSet<PathBuf> =
             HashSet::from_iter(new_local_repo_roots.iter().cloned());
         new_roots.extend(new_local_root_paths.iter().cloned());
 
-        // Build mapping from directories to their terminal IDs (keyed by LocalOrRemotePath).
+        // Build mapping from directories to their terminal IDs (keyed by PathBuf).
         // Local paths come from `root_for_raw_path` → `normalize_cwd`.
-        let mut new_root_to_terminal: HashMap<LocalOrRemotePath, EntityId> = local_terminal_cwds
+        let mut new_root_to_terminal: HashMap<PathBuf, EntityId> = local_terminal_cwds
             .iter()
-            .filter_map(|(terminal_id, cwd)| {
-                root_for_raw_path(cwd).map(|p| (LocalOrRemotePath::Local(p), *terminal_id))
-            })
+            .filter_map(|(terminal_id, cwd)| root_for_raw_path(cwd).map(|p| (p, *terminal_id)))
             .collect();
-        new_root_to_terminal
-            .retain(|cwd, _terminal_id| cwd.to_local_path().is_some_and(|p| new_roots.contains(p)));
+        new_root_to_terminal.retain(|cwd, _terminal_id| new_roots.contains(cwd));
 
         // Second pass: if we have a focused terminal, ensure its repo maps to it
         // This ensures the dropdown selects the correct repo when a pane is focused or CD'd
-        let mut focused_repo: Option<LocalOrRemotePath> = None;
+        let mut focused_repo: Option<PathBuf> = None;
         if let Some(focused_id) = focused_terminal_id {
             let mut repos_to_insert = Vec::new();
             for (dir, terminal_id) in &new_root_to_terminal {
@@ -683,10 +652,7 @@ impl WorkingDirectoriesModel {
             }
         }
 
-        let mut new_repo_roots_wrapped: Vec<LocalOrRemotePath> = new_local_repo_roots
-            .into_iter()
-            .map(LocalOrRemotePath::Local)
-            .collect();
+        let mut new_repo_roots_wrapped: Vec<PathBuf> = new_local_repo_roots.into_iter().collect();
         // Deduplicate (IndexSet handles this, but avoid duplicates in the input).
         let seen: HashSet<_> = new_repo_roots_wrapped.iter().cloned().collect();
         new_repo_roots_wrapped.retain({
@@ -714,7 +680,7 @@ impl WorkingDirectoriesModel {
                     .collect()
             })
             .unwrap_or_default();
-        let new_deduplicated_repos: Vec<LocalOrRemotePath> = self
+        let new_deduplicated_repos: Vec<PathBuf> = self
             .repository_roots
             .get(pane_group_id)
             .map(|repos| repos.iter().cloned().collect())
@@ -741,7 +707,7 @@ impl WorkingDirectoriesModel {
     pub fn register_terminal_for_repo(
         &mut self,
         pane_group_id: EntityId,
-        repo_key: LocalOrRemotePath,
+        repo_key: PathBuf,
         terminal_id: EntityId,
     ) {
         self.directory_to_terminal
@@ -752,9 +718,7 @@ impl WorkingDirectoriesModel {
 
     /// Get the repository root for a given path.
     fn get_repo_root_for_path(&self, path: &Path, ctx: &AppContext) -> Option<PathBuf> {
-        DetectedRepositories::as_ref(ctx)
-            .get_root_for_path(&LocalOrRemotePath::Local(path.to_path_buf()))
-            .and_then(|r| PathBuf::try_from(r).ok())
+        DetectedRepositories::as_ref(ctx).get_root_for_path(path)
     }
 
     /// Emit a DirectoriesChanged event with the current state for a specific pane group.
@@ -784,7 +748,7 @@ impl WorkingDirectoriesModel {
     fn emit_focused_repo_changed(
         &mut self,
         pane_group_id: EntityId,
-        focused_repo: Option<LocalOrRemotePath>,
+        focused_repo: Option<PathBuf>,
         ctx: &mut ModelContext<Self>,
     ) {
         ctx.emit(WorkingDirectoriesEvent::FocusedRepoChanged {
@@ -817,15 +781,15 @@ impl WorkingDirectoriesModel {
     pub fn most_recent_repositories_for_pane_group(
         &self,
         _pane_group_id: EntityId,
-    ) -> Option<impl Iterator<Item = LocalOrRemotePath> + '_> {
-        Option::<std::iter::Empty<LocalOrRemotePath>>::None
+    ) -> Option<impl Iterator<Item = PathBuf> + '_> {
+        Option::<std::iter::Empty<PathBuf>>::None
     }
 
     /// Get the terminal view ID associated with a specific repository in a pane group.
     pub fn get_terminal_id_for_root_path(
         &self,
         _pane_group_id: EntityId,
-        _root_path: &LocalOrRemotePath,
+        _root_path: &PathBuf,
     ) -> Option<EntityId> {
         None
     }
@@ -833,8 +797,8 @@ impl WorkingDirectoriesModel {
     pub fn refresh_working_directories_for_pane_group(
         &mut self,
         _pane_group_id: EntityId,
-        _terminal_cwds: Vec<(EntityId, LocalOrRemotePath)>,
-        _editor_paths: Vec<(EntityId, LocalOrRemotePath)>,
+        _terminal_cwds: Vec<(EntityId, PathBuf)>,
+        _editor_paths: Vec<(EntityId, PathBuf)>,
         _focused_terminal_id: Option<EntityId>,
         _ctx: &mut ModelContext<Self>,
     ) {
@@ -842,7 +806,7 @@ impl WorkingDirectoriesModel {
 
     pub fn get_or_create_diff_state_model(
         &mut self,
-        _key: LocalOrRemotePath,
+        _key: PathBuf,
         _ctx: &mut ModelContext<Self>,
     ) -> Option<ModelHandle<DiffStateModel>> {
         None
@@ -850,7 +814,7 @@ impl WorkingDirectoriesModel {
 
     pub fn get_or_create_code_review_comments(
         &mut self,
-        _repo_path: &LocalOrRemotePath,
+        _repo_path: &PathBuf,
         _ctx: &mut ModelContext<Self>,
     ) -> Option<ModelHandle<ReviewCommentBatch>> {
         None
@@ -859,7 +823,7 @@ impl WorkingDirectoriesModel {
     pub fn store_code_review_view(
         &mut self,
         _pane_group_id: EntityId,
-        _repo_path: LocalOrRemotePath,
+        _repo_path: PathBuf,
         _view: ViewHandle<CodeReviewView>,
     ) {
     }
@@ -867,21 +831,16 @@ impl WorkingDirectoriesModel {
     pub fn get_code_review_view(
         &self,
         _pane_group_id: EntityId,
-        _repo_path: &LocalOrRemotePath,
+        _repo_path: &PathBuf,
     ) -> Option<ViewHandle<CodeReviewView>> {
         None
     }
 
-    pub fn get_selected_review_repo(&self, _pane_group_id: EntityId) -> Option<&LocalOrRemotePath> {
+    pub fn get_selected_review_repo(&self, _pane_group_id: EntityId) -> Option<&PathBuf> {
         None
     }
 
-    pub fn set_selected_review_repo(
-        &mut self,
-        _pane_group_id: EntityId,
-        _repo_path: LocalOrRemotePath,
-    ) {
-    }
+    pub fn set_selected_review_repo(&mut self, _pane_group_id: EntityId, _repo_path: PathBuf) {}
 
     pub fn clear_selected_review_repo(&mut self, _pane_group_id: EntityId) {}
 
@@ -917,7 +876,7 @@ impl WorkingDirectoriesModel {
 
     pub(crate) fn upsert_flattened_code_review_comments(
         &mut self,
-        _repo_path: &LocalOrRemotePath,
+        _repo_path: &PathBuf,
         _comments: Vec<AttachedReviewComment>,
         _ctx: &mut ModelContext<Self>,
     ) {

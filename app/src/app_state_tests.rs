@@ -59,9 +59,7 @@ fn test_code_pane_snapshot_single_tab() {
         }],
         active_tab_index: 0,
         source: Some(CodeSource::FileTree {
-            location: crate::code::buffer_location::LocalOrRemotePath::Local(PathBuf::from(
-                "/tmp/test.rs",
-            )),
+            location: PathBuf::from("/tmp/test.rs"),
         }),
     };
     let CodePaneSnapShot::Local {

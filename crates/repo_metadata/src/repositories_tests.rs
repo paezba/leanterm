@@ -1,7 +1,6 @@
 use std::fs;
 
 use virtual_fs::{Stub, VirtualFS};
-use warp_util::local_or_remote_path::LocalOrRemotePath;
 use warp_util::standardized_path::StandardizedPath;
 use warpui_core::App;
 
@@ -68,7 +67,7 @@ fn test_detect_possible_local_git_repo_not_a_git_repo() {
             let regular_canonical =
                 StandardizedPath::from_local_canonicalized(&regular_dir).unwrap();
             repo_handle.read(&app, |watcher, _ctx| {
-                let key = LocalOrRemotePath::Local(regular_canonical.to_local_path().unwrap());
+                let key = regular_canonical.to_local_path().unwrap();
                 assert!(!watcher.repository_roots.contains(&key));
             });
         });
@@ -107,10 +106,8 @@ fn test_detect_possible_local_git_repo_nested_repo_created_after_parent_registra
             // Verify parent is registered
             repo_handle.read(&app, |repo, _ctx| {
                 assert!(
-                    repo.get_root_for_path(&LocalOrRemotePath::Local(
-                        parent_canonical_path.to_local_path().unwrap(),
-                    ))
-                    .is_some()
+                    repo.get_root_for_path(&parent_canonical_path.to_local_path().unwrap(),)
+                        .is_some()
                 );
             });
 
@@ -137,17 +134,13 @@ fn test_detect_possible_local_git_repo_nested_repo_created_after_parent_registra
             repo_handle.read(&app, |repo, _ctx| {
                 // Parent should still be registered
                 assert!(
-                    repo.get_root_for_path(&LocalOrRemotePath::Local(
-                        parent_canonical_path.to_local_path().unwrap(),
-                    ))
-                    .is_some()
+                    repo.get_root_for_path(&parent_canonical_path.to_local_path().unwrap(),)
+                        .is_some()
                 );
                 // Nested project should now also be registered as its own repo
                 assert!(
-                    repo.get_root_for_path(&LocalOrRemotePath::Local(
-                        nested_canonical_path.to_local_path().unwrap(),
-                    ))
-                    .is_some()
+                    repo.get_root_for_path(&nested_canonical_path.to_local_path().unwrap(),)
+                        .is_some()
                 );
             });
 

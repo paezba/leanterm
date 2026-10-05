@@ -240,7 +240,7 @@ fn test_load_before_session() {
                 file_notebook.open_local("../README.md", None, ctx);
                 match &file_notebook.file_state {
                     FileState::Loading(SourceFile::FileBased { path, .. }) => {
-                        assert_eq!(path.to_local_path(), Some(Path::new("../README.md")))
+                        assert_eq!(path.as_path(), Path::new("../README.md"))
                     }
                     other => panic!("Expected FileState::Loading(FileBased), got {other:?}"),
                 }
@@ -265,7 +265,7 @@ fn test_load_before_session() {
 
             match &view.file_state {
                 FileState::Loaded(SourceFile::FileBased { path, .. }) => {
-                    assert_eq!(path.to_local_path(), Some(expected_path.as_path()));
+                    assert_eq!(path.as_path(), expected_path.as_path());
                 }
                 other => panic!("Expected FileState::Loaded(FileBased), got {other:?}"),
             };

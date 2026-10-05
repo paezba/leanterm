@@ -1,41 +1,26 @@
-use warp_util::local_or_remote_path::LocalOrRemotePath;
+use std::path::Path;
+
 pub use warp_util::path::*;
 
-/// Label used for the host of a `RemotePath`.
-const UNKNOWN_HOST_LABEL: &str = "Remote host";
-
-/// Returns the display name of a local or remote path, prefixed with the
-/// host label for remote paths.
-pub fn display_name_with_host(path: &LocalOrRemotePath) -> String {
-    let name = path.display_name();
-    match path {
-        LocalOrRemotePath::Local(_) => name.to_string(),
-        LocalOrRemotePath::Remote(_) => {
-            format!("{UNKNOWN_HOST_LABEL}:{name}")
-        }
-    }
+/// Returns the file name of `path` for display (e.g. tab titles).
+pub fn display_name(path: &Path) -> String {
+    path.file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or_default()
+        .to_string()
 }
 
-/// Returns the display path of a local or remote path,
-/// prefixed with the host label for remote paths.
+/// Returns the display string of `path`.
 ///
-/// When `abbreviate_home` is true, local paths under the user's home directory
-/// are abbreviated with a `~/` prefix. The flag is ignored for remote paths,
-/// whose home directory lives on a different machine.
-pub fn display_path_with_host(path: &LocalOrRemotePath, abbreviate_home: bool) -> String {
-    match path {
-        LocalOrRemotePath::Local(local_path) => {
-            if abbreviate_home {
-                dirs::home_dir()
-                    .and_then(|home| local_path.strip_prefix(&home).ok())
-                    .map(|relative| format!("~/{}", relative.display()))
-                    .unwrap_or_else(|| local_path.display().to_string())
-            } else {
-                path.display_path()
-            }
-        }
-        LocalOrRemotePath::Remote(_) => {
-            format!("{UNKNOWN_HOST_LABEL}:{}", path.display_path())
-        }
+/// When `abbreviate_home` is true, paths under the user's home directory are abbreviated
+/// with a `~/` prefix.
+pub fn display_path(path: &Path, abbreviate_home: bool) -> String {
+    if abbreviate_home {
+        dirs::home_dir()
+            .and_then(|home| path.strip_prefix(&home).ok())
+            .map(|relative| format!("~/{}", relative.display()))
+            .unwrap_or_else(|| path.display().to_string())
+    } else {
+        path.display().to_string()
     }
 }

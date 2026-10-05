@@ -1,10 +1,7 @@
 use std::collections::HashMap;
-use std::path::Path;
-#[cfg(test)]
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Weak};
 
-use warp_util::local_or_remote_path::LocalOrRemotePath;
 use warpui::{Entity, EntityId, ModelContext, SingletonEntity, WindowId};
 
 use crate::terminal::model::session::Session;
@@ -30,7 +27,7 @@ struct WindowActiveSession {
     /// prevent cleaning up the session when it closes, in case no other session is activated.
     session: Option<Weak<Session>>,
     /// The active session's working directory (local or remote).
-    working_directory: Option<LocalOrRemotePath>,
+    working_directory: Option<PathBuf>,
     /// The [`EntityId`]` for the [`TerminalView`] for the active session, if there is one.
     terminal_view_id: Option<EntityId>,
 }
@@ -55,11 +52,11 @@ impl ActiveSession {
             .get(&window_id)?
             .working_directory
             .as_ref()
-            .and_then(|wd| wd.to_local_path())
+            .map(PathBuf::as_path)
     }
 
     /// The current working directory of the active session (local or remote).
-    pub fn working_directory(&self, window_id: WindowId) -> Option<&LocalOrRemotePath> {
+    pub fn working_directory(&self, window_id: WindowId) -> Option<&PathBuf> {
         self.window_sessions
             .get(&window_id)?
             .working_directory
@@ -79,7 +76,7 @@ impl ActiveSession {
         self.set_session_state(
             window_id,
             Some(session),
-            path_if_local.map(|p| LocalOrRemotePath::Local(p.into())),
+            path_if_local.map(|p| p.into()),
             terminal_view_id,
             ctx,
         );
@@ -89,7 +86,7 @@ impl ActiveSession {
         &mut self,
         window_id: WindowId,
         session: Option<Arc<Session>>,
-        working_directory: Option<LocalOrRemotePath>,
+        working_directory: Option<PathBuf>,
         terminal_view_id: Option<EntityId>,
         ctx: &mut ModelContext<Self>,
     ) {

@@ -1,4 +1,3 @@
-use warp_util::local_or_remote_path::LocalOrRemotePath;
 use warpui::{Entity, ModelContext};
 
 use crate::workspace::view::global_search::SearchConfig;
@@ -20,7 +19,7 @@ impl GlobalSearch {
     pub fn run_search(
         &mut self,
         _pattern: String,
-        _roots: Vec<LocalOrRemotePath>,
+        _roots: Vec<PathBuf>,
         _search_config: SearchConfig,
         _ctx: &mut ModelContext<Self>,
     ) {

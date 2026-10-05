@@ -4,7 +4,6 @@ use chrono::Local;
 use warp_editor::render::model::LineCount;
 use warpui::App;
 
-use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code::editor::line::EditorLineLocation;
 use crate::code_review::comments::{
     AttachedReviewComment, AttachedReviewCommentTarget, CommentOrigin, LineDiffContent,
@@ -16,7 +15,7 @@ fn line_comment(file_path: &str, line_number: usize, content: &str) -> AttachedR
         id: Default::default(),
         content: content.to_string(),
         target: AttachedReviewCommentTarget::Line {
-            absolute_file_path: LocalOrRemotePath::Local(PathBuf::from(file_path)),
+            absolute_file_path: PathBuf::from(file_path),
             line: EditorLineLocation::Current {
                 line_number: LineCount::from(line_number),
                 line_range: LineCount::from(line_number)..LineCount::from(line_number + 1),
@@ -113,7 +112,7 @@ fn file_and_line_queries_filter_by_suffix() {
         });
 
         model.read(&app, |batch, _| {
-            let file_path = LocalOrRemotePath::Local(PathBuf::from("/repo/src/lib.rs"));
+            let file_path = PathBuf::from("/repo/src/lib.rs");
             let file_comments: Vec<_> = batch.file_comments(&file_path).collect();
             assert_eq!(file_comments.len(), 1);
             assert_eq!(file_comments[0].content, "a");
@@ -146,9 +145,8 @@ fn editor_comments_for_file_includes_only_line_comments() {
         });
 
         model.read(&app, |batch, _| {
-            let editor_comments = batch.editor_comments_for_file(&LocalOrRemotePath::Local(
-                PathBuf::from("/repo/src/lib.rs"),
-            ));
+            let editor_comments =
+                batch.editor_comments_for_file(&PathBuf::from("/repo/src/lib.rs"));
             assert_eq!(editor_comments.len(), 1);
             assert_eq!(editor_comments[0].id, comment_a.id);
             assert_eq!(editor_comments[0].comment_content, "a");

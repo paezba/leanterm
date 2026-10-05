@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::path::PathBuf;
 
 use indexmap::IndexMap;
 use pathfinder_color::ColorU;
@@ -35,7 +36,6 @@ use warpui::{
 };
 
 use crate::appearance::Appearance;
-use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code::editor::comment_editor::DEFAULT_COMMENT_MAX_WIDTH;
 use crate::code::editor::view::{CodeEditorEvent, CodeEditorView};
 use crate::code_review::code_review_view::CodeReviewView;
@@ -162,7 +162,7 @@ pub struct CommentListView {
 
     /// Set once the user has manually collapsed or expanded the outdated section.
     is_outdated_section_collapsed: Option<bool>,
-    repo_path: Option<LocalOrRemotePath>,
+    repo_path: Option<PathBuf>,
     view_state: ViewState,
     overflow_menu: ViewHandle<Menu<CommentListAction>>,
     active_overflow_comment_id: Option<CommentId>,
@@ -172,7 +172,7 @@ pub struct CommentListView {
 
 impl CommentListView {
     pub fn new(
-        initial_repo_path: Option<LocalOrRemotePath>,
+        initial_repo_path: Option<PathBuf>,
         parent: WeakViewHandle<CodeReviewView>,
         ctx: &mut ViewContext<Self>,
     ) -> Self {

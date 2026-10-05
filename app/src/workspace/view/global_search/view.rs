@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::ops::Range;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -16,7 +16,6 @@ use warp_core::ui::theme::color::internal_colors;
 use warp_core::ui::theme::{AnsiColorIdentifier, Fill as ThemeFill};
 use warp_editor::editor::NavigationKey;
 use warp_ripgrep::search::Submatch;
-use warp_util::local_or_remote_path::LocalOrRemotePath;
 use warpui::elements::{
     Border, ChildAnchor, ChildView, Clipped, ConstrainedBox, Container, CornerRadius,
     CrossAxisAlignment, DispatchEventResult, Empty, EventHandler, Fill, Flex, FormattedTextElement,
@@ -47,7 +46,7 @@ use crate::ui_components::blended_colors;
 use crate::ui_components::icons::Icon as UiIcon;
 use crate::ui_components::item_highlight::{ImageOrIcon, ItemHighlightState};
 use crate::ui_components::render_file_search_row::{FileSearchRowOptions, render_file_search_row};
-use crate::util::path::{display_name_with_host, display_path_with_host};
+use crate::util::path::{display_name, display_path};
 use crate::view_components::action_button::{ActionButton, ButtonSize, NakedTheme};
 use crate::workspace::view::global_search::model::GlobalSearch;
 use crate::workspace::view::global_search::{GlobalSearchMatch, SearchConfig};
@@ -77,19 +76,19 @@ enum FocusMode {
 #[derive(Debug, Clone)]
 pub enum GlobalSearchAction {
     SelectRow {
-        directory_path: LocalOrRemotePath,
-        file_path: LocalOrRemotePath,
+        directory_path: PathBuf,
+        file_path: PathBuf,
         match_index: Option<usize>,
     },
     ToggleFileCollapsed {
-        directory_path: LocalOrRemotePath,
-        file_path: LocalOrRemotePath,
+        directory_path: PathBuf,
+        file_path: PathBuf,
     },
     ToggleDirectoryCollapsed {
-        directory_path: LocalOrRemotePath,
+        directory_path: PathBuf,
     },
     OpenMatch {
-        location: LocalOrRemotePath,
+        location: PathBuf,
         line_number: u32,
         column_num: Option<usize>,
     },
@@ -134,7 +133,7 @@ pub enum GlobalSearchEvent {
 #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
 pub enum Event {
     OpenMatch {
-        location: LocalOrRemotePath,
+        location: PathBuf,
         line_number: u32,
         column_num: Option<usize>,
     },
@@ -171,14 +170,14 @@ enum RowIndexType {
 
 /// A root directory containing matched files.
 struct DirectoryEntry {
-    path: LocalOrRemotePath,
+    path: PathBuf,
     is_collapsed: bool,
     mouse_state: MouseStateHandle,
     matched_paths: MatchedPaths,
 }
 
 impl DirectoryEntry {
-    fn new(path: LocalOrRemotePath) -> Self {
+    fn new(path: PathBuf) -> Self {
         Self {
             path,
             is_collapsed: false,
@@ -211,7 +210,7 @@ impl DirectoryEntry {
 /// Collection of matched files within a directory.
 struct MatchedPaths {
     paths: Vec<MatchedPath>,
-    index_by_path: HashMap<LocalOrRemotePath, usize>,
+    index_by_path: HashMap<PathBuf, usize>,
 }
 
 impl MatchedPaths {
@@ -229,7 +228,7 @@ impl MatchedPaths {
 
     /// Gets or creates a MatchedPath entry for the given file location.
     /// Returns a mutable reference to the entry and its index.
-    fn get_or_create(&mut self, path: &LocalOrRemotePath) -> (&mut MatchedPath, usize) {
+    fn get_or_create(&mut self, path: &PathBuf) -> (&mut MatchedPath, usize) {
         if let Some(&index) = self.index_by_path.get(path) {
             (&mut self.paths[index], index)
         } else {
@@ -241,7 +240,7 @@ impl MatchedPaths {
     }
 
     /// Gets a mutable MatchedPath entry by file location.
-    fn get_mut(&mut self, path: &LocalOrRemotePath) -> Option<&mut MatchedPath> {
+    fn get_mut(&mut self, path: &PathBuf) -> Option<&mut MatchedPath> {
         self.index_by_path
             .get(path)
             .copied()
@@ -251,14 +250,14 @@ impl MatchedPaths {
 
 /// A file containing matches.
 struct MatchedPath {
-    path: LocalOrRemotePath,
+    path: PathBuf,
     is_collapsed: bool,
     mouse_state: MouseStateHandle,
     matches: Vec<Match>,
 }
 
 impl MatchedPath {
-    fn new(path: LocalOrRemotePath) -> Self {
+    fn new(path: PathBuf) -> Self {
         Self {
             path,
             is_collapsed: false,
@@ -310,12 +309,12 @@ pub struct GlobalSearchView {
     query_editor: ViewHandle<EditorView>,
     query_change_tx: Sender<()>,
     /// All terminal working directories for display grouping (preserved as-is)
-    root_directories: Vec<LocalOrRemotePath>,
+    root_directories: Vec<PathBuf>,
     /// Deduplicated roots for search (excludes nested subdirectories)
-    search_roots: Vec<LocalOrRemotePath>,
+    search_roots: Vec<PathBuf>,
     last_searched_pattern: Option<String>,
     directory_entries: Vec<DirectoryEntry>,
-    directory_path_to_directory_index_entry: HashMap<LocalOrRemotePath, usize>,
+    directory_path_to_directory_index_entry: HashMap<PathBuf, usize>,
     selected_row: Option<RowIndex>,
     total_match_count: usize,
     is_search_in_progress: bool,
@@ -745,8 +744,8 @@ impl GlobalSearchView {
     /// (remote files only match directories on the same host).
     fn find_matching_directories<'a>(
         &'a self,
-        location: &'a LocalOrRemotePath,
-    ) -> impl Iterator<Item = &'a LocalOrRemotePath> {
+        location: &'a PathBuf,
+    ) -> impl Iterator<Item = &'a PathBuf> {
         self.root_directories
             .iter()
             .filter(move |root| location.starts_with(root))
@@ -763,7 +762,10 @@ impl GlobalSearchView {
         let mut matching_directories = self.find_matching_directories(&location).peekable();
         if matching_directories.peek().is_none() {
             // File doesn't match any root directory, skip it
-            let file_path_name = location.file_name().unwrap_or("<unknown>");
+            let file_path_name = location
+                .file_name()
+                .and_then(|name| name.to_str())
+                .unwrap_or("<unknown>");
             log::warn!("[Global search] file {file_path_name} was not found in directories");
             return;
         }
@@ -981,24 +983,13 @@ impl GlobalSearchView {
         }
     }
 
-    pub fn set_root_directories(
-        &mut self,
-        roots: Vec<LocalOrRemotePath>,
-        _ctx: &mut ViewContext<Self>,
-    ) {
+    pub fn set_root_directories(&mut self, roots: Vec<PathBuf>, _ctx: &mut ViewContext<Self>) {
         // Ancestor-dedup search roots so we don't search the same file twice
         // when terminal directories are nested (e.g. `~/code` + `~/code/a`).
         // Roots share `group_roots_by_common_ancestor` with `FileTreeView` for consistency.
-        let local_roots: Vec<PathBuf> = roots
-            .iter()
-            .filter_map(|root| root.to_local_path().map(Path::to_path_buf))
-            .collect();
-        let deduped_local = warp_util::path::group_roots_by_common_ancestor(&local_roots).roots;
+        let deduped_local = warp_util::path::group_roots_by_common_ancestor(&roots).roots;
 
-        self.search_roots = deduped_local
-            .into_iter()
-            .map(LocalOrRemotePath::Local)
-            .collect();
+        self.search_roots = deduped_local.into_iter().collect();
         self.root_directories = roots;
     }
 
@@ -1085,7 +1076,7 @@ impl GlobalSearchView {
     fn render_file_header(
         &self,
         index: usize,
-        directory_path: &LocalOrRemotePath,
+        directory_path: &PathBuf,
         matched_path: &MatchedPath,
         appearance: &Appearance,
         theme: &warp_core::ui::theme::WarpTheme,
@@ -1101,10 +1092,10 @@ impl GlobalSearchView {
         let file_path_clone = file_path.clone();
         let directory_path_for_toggle = directory_path.clone();
 
-        let display_path = directory_path
-            .strip_repo_prefix(&file_path)
+        let display_path = file_path
+            .strip_prefix(directory_path)
             .map(PathBuf::from)
-            .unwrap_or_else(|| PathBuf::from(file_path.display_path()));
+            .unwrap_or_else(|_| file_path.clone());
 
         Hoverable::new(file_mouse_state, move |mouse_state| {
             let item_highlight_state = ItemHighlightState::new(is_selected, mouse_state);
@@ -1127,7 +1118,7 @@ impl GlobalSearchView {
                 .finish();
             let chevron_container = Container::new(chevron_icon).with_margin_right(8.).finish();
 
-            let tooltip_text = file_path.display_path();
+            let tooltip_text = file_path.display().to_string();
 
             let header_text_fill = match list_highlight_state {
                 ItemHighlightState::None => {
@@ -1164,9 +1155,10 @@ impl GlobalSearchView {
                 .with_corner_radius(CornerRadius::with_all(Radius::Pixels(4.)))
                 .finish();
 
-            let icon_from_file_path = icon_from_file_path(&file_path.display_path(), appearance)
-                .map(ImageOrIcon::Image)
-                .unwrap_or(ImageOrIcon::Icon(Icon::File));
+            let icon_from_file_path =
+                icon_from_file_path(&file_path.display().to_string(), appearance)
+                    .map(ImageOrIcon::Image)
+                    .unwrap_or(ImageOrIcon::Icon(Icon::File));
 
             let icon_color = list_highlight_state.text_and_icon_color(appearance);
             let file_icon = match icon_from_file_path {
@@ -1258,7 +1250,7 @@ impl GlobalSearchView {
     fn render_match_row(
         &self,
         index: usize,
-        directory_path: &LocalOrRemotePath,
+        directory_path: &PathBuf,
         matched_path: &MatchedPath,
         matched: &Match,
         match_index: usize,
@@ -1493,10 +1485,7 @@ impl GlobalSearchView {
     /// Gets or creates a DirectoryEntry for the given location.
     /// Returns a mutable reference to the entry and its index.
     #[allow(dead_code)] // Will be used in later PRs
-    fn get_or_create_directory_entry(
-        &mut self,
-        path: &LocalOrRemotePath,
-    ) -> (&mut DirectoryEntry, usize) {
+    fn get_or_create_directory_entry(&mut self, path: &PathBuf) -> (&mut DirectoryEntry, usize) {
         if let Some(&index) = self.directory_path_to_directory_index_entry.get(path) {
             (&mut self.directory_entries[index], index)
         } else {
@@ -1513,8 +1502,8 @@ impl GlobalSearchView {
     /// Returns None if the paths are not found
     fn path_to_row_index(
         &self,
-        directory_path: &LocalOrRemotePath,
-        file_path: &LocalOrRemotePath,
+        directory_path: &PathBuf,
+        file_path: &PathBuf,
         match_index: Option<usize>,
     ) -> Option<RowIndex> {
         let &directory_index = self
@@ -1538,14 +1527,14 @@ impl GlobalSearchView {
     }
 
     /// Gets the directory location for a given RowIndex.
-    fn directory_path_for_row_index(&self, row: &RowIndex) -> Option<&LocalOrRemotePath> {
+    fn directory_path_for_row_index(&self, row: &RowIndex) -> Option<&PathBuf> {
         self.directory_entries
             .get(row.directory_index)
             .map(|e| &e.path)
     }
 
     /// Gets the file location for a given RowIndex (if it refers to a file or match).
-    fn file_path_for_row_index(&self, row: &RowIndex) -> Option<&LocalOrRemotePath> {
+    fn file_path_for_row_index(&self, row: &RowIndex) -> Option<&PathBuf> {
         let dir_entry = self.directory_entries.get(row.directory_index)?;
         match &row.index_type {
             RowIndexType::DirectoryHeader => None,
@@ -1750,7 +1739,7 @@ impl GlobalSearchView {
 
     fn toggle_directory_collapsed(
         &mut self,
-        directory_path: &LocalOrRemotePath,
+        directory_path: &PathBuf,
         ctx: &mut ViewContext<Self>,
     ) {
         let Some(&dir_idx) = self
@@ -1784,8 +1773,8 @@ impl GlobalSearchView {
 
     fn toggle_file_collapsed(
         &mut self,
-        directory_path: &LocalOrRemotePath,
-        file_path: &LocalOrRemotePath,
+        directory_path: &PathBuf,
+        file_path: &PathBuf,
         ctx: &mut ViewContext<Self>,
     ) {
         // Get directory index
@@ -1871,13 +1860,13 @@ impl GlobalSearchView {
         let is_collapsed = dir_entry.is_collapsed;
         let directory_path = &dir_entry.path;
 
-        let display_name = if directory_path.display_name().is_empty() {
-            display_path_with_host(directory_path, false)
+        let display_name = if display_name(directory_path).is_empty() {
+            display_path(directory_path, false)
         } else {
-            display_name_with_host(directory_path)
+            display_name(directory_path)
         };
         let directory_path_for_click = directory_path.clone();
-        let tooltip_text = display_path_with_host(directory_path, false);
+        let tooltip_text = display_path(directory_path, false);
 
         Hoverable::new(mouse_state, move |mouse_state| {
             let list_highlight_state = ItemHighlightState::new(is_selected, mouse_state);

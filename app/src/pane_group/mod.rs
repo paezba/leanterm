@@ -47,7 +47,6 @@ use crate::channel::{Channel, ChannelState};
 use crate::cloud_object::Space;
 use crate::cmd_or_ctrl_shift;
 use crate::code::active_file::ActiveFileModel;
-use crate::code::buffer_location::LocalOrRemotePath;
 #[cfg(feature = "local_fs")]
 use crate::code::editor_management::CodeSource;
 use crate::code::view::{CodeView, CodeViewAction};
@@ -444,7 +443,7 @@ pub enum Event {
     /// tell the workspace to open a file within Warp.
     OpenFileInWarp {
         /// The file path to open.
-        path: LocalOrRemotePath,
+        path: PathBuf,
         /// The session that the path was opened from.
         session: Arc<Session>,
     },
@@ -1347,7 +1346,7 @@ impl PaneGroup {
                         settings,
                     } => Box::new(NotebookPane::restore(notebook_id, &settings, ctx)?),
                     NotebookPaneSnapshot::LocalFileNotebook { path } => Box::new(FilePane::new(
-                        path.map(LocalOrRemotePath::Local),
+                        path,
                         None,
                         #[cfg(feature = "local_fs")]
                         None,
@@ -1371,11 +1370,8 @@ impl PaneGroup {
                     active_tab_index,
                     source,
                 } = snapshot;
-
-                let Some(source) = source.filter(|s: &CodeSource| s.is_restorable()) else {
-                    return Err(anyhow::anyhow!(
-                        "Skipping code pane with non-restorable source"
-                    ));
+                let Some(source) = source else {
+                    return Err(anyhow::anyhow!("Skipping code pane without a source"));
                 };
 
                 let code_view = ctx.add_typed_action_view(move |ctx| {
@@ -1733,7 +1729,7 @@ impl PaneGroup {
                 .file_view(ctx)
                 .as_ref(ctx)
                 .path()
-                .map(|path| path.display_path());
+                .map(|path| path.display().to_string());
         }
 
         if let Some(code_pane) = self.downcast_pane_by_id::<CodePane>(focused_pane_id) {
@@ -1742,7 +1738,7 @@ impl PaneGroup {
             return code_view
                 .tab_at(code_view.active_tab_index())
                 .and_then(|tab| tab.location())
-                .map(|path| path.display_path());
+                .map(|path| path.display().to_string());
         }
 
         let terminal_view = self.focused_session_view(ctx)?;
@@ -2733,7 +2729,7 @@ impl PaneGroup {
     fn replace_file_pane_with_code_pane(
         &mut self,
         file_pane_id: PaneId,
-        path: LocalOrRemotePath,
+        path: PathBuf,
         source: Option<crate::code::editor_management::CodeSource>,
         scroll_fraction: Option<f32>,
         ctx: &mut ViewContext<Self>,
@@ -2767,7 +2763,7 @@ impl PaneGroup {
     fn replace_code_pane_with_file_pane(
         &mut self,
         code_pane_id: PaneId,
-        path: LocalOrRemotePath,
+        path: PathBuf,
         source: Option<crate::code::editor_management::CodeSource>,
         scroll_fraction: Option<f32>,
         ctx: &mut ViewContext<Self>,
@@ -4357,7 +4353,7 @@ impl PaneGroup {
     pub fn terminal_view_working_directories<'a>(
         &'a self,
         ctx: &'a AppContext,
-    ) -> impl Iterator<Item = (EntityId, Option<LocalOrRemotePath>)> + 'a {
+    ) -> impl Iterator<Item = (EntityId, Option<PathBuf>)> + 'a {
         self.terminal_views(ctx).into_iter().map(|terminal_view| {
             let terminal_id = terminal_view.id();
             let cwd = terminal_view.as_ref(ctx).pwd_as_local_or_remote(ctx);
@@ -4370,7 +4366,7 @@ impl PaneGroup {
     pub fn code_view_paths<'a>(
         &'a self,
         ctx: &'a AppContext,
-    ) -> impl Iterator<Item = (EntityId, Option<LocalOrRemotePath>)> + 'a {
+    ) -> impl Iterator<Item = (EntityId, Option<PathBuf>)> + 'a {
         self.code_views(ctx).into_iter().map(move |code_view| {
             let id = code_view.id();
             let location = code_view
@@ -4384,7 +4380,7 @@ impl PaneGroup {
     pub fn file_notebook_paths<'a>(
         &'a self,
         ctx: &'a AppContext,
-    ) -> impl Iterator<Item = (EntityId, Option<LocalOrRemotePath>)> + 'a {
+    ) -> impl Iterator<Item = (EntityId, Option<PathBuf>)> + 'a {
         self.file_notebook_views(ctx)
             .into_iter()
             .map(move |file_view| {

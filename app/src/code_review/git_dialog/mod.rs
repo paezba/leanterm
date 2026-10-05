@@ -9,6 +9,8 @@
 //! + confirm async, extend `GitDialogMode`, add the per-mode action and
 //! outcome variant, and wire up dispatch.
 
+use std::path::PathBuf;
+
 use pathfinder_geometry::vector::vec2f;
 use warp_core::ui::appearance::Appearance;
 use warpui::elements::{
@@ -25,7 +27,6 @@ use warpui::{
     ViewContext, ViewHandle,
 };
 
-use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code::editor::{add_color, remove_color};
 use crate::code_review::diff_state::{DiffStateModel, DiffStateModelEvent, GitOpResult};
 use crate::ui_components::dialog::{Dialog, dialog_styles};
@@ -442,7 +443,7 @@ pub enum GitDialogMode {
 }
 
 pub struct GitDialog {
-    repo_location: LocalOrRemotePath,
+    repo_location: PathBuf,
     diff_state_model: ModelHandle<DiffStateModel>,
     branch_name: String,
     mode: GitDialogMode,
@@ -454,7 +455,7 @@ pub struct GitDialog {
 
 impl GitDialog {
     pub fn new_for_commit(
-        repo_location: LocalOrRemotePath,
+        repo_location: PathBuf,
         diff_state_model: ModelHandle<DiffStateModel>,
         branch_name: String,
         allow_create_pr: bool,
@@ -469,12 +470,12 @@ impl GitDialog {
             Self::build_dialog_buttons("Confirm", None, ctx);
         ctx.subscribe_to_model(&diff_state_model, Self::handle_diff_state_event);
         let state = commit::new_state(
-            repo_location.to_local_path(),
+            Some(repo_location.as_path()),
             allow_create_pr,
             has_upstream,
             ctx,
         );
-        let mut this = Self {
+        let this = Self {
             repo_location,
             diff_state_model,
             branch_name,
@@ -489,13 +490,12 @@ impl GitDialog {
         // returns via the diff-state subscription wired up just above.
         // Remote repos source the Changes box from synced metadata (the local
         // path loads it from the working tree in `commit::new_state`).
-        commit::refresh_remote_file_changes(&mut this, ctx);
         this.refresh_confirm_enabled(ctx);
         this
     }
 
     pub fn new_for_push(
-        repo_location: LocalOrRemotePath,
+        repo_location: PathBuf,
         diff_state_model: ModelHandle<DiffStateModel>,
         branch_name: String,
         publish: bool,
@@ -522,7 +522,7 @@ impl GitDialog {
     }
 
     pub fn new_for_pr(
-        repo_location: LocalOrRemotePath,
+        repo_location: PathBuf,
         diff_state_model: ModelHandle<DiffStateModel>,
         branch_name: String,
         base_branch_name: Option<String>,
@@ -584,7 +584,7 @@ impl GitDialog {
         (confirm_button, cancel_button, close_button)
     }
 
-    fn repo_location(&self) -> &LocalOrRemotePath {
+    fn repo_location(&self) -> &PathBuf {
         &self.repo_location
     }
 
@@ -603,11 +603,7 @@ impl GitDialog {
         // Commit-message autogen arrives at dialog open (before any op is
         // initiated), so it's handled outside the `loading` gate the
         // op-completion events use below.
-        // Commit mode (remote) sources its Changes box from synced metadata, so
-        // refresh it whenever metadata lands. Arrives independently of any
-        // in-flight op, so it's handled outside the `loading` gate below.
         if let DiffStateModelEvent::MetadataRefreshed(_) = event {
-            commit::refresh_remote_file_changes(self, ctx);
             return;
         }
         // The create-PR dialog fetches its committed file list on open

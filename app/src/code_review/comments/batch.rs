@@ -1,8 +1,9 @@
+use std::path::PathBuf;
+
 use warp_editor::render::model::LineCount;
 use warpui::{Entity, ModelContext};
 
 use super::{AttachedReviewComment, AttachedReviewCommentTarget, CommentId};
-use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code::editor::EditorReviewComment;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -49,7 +50,7 @@ impl ReviewCommentBatch {
     /// `file` should be the host-aware absolute path for the editor file.
     pub fn file_comments<'a>(
         &'a self,
-        file: &'a LocalOrRemotePath,
+        file: &'a PathBuf,
     ) -> impl Iterator<Item = &'a AttachedReviewComment> + 'a {
         self.comments.iter().filter(move |comment| {
             comment
@@ -62,7 +63,7 @@ impl ReviewCommentBatch {
     /// `file` should be the host-aware absolute path for the editor file.
     pub fn comment_line_numbers_for_file<'a>(
         &'a self,
-        file: &'a LocalOrRemotePath,
+        file: &'a PathBuf,
     ) -> impl Iterator<Item = LineCount> + 'a {
         self.file_comments(file).filter_map(move |comment| {
             if let AttachedReviewCommentTarget::Line {
@@ -82,10 +83,7 @@ impl ReviewCommentBatch {
         })
     }
 
-    pub(crate) fn editor_comments_for_file(
-        &self,
-        file: &LocalOrRemotePath,
-    ) -> Vec<EditorReviewComment> {
+    pub(crate) fn editor_comments_for_file(&self, file: &PathBuf) -> Vec<EditorReviewComment> {
         self.file_comments(file)
             .filter(|comment| !comment.outdated)
             .filter_map(|comment| EditorReviewComment::try_from(comment.clone()).ok())

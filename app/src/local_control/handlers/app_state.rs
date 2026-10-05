@@ -14,7 +14,6 @@ use ::local_control::protocol::{
 use ::local_control::{ActionKind, ControlError, ErrorCode, InstanceId};
 use serde_json::json;
 #[cfg(feature = "local_fs")]
-use warp_util::local_or_remote_path::LocalOrRemotePath;
 use warp_util::path::LineAndColumnArg;
 #[cfg(feature = "local_fs")]
 use warpui::SingletonEntity;
@@ -777,13 +776,7 @@ fn resolve_file_open_path(
             .and_then(|terminal| terminal.as_ref(ctx).pwd_as_local_or_remote(ctx))
     });
     match working_directory {
-        Some(LocalOrRemotePath::Local(working_directory)) => {
-            Ok(resolve_against_working_directory(path, &working_directory))
-        }
-        Some(LocalOrRemotePath::Remote(_)) => Err(ControlError::new(
-            ErrorCode::TargetStateConflict,
-            "file.open requires an absolute path when the target session is remote",
-        )),
+        Some(working_directory) => Ok(resolve_against_working_directory(path, &working_directory)),
         None => Err(ControlError::new(
             ErrorCode::TargetStateConflict,
             "file.open cannot resolve a relative path without a working directory for the target session",

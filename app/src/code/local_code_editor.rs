@@ -29,7 +29,6 @@ use warp_editor::render::model::Decoration;
 use warp_util::content_version::ContentVersion;
 use warp_util::file::{FileId, FileLoadError, FileSaveError};
 #[cfg(feature = "local_fs")]
-use warp_util::local_or_remote_path::LocalOrRemotePath;
 use warp_util::sync::Condition;
 use warpui::elements::{
     ChildAnchor, ChildView, ClippedScrollStateHandle, ConstrainedBox, Container, CornerRadius,
@@ -46,7 +45,6 @@ use warpui::{
     ViewHandle, WindowId,
 };
 
-use crate::code::buffer_location::LocalOrRemotePath as BufferFileLocation;
 use crate::code::editor::EditorReviewComment;
 use crate::code::editor::model::HoverableLink;
 use crate::code::footer::{CodeFooterView, CodeFooterViewEvent};
@@ -134,7 +132,7 @@ pub enum LocalCodeEditorEvent {
 #[derive(Debug, Clone)]
 struct LoadedFileMetadata {
     id: FileId,
-    location: BufferFileLocation,
+    location: PathBuf,
 }
 
 use warp_errors::report_error;
@@ -1254,7 +1252,7 @@ impl LocalCodeEditorView {
     /// For remote files, sets the language from the extension and skips
     /// local-only wiring (LSP, footer).
     pub fn new_with_global_buffer<T>(
-        location: BufferFileLocation,
+        location: PathBuf,
         editor_constructor: T,
         enable_diff_nav_by_default: bool,
         display_mode: Option<DisplayMode>,
@@ -1268,17 +1266,13 @@ impl LocalCodeEditorView {
         let file_id = buffer_state.file_id;
         let editor = editor_constructor(buffer_state, ctx);
 
-        match &location {
-            BufferFileLocation::Local(path) => {
-                editor.update(ctx, |editor, ctx| {
-                    editor.set_language_with_local_path(path, ctx);
-                    editor.model.update(ctx, |model, ctx| {
-                        model.rebuild_layout_with_syntax_highlighting(ctx)
-                    });
-                });
-            }
-            BufferFileLocation::Remote(_) => {}
-        }
+        let path = &location;
+        editor.update(ctx, |editor, ctx| {
+            editor.set_language_with_local_path(path, ctx);
+            editor.model.update(ctx, |model, ctx| {
+                model.rebuild_layout_with_syntax_highlighting(ctx)
+            });
+        });
 
         let mut local_editor =
             Self::new(editor, None, enable_diff_nav_by_default, display_mode, ctx);
@@ -1457,10 +1451,7 @@ impl LocalCodeEditorView {
         {
             Some(workspace_root.to_path_buf())
         } else {
-            match DetectedRepositories::as_ref(ctx)
-                .get_root_for_path(&LocalOrRemotePath::Local(path.to_path_buf()))
-                .and_then(|r| PathBuf::try_from(r).ok())
-            {
+            match DetectedRepositories::as_ref(ctx).get_root_for_path(path) {
                 Some(root) => Some(root),
                 None => path.parent().map(|s| s.to_path_buf()), // If we can't find root, treat the parent as the root.
             }
@@ -1498,10 +1489,7 @@ impl LocalCodeEditorView {
         {
             Some(workspace_root.to_path_buf())
         } else {
-            match DetectedRepositories::as_ref(ctx)
-                .get_root_for_path(&LocalOrRemotePath::Local(path.to_path_buf()))
-                .and_then(|r| PathBuf::try_from(r).ok())
-            {
+            match DetectedRepositories::as_ref(ctx).get_root_for_path(&path) {
                 Some(root) => Some(root),
                 None => path.parent().map(|s| s.to_path_buf()),
             }
@@ -1695,7 +1683,7 @@ impl LocalCodeEditorView {
         let file_id = buffer_state.file_id;
         me.metadata = Some(LoadedFileMetadata {
             id: file_id,
-            location: BufferFileLocation::Local(path.clone()),
+            location: path.clone(),
         });
 
         me.set_new_file(false);
@@ -1766,14 +1754,13 @@ impl LocalCodeEditorView {
     }
 
     /// Returns the unified file location (local or remote).
-    pub fn file_location(&self) -> Option<&BufferFileLocation> {
+    pub fn file_location(&self) -> Option<&PathBuf> {
         self.metadata.as_ref().map(|m| &m.location)
     }
 
-    /// Returns the local path if this editor is backed by a local file.
-    /// Returns `None` for remote files. Used by LSP and other local-only code paths.
+    /// Returns the path of the file backing this editor, if any.
     pub fn file_path(&self) -> Option<&Path> {
-        self.file_location().and_then(|loc| loc.to_local_path())
+        self.file_location().map(PathBuf::as_path)
     }
 
     /// Update this editor's file identity after a `GlobalBufferModel::rename`.
@@ -1789,7 +1776,7 @@ impl LocalCodeEditorView {
         let file_id = buffer_state.file_id;
         self.metadata = Some(LoadedFileMetadata {
             id: file_id,
-            location: BufferFileLocation::Local(new_path.to_path_buf()),
+            location: new_path.to_path_buf(),
         });
 
         self.editor.update(ctx, |editor, ctx| {

@@ -11,7 +11,6 @@ use warp_editor::model::CoreEditorModel;
 use warp_files::{FileModel, FileModelEvent};
 #[cfg(feature = "local_fs")]
 use warp_util::file::FileId;
-use warp_util::local_or_remote_path::LocalOrRemotePath;
 use warp_util::path::user_friendly_path;
 use warpui::accessibility::{AccessibilityContent, WarpA11yRole};
 #[cfg(feature = "local_fs")]
@@ -150,7 +149,7 @@ impl From<ContextMenuAction> for FileNotebookAction {
 #[derive(Debug, Clone)]
 enum SourceFile {
     FileBased {
-        path: LocalOrRemotePath,
+        path: PathBuf,
         /// Only meaningful for local paths; remote paths carry their own host information.
         session: Option<Arc<Session>>,
     },
@@ -159,7 +158,7 @@ enum SourceFile {
 }
 
 impl SourceFile {
-    fn path(&self) -> Option<&LocalOrRemotePath> {
+    fn path(&self) -> Option<&PathBuf> {
         match self {
             SourceFile::FileBased { path, .. } => Some(path),
             SourceFile::Static { .. } => None,
@@ -167,12 +166,12 @@ impl SourceFile {
     }
 
     fn local_path(&self) -> Option<&Path> {
-        self.path().and_then(|p| p.to_local_path())
+        self.path().map(PathBuf::as_path)
     }
 
     fn display_name(&self) -> String {
         match self {
-            SourceFile::FileBased { path, .. } => path.display_path(),
+            SourceFile::FileBased { path, .. } => path.display().to_string(),
             SourceFile::Static { title } => title.clone(),
         }
     }
@@ -187,7 +186,7 @@ enum FileState {
 }
 
 impl FileState {
-    fn path(&self) -> Option<&LocalOrRemotePath> {
+    fn path(&self) -> Option<&PathBuf> {
         self.source().and_then(|src| src.path())
     }
 
@@ -405,23 +404,17 @@ impl FileNotebookView {
     /// ignore it because the `RemotePath` already carries host info.
     pub fn open(
         &mut self,
-        path: LocalOrRemotePath,
+        path: PathBuf,
         session: Option<Arc<Session>>,
         ctx: &mut ViewContext<Self>,
     ) {
-        match path {
-            LocalOrRemotePath::Local(local_path) => {
-                let session = session.or_else(|| {
-                    ActiveSession::as_ref(ctx)
-                        .session(ctx.window_id())
-                        .filter(|s| s.is_local())
-                });
-                self.open_local(local_path, session, ctx);
-            }
-            LocalOrRemotePath::Remote(_) => {
-                log::warn!("Remote files are not supported");
-            }
-        }
+        let local_path = path;
+        let session = session.or_else(|| {
+            ActiveSession::as_ref(ctx)
+                .session(ctx.window_id())
+                .filter(|s| s.is_local())
+        });
+        self.open_local(local_path, session, ctx);
     }
 
     /// Asynchronously open a local file, watching for local file changes.
@@ -443,7 +436,7 @@ impl FileNotebookView {
         }
 
         self.file_state = FileState::Loading(SourceFile::FileBased {
-            path: LocalOrRemotePath::Local(local_path.clone()),
+            path: local_path.clone(),
             session: session.clone(),
         });
 
@@ -472,7 +465,7 @@ impl FileNotebookView {
                             if let Some(canonical_path) = file_model.as_ref(ctx).file_path(file_id)
                             {
                                 me.file_state = FileState::Loaded(SourceFile::FileBased {
-                                    path: LocalOrRemotePath::Local(canonical_path),
+                                    path: canonical_path,
                                     session: session.clone(),
                                 });
                             }
@@ -517,7 +510,7 @@ impl FileNotebookView {
                 full: ("Local filesystem access is not available in this build (feature \"local_fs\" disabled)")
             );
             self.file_state = FileState::Error(SourceFile::FileBased {
-                path: LocalOrRemotePath::Local(local_path),
+                path: local_path,
                 session,
             });
             ctx.notify();
@@ -586,7 +579,7 @@ impl FileNotebookView {
         }
     }
 
-    pub fn path(&self) -> Option<&LocalOrRemotePath> {
+    pub fn path(&self) -> Option<&PathBuf> {
         self.file_state.path()
     }
 
@@ -606,14 +599,14 @@ impl FileNotebookView {
     fn is_markdown_file(&self) -> bool {
         self.file_state
             .path()
-            .map(|p| is_markdown_file(Path::new(&p.display_path())))
+            .map(|p| is_markdown_file(Path::new(&p.display().to_string())))
             .unwrap_or(false)
     }
 
     fn is_jupyter_notebook_file(&self) -> bool {
         self.file_state
             .path()
-            .map(|p| is_jupyter_notebook_file(Path::new(&p.display_path())))
+            .map(|p| is_jupyter_notebook_file(Path::new(&p.display().to_string())))
             .unwrap_or(false)
     }
 
@@ -895,7 +888,7 @@ impl TypedActionView for FileNotebookView {
             FileNotebookAction::CopyFilePath => {
                 if let Some(path) = self.file_state.path() {
                     ctx.clipboard()
-                        .write(ClipboardContent::plain_text(path.display_path()));
+                        .write(ClipboardContent::plain_text(path.display().to_string()));
                 }
             }
             #[cfg(feature = "local_fs")]
@@ -927,7 +920,7 @@ impl TypedActionView for FileNotebookView {
             FileNotebookAction::OpenAsCode => self.open_as_code(ctx),
             FileNotebookAction::ContextMenu(action) => {
                 if matches!(action, ContextMenuAction::Open(_)) {
-                    let copy_file_path = self.file_state.path().map(|p| p.display_path());
+                    let copy_file_path = self.file_state.path().map(|p| p.display().to_string());
                     self.context_menu.set_copy_file_path(copy_file_path);
                 }
                 self.context_menu.handle_action(action, ctx);
@@ -1081,38 +1074,39 @@ impl BackingView for FileNotebookView {
                 warpui::text_layout::ClipConfig::start(),
             );
 
-            let title_element: Box<dyn Element> =
-                if let Some(display_path) = self.file_state.path().map(|p| p.display_path()) {
-                    use pathfinder_geometry::vector::vec2f;
-                    use warpui::elements::{
-                        ChildAnchor, Hoverable, OffsetPositioning, ParentAnchor,
-                        ParentOffsetBounds, Stack,
-                    };
-                    Hoverable::new(self.header_title_mouse_state.clone(), move |hover_state| {
-                        let mut stack = Stack::new();
-                        stack.add_child(title_text);
-                        if hover_state.is_hovered() {
-                            let tooltip = appearance
-                                .ui_builder()
-                                .tool_tip(display_path.clone())
-                                .build()
-                                .finish();
-                            stack.add_positioned_overlay_child(
-                                tooltip,
-                                OffsetPositioning::offset_from_parent(
-                                    vec2f(0., 4.),
-                                    ParentOffsetBounds::Unbounded,
-                                    ParentAnchor::BottomMiddle,
-                                    ChildAnchor::TopMiddle,
-                                ),
-                            );
-                        }
-                        stack.finish()
-                    })
-                    .finish()
-                } else {
-                    title_text
+            let title_element: Box<dyn Element> = if let Some(display_path) =
+                self.file_state.path().map(|p| p.display().to_string())
+            {
+                use pathfinder_geometry::vector::vec2f;
+                use warpui::elements::{
+                    ChildAnchor, Hoverable, OffsetPositioning, ParentAnchor, ParentOffsetBounds,
+                    Stack,
                 };
+                Hoverable::new(self.header_title_mouse_state.clone(), move |hover_state| {
+                    let mut stack = Stack::new();
+                    stack.add_child(title_text);
+                    if hover_state.is_hovered() {
+                        let tooltip = appearance
+                            .ui_builder()
+                            .tool_tip(display_path.clone())
+                            .build()
+                            .finish();
+                        stack.add_positioned_overlay_child(
+                            tooltip,
+                            OffsetPositioning::offset_from_parent(
+                                vec2f(0., 4.),
+                                ParentOffsetBounds::Unbounded,
+                                ParentAnchor::BottomMiddle,
+                                ChildAnchor::TopMiddle,
+                            ),
+                        );
+                    }
+                    stack.finish()
+                })
+                .finish()
+            } else {
+                title_text
+            };
 
             view::HeaderContent::Custom {
                 element: render_three_column_header(

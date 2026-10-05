@@ -16,7 +16,6 @@ use super::*;
 use crate::NotebookKeybindings;
 use crate::auth::AuthStateProvider;
 use crate::cloud_object::model::persistence::CloudModel;
-use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code::editor::view::{CodeEditorRenderOptions, CodeEditorView};
 use crate::code::local_code_editor::LocalCodeEditorView;
 use crate::code_review::GlobalCodeReviewModel;
@@ -157,7 +156,7 @@ fn create_line_comment(
         id: CommentId::new(),
         content: comment_content.to_string(),
         target: AttachedReviewCommentTarget::Line {
-            absolute_file_path: LocalOrRemotePath::Local(file_path.into()),
+            absolute_file_path: file_path.into(),
             line: EditorLineLocation::Current {
                 line_number: line_count,
                 line_range: line_count..LineCount::from(line_number + 1),
@@ -191,7 +190,7 @@ fn create_imported_line_comment(
         id: CommentId::new(),
         content: comment_content.to_string(),
         target: AttachedReviewCommentTarget::Line {
-            absolute_file_path: LocalOrRemotePath::Local(file_path.into()),
+            absolute_file_path: file_path.into(),
             line: EditorLineLocation::Current {
                 line_number: line_count,
                 line_range: line_count..LineCount::from(line_number + 1),
@@ -224,7 +223,7 @@ fn create_file_comment(
         id: CommentId::new(),
         content: comment_content.to_string(),
         target: AttachedReviewCommentTarget::File {
-            absolute_file_path: LocalOrRemotePath::Local(file_path.into()),
+            absolute_file_path: file_path.into(),
         },
         last_update_time: Local::now(),
         base: None,
@@ -300,7 +299,7 @@ use crate::view_components::action_button::{ActionButton, NakedTheme};
 /// Test context that holds all common test state
 struct TestContext {
     repo_path: PathBuf,
-    repo_location: LocalOrRemotePath,
+    repo_location: PathBuf,
     #[allow(dead_code)]
     window_id: warpui::WindowId,
     state: LoadedState,
@@ -322,7 +321,7 @@ impl TestContext {
         let diff_state_model = app.add_model(DiffStateModel::new_for_test);
 
         let working_directories_model = app.add_model(|_| WorkingDirectoriesModel::new());
-        let repo_key = LocalOrRemotePath::Local(repo_path.clone());
+        let repo_key = repo_path.clone();
         let code_review_comment_batch =
             working_directories_model.update(app, |working_directories, ctx| {
                 working_directories.get_or_create_code_review_comments(&repo_key, ctx)
@@ -340,7 +339,7 @@ impl TestContext {
 
         Self {
             repo_path: repo_path.clone(),
-            repo_location: LocalOrRemotePath::Local(repo_path),
+            repo_location: repo_path,
             window_id,
             state,
             code_review_view,
@@ -743,7 +742,7 @@ fn test_native_indented_context_comment_not_outdated() {
             id: CommentId::new(),
             content: "Comment on an indented native line".to_string(),
             target: AttachedReviewCommentTarget::Line {
-                absolute_file_path: LocalOrRemotePath::Local(PathBuf::from("/repo/test.txt")),
+                absolute_file_path: PathBuf::from("/repo/test.txt"),
                 line: EditorLineLocation::Current {
                     line_number: line_count,
                     line_range: line_count..LineCount::from(2),
@@ -894,7 +893,7 @@ fn test_on_close_then_on_open_reinitializes_repo_state() {
 
             assert!(view.is_open, "View should be open after on_open");
             assert_eq!(
-                view.repo_path().and_then(LocalOrRemotePath::to_local_path),
+                view.repo_path().map(PathBuf::as_path),
                 Some(repo_path.as_path()),
                 "Repo path should be preserved after on_open (set at construction)"
             );

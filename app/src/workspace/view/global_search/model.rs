@@ -9,7 +9,6 @@ use regex::escape;
 use string_offset::ByteOffset;
 use warp_errors::report_error;
 use warp_ripgrep::search::{Match as RipgrepMatch, Submatch};
-use warp_util::local_or_remote_path::LocalOrRemotePath;
 use warpui::r#async::SpawnedFutureHandle;
 use warpui::{Entity, ModelContext, ModelSpawner, SingletonEntity};
 
@@ -92,7 +91,7 @@ impl GlobalSearch {
     pub fn run_search(
         &mut self,
         pattern: String,
-        roots: Vec<LocalOrRemotePath>,
+        roots: Vec<PathBuf>,
         search_config: SearchConfig,
         ctx: &mut ModelContext<Self>,
     ) {
@@ -112,15 +111,7 @@ impl GlobalSearch {
         let ignore_case = !search_config.use_case_sensitivity;
         let multiline = effective_pattern.contains('\n');
 
-        let mut local_roots: Vec<PathBuf> = Vec::new();
-        for root in roots {
-            match root {
-                LocalOrRemotePath::Local(path) => local_roots.push(path),
-                LocalOrRemotePath::Remote(_) => {
-                    log::warn!("GlobalSearch: ignoring unsupported remote search root");
-                }
-            }
-        }
+        let local_roots = roots;
 
         ctx.emit(GlobalSearchEvent::Started { search_id });
         let source_count = usize::from(!local_roots.is_empty());
@@ -332,7 +323,7 @@ impl GlobalSearch {
 
     fn local_match_to_global(m: RipgrepMatch) -> GlobalSearchMatch {
         GlobalSearchMatch {
-            location: LocalOrRemotePath::Local(m.file_path),
+            location: m.file_path,
             line_number: m.line_number,
             column_num: None,
             line_text: m.line_text,
@@ -384,7 +375,7 @@ impl GlobalSearch {
     /// adjusting the submatch offset accordingly.
     fn trim_leading_whitespace_for_submatch(
         original_line: &str,
-        location: LocalOrRemotePath,
+        location: PathBuf,
         line_number: u32,
         column_num: Option<usize>,
         submatch: Option<Submatch>,

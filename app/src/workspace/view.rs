@@ -137,7 +137,6 @@ use crate::cloud_object::toast_message::CloudObjectToastMessage;
 use crate::cloud_object::{
     CloudObject, GenericStringObjectFormat, JsonObjectType, ObjectType, Owner, Space,
 };
-use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code::editor::{add_color, remove_color};
 #[cfg(feature = "local_fs")]
 use crate::code::editor_management::CodeManager;
@@ -650,7 +649,7 @@ struct WorkspaceBannerFields {
 
 #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
 struct CodeReviewPaneContext {
-    repo_path: Option<LocalOrRemotePath>,
+    repo_path: Option<PathBuf>,
     diff_state_model: ModelHandle<DiffStateModel>,
 }
 
@@ -4327,13 +4326,7 @@ impl Workspace {
             FileTarget::MarkdownViewer(layout) => {
                 let session = self.get_active_session(ctx);
 
-                self.open_file_notebook(
-                    LocalOrRemotePath::Local(path.clone()),
-                    session,
-                    layout,
-                    Some(code_source),
-                    ctx,
-                );
+                self.open_file_notebook(path.clone(), session, layout, Some(code_source), ctx);
             }
             FileTarget::EnvEditor => {
                 let editor_value: Option<String> = self
@@ -4428,43 +4421,14 @@ impl Workspace {
                 let code_source = CodeSource::FileTree {
                     location: location.clone(),
                 };
-                match location {
-                    LocalOrRemotePath::Local(path) => {
-                        self.open_file_with_target(
-                            path.clone(),
-                            target.clone(),
-                            *line_col,
-                            code_source,
-                            ctx,
-                        );
-                    }
-                    LocalOrRemotePath::Remote(_) => {
-                        #[cfg(feature = "local_fs")]
-                        {
-                            // Honor a notebook-viewer target (e.g. a remote
-                            // Jupyter notebook) instead of always opening remote
-                            // files as raw code in the editor.
-                            if let FileTarget::MarkdownViewer(layout) = target {
-                                self.open_file_notebook(
-                                    location.clone(),
-                                    None,
-                                    *layout,
-                                    Some(code_source),
-                                    ctx,
-                                );
-                            } else {
-                                self.open_code(
-                                    code_source,
-                                    crate::util::openable_file_type::EditorLayout::SplitPane,
-                                    *line_col,
-                                    false,
-                                    &[],
-                                    ctx,
-                                );
-                            }
-                        }
-                    }
-                }
+                let path = location;
+                self.open_file_with_target(
+                    path.clone(),
+                    target.clone(),
+                    *line_col,
+                    code_source,
+                    ctx,
+                );
             }
             LeftPanelEvent::SignInRequested => {
                 self.open_require_login_modal(AuthViewVariant::RequireLoginCloseable, ctx);
@@ -4510,21 +4474,9 @@ impl Workspace {
             RightPanelEvent::OpenFileInNewTab {
                 path,
                 line_and_column,
-            } => match path {
-                LocalOrRemotePath::Local(path) => {
-                    self.add_tab_for_code_file(path, line_and_column, ctx);
-                }
-                path @ LocalOrRemotePath::Remote(_) => {
-                    self.open_code(
-                        CodeSource::FileTree { location: path },
-                        EditorLayout::NewTab,
-                        line_and_column,
-                        false,
-                        &[],
-                        ctx,
-                    );
-                }
-            },
+            } => {
+                self.add_tab_for_code_file(path, line_and_column, ctx);
+            }
             #[cfg(not(target_family = "wasm"))]
             RightPanelEvent::OpenLspLogs { log_path } => {
                 self.open_lsp_logs(&log_path, ctx);
@@ -6205,7 +6157,7 @@ impl Workspace {
     #[cfg(feature = "local_fs")]
     fn open_file_notebook(
         &mut self,
-        path: LocalOrRemotePath,
+        path: PathBuf,
         session: Option<Arc<Session>>,
         layout: EditorLayout,
         code_source: Option<CodeSource>,
@@ -6316,29 +6268,18 @@ impl Workspace {
             // If the tabbed editor view is enabled and there is an existing CodeView, we should group the newly opened file into this view.
             if let (Some(location), Some((pane_id, code_view))) = (source.location(), code_view) {
                 code_view.update(ctx, |code_view, ctx| {
-                    // Preview (single-click = light open, double-click = promote to
-                    // full tab) is only supported for local files because it relies
-                    // on `open_in_preview_or_promote` which takes a local `PathBuf`.
-                    // Remote files skip preview and open normally.
+                    // Preview: single-click = light open, double-click = promote to full tab.
                     if preview {
-                        if let Some(path) = location.to_local_path() {
-                            code_view.open_in_preview_or_promote_and_jump(
-                                path.to_path_buf(),
-                                line_col,
-                                ctx,
-                            );
-                        } else {
-                            code_view.open_or_focus_existing(Some(location.clone()), line_col, ctx);
-                        }
+                        code_view.open_in_preview_or_promote_and_jump(
+                            location.clone(),
+                            line_col,
+                            ctx,
+                        );
                     } else {
                         code_view.open_or_focus_existing(Some(location.clone()), line_col, ctx);
                     }
                     for extra in additional_paths {
-                        code_view.open_or_focus_existing(
-                            Some(LocalOrRemotePath::Local(extra.clone())),
-                            None,
-                            ctx,
-                        );
+                        code_view.open_or_focus_existing(Some(extra.clone()), None, ctx);
                     }
                 });
                 // Only focus the pane for non-preview opens
@@ -6366,21 +6307,12 @@ impl Workspace {
                             pane_group.code_view_from_pane_id(locator.pane_id, ctx)
                         {
                             code_view.update(ctx, |code_view, ctx| {
-                                // Preview is local-only (see comment above).
                                 if preview {
-                                    if let Some(path) = location.to_local_path() {
-                                        code_view.open_in_preview_or_promote_and_jump(
-                                            path.to_path_buf(),
-                                            line_col,
-                                            ctx,
-                                        );
-                                    } else {
-                                        code_view.open_or_focus_existing(
-                                            Some(location.clone()),
-                                            line_col,
-                                            ctx,
-                                        );
-                                    }
+                                    code_view.open_in_preview_or_promote_and_jump(
+                                        location.clone(),
+                                        line_col,
+                                        ctx,
+                                    );
                                 } else {
                                     code_view.open_or_focus_existing(
                                         Some(location.clone()),
@@ -6391,7 +6323,7 @@ impl Workspace {
 
                                 for extra in additional_paths {
                                     code_view.open_or_focus_existing(
-                                        Some(LocalOrRemotePath::Local(extra.clone())),
+                                        Some(extra.clone()),
                                         None,
                                         ctx,
                                     );
@@ -6446,11 +6378,7 @@ impl Workspace {
             if let Some(code_view) = code_view_handle {
                 code_view.update(ctx, |code_view, ctx| {
                     for path in additional_paths {
-                        code_view.open_or_focus_existing(
-                            Some(LocalOrRemotePath::Local(path.clone())),
-                            None,
-                            ctx,
-                        );
+                        code_view.open_or_focus_existing(Some(path.clone()), None, ctx);
                     }
                 });
             }
@@ -6762,7 +6690,7 @@ impl Workspace {
         ctx: &mut ViewContext<Self>,
     ) {
         // If context is provided, use it directly. Otherwise, derive from active pane group.
-        let context_data: Option<(Option<LocalOrRemotePath>, ModelHandle<DiffStateModel>)> =
+        let context_data: Option<(Option<PathBuf>, ModelHandle<DiffStateModel>)> =
             if let Some(context) = context {
                 Some((context.repo_path.clone(), context.diff_state_model.clone()))
             } else {
@@ -6910,7 +6838,7 @@ impl Workspace {
         });
         // Resolve DiffStateModel outside the read closure (needs mutable context).
         let context = read_result.and_then(
-            |(repo_path, _preferred_session): (Option<LocalOrRemotePath>, Option<SessionId>)| {
+            |(repo_path, _preferred_session): (Option<PathBuf>, Option<SessionId>)| {
                 let diff_state_model = repo_path.as_ref().and_then(|rp| {
                     self.working_directories_model.update(ctx, |model, ctx| {
                         model.get_or_create_diff_state_model(rp.clone(), ctx)
@@ -10266,7 +10194,7 @@ impl Workspace {
             } => {
                 #[cfg(feature = "local_fs")]
                 {
-                    let location = LocalOrRemotePath::Local(PathBuf::from(path));
+                    let location = PathBuf::from(path);
 
                     let code_source = CodeSource::CommandPalette { location };
 
@@ -10442,22 +10370,22 @@ impl Workspace {
         ctx: &mut ViewContext<Self>,
     ) {
         let pane_group_id = pane_group.id();
-        let terminal_cwds: Vec<(EntityId, LocalOrRemotePath)> = pane_group
+        let terminal_cwds: Vec<(EntityId, PathBuf)> = pane_group
             .as_ref(ctx)
             .terminal_view_working_directories(ctx)
             .filter_map(|(id, cwd)| cwd.map(|c| (id, c)))
             .collect();
-        let code_paths: Vec<(EntityId, LocalOrRemotePath)> = pane_group
+        let code_paths: Vec<(EntityId, PathBuf)> = pane_group
             .as_ref(ctx)
             .code_view_paths(ctx)
             .filter_map(|(id, cwd)| cwd.map(|c| (id, c)))
             .collect();
-        let notebook_paths: Vec<(EntityId, LocalOrRemotePath)> = pane_group
+        let notebook_paths: Vec<(EntityId, PathBuf)> = pane_group
             .as_ref(ctx)
             .file_notebook_paths(ctx)
             .filter_map(|(id, path)| path.map(|p| (id, p)))
             .collect();
-        let local_paths: Vec<(EntityId, LocalOrRemotePath)> =
+        let local_paths: Vec<(EntityId, PathBuf)> =
             code_paths.into_iter().chain(notebook_paths).collect();
 
         // Get the focused terminal ID to prioritize it in the repo_to_terminal map
@@ -11032,11 +10960,7 @@ impl Workspace {
                                         // After removing the file from the origin's editor, we want to open it in the target's editor.
                                         if let Some(path) = moved_file_path {
                                             target_code_view.update(ctx, |view, ctx| {
-                                                view.open_or_focus_existing(
-                                                    Some(LocalOrRemotePath::Local(path)),
-                                                    None,
-                                                    ctx,
-                                                );
+                                                view.open_or_focus_existing(Some(path), None, ctx);
                                             });
                                         }
                                         return;

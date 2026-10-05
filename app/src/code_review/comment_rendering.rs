@@ -3,6 +3,7 @@
 //! These functions are used by both the `CommentListView` (in the code review panel)
 //! and the blocklist's imported comments rendering.
 
+use std::path::PathBuf;
 use std::rc::Rc;
 
 use chrono::{Duration, Local};
@@ -11,6 +12,7 @@ use warp_core::ui::theme::Fill;
 use warp_core::ui::theme::color::internal_colors::{neutral_1, neutral_2, text_sub};
 use warp_editor::content::buffer::InitialBufferState;
 use warp_editor::render::element::VerticalExpansionBehavior;
+use warp_util::standardized_path::StandardizedPath;
 use warpui::elements::new_scrollable::ScrollableAppearance;
 use warpui::elements::{
     Border, ChildView, Container, CornerRadius, CrossAxisAlignment, Flex, Hoverable,
@@ -23,7 +25,6 @@ use warpui::units::Pixels;
 use warpui::{AppContext, Element, EventContext, SingletonEntity, View, ViewContext, ViewHandle};
 
 use crate::appearance::Appearance;
-use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code::editor::comment_editor::create_readonly_comment_markdown_editor;
 use crate::code::editor::view::{CodeEditorRenderOptions, CodeEditorView};
 use crate::code_review::comments::{
@@ -229,7 +230,7 @@ fn render_comment_text_section(
 /// highlighting is set based on the file path.
 fn create_static_diff_content_editor<V: View>(
     content: &LineDiffContent,
-    file_path: Option<&LocalOrRemotePath>,
+    file_path: Option<&PathBuf>,
     ctx: &mut ViewContext<V>,
 ) -> ViewHandle<CodeEditorView> {
     let editor = ctx.add_typed_action_view(|ctx| {
@@ -253,7 +254,7 @@ fn create_static_diff_content_editor<V: View>(
         let state = InitialBufferState::plain_text(original_text.trim());
         view.reset(state, ctx);
         if let Some(file_path) = file_path {
-            let language_path = file_path.path_component();
+            let language_path = StandardizedPath::from_local_absolute_unchecked(file_path);
             view.set_language_with_path(&language_path, ctx);
         }
     });
@@ -302,7 +303,7 @@ impl CommentViewCard {
         always_use_static_diff: bool,
         disable_scrolling: bool,
         max_width: Option<Pixels>,
-        repo_path: Option<&LocalOrRemotePath>,
+        repo_path: Option<&PathBuf>,
         ctx: &mut ViewContext<V>,
     ) -> Self {
         let comment_editor = create_readonly_comment_markdown_editor(
@@ -352,7 +353,7 @@ impl CommentViewCard {
     pub(crate) fn update_source<V: View>(
         &mut self,
         new_source: AttachedReviewComment,
-        repo_path: Option<&LocalOrRemotePath>,
+        repo_path: Option<&PathBuf>,
         ctx: &mut ViewContext<V>,
     ) {
         self.comment_editor.update(ctx, |editor, ctx| {
@@ -450,14 +451,12 @@ impl CommentViewCard {
         self.last_updated_duration = Local::now() - self.source.last_update_time;
     }
 
-    fn compute_title(
-        source: &AttachedReviewComment,
-        repo_path: Option<&LocalOrRemotePath>,
-    ) -> String {
+    fn compute_title(source: &AttachedReviewComment, repo_path: Option<&PathBuf>) -> String {
         let file_path = source.target.absolute_file_path().map(|p| {
             repo_path
-                .and_then(|rp| rp.strip_repo_prefix(p))
-                .unwrap_or_else(|| p.display_path())
+                .and_then(|rp| p.strip_prefix(rp).ok())
+                .map(|relative| relative.to_string_lossy().into_owned())
+                .unwrap_or_else(|| p.display().to_string())
         });
         let line_number = source.target.line_number().map(|lc| lc.as_u32() + 1);
 

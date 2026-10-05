@@ -121,7 +121,7 @@ pub fn test_copy_current_path_copies_code_editor_file_path() -> Builder {
                                 code_view
                                     .tab_at(code_view.active_tab_index())
                                     .and_then(|tab| tab.location())
-                                    .map(|path| path.display_path())
+                                    .map(|path| path.display().to_string())
                             })
                     });
                     let Some(expected) = expected else {

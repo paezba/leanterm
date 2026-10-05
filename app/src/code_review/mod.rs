@@ -12,6 +12,8 @@ mod git_repo_models;
 pub mod github_repo_model;
 mod hidden_lines;
 #[cfg_attr(not(feature = "local_fs"), allow(unused_imports))]
+use std::path::PathBuf;
+
 use crate::terminal::view::TerminalView;
 
 pub(crate) mod code_review_header;
@@ -28,7 +30,6 @@ use warpui::{
     AppContext, Entity, EntityId, ModelContext, SingletonEntity, WeakViewHandle, WindowId, id,
 };
 
-use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code_review::telemetry_event::CodeReviewPaneEntrypoint;
 use crate::util::bindings::CustomAction;
 
@@ -37,7 +38,7 @@ use crate::util::bindings::CustomAction;
 /// review and perform follow-up work without relying on event ordering.
 #[derive(Clone)]
 pub struct CodeReviewPanelArg {
-    pub repo_path: Option<LocalOrRemotePath>,
+    pub repo_path: Option<PathBuf>,
     pub terminal_view: WeakViewHandle<TerminalView>,
     pub entrypoint: CodeReviewPaneEntrypoint,
     pub focus_new_pane: bool,

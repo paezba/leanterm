@@ -85,7 +85,6 @@ use warp_core::context_flag::ContextFlag;
 use warp_core::semantic_selection::SemanticSelection;
 use warp_core::user_preferences::GetUserPreferences as _;
 use warp_errors::{report_error, report_if_error};
-use warp_util::local_or_remote_path::LocalOrRemotePath;
 #[cfg(feature = "local_fs")]
 use warp_util::path::LineAndColumnArg;
 use warp_util::path::ShellFamily;
@@ -1812,7 +1811,7 @@ pub struct TerminalView {
     block_completed_callbacks: Vec<TerminalViewCallback>,
 
     /// Path to the current repository, or None if not currently in a repo.
-    current_repo_path: Option<LocalOrRemotePath>,
+    current_repo_path: Option<PathBuf>,
 
     /// The title of the terminal view to show when there is no selected conversation.
     terminal_title: String,
@@ -1880,16 +1879,13 @@ enum BlockMetadataUpdateSource {
 
 impl TerminalView {
     /// Returns the path to the current repository, if any.
-    pub fn current_repo_path(&self) -> Option<&LocalOrRemotePath> {
+    pub fn current_repo_path(&self) -> Option<&PathBuf> {
         self.current_repo_path.as_ref()
     }
 
     /// Returns the local repo path, if the current repo is local.
-    /// Remote repo paths return None — full remote support is a follow-up.
     pub fn current_local_repo_path(&self) -> Option<&Path> {
-        self.current_repo_path
-            .as_ref()
-            .and_then(|p| p.to_local_path())
+        self.current_repo_path.as_deref()
     }
 
     /// Create a SyncEvent for other terminals to use based on
@@ -2675,7 +2671,7 @@ impl TerminalView {
         let needs_pr_info = self.needs_pr_info(ctx);
         if needs_pr_info && self.github_repo_model.is_none() {
             // Acquire a GitHub-info handle for the current repo. The factory
-            // dispatches on the `LocalOrRemotePath` to a local `gh`-driven model
+            // dispatches on the `PathBuf` to a local `gh`-driven model
             // or a remote push receiver, both wired up identically.
             let Some(repo) = self.current_repo_path.clone() else {
                 return;
@@ -2743,7 +2739,7 @@ impl TerminalView {
         }
 
         // No active subscription: create one for the current repo. The factory
-        // dispatches on the `LocalOrRemotePath` to a local watcher-backed model
+        // dispatches on the `PathBuf` to a local watcher-backed model
         // or a remote push receiver, both wired up identically.
         let Some(repo) = self.current_repo_path.clone() else {
             return;
@@ -2803,35 +2799,23 @@ impl TerminalView {
                 ctx.emit(event_constructor(arg));
             }
             GitDeltaPreference::OnlyDirty => {
-                // For remote repos, skip the dirty check — there's no local
-                // GitRepoStatusModel, so the deferred open would never resolve.
-                // The diff chip only appears when the remote shell reports changes,
-                // so the user intent is clear.
-                if self
-                    .current_repo_path
-                    .as_ref()
-                    .is_some_and(|p| p.is_remote())
+                // Check if repo has uncommitted changes via the per-repo sub-model.
+                #[cfg(feature = "local_fs")]
                 {
-                    ctx.emit(event_constructor(arg));
-                } else {
-                    // Check if repo has uncommitted changes via the per-repo sub-model.
-                    #[cfg(feature = "local_fs")]
-                    {
-                        let is_dirty = self
-                            .git_status_metadata(ctx)
-                            .map(|m| !m.stats_against_head.has_no_changes());
-                        match is_dirty {
-                            Some(true) => ctx.emit(event_constructor(arg)),
-                            // Metadata not loaded yet — defer until the next
-                            // git repo status update delivers it.
-                            None => {
-                                self.deferred_code_review_open = Some(DeferredCodeReviewOpen {
-                                    git_delta_preference: delta_pref,
-                                    focus_new_pane,
-                                });
-                            }
-                            Some(false) => {}
+                    let is_dirty = self
+                        .git_status_metadata(ctx)
+                        .map(|m| !m.stats_against_head.has_no_changes());
+                    match is_dirty {
+                        Some(true) => ctx.emit(event_constructor(arg)),
+                        // Metadata not loaded yet — defer until the next
+                        // git repo status update delivers it.
+                        None => {
+                            self.deferred_code_review_open = Some(DeferredCodeReviewOpen {
+                                git_delta_preference: delta_pref,
+                                focus_new_pane,
+                            });
                         }
+                        Some(false) => {}
                     }
                 }
             }
@@ -4660,8 +4644,7 @@ impl TerminalView {
                             }
 
                             match &repo_path_opt {
-                                Some(LocalOrRemotePath::Remote(_)) => {}
-                                Some(LocalOrRemotePath::Local(repo_path)) => {
+                                Some(repo_path) => {
                                     #[cfg(feature = "local_fs")]
                                     {
                                         let Some(active_directory) =
@@ -4694,9 +4677,7 @@ impl TerminalView {
                                             },
                                         );
 
-                                        if old_repo_path.as_ref().and_then(|p| p.to_local_path())
-                                            != Some(repo_path.as_path())
-                                        {
+                                        if old_repo_path.as_deref() != Some(repo_path.as_path()) {
                                             me.clear_git_repo_status_subscription(ctx);
                                             me.update_git_status_subscription(ctx);
                                         }
@@ -10353,12 +10334,12 @@ impl TerminalView {
             .map(|path| path.to_string_lossy().into_owned())
     }
 
-    /// Returns the active session's CWD as a `LocalOrRemotePath`.
+    /// Returns the active session's CWD as a `PathBuf`.
     ///
     /// For local sessions the CWD is canonicalized via `dunce::canonicalize`
     /// and wrapped as `Local`. Returns `None` when no CWD is available or the
     /// session is remote.
-    pub fn pwd_as_local_or_remote(&self, ctx: &AppContext) -> Option<LocalOrRemotePath> {
+    pub fn pwd_as_local_or_remote(&self, ctx: &AppContext) -> Option<PathBuf> {
         let session_id = self.active_block_session_id()?;
         let session = self.sessions.as_ref(ctx).get(session_id)?;
         let cwd_str = self
@@ -10373,7 +10354,7 @@ impl TerminalView {
                 .and_then(|data| data.maybe_convert_absolute_path(cwd_str))
                 .unwrap_or_else(|| PathBuf::from(cwd_str));
             let canonical = dunce::canonicalize(&path).ok()?;
-            Some(LocalOrRemotePath::Local(canonical))
+            Some(canonical)
         } else {
             None
         }

@@ -1,11 +1,11 @@
 //! Helpers for constructing repo detection calls.
 
 use std::future::Future;
+use std::path::PathBuf;
 
 #[cfg(not(target_family = "wasm"))]
 use repo_metadata::repositories::DetectedRepositories;
 use repo_metadata::repositories::RepoDetectionSource;
-use warp_util::local_or_remote_path::LocalOrRemotePath;
 use warpui::AppContext;
 #[cfg(not(target_family = "wasm"))]
 use warpui::SingletonEntity;
@@ -19,7 +19,7 @@ pub fn detect_possible_git_repo(
     active_directory: &str,
     source: RepoDetectionSource,
     ctx: &mut AppContext,
-) -> impl Future<Output = Option<LocalOrRemotePath>> + use<> {
+) -> impl Future<Output = Option<PathBuf>> + use<> {
     DetectedRepositories::handle(ctx).update(ctx, |repos, ctx| {
         repos.detect_possible_git_repo(active_directory, source, ctx)
     })
@@ -32,6 +32,6 @@ pub fn detect_possible_git_repo(
     _active_directory: &str,
     _source: RepoDetectionSource,
     _ctx: &mut AppContext,
-) -> impl Future<Output = Option<LocalOrRemotePath>> + use<> {
+) -> impl Future<Output = Option<PathBuf>> + use<> {
     futures::future::ready(None)
 }

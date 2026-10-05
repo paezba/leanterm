@@ -1,5 +1,6 @@
+use std::path::PathBuf;
+
 use warp_ripgrep::search::Submatch;
-use warp_util::local_or_remote_path::LocalOrRemotePath;
 
 pub struct SearchConfig {
     pub use_regex: bool,
@@ -10,7 +11,7 @@ pub struct SearchConfig {
 /// the local filesystem or on a remote host.
 #[derive(Clone, Debug)]
 pub struct GlobalSearchMatch {
-    pub location: LocalOrRemotePath,
+    pub location: PathBuf,
     pub line_number: u32,
     /// Original 1-based character column in the file. This is captured
     /// before display-only whitespace trimming so opening a result navigates

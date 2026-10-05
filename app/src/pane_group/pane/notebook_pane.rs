@@ -175,7 +175,7 @@ pub(super) fn subscribe_to_link_model(
         LinkEvent::OpenFileNotebook { path, session } => {
             // Opening local files is delegated to the parent workspace.
             ctx.emit(crate::pane_group::Event::OpenFileInWarp {
-                path: crate::code::buffer_location::LocalOrRemotePath::Local(path.clone()),
+                path: path.clone(),
                 session: session.clone(),
             })
         }

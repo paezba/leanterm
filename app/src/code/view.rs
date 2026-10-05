@@ -29,7 +29,6 @@ use warpui::{
     ViewHandle, WindowId, id,
 };
 
-use super::buffer_location::LocalOrRemotePath;
 use super::diff_viewer::DiffViewer;
 use super::editor::view::{CodeEditorEvent, CodeEditorView};
 use super::editor_management::CodeSource;
@@ -61,7 +60,7 @@ use crate::settings::CodeSettings;
 use crate::tab::TAB_BAR_BORDER_HEIGHT;
 use crate::ui_components::blended_colors;
 use crate::ui_components::buttons::icon_button;
-use crate::util::path::{display_name_with_host, display_path_with_host};
+use crate::util::path::{display_name, display_path};
 use crate::view_components::{DismissibleToast, MarkdownToggleEvent, MarkdownToggleView};
 use crate::workspace::{ActiveSession, TabBarDropTargetData, ToastStack};
 
@@ -167,11 +166,11 @@ pub enum CodeViewAction {
 pub enum CodeViewEvent {
     Pane(PaneEvent),
     TabChanged {
-        location: Option<LocalOrRemotePath>,
+        location: Option<PathBuf>,
         tab_index: usize,
     },
     FileOpened {
-        location: LocalOrRemotePath,
+        location: PathBuf,
         tab_index: usize,
     },
     OpenLspLogs {
@@ -188,7 +187,7 @@ struct TabDataMouseStateHandles {
 
 #[derive(Clone)]
 pub struct TabData {
-    location: Option<LocalOrRemotePath>,
+    location: Option<PathBuf>,
     editor_view: ViewHandle<LocalCodeEditorView>,
     mouse_state_handles: TabDataMouseStateHandles,
     preview: bool,
@@ -203,16 +202,14 @@ pub enum PendingSaveIntent {
 
 impl TabData {
     /// Returns the file location (local or remote), if any.
-    pub fn location(&self) -> Option<&LocalOrRemotePath> {
+    pub fn location(&self) -> Option<&PathBuf> {
         self.location.as_ref()
     }
 
-    /// Returns the local filesystem path, if this tab is backed by a local file.
-    /// Returns `None` for remote files and untitled tabs.
+    /// Returns the filesystem path, if this tab is backed by a file.
+    /// Returns `None` for untitled tabs.
     pub fn local_path(&self) -> Option<PathBuf> {
-        self.location
-            .as_ref()
-            .and_then(|loc| loc.to_local_path().map(Path::to_path_buf))
+        self.location.clone()
     }
 }
 
@@ -264,7 +261,9 @@ impl CodeView {
         let renders_in_notebook_viewer = self
             .tab_at(self.active_tab_index)
             .and_then(|t| t.location.as_ref())
-            .map(|loc| renders_in_warp_notebook_viewer(std::path::Path::new(&loc.display_path())))
+            .map(|loc| {
+                renders_in_warp_notebook_viewer(std::path::Path::new(&loc.display().to_string()))
+            })
             .unwrap_or(false);
 
         if !renders_in_notebook_viewer {
@@ -303,7 +302,7 @@ impl CodeView {
     ) -> Self {
         let mut view = Self::new_internal(source, ctx);
         for tab_snapshot in tabs {
-            let location = tab_snapshot.path.clone().map(LocalOrRemotePath::Local);
+            let location = tab_snapshot.path.clone();
             let tab_data = view.build_tab_data(location, false, ctx);
             view.tab_group.push(tab_data);
         }
@@ -354,10 +353,10 @@ impl CodeView {
     /// related tooling run on the local machine.
     fn construct_editor_for_location(
         &mut self,
-        location: LocalOrRemotePath,
+        location: PathBuf,
         ctx: &mut ViewContext<Self>,
     ) -> ViewHandle<LocalCodeEditorView> {
-        let is_local = matches!(location, LocalOrRemotePath::Local(_));
+        let is_local = matches!(location, _);
         ctx.add_typed_action_view(|ctx| {
             let editor = LocalCodeEditorView::new_with_global_buffer(
                 location,
@@ -431,7 +430,7 @@ impl CodeView {
 
     fn build_tab_data(
         &mut self,
-        location: Option<LocalOrRemotePath>,
+        location: Option<PathBuf>,
         preview: bool,
         ctx: &mut ViewContext<Self>,
     ) -> TabData {
@@ -528,11 +527,7 @@ impl CodeView {
                     column_num: Some(*column),
                 };
 
-                me.open_or_focus_existing(
-                    Some(LocalOrRemotePath::Local(path.to_path_buf())),
-                    Some(line_col),
-                    ctx,
-                );
+                me.open_or_focus_existing(Some(path.to_path_buf()), Some(line_col), ctx);
                 if let Some(editor) = me.tab_at(me.active_tab_index()).map(|tab| &tab.editor_view) {
                     editor.update(ctx, |editor, ctx| {
                         editor.cursor_at(Point::new(line_1based as u32, *column as u32), ctx);
@@ -619,7 +614,7 @@ impl CodeView {
         if let Some(existing_index) = self
             .tab_group
             .iter()
-            .position(|tab| tab.location.as_ref() == Some(&LocalOrRemotePath::Local(path.clone())))
+            .position(|tab| tab.location.as_ref() == Some(&path.clone()))
         {
             self.set_active_tab_index(existing_index, ctx);
             self.promote_if_preview(ctx);
@@ -628,8 +623,7 @@ impl CodeView {
 
         // Find the existing preview tab (if any) and replace it with a new GlobalBuffer-backed editor
         if let Some((preview_index, _)) = self.preview_tab() {
-            let new_tab =
-                self.build_tab_data(Some(LocalOrRemotePath::Local(path.clone())), true, ctx);
+            let new_tab = self.build_tab_data(Some(path.clone()), true, ctx);
             self.tab_group[preview_index] = new_tab;
 
             GlobalBufferModel::handle(ctx).update(ctx, |model, ctx| {
@@ -641,14 +635,14 @@ impl CodeView {
         }
 
         // Create a new preview tab
-        let new_tab = self.build_tab_data(Some(LocalOrRemotePath::Local(path.clone())), true, ctx);
+        let new_tab = self.build_tab_data(Some(path.clone()), true, ctx);
 
         self.tab_group.push(new_tab);
         let active_tab_index = self.tab_group.len() - 1;
         self.set_active_tab_index(active_tab_index, ctx);
 
         ctx.emit(CodeViewEvent::FileOpened {
-            location: LocalOrRemotePath::Local(path),
+            location: path,
             tab_index: self.active_tab_index,
         });
     }
@@ -667,7 +661,7 @@ impl CodeView {
 
     pub fn open_or_focus_existing(
         &mut self,
-        location: Option<LocalOrRemotePath>,
+        location: Option<PathBuf>,
         line_col: Option<LineAndColumnArg>,
         ctx: &mut ViewContext<Self>,
     ) {
@@ -684,7 +678,7 @@ impl CodeView {
 
     fn focus_existing_tab_if_present(
         &mut self,
-        location: Option<&LocalOrRemotePath>,
+        location: Option<&PathBuf>,
         ctx: &mut ViewContext<Self>,
     ) -> Option<usize> {
         let location = location?;
@@ -741,7 +735,7 @@ impl CodeView {
 
     fn open_new_tab(
         &mut self,
-        location: Option<LocalOrRemotePath>,
+        location: Option<PathBuf>,
         line_col: Option<LineAndColumnArg>,
         ctx: &mut ViewContext<Self>,
     ) {
@@ -784,7 +778,7 @@ impl CodeView {
             .is_some_and(|t| t.editor_view.as_ref(ctx).is_new_file());
 
         let title = match &file_location {
-            Some(location) => display_path_with_host(location, false),
+            Some(location) => display_path(location, false),
             None => "Untitled".to_string(),
         };
 
@@ -1031,7 +1025,7 @@ impl CodeView {
             let file_name = tab
                 .location
                 .as_ref()
-                .map(|loc| display_name_with_host(loc))
+                .map(|loc| display_name(loc))
                 .filter(|n| !n.is_empty());
             let summary = UnsavedStateSummary::for_editor_tab(
                 file_name,
@@ -1257,7 +1251,7 @@ impl CodeView {
     ) {
         for tab in self.tab_group.iter_mut() {
             if tab.local_path().is_some_and(|path| path == old_path) {
-                tab.location = Some(LocalOrRemotePath::Local(new_path.to_path_buf()));
+                tab.location = Some(new_path.to_path_buf());
                 tab.editor_view.update(ctx, |editor, ctx| {
                     let was_unsaved = editor.has_unsaved_changes(ctx);
 
@@ -1431,7 +1425,7 @@ impl CodeView {
         let file_name = tab_data
             .location
             .as_ref()
-            .map(|loc| display_name_with_host(loc))
+            .map(|loc| display_name(loc))
             .filter(|n| !n.is_empty())
             .unwrap_or_else(|| "Untitled".to_string());
         let language_icon =
@@ -1809,7 +1803,7 @@ impl CodeView {
             .and_then(|tab| {
                 tab.location
                     .as_ref()
-                    .map(|loc| display_name_with_host(loc))
+                    .map(|loc| display_name(loc))
                     .filter(|n| !n.is_empty())
             })
             .unwrap_or_else(|| "Untitled".to_string());
@@ -1881,7 +1875,7 @@ impl CodeView {
                 if hover_state.is_hovered() {
                     let tooltip_path = tab
                         .and_then(|tab| tab.location())
-                        .map(|loc| loc.display_path());
+                        .map(|loc| loc.display().to_string());
                     if let Some(ref path) = tooltip_path {
                         let tooltip = appearance
                             .ui_builder()
@@ -1996,7 +1990,7 @@ impl CodeView {
                     active_location
                         .map(|loc| {
                             renders_in_warp_notebook_viewer(std::path::Path::new(
-                                &loc.display_path(),
+                                &loc.display().to_string(),
                             ))
                         })
                         .unwrap_or(false)
@@ -2015,7 +2009,7 @@ impl CodeView {
 
     /// Merges tabs from another `CodeView`, avoiding duplicates and updating the active tab index.
     pub fn merge_tabs(&mut self, source_code_view: &CodeView, ctx: &mut ViewContext<Self>) {
-        let existing_locations_to_idx: HashMap<&LocalOrRemotePath, usize> = self
+        let existing_locations_to_idx: HashMap<&PathBuf, usize> = self
             .tab_group
             .iter()
             .enumerate()
@@ -2114,7 +2108,7 @@ impl TypedActionView for CodeView {
                     .and_then(|t| t.location.as_ref())
                 {
                     ctx.clipboard()
-                        .write(ClipboardContent::plain_text(location.display_path()));
+                        .write(ClipboardContent::plain_text(location.display().to_string()));
                 }
             }
             #[cfg(feature = "local_fs")]

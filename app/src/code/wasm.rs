@@ -7,7 +7,6 @@ use warpui::{
     AppContext, Element, Entity, ModelHandle, TypedActionView, View, ViewContext, ViewHandle,
 };
 
-use super::buffer_location::LocalOrRemotePath;
 use super::editor_management::CodeSource;
 use super::local_code_editor::LocalCodeEditorView;
 use crate::pane_group::focus_state::PaneFocusHandle;
@@ -40,11 +39,11 @@ pub enum CodeViewAction {
 pub enum CodeViewEvent {
     Pane(PaneEvent),
     TabChanged {
-        location: Option<LocalOrRemotePath>,
+        location: Option<PathBuf>,
         tab_index: usize,
     },
     FileOpened {
-        location: LocalOrRemotePath,
+        location: PathBuf,
         tab_index: usize,
     },
     OpenLspLogs {
@@ -79,7 +78,7 @@ struct TabDataMouseStateHandles {
 #[allow(unused)]
 #[derive(Clone)]
 pub struct TabData {
-    location: Option<LocalOrRemotePath>,
+    location: Option<PathBuf>,
     editor_view: ViewHandle<LocalCodeEditorView>,
     mouse_state_handles: TabDataMouseStateHandles,
     drag_position: Option<TabBarDragPosition>,
@@ -87,7 +86,7 @@ pub struct TabData {
 
 impl TabData {
     /// Returns the file location (local or remote), if any.
-    pub fn location(&self) -> Option<&LocalOrRemotePath> {
+    pub fn location(&self) -> Option<&PathBuf> {
         self.location.as_ref()
     }
 
@@ -137,7 +136,7 @@ impl CodeView {
 
     pub fn open_or_focus_existing(
         &mut self,
-        location: Option<LocalOrRemotePath>,
+        location: Option<PathBuf>,
         line_col: Option<LineAndColumnArg>,
         ctx: &mut ViewContext<Self>,
     ) {

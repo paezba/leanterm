@@ -8,7 +8,6 @@ use warpui::units::Pixels;
 use warpui::{AppContext, ViewContext};
 
 use super::{CodeReviewView, CodeReviewViewState, FILE_HEADER_HEIGHT};
-use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code::editor::line::EditorLineLocation;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -362,8 +361,8 @@ impl CodeReviewView {
         ctx: &AppContext,
     ) -> Option<String> {
         // Test helper: probe by both the raw path (wrapped as a local
-        // `LocalOrRemotePath`) and by the repo-joined absolute path.
-        let local_path = LocalOrRemotePath::Local(PathBuf::from(path));
+        // `PathBuf`) and by the repo-joined absolute path.
+        let local_path = PathBuf::from(path);
         let editor = if let Some(editor) = self.editor_for_path(&local_path, ctx) {
             editor
         } else {

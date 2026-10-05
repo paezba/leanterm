@@ -21,6 +21,7 @@ pub mod workflow_pane;
 
 use std::any::Any;
 use std::fmt::Display;
+use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -34,7 +35,6 @@ use warpui::{
 pub use self::view::{PaneHeaderAction, PaneHeaderCustomAction, PaneView, PaneViewEvent};
 use super::{ActivationReason, LeafContents, PaneGroup, PaneGroupAction};
 #[cfg(feature = "local_fs")]
-use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code::view::CodeView;
 use crate::drive::sharing::ShareableObject;
 use crate::env_vars::view::env_var_collection::EnvVarCollectionView;
@@ -942,7 +942,7 @@ pub enum PaneEvent {
     ClearHoveredTabIndex,
     #[cfg(feature = "local_fs")]
     ReplaceWithCodePane {
-        path: LocalOrRemotePath,
+        path: PathBuf,
         source: Option<crate::code::editor_management::CodeSource>,
         /// Vertical scroll fraction (`0..=1`) captured from the outgoing pane, to restore on the
         /// new pane. `None` scrolls to the top. Wrapped in `OrderedFloat` so `PaneEvent` can
@@ -951,7 +951,7 @@ pub enum PaneEvent {
     },
     #[cfg(feature = "local_fs")]
     ReplaceWithFilePane {
-        path: LocalOrRemotePath,
+        path: PathBuf,
         source: Option<crate::code::editor_management::CodeSource>,
         /// Vertical scroll fraction (`0..=1`) captured from the outgoing pane, to restore on the
         /// new pane. `None` scrolls to the top. Wrapped in `OrderedFloat` so `PaneEvent` can

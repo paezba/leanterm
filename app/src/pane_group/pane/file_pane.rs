@@ -1,6 +1,6 @@
+use std::path::PathBuf;
 use std::sync::Arc;
 
-use warp_util::local_or_remote_path::LocalOrRemotePath;
 use warpui::{AppContext, ModelHandle, View, ViewContext, ViewHandle};
 
 use super::notebook_pane::subscribe_to_link_model;
@@ -41,7 +41,7 @@ impl FilePane {
     /// the pane waits for a local session to become active. Remote paths are loaded directly
     /// via the remote server.
     pub fn new<V: View>(
-        path: Option<LocalOrRemotePath>,
+        path: Option<PathBuf>,
         target_session: Option<Arc<Session>>,
         #[cfg(feature = "local_fs")] code_source: Option<CodeSource>,
         ctx: &mut ViewContext<V>,

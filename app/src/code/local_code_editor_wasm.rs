@@ -16,7 +16,6 @@ use warpui::{
 use super::ImmediateSaveError;
 pub use super::diff_viewer::DisplayMode;
 use super::editor::view::CodeEditorView;
-use crate::code::buffer_location::LocalOrRemotePath as BufferFileLocation;
 use crate::code::editor::EditorReviewComment;
 use crate::code_review::comments::CommentId;
 use crate::terminal::TerminalView;
@@ -100,7 +99,7 @@ impl LocalCodeEditorView {
 
     /// Returns the unified file location (local or remote).
     /// The WASM stub has no backing file, so this always returns `None`.
-    pub fn file_location(&self) -> Option<&BufferFileLocation> {
+    pub fn file_location(&self) -> Option<&PathBuf> {
         None
     }
 }

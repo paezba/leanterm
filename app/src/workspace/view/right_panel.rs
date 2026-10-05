@@ -23,7 +23,6 @@ use warpui::{
 };
 
 use crate::appearance::{Appearance, AppearanceEvent};
-use crate::code::buffer_location::LocalOrRemotePath;
 use crate::code_review::code_review_header::HEADER_BUTTON_PADDING;
 #[cfg(feature = "local_fs")]
 use crate::code_review::code_review_view::CodeReviewAction;
@@ -46,7 +45,7 @@ use crate::ui_components::icons;
 use crate::util::bindings::{CustomAction, keybinding_name_to_display_string};
 #[cfg(feature = "local_fs")]
 use crate::util::openable_file_type::FileTarget;
-use crate::util::path::{display_name_with_host, display_path_with_host};
+use crate::util::path::{display_name, display_path};
 use crate::view_components::action_button::{ActionButton, PaneHeaderTheme};
 #[cfg(feature = "local_fs")]
 use crate::view_components::action_button::{NakedTheme, TooltipAlignment};
@@ -77,11 +76,11 @@ impl ReviewActionTargetProvider for RightPanelReviewActionTargetProvider {
 
 struct CodeReviewState {
     dropdown: ViewHandle<Dropdown<RightPanelAction>>,
-    available_repos: Vec<LocalOrRemotePath>,
+    available_repos: Vec<PathBuf>,
     /// The repository path of the focused terminal
-    focused_repo_path: Option<LocalOrRemotePath>,
+    focused_repo_path: Option<PathBuf>,
     /// The repository path of the repository selected in the dropdown
-    selected_repo_path: Option<LocalOrRemotePath>,
+    selected_repo_path: Option<PathBuf>,
     /// Avoid showing the jump-to-repo button if the focused repo has not changed
     did_focused_repo_change: bool,
 }
@@ -150,17 +149,13 @@ impl CodeReviewState {
     #[cfg(not(feature = "local_fs"))]
     fn set_available_repos(
         &mut self,
-        _repos: Vec<LocalOrRemotePath>,
+        _repos: Vec<PathBuf>,
         _ctx: &mut ViewContext<RightPanelView>,
     ) {
     }
 
     #[cfg(feature = "local_fs")]
-    fn set_available_repos(
-        &mut self,
-        repos: Vec<LocalOrRemotePath>,
-        ctx: &mut ViewContext<RightPanelView>,
-    ) {
+    fn set_available_repos(&mut self, repos: Vec<PathBuf>, ctx: &mut ViewContext<RightPanelView>) {
         let should_clear = self
             .selected_repo_path
             .as_ref()
@@ -184,23 +179,19 @@ impl CodeReviewState {
     #[cfg(not(feature = "local_fs"))]
     pub fn set_selected_repo(
         &mut self,
-        _repo_path: LocalOrRemotePath,
+        _repo_path: PathBuf,
         _ctx: &mut ViewContext<RightPanelView>,
     ) {
     }
 
     #[cfg(feature = "local_fs")]
-    pub fn set_selected_repo(
-        &mut self,
-        repo_path: LocalOrRemotePath,
-        ctx: &mut ViewContext<RightPanelView>,
-    ) {
+    pub fn set_selected_repo(&mut self, repo_path: PathBuf, ctx: &mut ViewContext<RightPanelView>) {
         self.set_selected_repo_internal(repo_path, true, ctx);
     }
 
     pub fn set_focused_repo(
         &mut self,
-        repo_path: Option<LocalOrRemotePath>,
+        repo_path: Option<PathBuf>,
         ctx: &mut ViewContext<RightPanelView>,
     ) {
         self.did_focused_repo_change = true;
@@ -214,13 +205,10 @@ impl CodeReviewState {
     #[cfg(feature = "local_fs")]
     fn set_selected_repo_internal(
         &mut self,
-        repo_path: LocalOrRemotePath,
+        repo_path: PathBuf,
         update_dropdown: bool,
         ctx: &mut ViewContext<RightPanelView>,
     ) {
-        if repo_path.is_remote() {
-            return;
-        }
         if self.selected_repo_path.as_ref() == Some(&repo_path) {
             return;
         }
@@ -237,12 +225,8 @@ impl CodeReviewState {
     }
 
     #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
-    fn get_repo_display_name(
-        &self,
-        repo_path: &LocalOrRemotePath,
-        _ctx: &AppContext,
-    ) -> Option<String> {
-        let name = display_name_with_host(repo_path);
+    fn get_repo_display_name(&self, repo_path: &PathBuf, _ctx: &AppContext) -> Option<String> {
+        let name = display_name(repo_path);
         (!name.is_empty()).then_some(name)
     }
 
@@ -292,7 +276,7 @@ impl CodeReviewState {
 pub enum RightPanelAction {
     ToggleFileSidebar,
     SelectRepo {
-        repo_path: LocalOrRemotePath,
+        repo_path: PathBuf,
         from_dropdown: bool,
     },
     OpenRepository,
@@ -310,7 +294,7 @@ pub enum RightPanelEvent {
         line_col: Option<LineAndColumnArg>,
     },
     OpenFileInNewTab {
-        path: LocalOrRemotePath,
+        path: PathBuf,
         line_and_column: Option<LineAndColumnArg>,
     },
     #[cfg(not(target_family = "wasm"))]
@@ -431,18 +415,14 @@ impl RightPanelView {
         ctx.notify();
     }
 
-    pub fn selected_repo_path(&self) -> Option<&LocalOrRemotePath> {
+    pub fn selected_repo_path(&self) -> Option<&PathBuf> {
         self.code_review_state
             .as_ref()
             .and_then(|s| s.selected_repo_path.as_ref())
     }
 
     #[cfg(feature = "local_fs")]
-    pub fn update_selected_repo(
-        &mut self,
-        repo_path: LocalOrRemotePath,
-        ctx: &mut ViewContext<Self>,
-    ) {
+    pub fn update_selected_repo(&mut self, repo_path: PathBuf, ctx: &mut ViewContext<Self>) {
         self.handle_action(
             &RightPanelAction::SelectRepo {
                 repo_path,
@@ -539,7 +519,7 @@ impl RightPanelView {
         if let Some(state) = &mut self.code_review_state {
             let (active_repositories, saved_selection) =
                 working_directories_model.read(ctx, |model, _| {
-                    let repos: Vec<LocalOrRemotePath> = model
+                    let repos: Vec<PathBuf> = model
                         .most_recent_repositories_for_pane_group(pane_group_id)
                         .map(|repos| repos.collect())
                         .unwrap_or_default();
@@ -575,7 +555,7 @@ impl RightPanelView {
     /// Will only update repo_path if one is not already set
     pub fn open_code_review(
         &mut self,
-        repo_path: Option<LocalOrRemotePath>,
+        repo_path: Option<PathBuf>,
         diff_state_model: ModelHandle<DiffStateModel>,
         ctx: &mut ViewContext<Self>,
     ) {
@@ -586,9 +566,6 @@ impl RightPanelView {
         else {
             return;
         };
-        if repo_path.is_remote() {
-            return;
-        }
         let pane_group_id = active_pane_group.id();
 
         if repo_dropdown_state.selected_repo_path.is_none() {
@@ -618,7 +595,7 @@ impl RightPanelView {
     fn close_code_review_view(
         &self,
         pane_group_id: EntityId,
-        repo_path: &LocalOrRemotePath,
+        repo_path: &PathBuf,
         ctx: &mut ViewContext<Self>,
     ) {
         if let Some(code_review_view) = self
@@ -836,7 +813,7 @@ impl RightPanelView {
         let diff_stats = crv.loaded_diff_stats();
 
         let repo_path_element = repo_path.map(|repo_path| {
-            let display_path = display_path_with_host(repo_path, true);
+            let display_path = display_path(repo_path, true);
             Container::new(
                 Text::new_inline(
                     format!("{display_path}:"),
@@ -1064,7 +1041,7 @@ impl RightPanelView {
 
     fn create_code_review_view(
         &self,
-        repo_path: &LocalOrRemotePath,
+        repo_path: &PathBuf,
         diff_state_model: ModelHandle<DiffStateModel>,
         pane_group_id: EntityId,
         ctx: &mut ViewContext<Self>,
@@ -1155,14 +1132,7 @@ impl RightPanelView {
         Some(code_review_view)
     }
 
-    fn ensure_code_review_view_exists(
-        &mut self,
-        repo_path: &LocalOrRemotePath,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        if repo_path.is_remote() {
-            return;
-        }
+    fn ensure_code_review_view_exists(&mut self, repo_path: &PathBuf, ctx: &mut ViewContext<Self>) {
         let Some(pane_group) = &self.active_pane_group else {
             return;
         };
