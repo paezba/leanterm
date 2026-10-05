@@ -2,8 +2,6 @@ use std::sync::Arc;
 
 use chrono::Local;
 use futures_lite::future::yield_now;
-use ordered_float::OrderedFloat;
-use warp_core::features::FeatureFlag;
 use warpui::{AppContext, SingletonEntity};
 
 use super::HistorySearchItem;
@@ -64,10 +62,6 @@ pub(crate) fn fuzzy_match_history(
     snapshot: HistorySnapshot,
 ) -> BoxFuture<'static, Result<Vec<QueryResult<CommandSearchItemAction>>, DataSourceRunErrorWrapper>>
 {
-    if !FeatureFlag::HistorySearchRankingV2.is_enabled() {
-        return fuzzy_match_history_legacy(snapshot);
-    }
-
     Box::pin(async move {
         let mut results = Vec::new();
         let now = Local::now();
@@ -91,39 +85,6 @@ pub(crate) fn fuzzy_match_history(
                 }) else {
                     continue;
                 };
-
-                results.push(
-                    HistorySearchItem {
-                        entry: entry.clone(),
-                        match_result,
-                        score,
-                    }
-                    .into(),
-                );
-            }
-            yield_now().await;
-        }
-
-        Ok(results)
-    })
-}
-
-fn fuzzy_match_history_legacy(
-    snapshot: HistorySnapshot,
-) -> BoxFuture<'static, Result<Vec<QueryResult<CommandSearchItemAction>>, DataSourceRunErrorWrapper>>
-{
-    Box::pin(async move {
-        let mut results = Vec::new();
-
-        for chunk in snapshot.commands.chunks(CHUNK_SIZE) {
-            for entry in chunk {
-                let Some(match_result) = fuzzy_match::match_indices_case_insensitive(
-                    entry.command.as_str(),
-                    snapshot.query_text.as_str(),
-                ) else {
-                    continue;
-                };
-                let score = OrderedFloat(match_result.score as f64);
 
                 results.push(
                     HistorySearchItem {

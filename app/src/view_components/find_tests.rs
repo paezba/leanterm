@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use warp_core::ui::appearance::Appearance;
 use warpui::App;
 use warpui::platform::WindowStyle;

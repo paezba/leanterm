@@ -3,7 +3,6 @@ use std::{fmt, iter, mem};
 
 use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::Vector2F;
-use warp_core::features::FeatureFlag;
 use warp_errors::report_error;
 use warpui::elements::{
     ChildAnchor, ConstrainedBox, Container, DispatchEventResult, Element, Empty, EventHandler,
@@ -27,11 +26,7 @@ pub(in crate::pane_group) const DEFAULT_FLEX_VALUE: f32 = 1.0;
 pub(in crate::pane_group) const DEFAULT_FLEX_SIZE: PaneFlex = PaneFlex(DEFAULT_FLEX_VALUE);
 
 pub fn get_divider_thickness() -> f32 {
-    if FeatureFlag::MinimalistUI.is_enabled() {
-        1.0
-    } else {
-        2.0
-    }
+    1.0
 }
 
 // Extra padding for the divider to make it easier to resize.
@@ -1102,11 +1097,7 @@ impl PaneBranch {
         // Add actual dividers as positioned children anchored to their placeholders
         // (the reason we have to do it this way is explained in the large comment above)
         for (divider, position_id) in divider_positions {
-            let divider_element = if FeatureFlag::MinimalistUI.is_enabled() {
-                create_minimalist_divider(self.axis, divider, theme)
-            } else {
-                create_divider(self.axis, divider, theme)
-            };
+            let divider_element = create_minimalist_divider(self.axis, divider, theme);
 
             stack.add_positioned_child(
                 divider_element,

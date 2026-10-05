@@ -635,8 +635,6 @@ fn respond_to_native_shell_completions(
 
 #[test]
 fn combined_completions_show_file_paths_after_empty_native_results() {
-    let _native_completions_flag = FeatureFlag::NativeShellCompletions.override_enabled(true);
-
     App::test((), |mut app| async move {
         initialize_app(&mut app);
         app.update(|ctx| {
@@ -693,8 +691,6 @@ fn combined_completions_show_file_paths_after_empty_native_results() {
 
 #[test]
 fn combined_completions_preserve_nonempty_native_results() {
-    let _native_completions_flag = FeatureFlag::NativeShellCompletions.override_enabled(true);
-
     App::test((), |mut app| async move {
         initialize_app(&mut app);
         app.update(|ctx| {
@@ -1477,7 +1473,7 @@ fn test_tab_completion_common_prefix_shorter() {
             input.input_tab(ctx);
         });
         input.read(&app, |input, ctx| {
-            assert_eq!(input.buffer_text(ctx), "cd foo/b");
+            assert_eq!(input.buffer_text(ctx), "cd foo/Bar");
         });
     });
 }
@@ -1540,7 +1536,7 @@ fn test_cursor_movement() {
                 match_strategy: MatchStrategy::CaseInsensitive,
             },
             trigger: CompletionsTrigger::Keybinding,
-            menu_position: TabCompletionsMenuPosition::AtLastCursor,
+            menu_position: TabCompletionsMenuPosition::AtStartOfReplacementSpan,
         };
         input.read(&app, |input, ctx| {
             assert_eq!(input.buffer_text(ctx), "cd Do");

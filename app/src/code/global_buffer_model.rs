@@ -9,7 +9,6 @@ use futures_util::stream::AbortHandle;
 use lsp::types::TextDocumentContentChangeEvent;
 use lsp::{LspManagerModel, LspServerLogLevel, LspServerModel};
 use vec1::vec1;
-use warp_core::features::FeatureFlag;
 use warp_editor::content::buffer::Buffer;
 use warp_editor::content::diff::{TextDiff, text_diff};
 use warp_editor::content::edit::PreciseDelta;
@@ -276,7 +275,7 @@ impl GlobalBufferModel {
                 file_id,
                 content_version: new_version,
             });
-        } else if FeatureFlag::IncrementalAutoReload.is_enabled() {
+        } else {
             // Auto-reload: spawn background task for diff computation
             Self::start_background_diff_parse(
                 file_id,
@@ -287,20 +286,6 @@ impl GlobalBufferModel {
                 new_version,
                 ctx,
             );
-        } else {
-            // Fallback: synchronous replace_all (non-incremental)
-            buffer.update(ctx, |buffer, ctx| {
-                buffer.replace_all(content, ctx);
-                buffer.set_version(new_version);
-            });
-
-            state.set_base_content_version(new_version);
-
-            ctx.emit(GlobalBufferModelEvent::BufferUpdatedFromFileEvent {
-                file_id,
-                success: true,
-                content_version: new_version,
-            });
         }
     }
 

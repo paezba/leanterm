@@ -917,9 +917,6 @@ impl GridHandler {
     /// detection reduces to "walk left/right while the next adjacent cell
     /// carries the same `HyperlinkId`."
     pub fn hyperlink_at_point(&self, displayed_point: Point) -> Option<Link> {
-        if !FeatureFlag::OscHyperlinks.is_enabled() {
-            return None;
-        }
         let original_point = self.maybe_translate_point_from_displayed_to_original(displayed_point);
         let row_idx = original_point.row;
 
@@ -966,9 +963,6 @@ impl GridHandler {
     /// any. Cheaper than `hyperlink_at_point` when the caller only needs the
     /// destination (e.g. tooltip text or click-open).
     pub fn hyperlink_uri_at_point(&self, displayed_point: Point) -> Option<&str> {
-        if !FeatureFlag::OscHyperlinks.is_enabled() {
-            return None;
-        }
         let original_point = self.maybe_translate_point_from_displayed_to_original(displayed_point);
         let grid_line = self.row(original_point.row)?;
         if original_point.col >= grid_line.line_length() {

@@ -80,7 +80,6 @@ use version_compare::Cmp;
 pub use video_recording::*;
 use warp::appearance::Appearance;
 use warp::cmd_or_ctrl_shift;
-use warp::features::FeatureFlag;
 use warp::integration_testing::assertions::assert_binding_display_string;
 use warp::integration_testing::block::{
     BlockPosition, LinePosition, assert_block_visible, assert_bottom_of_block_approx_at,
@@ -3740,8 +3739,6 @@ pub fn test_add_windows_correct_position_and_cascade() -> Builder {
 }
 
 pub fn test_open_new_tab_with_specific_shell_from_new_session_menu() -> Builder {
-    FeatureFlag::ShellSelector.set_enabled(true);
-
     // Consults the AvailableShells model to find a shell based on the shell type,
     // gets the display name, and then clicks on that entry in the new session menu.
     fn new_tab_with_click_on_shell(shell: ShellType) -> TestStep {
@@ -6740,7 +6737,6 @@ pub fn test_pass_control_sequences_to_long_running_block() -> Builder {
 /// 4. Close the window before grace period expires
 /// 5. Verify cleanup handles missing window gracefully
 pub fn test_undo_close_stack_timeout_cleanup() -> Builder {
-    FeatureFlag::UndoClosedPanes.set_enabled(true);
     new_builder()
         // This test is Mac-only due to differences in window management on Linux
         .set_should_run_test(|| cfg!(target_os = "macos"))

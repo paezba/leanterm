@@ -1,14 +1,12 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use pane_group::{PaneState, SplitPaneState, TerminalPaneId};
 #[cfg(feature = "local_fs")]
 use repo_metadata::RepoMetadataModel;
 use repo_metadata::repositories::DetectedRepositories;
 use repo_metadata::watcher::DirectoryWatcher;
 #[cfg(feature = "local_fs")]
 use tempfile::TempDir;
-use terminal::view::ActiveSessionState;
 #[cfg(feature = "local_fs")]
 use warp_files::FileModel;
 use warpui::platform::WindowStyle;
@@ -21,7 +19,7 @@ use crate::editor::Event;
 use crate::gpu_state::GPUState;
 use crate::network::NetworkStatus;
 use crate::notebooks::editor::keys::NotebookKeybindings;
-use crate::pane_group::{Direction, PaneGroupAction, PaneId};
+use crate::pane_group::{Direction, PaneGroupAction};
 use crate::persisted_workspace::PersistedWorkspace;
 use crate::settings::PrivacySettings;
 use crate::settings_view::DisplayCount;
@@ -274,53 +272,6 @@ fn test_open_markdown_viewer_target_preserves_requested_line() {
 }
 
 // Creates a workspace as a viewer of a shared session.
-
-/// Disable the warn-before-quit setting. Because we don't fully bootstrap the shell in tests, this
-/// is generally needed in tests that close tabs.
-fn disable_quit_warning(app: &mut AppContext) {
-    GeneralSettings::handle(app).update(app, |settings, ctx| {
-        settings
-            .show_warning_before_quitting
-            .set_value(false, ctx)
-            .expect("Failed to disable quit warning");
-    });
-}
-
-fn get_newly_created_pane_id(panes: &PaneGroup, existing_ids: &[PaneId]) -> PaneId {
-    panes
-        .pane_ids()
-        .find(|id| !existing_ids.contains(id))
-        .unwrap()
-}
-
-fn split_pane_state(
-    panes: &PaneGroup,
-    pane_id: impl Into<PaneId>,
-    ctx: &AppContext,
-) -> SplitPaneState {
-    // Split pane state is now inferred from the pane group's focus state
-    panes
-        .focus_state_handle()
-        .as_ref(ctx)
-        .split_pane_state_for(pane_id.into())
-}
-
-fn active_session_state(
-    panes: &PaneGroup,
-    pane_id: TerminalPaneId,
-    ctx: &AppContext,
-) -> ActiveSessionState {
-    if panes
-        .terminal_view_from_pane_id(pane_id, ctx)
-        .expect("Not a terminal pane")
-        .as_ref(ctx)
-        .is_active_session(ctx)
-    {
-        ActiveSessionState::Active
-    } else {
-        ActiveSessionState::Inactive
-    }
-}
 
 fn new_session_menu_label(item: &MenuItem<WorkspaceAction>) -> String {
     match item {
@@ -686,7 +637,6 @@ fn test_workspace_sessions_retrieves_tabs() {
 fn ctrl_t_action_forwards_to_pty_when_no_external_widget_detected() {
     App::test((), |mut app| async move {
         initialize_app(&mut app);
-        let _flag = FeatureFlag::ShellWidgetHandoff.override_enabled(true);
         let workspace = mock_workspace(&mut app);
 
         let terminal_view = workspace.update(&mut app, |workspace, ctx| {
@@ -748,7 +698,6 @@ fn test_workspace_sessions_retrieves_panes() {
 
 #[test]
 fn test_close_active_horizontal_tab_activates_tab_to_right() {
-    let _vertical_tabs_guard = FeatureFlag::VerticalTabs.override_enabled(true);
     App::test((), |mut app| async move {
         initialize_app(&mut app);
         app.update(|ctx| {
@@ -776,7 +725,6 @@ fn test_close_active_horizontal_tab_activates_tab_to_right() {
 
 #[test]
 fn test_close_last_horizontal_tab_activates_tab_to_left() {
-    let _vertical_tabs_guard = FeatureFlag::VerticalTabs.override_enabled(true);
     App::test((), |mut app| async move {
         initialize_app(&mut app);
         app.update(|ctx| {
@@ -804,7 +752,6 @@ fn test_close_last_horizontal_tab_activates_tab_to_left() {
 
 #[test]
 fn test_close_active_vertical_tab_activates_tab_below() {
-    let _vertical_tabs_guard = FeatureFlag::VerticalTabs.override_enabled(true);
     App::test((), |mut app| async move {
         initialize_app(&mut app);
         app.update(|ctx| {
@@ -832,7 +779,6 @@ fn test_close_active_vertical_tab_activates_tab_below() {
 
 #[test]
 fn test_close_last_vertical_tab_activates_tab_above() {
-    let _vertical_tabs_guard = FeatureFlag::VerticalTabs.override_enabled(true);
     App::test((), |mut app| async move {
         initialize_app(&mut app);
         app.update(|ctx| {
@@ -1119,7 +1065,6 @@ fn test_left_panel_window_scoped_disabled_keeps_per_tab_state() {
 
 #[test]
 fn test_vertical_tabs_panel_visibility_restores_from_window_snapshot() {
-    let _vertical_tabs_guard = FeatureFlag::VerticalTabs.override_enabled(true);
     App::test((), |mut app| async move {
         initialize_app(&mut app);
         app.update(|ctx| {
@@ -1170,8 +1115,6 @@ fn test_open_vertical_tabs_panel_is_idempotent() {
 
 #[test]
 fn test_vertical_tabs_panel_restored_open_when_show_in_restored_windows_enabled() {
-    let _vertical_tabs_guard = FeatureFlag::VerticalTabs.override_enabled(true);
-
     App::test((), |mut app| async move {
         initialize_app(&mut app);
         app.update(|ctx| {
@@ -1205,7 +1148,6 @@ fn test_vertical_tabs_panel_closed_when_disabled_even_if_persisted_open() {
     // and the user then disables vertical tabs, restoring the workspace must
     // not honor the stale snapshot — otherwise a dismiss underlay paints over
     // the window and silently swallows every click.
-    let _vertical_tabs_guard = FeatureFlag::VerticalTabs.override_enabled(true);
     App::test((), |mut app| async move {
         initialize_app(&mut app);
 
@@ -1236,8 +1178,6 @@ fn test_vertical_tabs_panel_closed_when_disabled_even_if_persisted_open() {
 
 #[test]
 fn test_vertical_tabs_panel_inherits_transferred_tab_source_window_state() {
-    let _vertical_tabs_guard = FeatureFlag::VerticalTabs.override_enabled(true);
-
     App::test((), |mut app| async move {
         initialize_app(&mut app);
         app.update(|ctx| {
@@ -1260,8 +1200,6 @@ fn test_vertical_tabs_panel_inherits_transferred_tab_source_window_state() {
 
 #[test]
 fn test_vertical_tabs_panel_auto_shows_when_setting_enabled() {
-    let _vertical_tabs_guard = FeatureFlag::VerticalTabs.override_enabled(true);
-
     App::test((), |mut app| async move {
         initialize_app(&mut app);
         app.update(|ctx| {
@@ -1304,7 +1242,6 @@ fn test_active_tab_bar_position_id_tracks_layout() {
     // the active tab presentation. Regression guard for the bug where the
     // inactive horizontal bar registered as a drop zone while vertical tabs
     // were enabled, lighting up a spurious placeholder over the top bar.
-    let _vertical_tabs_guard = FeatureFlag::VerticalTabs.override_enabled(true);
     App::test((), |mut app| async move {
         initialize_app(&mut app);
         app.update(|ctx| {
@@ -1336,8 +1273,6 @@ fn test_active_tab_bar_position_id_tracks_layout() {
 
 #[test]
 fn test_toggle_tab_configs_menu_opens_vertical_tabs_panel_and_menu() {
-    let _vertical_tabs_guard = FeatureFlag::VerticalTabs.override_enabled(true);
-
     App::test((), |mut app| async move {
         initialize_app(&mut app);
 
@@ -1363,8 +1298,6 @@ fn test_toggle_tab_configs_menu_opens_vertical_tabs_panel_and_menu() {
 
 #[test]
 fn test_toggle_tab_configs_menu_keyboard_shortcut_selects_top_item() {
-    let _tab_configs_guard = FeatureFlag::TabConfigs.override_enabled(true);
-
     App::test((), |mut app| async move {
         initialize_app(&mut app);
 
@@ -1372,6 +1305,9 @@ fn test_toggle_tab_configs_menu_keyboard_shortcut_selects_top_item() {
 
         workspace.update(&mut app, |workspace, ctx| {
             workspace.show_new_session_dropdown_menu = None;
+            TabSettings::handle(ctx).update(ctx, |settings, ctx| {
+                report_if_error!(settings.use_vertical_tabs.set_value(false, ctx));
+            });
 
             workspace.handle_action(&WorkspaceAction::ToggleTabConfigsMenu, ctx);
 
@@ -1388,8 +1324,6 @@ fn test_toggle_tab_configs_menu_keyboard_shortcut_selects_top_item() {
 
 #[test]
 fn test_pointer_opened_tab_configs_menu_does_not_select_top_item() {
-    let _tab_configs_guard = FeatureFlag::TabConfigs.override_enabled(true);
-
     App::test((), |mut app| async move {
         initialize_app(&mut app);
 
@@ -1414,14 +1348,15 @@ fn test_pointer_opened_tab_configs_menu_does_not_select_top_item() {
 
 #[test]
 fn test_new_session_menu_is_capped_to_window_height() {
-    let _tab_configs_guard = FeatureFlag::TabConfigs.override_enabled(true);
-
     App::test((), |mut app| async move {
         initialize_app(&mut app);
 
         let workspace = mock_workspace(&mut app);
 
         workspace.update(&mut app, |workspace, ctx| {
+            TabSettings::handle(ctx).update(ctx, |settings, ctx| {
+                report_if_error!(settings.use_vertical_tabs.set_value(false, ctx));
+            });
             let window_height = ctx
                 .windows()
                 .platform_window(ctx.window_id())
@@ -1546,8 +1481,6 @@ fn test_open_tab_config_with_params_uses_explicit_title_template() {
 }
 #[test]
 fn test_toggle_tab_configs_menu_does_not_change_vertical_tabs_panel_in_horizontal_mode() {
-    let _vertical_tabs_guard = FeatureFlag::VerticalTabs.override_enabled(true);
-
     App::test((), |mut app| async move {
         initialize_app(&mut app);
 
@@ -1570,8 +1503,6 @@ fn test_toggle_tab_configs_menu_does_not_change_vertical_tabs_panel_in_horizonta
 
 #[test]
 fn test_unified_new_session_menu_uses_new_worktree_config_label_and_order() {
-    let _tab_configs_guard = FeatureFlag::TabConfigs.override_enabled(true);
-
     App::test((), |mut app| async move {
         initialize_app(&mut app);
 
@@ -1661,8 +1592,6 @@ fn test_tab_mru_order() {
 
 #[test]
 fn test_create_new_tab_group_groups_active_tab() {
-    let _grouped_tabs_guard = FeatureFlag::GroupedTabs.override_enabled(true);
-
     App::test((), |mut app| async move {
         initialize_app(&mut app);
 
@@ -1692,8 +1621,6 @@ fn test_create_new_tab_group_groups_active_tab() {
 
 #[test]
 fn test_new_tab_group_from_tab_keeps_tab_in_place() {
-    let _grouped_tabs_guard = FeatureFlag::GroupedTabs.override_enabled(true);
-
     App::test((), |mut app| async move {
         initialize_app(&mut app);
 
@@ -1728,8 +1655,6 @@ fn test_new_tab_group_from_tab_keeps_tab_in_place() {
 
 #[test]
 fn test_new_tab_group_from_selected_tabs_anchors_at_earliest_tab() {
-    let _grouped_tabs_guard = FeatureFlag::GroupedTabs.override_enabled(true);
-
     App::test((), |mut app| async move {
         initialize_app(&mut app);
 
@@ -1782,7 +1707,6 @@ fn test_new_tab_group_from_tab_in_group_anchors_after_group() {
     // Pulling a tab out of the middle of an existing group must not split
     // that group: the new single-tab group should land just past the old
     // group's last remaining member.
-    let _grouped_tabs_guard = FeatureFlag::GroupedTabs.override_enabled(true);
 
     App::test((), |mut app| async move {
         initialize_app(&mut app);
@@ -1840,7 +1764,6 @@ fn test_new_tab_group_from_selected_tabs_in_group_anchors_after_group() {
     // When the earliest selected tab sits inside an existing group, the new
     // group block is anchored past that group's last surviving member so the
     // existing group is never split.
-    let _grouped_tabs_guard = FeatureFlag::GroupedTabs.override_enabled(true);
 
     App::test((), |mut app| async move {
         initialize_app(&mut app);
@@ -1901,8 +1824,6 @@ fn test_new_tab_group_from_selected_tabs_in_group_anchors_after_group() {
 
 #[test]
 fn test_toggle_tab_group_collapsed_flips_state() {
-    let _grouped_tabs_guard = FeatureFlag::GroupedTabs.override_enabled(true);
-
     App::test((), |mut app| async move {
         initialize_app(&mut app);
 
@@ -1928,8 +1849,6 @@ fn test_toggle_tab_group_collapsed_flips_state() {
 
 #[test]
 fn test_close_tab_group_removes_group_and_members() {
-    let _grouped_tabs_guard = FeatureFlag::GroupedTabs.override_enabled(true);
-
     App::test((), |mut app| async move {
         initialize_app(&mut app);
 
@@ -1976,8 +1895,6 @@ fn test_close_tab_group_removes_group_and_members() {
 
 #[test]
 fn test_move_tab_to_group_expands_collapsed_group() {
-    let _grouped_tabs_guard = FeatureFlag::GroupedTabs.override_enabled(true);
-
     App::test((), |mut app| async move {
         initialize_app(&mut app);
 
@@ -2025,8 +1942,6 @@ fn test_move_tab_to_group_expands_collapsed_group() {
 
 #[test]
 fn test_move_selected_tabs_to_group_expands_collapsed_group() {
-    let _grouped_tabs_guard = FeatureFlag::GroupedTabs.override_enabled(true);
-
     App::test((), |mut app| async move {
         initialize_app(&mut app);
 
@@ -2077,7 +1992,6 @@ fn test_move_selected_tabs_to_group_expands_collapsed_group() {
 fn test_new_tab_in_group_expands_collapsed_group_non_member_active() {
     // When the active tab is NOT a member of the group, `new_tab_in_group`
     // must still expand the target group.
-    let _grouped_tabs_guard = FeatureFlag::GroupedTabs.override_enabled(true);
 
     App::test((), |mut app| async move {
         initialize_app(&mut app);
@@ -2123,7 +2037,6 @@ fn test_new_tab_in_group_expands_collapsed_group_non_member_active() {
 fn test_new_tab_in_group_expands_collapsed_group_member_active() {
     // When the active tab IS a member of the group, `new_tab_in_group` takes
     // the inheritance path; the group must still expand.
-    let _grouped_tabs_guard = FeatureFlag::GroupedTabs.override_enabled(true);
 
     App::test((), |mut app| async move {
         initialize_app(&mut app);
@@ -2157,8 +2070,6 @@ fn test_new_tab_in_group_expands_collapsed_group_member_active() {
 
 #[test]
 fn test_pin_unpin_ungrouped_tab_moves_to_and_from_boundary() {
-    let _pinned_guard = FeatureFlag::PinnedTabs.override_enabled(true);
-
     App::test((), |mut app| async move {
         initialize_app(&mut app);
         let workspace = mock_workspace(&mut app);
@@ -2192,8 +2103,6 @@ fn test_pin_unpin_ungrouped_tab_moves_to_and_from_boundary() {
 fn test_pin_unpin_tab_group_moves_block_without_syncing_members() {
     // The group's own `pinned` flag is the sole source of truth for grouped
     // tabs — members keep `tab.pinned = false` regardless.
-    let _pinned_guard = FeatureFlag::PinnedTabs.override_enabled(true);
-    let _grouped_tabs_guard = FeatureFlag::GroupedTabs.override_enabled(true);
 
     App::test((), |mut app| async move {
         initialize_app(&mut app);
@@ -2246,9 +2155,6 @@ fn test_pin_unpin_tab_group_moves_block_without_syncing_members() {
 
 #[test]
 fn test_pin_tab_on_grouped_tab_extracts_then_pins() {
-    let _pinned_guard = FeatureFlag::PinnedTabs.override_enabled(true);
-    let _grouped_tabs_guard = FeatureFlag::GroupedTabs.override_enabled(true);
-
     App::test((), |mut app| async move {
         initialize_app(&mut app);
         let workspace = mock_workspace(&mut app);
@@ -2300,8 +2206,6 @@ fn test_pin_tab_on_grouped_tab_extracts_then_pins() {
 /// A rename the user never finished must not be committed.
 #[test]
 fn test_tab_group_rename_blur_does_not_commit_unfinished_name() {
-    let _grouped_tabs_guard = FeatureFlag::GroupedTabs.override_enabled(true);
-
     App::test((), |mut app| async move {
         initialize_app(&mut app);
 

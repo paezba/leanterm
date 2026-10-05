@@ -6,7 +6,6 @@ use warpui::units::IntoLines;
 use super::TerminalAction;
 use crate::channel::{Channel, ChannelState};
 use crate::event_sources::ToggleBlockFilterSource;
-use crate::features::FeatureFlag;
 use crate::settings_view::flags;
 use crate::terminal::TerminalView;
 use crate::terminal::model::escape_sequences::{self, EscCodes};
@@ -602,14 +601,12 @@ pub fn init(app: &mut AppContext) {
 
     app.register_editable_bindings([]);
 
-    if FeatureFlag::CommandCorrectionKey.is_enabled() {
-        app.register_editable_bindings([EditableBinding::new(
-            "input:insert_command_correction",
-            "Insert Command Correction",
-            TerminalAction::InsertMostRecentCommandCorrection,
-        )
-        .with_context_predicate(id!("Terminal"))]);
-    }
+    app.register_editable_bindings([EditableBinding::new(
+        "input:insert_command_correction",
+        "Insert Command Correction",
+        TerminalAction::InsertMostRecentCommandCorrection,
+    )
+    .with_context_predicate(id!("Terminal"))]);
 
     app.register_editable_bindings([]);
 

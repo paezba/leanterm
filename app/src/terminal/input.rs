@@ -184,11 +184,7 @@ const SHORT_CIRCUIT_HIGHLIGHTING_ACTIONS: [Option<PlainTextEditorViewAction>; 7]
 
 /// Border width for the line at the top of the input box in pixels
 pub fn get_input_box_top_border_width() -> f32 {
-    if FeatureFlag::MinimalistUI.is_enabled() {
-        0.0
-    } else {
-        1.0
-    }
+    0.0
 }
 
 pub const COMPLETIONS_MENU_WIDTH: f32 = 330.;
@@ -846,18 +842,11 @@ impl CompletionSources {
 /// feature flag, the input type, the trigger, and the two user toggles -- the outer policy that
 /// sits above [`CompletionSources::resolve`].
 fn resolve_completion_sources(
-    feature_flag_enabled: bool,
     buffer_text_is_multiline: bool,
     completions_trigger: CompletionsTrigger,
     warp_completions_enabled: bool,
     native_shell_completions_enabled: bool,
 ) -> CompletionSources {
-    let (warp_completions_enabled, native_shell_completions_enabled) = if feature_flag_enabled {
-        (warp_completions_enabled, native_shell_completions_enabled)
-    } else {
-        (true, false)
-    };
-
     let native_shell_completions_eligible = completions_trigger != CompletionsTrigger::AsYouType
         && native_shell_completions_enabled
         && !buffer_text_is_multiline; // For now, don't use native shell completions for multi-line commands.
@@ -1160,17 +1149,6 @@ pub fn init(app: &mut AppContext) {
         .with_key_binding("pagedown"),
     ]);
 
-    if FeatureFlag::ClassicCompletions.is_enabled()
-        && !FeatureFlag::ForceClassicCompletions.is_enabled()
-    {
-        app.register_editable_bindings([EditableBinding::new(
-            "input:toggle_classic_completions_mode",
-            "(Experimental) Toggle classic completions mode",
-            InputAction::ToggleClassicCompletionsMode,
-        )
-        .with_context_predicate(id!("Input"))]);
-    }
-
     // Register editable bindings relating to Command Search.
     app.register_editable_bindings([
         EditableBinding::new(
@@ -1210,7 +1188,6 @@ pub fn init(app: &mut AppContext) {
             "External File Search",
             WorkspaceAction::TriggerExternalCtrlTFileSearch,
         )
-        .with_enabled(|| FeatureFlag::ShellWidgetHandoff.is_enabled())
         .with_context_predicate(id!("Input") & !id!("VoltronActive") & !id!("LongRunningCommand"))
         .with_key_binding("ctrl-t"),
         EditableBinding::new(
@@ -1218,7 +1195,6 @@ pub fn init(app: &mut AppContext) {
             "External Directory Search",
             WorkspaceAction::TriggerExternalAltCDirectorySearch,
         )
-        .with_enabled(|| FeatureFlag::ShellWidgetHandoff.is_enabled())
         .with_context_predicate(id!(EXTERNAL_ALT_C_BINDING_CONTEXT))
         .with_key_binding("alt-c"),
     ]);
@@ -4089,10 +4065,8 @@ impl Input {
             .value()
     }
 
-    fn is_classic_completions_enabled(&self, ctx: &AppContext) -> bool {
-        (FeatureFlag::ClassicCompletions.is_enabled()
-            && *InputSettings::as_ref(ctx).classic_completions_mode)
-            || FeatureFlag::ForceClassicCompletions.is_enabled()
+    fn is_classic_completions_enabled(&self, _ctx: &AppContext) -> bool {
+        true
     }
 
     fn should_expand_aliases(&self, ctx: &mut ViewContext<Self>) -> bool {
@@ -4153,7 +4127,6 @@ impl Input {
         let comp_sources = {
             let input_settings = InputSettings::as_ref(ctx);
             resolve_completion_sources(
-                FeatureFlag::NativeShellCompletions.is_enabled(),
                 buffer_text.contains('\n'),
                 completions_trigger,
                 *input_settings.warp_completions_enabled,

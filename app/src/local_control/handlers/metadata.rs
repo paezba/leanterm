@@ -15,7 +15,6 @@ use settings::Setting as _;
 use warp_core::channel::ChannelState;
 use warpui::{AppContext, ModelContext, SingletonEntity, ViewHandle, WindowId};
 
-use crate::features::FeatureFlag;
 use crate::local_control::LocalControlBridge;
 use crate::local_control::resolver::{reject_target_families, require_active_window_id_for_action};
 use crate::pane_group::{PaneGroup, PaneId};
@@ -320,7 +319,6 @@ pub(crate) fn surface_unavailable_reason(
         SurfaceDestination::ProjectExplorer => None,
         SurfaceDestination::GlobalSearch
             if !cfg!(feature = "local_fs")
-                || !FeatureFlag::GlobalSearch.is_enabled()
                 || !*CodeSettings::as_ref(ctx).show_global_search.value() =>
         {
             Some("global search is unavailable or disabled")
@@ -335,8 +333,7 @@ pub(crate) fn surface_unavailable_reason(
         }
         SurfaceDestination::LeftPanel => None,
         SurfaceDestination::VerticalTabs
-            if !FeatureFlag::VerticalTabs.is_enabled()
-                || !*TabSettings::as_ref(ctx).use_vertical_tabs.value() =>
+            if !*TabSettings::as_ref(ctx).use_vertical_tabs.value() =>
         {
             Some("vertical tabs are unavailable or disabled")
         }

@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use repo_metadata::RepoMetadataModel;
 use repo_metadata::repositories::DetectedRepositories;
 use warpui::platform::WindowStyle;

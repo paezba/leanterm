@@ -129,7 +129,6 @@ pub mod workflows;
 pub mod workspace;
 
 use std::borrow::Cow;
-use std::ops::Deref;
 
 use ::settings::{Setting, ToggleableSetting};
 #[cfg(feature = "local_tty")]
@@ -674,11 +673,7 @@ fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
         expect(unused)
     )]
     let prefs_for_public_settings: &dyn warpui_extras::user_preferences::UserPreferences =
-        if FeatureFlag::SettingsFile.is_enabled() {
-            public_preferences.as_ref()
-        } else {
-            private_preferences.deref()
-        };
+        public_preferences.as_ref();
 
     #[cfg(enable_crash_recovery)]
     let crash_recovery =
@@ -880,9 +875,7 @@ pub(crate) fn initialize_app(
     let user_defaults_on_startup = settings::init(startup_toml_parse_error, ctx);
     timer.mark_interval_end("READ_USER_DEFAULTS_AND_INITIALIZE_SETTINGS");
 
-    if FeatureFlag::UIZoom.is_enabled() {
-        ctx.set_zoom_factor(WindowSettings::as_ref(ctx).zoom_level.as_zoom_factor());
-    }
+    ctx.set_zoom_factor(WindowSettings::as_ref(ctx).zoom_level.as_zoom_factor());
 
     // NetworkLogModel must be registered before HttpClientProvider so that
     // `NetworkLogModel::install_on_clients` can reach it when forwarding items
@@ -1069,9 +1062,7 @@ pub(crate) fn initialize_app(
     tab_configs::params_modal::init(ctx);
     context_chips::display_menu::init(ctx);
     context_chips::node_version_popup::init(ctx);
-    if FeatureFlag::CodeReviewSaveChanges.is_enabled() {
-        code_review::init(ctx);
-    }
+    code_review::init(ctx);
 
     let display_count = ctx.windows().display_count();
     ctx.add_singleton_model(|_| DisplayCount(display_count));

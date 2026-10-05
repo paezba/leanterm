@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use settings::macros::define_settings_group;
 use settings::{RespectUserSyncSetting, SupportedPlatforms, SyncToCloud};
-use warp_core::features::FeatureFlag;
 use warpui::units::Pixels;
 use warpui::{AppContext, SingletonEntity};
 
@@ -181,19 +180,6 @@ define_settings_group!(TerminalSettings, settings: [
         toml_path: "terminal.osc52_clipboard_access",
         description: "Controls whether terminal programs can access the system clipboard via OSC 52 escape sequences. Options: deny (default), write_only, read_write.",
     },
-    // Opt-in toggle for running terminal find on a background thread. Only consulted on
-    // channels where `FeatureFlag::AsyncFind` is off; channels with the flag on force the
-    // feature on and hide this toggle. See `is_async_find_enabled` for the composite check.
-    async_find_enabled: AsyncFindEnabled {
-        type: bool,
-        default: false,
-        supported_platforms: SupportedPlatforms::ALL,
-        sync_to_cloud: SyncToCloud::Globally(RespectUserSyncSetting::Yes),
-        surface: settings::SettingSurfaces::GUI,
-        private: false,
-        toml_path: "experimental.async_find_enabled",
-        description: "Use an improved implementation of find to keep the UI responsive while searching for matches on large outputs.",
-    },
 ]);
 
 impl TerminalSettings {
@@ -203,13 +189,6 @@ impl TerminalSettings {
             SpacingMode::Normal => TerminalSpacing::normal(line_height_ratio, ctx),
             SpacingMode::Compact => TerminalSpacing::compact(line_height_ratio, ctx),
         }
-    }
-
-    /// Whether asynchronous terminal find should be used. On channels where
-    /// `FeatureFlag::AsyncFind` is on, the feature is force-enabled (no toggle shown).
-    /// On other channels, users opt in via the `async_find_enabled` setting.
-    pub fn is_async_find_enabled(&self) -> bool {
-        FeatureFlag::AsyncFind.is_enabled() || *self.async_find_enabled
     }
 
     /// Spacing for the input box.

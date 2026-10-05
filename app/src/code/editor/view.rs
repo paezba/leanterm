@@ -267,7 +267,6 @@ pub struct CodeEditorView {
     self_handle: WeakViewHandle<Self>,
     display_options: CodeEditorViewDisplayOptions,
     pending_scroll: Option<ScrollTrigger>,
-    supports_vim_mode: bool,
     vim_model: ModelHandle<VimModel>,
     // Track the most recent Vim search direction to determine how to cycle (n/N) thereafter.
     last_search_direction: Direction,
@@ -353,14 +352,11 @@ impl CodeEditorView {
             }
         });
 
-        // If feature flag is enabled, enable vim mode.
-        let supports_vim_mode = FeatureFlag::VimCodeEditor.is_enabled();
-
         let vim_model = ctx.add_model(|_| VimModel::new());
         ctx.subscribe_to_model(&vim_model, Self::handle_vim_event);
 
         // Ensure CodeEditorView starts in Normal mode when Vim keybindings are enabled.
-        if supports_vim_mode && AppEditorSettings::as_ref(ctx).vim_mode_enabled() {
+        if AppEditorSettings::as_ref(ctx).vim_mode_enabled() {
             vim_model.update(ctx, |vim_model, ctx| {
                 if let Ok(escape) = Keystroke::parse("escape") {
                     vim_model.keypress(&escape, ctx);
@@ -417,7 +413,6 @@ impl CodeEditorView {
                 line_height_override: render_options.line_height_override,
             },
             pending_scroll: None,
-            supports_vim_mode,
             vim_model,
             last_search_direction: Direction::Forward,
             active_comment_editor: comment_editor,
@@ -1411,7 +1406,7 @@ impl CodeEditorView {
             return;
         }
 
-        let multiselect = modifiers.alt && FeatureFlag::RichTextMultiselect.is_enabled();
+        let multiselect = modifiers.alt;
         self.model.update(ctx, |model, ctx| {
             model.select_at(offset, multiselect, ctx);
         });
@@ -1899,7 +1894,7 @@ impl CodeEditorView {
     }
 
     pub fn vim_mode_enabled(&self, ctx: &AppContext) -> bool {
-        self.supports_vim_mode && AppEditorSettings::as_ref(ctx).vim_mode_enabled()
+        AppEditorSettings::as_ref(ctx).vim_mode_enabled()
     }
 
     pub fn enter_vim_normal_mode(&mut self, ctx: &mut ViewContext<Self>) {

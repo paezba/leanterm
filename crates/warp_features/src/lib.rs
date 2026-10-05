@@ -19,15 +19,9 @@ pub enum FeatureFlag {
     /// If set, generators are executed using cmd.exe on Windows.
     RunGeneratorsWithCmdExe,
 
-    /// Gates a bindable keyboard action for accepting command corrections.
-    CommandCorrectionKey,
-
     /// If `true`, the "Show Initialization Block" menu item is added to the Blocks menu in the Mac
     /// menu bar.
     ToggleBootstrapBlock,
-
-    /// Ligature Support in the Editor and Grid
-    Ligatures,
 
     /// When enabled, the `History` rule from the command_corrections crate
     /// will be enabled. When the `History` rule is enabled, the command_corrections
@@ -38,12 +32,6 @@ pub enum FeatureFlag {
     /// to get a sense of PTY throughput over time.
     RecordPtyThroughput,
 
-    /// A setting to enable a traditional completions experience.
-    ClassicCompletions,
-
-    /// Force enable classic completions.
-    ForceClassicCompletions,
-
     /// If enabled, autosuggestions are hidden when the tab completions
     /// menu is open (except when using completions-as-you-type).
     RemoveAutosuggestionDuringTabCompletions,
@@ -51,41 +39,11 @@ pub enum FeatureFlag {
     /// Feature flag for cursor reflow fix (fixes part of the Alacritty resizing logic).
     ResizeFix,
 
-    /// Enable multiselect in Notebooks and Warp Text.
-    RichTextMultiselect,
-
     /// Makes the input editor's prompt selectable.
     SelectablePrompt,
 
-    /// Enables the settings file feature.
-    SettingsFile,
-
-    /// Enables rect selection.
-    RectSelection,
-
     /// Adds Alacritty as a supported terminal to import settings from.
     AlacrittySettingsImport,
-
-    /// Enables the shell selector, allowing us to open a new tab in
-    /// a shell other than the default shell.
-    ShellSelector,
-
-    /// Enables writing to long-running commands in shared sessions.
-
-    /// Enables support for ACLs in Session Sharing. Should be disabled if the
-    /// corresponding `use_acls` flag in the session sharing server is disabled.
-    /// https://github.com/warpdotdev/session-sharing-server/blob/b6590ebd0b0e7f6847d6b2228b4e77d63939ce22/server/Cargo.toml#L13
-
-    /// Enables the full-screen "zen mode" setting, where we hide the tab bar if there's only one
-    /// tab.
-    FullScreenZenMode,
-
-    /// Playground for reducing Warp UI clutter.
-    MinimalistUI,
-
-    /// Enables support for using native shell completions to supplement our
-    /// completion specs.
-    NativeShellCompletions,
 
     SshDragAndDrop,
     DragTabsToWindows,
@@ -96,20 +54,8 @@ pub enum FeatureFlag {
     /// Maximizes data in flat storage to reduce memory usage.
     MaximizeFlatStorage,
 
-    /// Recognizes the OSC 8 hyperlink escape sequence and makes the
-    /// linked text Cmd+click-able.
-    OscHyperlinks,
-
-    ImeMarkedText,
-
     /// Enables iTerm image rendering
     ITermImages,
-
-    /// Enables validation of autosuggestions.
-    ValidateAutosuggestions,
-
-    /// Enables using `esc` to clear autosuggestions.
-    ClearAutosuggestionOnEscape,
 
     /// Enables Kitty image rendering
     KittyImages,
@@ -123,132 +69,29 @@ pub enum FeatureFlag {
     /// Enables inline review comments on specific lines of code.
     ContextLineReviewComments,
 
-    /// Enables the find/replace in code editor
-    CodeFindReplace,
-
-    /// Enables file search functionality in command palette
-    CommandPaletteFileSearch,
-
-    /// Enables close button on left side of tabs
-    TabCloseButtonOnLeft,
-
-    /// Enables the tabbed file viewer
-    TabbedEditorView,
-
-    /// Enables vim keybindings in the code editor.
-    VimCodeEditor,
-
-    /// Allows opening file links using the $EDITOR environment variable.
-    AllowOpeningFileLinksUsingEditorEnv,
-
-    /// Enables the ability to undo closed panes.
-    UndoClosedPanes,
-
-    /// Enables revert button for diff hunks in the gutter.
-    RevertDiffHunk,
-
-    /// Enables saving code review pane changes
-    CodeReviewSaveChanges,
-
-    /// Enables ignoring input suggestions.
-    AllowIgnoringInputSuggestions,
-
     /// Enables file- and diff set-level comments in the code review header.
     FileAndDiffSetComments,
-
-    /// Enables discarding per-file and discarding all changes
-    DiscardPerFileAndAllChanges,
-
-    /// Enables UI zoom support (scaling the entire UI by a given percentage).
-    UIZoom,
-
-    /// Enables find/search in code review pane
-    CodeReviewFind,
-
-    /// Enables asynchronous find in terminal, running search on a background thread.
-    AsyncFind,
-
-    /// Enables inline code review functionality
-    InlineCodeReview,
-
-    /// Enables rendering Mermaid diagrams in markdown notebooks.
-    MarkdownMermaid,
     /// Enables editable Mermaid diagrams to behave atomically in notebook and plan editors.
     EditableMarkdownMermaid,
-
-    /// Enables rendering markdown tables in notebooks.
-    MarkdownTables,
 
     /// Renders `.ipynb` (Jupyter) files as a formatted, read-only notebook in
     /// Warp's notebook viewer instead of showing the raw JSON in the code editor.
     JupyterNotebookRendering,
 
-    /// Enables global search
-    GlobalSearch,
-
     /// Enables embedded code review comments.
     EmbeddedCodeReviewComments,
-
-    /// Enables configuring header toolbar item order, side placement, and visibility.
-    ConfigurableToolbar,
-
-    /// Updated tab styling (background colors, border, close button positioning, margins).
-    NewTabStyling,
-
-    /// Enables incremental (diff-based) buffer updates for auto-reload instead of full replace.
-    IncrementalAutoReload,
 
     /// Enables scroll position preservation in the code review pane when file
     /// content changes via auto-reload.
     CodeReviewScrollPreservation,
 
-    /// Enables Kitty keyboard protocol support (CSI u encoding, progressive enhancement).
-    KittyKeyboardProtocol,
-
-    /// Enables associating a tab color with a directory so tabs automatically
-    /// adopt the configured color when their working directory matches.
-    DirectoryTabColors,
-
-    /// Enables vertical tab layout as an alternative to the horizontal tab bar.
-    VerticalTabs,
-
-    /// Enables tab configs — user-definable TOML templates for launching custom tab layouts.
-    TabConfigs,
-
     /// Enables Warp local control through the standalone warpctrl CLI.
     WarpControlCli,
-
-    /// Enables commit, push, and create-PR actions in the code review panel.
-    GitOperationsInCodeReview,
-
-    /// Enables summary mode in vertical tabs, showing condensed tab summaries
-    /// instead of individual pane rows.
-    VerticalTabsSummaryMode,
-
-    /// Gates the Grouped Tabs feature.
-    GroupedTabs,
-
-    /// Gates the Pinned Tabs feature, which lets users pin individual tabs
-    /// and whole tab groups so they stay at the front of the tab list and
-    /// are protected from reordering.
-    PinnedTabs,
-
-    /// Enables state-mutating recovery for abnormal terminal lifecycle sequences.
-    TerminalLifecycleRecovery,
 
     /// Renders supported solid box-drawing characters (`U+2500..=U+257F`)
     /// procedurally as cell-filling rectangles instead of from the font,
     /// eliminating seams between adjacent box-drawing cells in the terminal.
     BoxDrawingGlyphs,
-
-    /// Uses fzf or atuin for history search instead of Warp's command search.
-    ShellWidgetHandoff,
-
-    /// Gates Ctrl+R / Command Search history ranking on match quality and usage priors (recency,
-    /// session, exit status) plus whitespace space-AND tokenization, instead of Skim's raw
-    /// fuzzy-match score against the whole query as a single pattern. Disabling this is a full
-    /// return to the pre-APP-5650 history search behavior, not an approximation of it.
-    HistorySearchRankingV2,
 }
 
 static FLAG_STATES: [AtomicBool; cardinality::<FeatureFlag>()] =
@@ -277,7 +120,6 @@ pub const DOGFOOD_FLAGS: &[FeatureFlag] = &[
     FeatureFlag::RemoveAutosuggestionDuringTabCompletions,
     FeatureFlag::ResizeFix,
     FeatureFlag::SshDragAndDrop,
-    FeatureFlag::ImeMarkedText,
     FeatureFlag::MSYS2Shells,
     FeatureFlag::ContextLineReviewComments,
     FeatureFlag::RunGeneratorsWithCmdExe,
@@ -288,7 +130,6 @@ pub const DOGFOOD_FLAGS: &[FeatureFlag] = &[
     FeatureFlag::EditableMarkdownMermaid,
     FeatureFlag::CodeReviewScrollPreservation,
     FeatureFlag::WarpControlCli,
-    FeatureFlag::TerminalLifecycleRecovery,
     FeatureFlag::JupyterNotebookRendering,
     FeatureFlag::BoxDrawingGlyphs,
 ];
@@ -301,7 +142,6 @@ pub const PREVIEW_FLAGS: &[FeatureFlag] = &[];
 /// NOTE: if you are promoting a feature from Preview to launch, you'll likely
 /// want to enable the feature by default in app/Cargo.toml, rather than add it to RELEASE_FLAGS.
 pub const RELEASE_FLAGS: &[FeatureFlag] = &[
-    FeatureFlag::ImeMarkedText,
     #[cfg(any(target_os = "macos", target_os = "windows"))]
     FeatureFlag::DragTabsToWindows,
 ];
@@ -358,30 +198,6 @@ impl FeatureFlag {
     #[cfg(feature = "test-util")]
     pub fn override_enabled(self, enabled: bool) -> overrides::OverrideGuard {
         overrides::override_flag(self, enabled)
-    }
-
-    pub fn flag_description(&self) -> Option<&'static str> {
-        use FeatureFlag::*;
-
-        // Note: many feature flags are purposefully omitted from this list, in order to avoid blowing up
-        // the Preview changelog. Features below which are enabled for Preview via PREVIEW_FLAGS, will be added to the changelog.
-        // Features which are added to Stable should ideally have their feature flag removed entirely, but at the
-        // very least, the feature flag should be removed from the Preview changelog by removing it from PREVIEW_FLAGS.
-        // ** ONLY Preview-exclusive features should be added to this list! **
-        match self {
-            CodeReviewFind => Some("Enables the find bar in the code review pane."),
-            GlobalSearch => Some("Enables global search in the left panel"),
-            MarkdownTables => {
-                Some("Enables rendering and interaction support for markdown tables in notebooks.")
-            }
-            SettingsFile => Some(
-                "Enables configuring Warp via a user-editable `settings.toml` file, with hot reload and error reporting for invalid values.",
-            ),
-            GitOperationsInCodeReview => Some(
-                "Enables commit, push, and create-PR actions directly from the code review panel.",
-            ),
-            _ => None,
-        }
     }
 }
 
@@ -533,7 +349,3 @@ impl From<TriState> for Option<bool> {
         }
     }
 }
-
-#[cfg(test)]
-#[path = "features_tests.rs"]
-mod tests;

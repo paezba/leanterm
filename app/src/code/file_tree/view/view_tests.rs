@@ -1,5 +1,4 @@
 use std::path::Path;
-use std::sync::Arc;
 
 use repo_metadata::entry::{DirectoryEntry, Entry, FileMetadata};
 use repo_metadata::file_tree_store::FileTreeState;

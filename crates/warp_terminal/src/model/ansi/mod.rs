@@ -877,7 +877,7 @@ where
             // Format: OSC 8 ; params ; URI ST. An empty URI closes the active
             // hyperlink.
             // Reference: https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda
-            b"8" if FeatureFlag::OscHyperlinks.is_enabled() => {
+            b"8" => {
                 match Hyperlink::parse_osc_params(&params[1..]) {
                     Ok(hyperlink) => self.handler.set_hyperlink(hyperlink),
                     // A malformed, non-UTF-8, or over-length sequence closes any

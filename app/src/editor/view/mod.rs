@@ -86,7 +86,6 @@ use crate::channel::{Channel, ChannelState};
 use crate::editor::RangeExt;
 use crate::editor::accept_autosuggestion_keybinding_view::AcceptAutosuggestionKeybinding;
 use crate::editor::autosuggestion_ignore_view::{AutosuggestionIgnore, AutosuggestionIgnoreEvent};
-use crate::features::FeatureFlag;
 use crate::settings::{
     AppEditorSettings, AppEditorSettingsChangedEvent, CursorBlink, CursorDisplayType,
     SelectionSettings,
@@ -5246,9 +5245,7 @@ impl EditorView {
         {
             self.vim_escape(ctx);
         } else if self.can_select(ctx) {
-            if FeatureFlag::ClearAutosuggestionOnEscape.is_enabled()
-                && (!self.vim_mode_enabled(ctx) || self.vim_mode(ctx) == Some(VimMode::Normal))
-            {
+            if !self.vim_mode_enabled(ctx) || self.vim_mode(ctx) == Some(VimMode::Normal) {
                 self.clear_autosuggestion(ctx);
             }
 
@@ -7145,10 +7142,6 @@ impl EditorView {
         selected_range: &Range<usize>,
         ctx: &mut ViewContext<Self>,
     ) {
-        if !FeatureFlag::ImeMarkedText.is_enabled() {
-            return;
-        }
-
         // If in Normal or Visual mode, we don't want to insert any text.
         if matches!(
             self.vim_mode(ctx),
@@ -7179,10 +7172,6 @@ impl EditorView {
     }
 
     fn clear_marked_text(&mut self, ctx: &mut ViewContext<Self>) {
-        if !FeatureFlag::ImeMarkedText.is_enabled() {
-            return;
-        }
-
         self.editor_model.update(ctx, |editor_model, ctx| {
             editor_model.clear_marked_text(ctx);
         });

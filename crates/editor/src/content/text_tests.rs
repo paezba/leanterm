@@ -1,11 +1,7 @@
-use markdown_parser::{CodeBlockText, FormattedTable};
-use warp_core::features::FeatureFlag;
+use markdown_parser::FormattedTable;
 use warpui_core::fonts::Weight;
 
-use super::{
-    BufferBlockItem, BufferTextStyle, CodeBlockType, MarkdownStyle, TextStyles,
-    format_image_markdown,
-};
+use super::{BufferBlockItem, BufferTextStyle, MarkdownStyle, TextStyles, format_image_markdown};
 
 #[test]
 fn test_text_style_xor() {
@@ -94,27 +90,6 @@ fn test_formatted_table_empty_input() {
     let table = FormattedTable::from_internal_format("");
     assert!(table.headers.is_empty());
     assert!(table.rows.is_empty());
-}
-
-#[test]
-fn test_mermaid_code_block_type_respects_feature_flag() {
-    let markdown = CodeBlockText {
-        lang: "mermaid".to_string(),
-        code: "graph TD\nA --> B\n".to_string(),
-    };
-
-    let _disabled = FeatureFlag::MarkdownMermaid.override_enabled(false);
-    assert_eq!(
-        CodeBlockType::from(&markdown),
-        CodeBlockType::Code {
-            lang: "mermaid".to_string(),
-        }
-    );
-
-    drop(_disabled);
-
-    let _enabled = FeatureFlag::MarkdownMermaid.override_enabled(true);
-    assert_eq!(CodeBlockType::from(&markdown), CodeBlockType::Mermaid);
 }
 
 #[test]

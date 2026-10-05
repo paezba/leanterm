@@ -27,7 +27,6 @@ use crate::terminal::model::TerminalModel;
 use crate::terminal::model::grid::grid_handler::GridHandler;
 use crate::terminal::model::index::Point;
 use crate::terminal::model::terminal_model::BlockIndex;
-use crate::terminal::settings::TerminalSettings;
 use crate::view_components::find::{FindDirection, FindEvent, FindModel};
 
 /// Pre-computed find data for rendering a single block.
@@ -242,12 +241,8 @@ impl FindModel for TerminalFindModel {
 }
 
 impl TerminalFindModel {
-    pub fn new(terminal_model: Arc<FairMutex<TerminalModel>>, ctx: &AppContext) -> Self {
-        let async_find_controller = if TerminalSettings::as_ref(ctx).is_async_find_enabled() {
-            Some(AsyncFindController::new(terminal_model.clone()))
-        } else {
-            None
-        };
+    pub fn new(terminal_model: Arc<FairMutex<TerminalModel>>) -> Self {
+        let async_find_controller = Some(AsyncFindController::new(terminal_model.clone()));
 
         Self {
             terminal_model,

@@ -11,7 +11,6 @@ pub(in crate::terminal) use transition::{
     CommandStartKind, IgnoreReason, LifecycleAction, LifecycleInput, LifecyclePhase,
     LifecycleSnapshot, LifecycleTransition, NextBlockIdDisposition, PreexecObservation,
 };
-use warp_core::features::FeatureFlag;
 
 use super::block::BlockState;
 
@@ -84,20 +83,12 @@ impl BlockLifecycleCoordinator {
                 false
             }
         };
-        let is_gated_recovery = recovers_command_finished
+        let _is_gated_recovery = recovers_command_finished
             || matches!(
                 planned_action,
                 LifecycleAction::ReconcileCompletionThenApplyPrecmd
             );
-        let (next_phase, action) =
-            if is_gated_recovery && !FeatureFlag::TerminalLifecycleRecovery.is_enabled() {
-                (
-                    previous_phase,
-                    LifecycleAction::Ignore(IgnoreReason::RecoveryDisabled),
-                )
-            } else {
-                (planned_next_phase, planned_action)
-            };
+        let (next_phase, action) = (planned_next_phase, planned_action);
         let _reconciles_missing_execution = matches!(
             (input, planned_action),
             (

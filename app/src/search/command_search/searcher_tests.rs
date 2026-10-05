@@ -6,7 +6,6 @@ use chrono::Local;
 use itertools::Itertools;
 use ordered_float::OrderedFloat;
 use warp_core::command::ExitCode;
-use warp_core::features::FeatureFlag;
 use warpui::r#async::Timer;
 use warpui::elements::Empty;
 use warpui::{App, AppContext, Element, SingletonEntity};
@@ -130,7 +129,7 @@ impl<T: SearchItem<Action = CommandSearchItemAction> + Clone + 'static> SyncData
     }
 }
 
-fn initialize_app(app: &mut App) {}
+fn initialize_app(_app: &mut App) {}
 
 #[test]
 fn test_add_source_to_mixer() {
@@ -164,8 +163,6 @@ fn test_add_source_to_mixer() {
 
 #[test]
 fn test_history_data_source_reflects_live_exit_status_update() {
-    let _flag = FeatureFlag::HistorySearchRankingV2.override_enabled(true);
-
     App::test((), |mut app| async move {
         crate::test_util::terminal::initialize_app_for_terminal_view(&mut app);
 
@@ -237,8 +234,6 @@ fn test_history_data_source_reflects_live_exit_status_update() {
 
 #[test]
 fn test_exact_matches_rank_above_prefix_matches() {
-    let _flag = FeatureFlag::HistorySearchRankingV2.override_enabled(true);
-
     App::test((), |mut app| async move {
         initialize_app(&mut app);
         let short_command = "git".to_owned();
@@ -305,8 +300,6 @@ fn test_exact_matches_rank_above_prefix_matches() {
 
 #[test]
 fn test_blank_query_preserves_chronological_order_despite_differing_priors() {
-    let _flag = FeatureFlag::HistorySearchRankingV2.override_enabled(true);
-
     App::test((), |mut app| async move {
         initialize_app(&mut app);
 
@@ -370,8 +363,6 @@ fn test_blank_query_preserves_chronological_order_despite_differing_priors() {
 
 #[test]
 fn test_no_query_filter_runs_all_data_sources() {
-    let _flag = FeatureFlag::HistorySearchRankingV2.override_enabled(true);
-
     App::test((), |mut app| async move {
         initialize_app(&mut app);
         let mixer = app.add_model(|_| CommandSearchMixer::new());
@@ -656,93 +647,6 @@ fn test_async_source_without_include_in_unfiltered_skipped_on_empty_filters() {
         app.read(|app| {
             let results = mixer.as_ref(app).results();
             assert!(results.is_empty());
-        });
-    });
-}
-
-#[test]
-fn test_history_search_disabled_flag_skips_whitespace_tokenization() {
-    let _flag = FeatureFlag::HistorySearchRankingV2.override_enabled(false);
-
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-
-        let mixer = app.add_model(|_| CommandSearchMixer::new());
-        mixer.update(&mut app, |mixer, ctx| {
-            mixer.add_async_source(
-                history_data_source(vec![HistoryEntry::command_only(
-                    "cd ~/projects/history_orm".to_owned(),
-                )]),
-                HashSet::from([QueryFilter::History]),
-                AddAsyncSourceOptions {
-                    debounce_interval: None,
-                    run_in_zero_state: false,
-                    run_when_unfiltered: true,
-                },
-                ctx,
-            );
-            mixer.run_query("cd hi orm".into(), ctx);
-        });
-
-        assert_eventually!(
-            app.read(|app| !mixer.as_ref(app).is_loading()),
-            "the query should finish loading"
-        );
-
-        app.read(|app| {
-            let results = mixer.as_ref(app).results();
-            assert!(
-                results.is_empty(),
-                "the legacy path shouldn't AND-tokenize \"cd hi orm\" against a single command"
-            );
-        });
-    });
-}
-
-#[test]
-fn test_history_search_disabled_flag_scores_raw_skim_with_no_priors() {
-    let _flag = FeatureFlag::HistorySearchRankingV2.override_enabled(false);
-
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-
-        let command = "git status".to_owned();
-        let raw_score = fuzzy_match::match_indices_case_insensitive(&command, "git status")
-            .expect("the command should fuzzy-match itself")
-            .score;
-
-        let mut old_entry = HistoryEntry::command_only(command.clone());
-        old_entry.start_ts = Some(Local::now() - chrono::Duration::days(365));
-        old_entry.exit_code = Some(warp_core::command::ExitCode::from(1));
-
-        let mixer = app.add_model(|_| CommandSearchMixer::new());
-        mixer.update(&mut app, |mixer, ctx| {
-            mixer.add_async_source(
-                history_data_source(vec![old_entry]),
-                HashSet::from([QueryFilter::History]),
-                AddAsyncSourceOptions {
-                    debounce_interval: None,
-                    run_in_zero_state: false,
-                    run_when_unfiltered: true,
-                },
-                ctx,
-            );
-            mixer.run_query("git status".into(), ctx);
-        });
-
-        assert_eventually!(
-            app.read(|app| !mixer.as_ref(app).is_loading()),
-            "the query should finish loading"
-        );
-
-        app.read(|app| {
-            let results = mixer.as_ref(app).results();
-            assert_eq!(results.len(), 1);
-            assert_eq!(
-                results[0].score(),
-                OrderedFloat(raw_score as f64),
-                "the legacy path's score must be exactly the raw Skim score"
-            );
         });
     });
 }

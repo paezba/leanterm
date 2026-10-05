@@ -7,7 +7,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use rangemap::RangeSet;
 use string_offset::CharOffset;
-use warp_core::features::FeatureFlag;
 use warpui_core::assets::asset_cache::{AssetCache, AssetSource, AssetState};
 use warpui_core::fonts::{Properties, Style, Weight};
 use warpui_core::image_cache::ImageType;
@@ -374,7 +373,6 @@ fn test_layout_partial_url() {
 #[test]
 fn test_layout_mermaid_block_uses_loaded_svg_aspect_ratio() {
     App::test((), |app| async move {
-        let _flag = FeatureFlag::MarkdownMermaid.override_enabled(true);
         let content = "graph TD\nA[Start] --> B[Finish]\n";
         let asset_source = mermaid_asset_source(content);
 
@@ -464,7 +462,6 @@ fn test_layout_mermaid_block_uses_loaded_svg_aspect_ratio() {
 #[test]
 fn test_unloaded_mermaid_diagram_uses_stable_full_width_placeholder_height() {
     App::test((), |app| async move {
-        let _flag = FeatureFlag::MarkdownMermaid.override_enabled(true);
         app.read(|ctx| {
             let text_layout =
                 TextLayout::new(ctx.font_cache().text_layout_system(), &TEST_STYLES, 800.);
@@ -519,7 +516,6 @@ fn mermaid_layout_options() -> RenderLayoutOptions {
 #[test]
 fn test_empty_mermaid_block_lays_out_as_code_block() {
     App::test((), |app| async move {
-        let _flag = FeatureFlag::MarkdownMermaid.override_enabled(true);
         app.read(|ctx| {
             let text_layout =
                 TextLayout::new(ctx.font_cache().text_layout_system(), &TEST_STYLES, 800.);
@@ -549,7 +545,6 @@ fn test_empty_mermaid_block_lays_out_as_code_block() {
 #[test]
 fn test_non_parseable_mermaid_block_lays_out_as_code_block() {
     App::test((), |app| async move {
-        let _flag = FeatureFlag::MarkdownMermaid.override_enabled(true);
         app.read(|ctx| {
             let text_layout =
                 TextLayout::new(ctx.font_cache().text_layout_system(), &TEST_STYLES, 800.);
@@ -582,7 +577,6 @@ fn test_non_parseable_mermaid_block_lays_out_as_code_block() {
 #[test]
 fn test_invalid_mermaid_block_stays_as_code_block_after_load_fails() {
     App::test((), |app| async move {
-        let _flag = FeatureFlag::MarkdownMermaid.override_enabled(true);
         let contents = "echo hi\n";
         let asset_source = mermaid_asset_source(contents);
 
@@ -639,7 +633,6 @@ fn test_invalid_mermaid_block_stays_as_code_block_after_load_fails() {
 #[test]
 fn test_valid_mermaid_block_lays_out_as_diagram_after_load() {
     App::test((), |app| async move {
-        let _flag = FeatureFlag::MarkdownMermaid.override_enabled(true);
         let contents = "graph TD\nA[Start] --> B[Finish]\n";
         let asset_source = mermaid_asset_source(contents);
 
@@ -674,7 +667,6 @@ fn test_valid_mermaid_block_lays_out_as_diagram_after_load() {
 #[test]
 fn test_mermaid_block_skipped_when_render_disabled() {
     App::test((), |app| async move {
-        let _flag = FeatureFlag::MarkdownMermaid.override_enabled(true);
         app.read(|ctx| {
             let text_layout =
                 TextLayout::new(ctx.font_cache().text_layout_system(), &TEST_STYLES, 800.);
@@ -777,7 +769,6 @@ fn test_resolve_asset_source_leaves_non_local_markdown_images_unchanged() {
 fn test_layout_text_block_uses_rich_table_when_flag_enabled() {
     App::test((), |app| async move {
         app.read(|ctx| {
-            let _flag = FeatureFlag::MarkdownTables.override_enabled(true);
             let text_layout = TextLayout::new(
                 ctx.font_cache().text_layout_system(),
                 &TEST_STYLES,
@@ -800,36 +791,6 @@ fn test_layout_text_block_uses_rich_table_when_flag_enabled() {
 
             assert!(matches!(item, BlockItem::Table(_)));
             assert!(!has_trailing_newline);
-        });
-    })
-}
-
-#[test]
-fn test_layout_text_block_uses_plain_text_when_flag_disabled() {
-    App::test((), |app| async move {
-        app.read(|ctx| {
-            let _flag = FeatureFlag::MarkdownTables.override_enabled(false);
-            let text_layout = TextLayout::new(
-                ctx.font_cache().text_layout_system(),
-                &TEST_STYLES,
-                f32::MAX,
-            );
-            let content = "short\tmuch longer\ncell\trow\n";
-            let block = StyledTextBlock {
-                block: vec![StyledBufferRun {
-                    run: content.to_string(),
-                    text_styles: TextStylesWithMetadata::default(),
-                    block_style: BufferBlockStyle::table(Vec::new()),
-                }],
-                style: BufferBlockStyle::table(Vec::new()),
-                content_length: CharOffset::from(content.chars().count()),
-            };
-
-            let (item, _has_trailing_newline) =
-                layout_text_block(&block, &text_layout, BlockLocation::Middle, false)
-                    .expect("table layout should succeed");
-
-            assert!(matches!(item, BlockItem::Paragraph(_)));
         });
     })
 }

@@ -10,7 +10,6 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use settings::Setting as _;
-use warp::features::FeatureFlag;
 use warp::integration_testing::input::{input_is_empty, tab_completions_menu_is_open};
 use warp::integration_testing::step::new_step_with_default_assertions;
 use warp::integration_testing::terminal::util::{
@@ -97,9 +96,7 @@ pub fn test_zsh_native_completions_without_compinit_use_filepaths() -> Builder {
 /// Enables the `NativeShellCompletions` gate for the whole app run. Process-global, which is safe
 /// because each integration test runs in its own process, and unlike a scoped guard it is still in
 /// effect once the app starts.
-fn enable_native_shell_completions_feature() {
-    FeatureFlag::NativeShellCompletions.set_enabled(true);
-}
+fn enable_native_shell_completions_feature() {}
 
 /// Warp completions off, native on, resolving to `CompletionSources::NativeOnly`: the shell is
 /// asked before Warp considers file-path suggestions.

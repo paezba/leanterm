@@ -10,7 +10,6 @@ use serde::Serialize;
 use string_offset::CharOffset;
 use warp_completer::meta::Span;
 use warp_core::command::ExitCode;
-use warp_core::features::FeatureFlag;
 use warp_core::semantic_selection::SemanticSelection;
 use warp_errors::report_error;
 pub use warp_terminal::event::ExitReason;
@@ -1980,16 +1979,10 @@ impl TerminalModel {
     }
 
     pub fn set_marked_text(&mut self, marked_text: &str, selected_range: &Range<usize>) {
-        if !FeatureFlag::ImeMarkedText.is_enabled() {
-            return;
-        }
         delegate!(self.set_marked_text(marked_text, selected_range))
     }
 
     pub fn clear_marked_text(&mut self) {
-        if !FeatureFlag::ImeMarkedText.is_enabled() {
-            return;
-        }
         delegate!(self.clear_marked_text())
     }
 }

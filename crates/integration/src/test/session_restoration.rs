@@ -1,5 +1,3 @@
-use settings::{RespectUserSyncSetting, SyncToCloud};
-use warp::features::FeatureFlag;
 use warp::integration_testing::step::{
     new_step_with_default_assertions, new_step_with_default_assertions_for_pane,
 };
@@ -216,7 +214,6 @@ pub fn test_restore_snapshot_with_deleted_cwd() -> Builder {
 // it would be nice to be able to modify the sqlite template to include the proper
 // paths, rather than having to hardcode them in advance.
 pub fn test_session_restoration_with_multiple_shells() -> Builder {
-    FeatureFlag::ShellSelector.set_enabled(true);
     new_builder()
         .with_setup(|_utils| {
             integration_testing::create_file_from_assets(

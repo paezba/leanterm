@@ -2,8 +2,6 @@ use settings::macros::define_settings_group;
 use settings::{RespectUserSyncSetting, Setting, SupportedPlatforms, SyncToCloud};
 use warpui::{AppContext, SingletonEntity};
 
-use crate::features::FeatureFlag;
-
 define_settings_group!(LigatureSettings, settings: [
     ligature_rendering_enabled: LigatureRenderingEnabled {
         type: bool,
@@ -22,5 +20,5 @@ pub fn should_use_ligature_rendering(app: &AppContext) -> bool {
         .ligature_rendering_enabled
         .value();
 
-    enabled_in_settings && FeatureFlag::Ligatures.is_enabled()
+    enabled_in_settings
 }

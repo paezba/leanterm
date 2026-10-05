@@ -64,7 +64,6 @@ use anyhow::{Context, Result};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use warp_errors::report_error;
-use warp_features::FeatureFlag;
 use warpui_core::{AppContext, Entity, ModelContext};
 use warpui_extras::secure_storage::{self, AppContextExt as _};
 use warpui_extras::user_preferences::UserPreferences;
@@ -467,12 +466,8 @@ pub trait Setting {
 
         if Self::is_private() {
             <PrivatePreferences as SingletonEntity>::as_ref(ctx).deref()
-        } else if FeatureFlag::SettingsFile.is_enabled() {
-            <PublicPreferences as SingletonEntity>::as_ref(ctx).as_preferences()
         } else {
-            // When the settings file is disabled, fall back to the private
-            // backend so both paths share a single instance.
-            <PrivatePreferences as SingletonEntity>::as_ref(ctx).deref()
+            <PublicPreferences as SingletonEntity>::as_ref(ctx).as_preferences()
         }
     }
 

@@ -4,7 +4,6 @@ use std::path::PathBuf;
 
 use hex;
 use warp_core::command::ExitCode;
-use warp_core::features::FeatureFlag;
 use warpui_core::color::ColorU;
 
 use super::*;
@@ -1080,7 +1079,6 @@ fn parse_sourced_rc_file_hook_with_uname() {
 
 #[test]
 fn parse_osc8_hyperlink_open() {
-    let _guard = FeatureFlag::OscHyperlinks.override_enabled(true);
     // ESC ] 8 ; ; https://example.com ESC \
     let bytes: &[u8] = b"\x1b]8;;https://example.com\x1b\\";
     let (_, handler) = parse_bytes(bytes);
@@ -1093,7 +1091,6 @@ fn parse_osc8_hyperlink_open() {
 
 #[test]
 fn parse_osc8_hyperlink_open_with_id() {
-    let _guard = FeatureFlag::OscHyperlinks.override_enabled(true);
     let bytes: &[u8] = b"\x1b]8;id=link-1;https://example.com\x07";
     let (_, handler) = parse_bytes(bytes);
 
@@ -1105,7 +1102,6 @@ fn parse_osc8_hyperlink_open_with_id() {
 
 #[test]
 fn parse_osc8_hyperlink_close_canonical() {
-    let _guard = FeatureFlag::OscHyperlinks.override_enabled(true);
     // Canonical close: ESC ] 8 ; ; ESC \
     let bytes: &[u8] = b"\x1b]8;;\x1b\\";
     let (_, handler) = parse_bytes(bytes);
@@ -1116,7 +1112,6 @@ fn parse_osc8_hyperlink_close_canonical() {
 
 #[test]
 fn parse_osc8_open_then_close_bell_terminator() {
-    let _guard = FeatureFlag::OscHyperlinks.override_enabled(true);
     // Open with bell terminator, write some bytes (irrelevant to the dispatch
     // mock), then close. Both terminator forms must dispatch.
     let bytes: &[u8] = b"\x1b]8;;https://example.com/report\x07Click me\x1b]8;;\x07";
@@ -1130,7 +1125,6 @@ fn parse_osc8_open_then_close_bell_terminator() {
 
 #[test]
 fn parse_osc8_uri_with_semicolons_dispatches_full_uri() {
-    let _guard = FeatureFlag::OscHyperlinks.override_enabled(true);
     // Anti-regression for the rejoin contract — the dispatcher must hand the
     // full URI (including embedded `;`) to set_hyperlink.
     let bytes: &[u8] = b"\x1b]8;;https://example.com/a?x=1;y=2\x1b\\";
@@ -1143,7 +1137,6 @@ fn parse_osc8_uri_with_semicolons_dispatches_full_uri() {
 
 #[test]
 fn parse_osc8_malformed_param_is_ignored_link_still_opens() {
-    let _guard = FeatureFlag::OscHyperlinks.override_enabled(true);
     // A param without `=` is ignored (per the OSC 8 spec); the link still opens.
     let bytes: &[u8] = b"\x1b]8;notavalidparam;https://example.com\x07";
     let (_, handler) = parse_bytes(bytes);
@@ -1155,18 +1148,7 @@ fn parse_osc8_malformed_param_is_ignored_link_still_opens() {
 }
 
 #[test]
-fn parse_osc8_dropped_when_feature_flag_disabled() {
-    let _guard = FeatureFlag::OscHyperlinks.override_enabled(false);
-    let bytes: &[u8] = b"\x1b]8;;https://example.com\x1b\\";
-    let (_, handler) = parse_bytes(bytes);
-
-    // Flag off -> dispatch falls through to `unhandled`, no event fires.
-    assert_eq!(handler.hyperlink_events.len(), 0);
-}
-
-#[test]
 fn parse_osc8_malformed_sequence_clears_active_hyperlink() {
-    let _guard = FeatureFlag::OscHyperlinks.override_enabled(true);
     // Open a valid link, then send a malformed (non-UTF-8 URI) sequence. The
     // parse error must clear the active hyperlink so subsequent output can't
     // inherit the stale URI.

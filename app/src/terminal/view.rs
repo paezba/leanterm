@@ -1927,7 +1927,7 @@ impl TerminalView {
             ActiveSession::new(sessions.clone(), model_events_handle.clone(), ctx)
         });
 
-        let find_model = ctx.add_model(|ctx| TerminalFindModel::new(model.clone(), ctx));
+        let find_model = ctx.add_model(|_| TerminalFindModel::new(model.clone()));
 
         ctx.subscribe_to_model(
             &TerminalSettings::handle(ctx),
@@ -3193,7 +3193,7 @@ impl TerminalView {
         &mut self,
         ctx: &mut ViewContext<Self>,
     ) -> bool {
-        if !FeatureFlag::ShellWidgetHandoff.is_enabled() || self.is_long_running() {
+        if self.is_long_running() {
             return false;
         }
         let Some(session_id) = self.active_block_session_id() else {
@@ -3234,7 +3234,7 @@ impl TerminalView {
         &mut self,
         ctx: &mut ViewContext<Self>,
     ) -> bool {
-        if !FeatureFlag::ShellWidgetHandoff.is_enabled() || self.is_long_running() {
+        if self.is_long_running() {
             return false;
         }
         let Some(session_id) = self.active_block_session_id() else {
@@ -3285,8 +3285,7 @@ impl TerminalView {
     }
 
     pub(crate) fn external_alt_c_binding_eligible(&self, app: &AppContext) -> bool {
-        if !FeatureFlag::ShellWidgetHandoff.is_enabled()
-            || self.is_long_running()
+        if self.is_long_running()
             || self.input.as_ref(app).is_voltron_open()
             || self.model.lock().is_alt_screen_active()
         {
@@ -3485,9 +3484,6 @@ impl TerminalView {
         selected_range: &Range<usize>,
         ctx: &mut ViewContext<Self>,
     ) {
-        if !FeatureFlag::ImeMarkedText.is_enabled() {
-            return;
-        }
         self.model
             .lock()
             .set_marked_text(marked_text, selected_range);
@@ -3495,9 +3491,6 @@ impl TerminalView {
     }
 
     fn clear_marked_text_on_terminal(&mut self, ctx: &mut ViewContext<Self>) {
-        if !FeatureFlag::ImeMarkedText.is_enabled() {
-            return;
-        }
         self.model.lock().clear_marked_text();
         ctx.notify();
     }
@@ -5037,50 +5030,45 @@ impl TerminalView {
                     // If the completed command was a `gh` or `gt` invocation, eagerly refresh PR
                     // info since these don't touch .git/ and won't be caught by the filesystem watcher.
                     #[cfg(feature = "local_fs")]
-                    if FeatureFlag::GitOperationsInCodeReview.is_enabled()
-                        && match &block_type {
-                            BlockType::User(user_block_completed) => {
-                                let command = user_block_completed.command.get_with(|compute| {
+                    if match &block_type {
+                        BlockType::User(user_block_completed) => {
+                            let command = user_block_completed.command.get_with(|compute| {
+                                let model = self.model.lock();
+                                compute(model.block_list())
+                            });
+                            let top_level = user_block_completed
+                                .serialized_block
+                                .get_with(|compute| {
                                     let model = self.model.lock();
                                     compute(model.block_list())
-                                });
-                                let top_level = user_block_completed
-                                    .serialized_block
-                                    .get_with(|compute| {
-                                        let model = self.model.lock();
-                                        compute(model.block_list())
-                                    })
-                                    .session_id
-                                    .and_then(|session_id| {
-                                        self.sessions.as_ref(ctx).get(session_id)
-                                    })
-                                    .and_then(|session| {
-                                        let escape_char = session.shell_family().escape_char();
-                                        let cmd =
+                                })
+                                .session_id
+                                .and_then(|session_id| self.sessions.as_ref(ctx).get(session_id))
+                                .and_then(|session| {
+                                    let escape_char = session.shell_family().escape_char();
+                                    let cmd = warp_completer::parsers::simple::top_level_command(
+                                        command,
+                                        escape_char,
+                                    )?;
+                                    let cmd = session
+                                        .alias_value(cmd.as_str())
+                                        .and_then(|alias| {
                                             warp_completer::parsers::simple::top_level_command(
-                                                command,
+                                                alias,
                                                 escape_char,
-                                            )?;
-                                        let cmd = session
-                                            .alias_value(cmd.as_str())
-                                            .and_then(|alias| {
-                                                warp_completer::parsers::simple::top_level_command(
-                                                    alias,
-                                                    escape_char,
-                                                )
-                                            })
-                                            .unwrap_or(cmd);
-                                        Some(cmd)
-                                    })
-                                    .or_else(|| {
-                                        command.split_whitespace().next().map(|cmd| cmd.to_owned())
-                                    });
+                                            )
+                                        })
+                                        .unwrap_or(cmd);
+                                    Some(cmd)
+                                })
+                                .or_else(|| {
+                                    command.split_whitespace().next().map(|cmd| cmd.to_owned())
+                                });
 
-                                matches!(top_level.as_deref(), Some("gh" | "gt"))
-                            }
-                            _ => false,
+                            matches!(top_level.as_deref(), Some("gh" | "gt"))
                         }
-                    {
+                        _ => false,
+                    } {
                         self.refresh_pr_info_after_gh_or_gt_command(ctx);
                     }
                 }
@@ -5395,9 +5383,7 @@ impl TerminalView {
             ModelEvent::Handler(_) => {}
             ModelEvent::FinishUpdate(_) => {}
             ModelEvent::ExternalShellWidgetSelection(data) => {
-                if FeatureFlag::ShellWidgetHandoff.is_enabled()
-                    && let Some(session_id) = data.session_id.map(SessionId::from)
-                {
+                if let Some(session_id) = data.session_id.map(SessionId::from) {
                     self.input.update(ctx, |input, _ctx| {
                         input.set_external_shell_widget_selection(session_id, &data.buffer);
                     });
@@ -10039,10 +10025,6 @@ impl TerminalView {
     }
 
     pub fn shell_launch_data_if_local(&self, ctx: &AppContext) -> Option<ShellLaunchData> {
-        if !FeatureFlag::ShellSelector.is_enabled() {
-            return None;
-        }
-
         let session_id = self.active_block_session_id()?;
         let Some(session) = self.sessions.as_ref(ctx).get(session_id) else {
             log::warn!("Expected to have session for session ID {session_id:?}, but doesn't exist");
@@ -12642,8 +12624,7 @@ impl View for TerminalView {
 
         // Add a border above the input view when there's an overhanging block (or below in input at the top
         // mode).
-        if ((viewport.overhanging_bottom_block(app).is_some()
-            && FeatureFlag::MinimalistUI.is_enabled())
+        if ((viewport.overhanging_bottom_block(app).is_some())
             || *BlockListSettings::as_ref(app).show_block_dividers.value())
             && self.is_input_box_visible(&model, app)
         {

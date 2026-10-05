@@ -279,7 +279,6 @@ use crate::workspace::header_toolbar_editor::{HeaderToolbarEditorEvent, HeaderTo
 use crate::workspace::header_toolbar_item::HeaderToolbarItemKind;
 use crate::workspace::sync_inputs::SyncedInputState;
 use crate::workspace::tab_group::{TabGroup, TabGroupId};
-use crate::workspace::tab_settings::TabCloseButtonPosition;
 use crate::workspace::toast_stack::{
     ToastStack, ToastStack as WorkspaceToastStack, ToastStackEvent as WorkspaceToastStackEvent,
 };
@@ -767,7 +766,7 @@ impl Workspace {
         self.suppress_detach_panes_on_window_close = value;
     }
     fn tab_rename_editor_font_size(ctx: &AppContext, appearance: &Appearance) -> f32 {
-        if FeatureFlag::VerticalTabs.is_enabled() && *TabSettings::as_ref(ctx).use_vertical_tabs {
+        if *TabSettings::as_ref(ctx).use_vertical_tabs {
             match *TabSettings::as_ref(ctx)
                 .vertical_tabs_display_granularity
                 .value()
@@ -1220,23 +1219,15 @@ impl Workspace {
         // `max_width` and `min_width` instead, so we can allow the menu to
         // grow as needed.
         let new_session_menu = ctx.add_typed_action_view(|ctx| {
-            if FeatureFlag::ShellSelector.is_enabled() {
-                let theme = Appearance::as_ref(ctx).theme();
-                Menu::new()
-                    .with_width(NEW_SESSION_MENU_WIDTH)
-                    .with_menu_variant(MenuVariant::scrollable())
-                    .with_border(Border::all(1.).with_border_color(theme.outline().into()))
-                    .with_drop_shadow()
-                    .with_safe_triangle()
-                    .with_ignore_hover_when_covered()
-                    .prevent_interaction_with_other_elements()
-            } else {
-                Menu::new()
-                    .with_menu_variant(MenuVariant::scrollable())
-                    .with_safe_triangle()
-                    .with_ignore_hover_when_covered()
-                    .prevent_interaction_with_other_elements()
-            }
+            let theme = Appearance::as_ref(ctx).theme();
+            Menu::new()
+                .with_width(NEW_SESSION_MENU_WIDTH)
+                .with_menu_variant(MenuVariant::scrollable())
+                .with_border(Border::all(1.).with_border_color(theme.outline().into()))
+                .with_drop_shadow()
+                .with_safe_triangle()
+                .with_ignore_hover_when_covered()
+                .prevent_interaction_with_other_elements()
         });
         ctx.subscribe_to_view(&new_session_menu, move |me, _, event, ctx| {
             me.handle_new_session_menu_event(event, ctx);
@@ -2173,8 +2164,7 @@ impl Workspace {
                 ctx.notify();
             }
             TabSettingsChangedEvent::ShowVerticalTabPanelInRestoredWindows { .. } => {
-                if FeatureFlag::VerticalTabs.is_enabled()
-                    && *TabSettings::as_ref(ctx).use_vertical_tabs
+                if *TabSettings::as_ref(ctx).use_vertical_tabs
                     && *TabSettings::as_ref(ctx).show_vertical_tab_panel_in_restored_windows
                 {
                     self.vertical_tabs_panel_open = true;
@@ -2195,10 +2185,8 @@ impl Workspace {
                 ctx.notify();
             }
             TabSettingsChangedEvent::DirectoryTabColors { .. } => {
-                if FeatureFlag::DirectoryTabColors.is_enabled() {
-                    for tab in &mut self.tabs {
-                        Self::sync_codebase_tab_color(tab, ctx);
-                    }
+                for tab in &mut self.tabs {
+                    Self::sync_codebase_tab_color(tab, ctx);
                 }
                 ctx.notify();
             }
@@ -2245,11 +2233,7 @@ impl Workspace {
         // one group container, so interleaved membership would render as two
         // containers sharing one id. `resolve_group_memberships` collapses that
         // to the first run of each group; see its docs for why.
-        let group_count = if FeatureFlag::GroupedTabs.is_enabled() {
-            window.tab_groups.len()
-        } else {
-            0
-        };
+        let group_count = window.tab_groups.len();
         let memberships = crate::launch_configs::launch_config::resolve_group_memberships(
             &window.tabs,
             group_count,
@@ -2282,7 +2266,7 @@ impl Workspace {
                     draggable_state: Default::default(),
                     // Mirrors the session-restore path: only honor pinned
                     // state while the Pinned Tabs feature is enabled.
-                    pinned: FeatureFlag::PinnedTabs.is_enabled() && group_template.pinned,
+                    pinned: group_template.pinned,
                 };
                 let id = group.id;
                 self.tab_groups.insert(id, group);
@@ -2400,28 +2384,25 @@ impl Workspace {
 
                 // Restore groups first so per-tab `group_id` assignments
                 // below can validate membership against a populated map.
-                if FeatureFlag::GroupedTabs.is_enabled() {
-                    self.tab_groups = window_snapshot
-                        .tab_groups
-                        .iter()
-                        .map(|group_snapshot| {
-                            (
-                                group_snapshot.id,
-                                TabGroup {
-                                    id: group_snapshot.id,
-                                    name: group_snapshot.name.clone(),
-                                    color: group_snapshot.color,
-                                    collapsed: group_snapshot.collapsed,
-                                    draggable_state: Default::default(),
-                                    // Only restore pinned state when the
-                                    // Pinned Tabs feature is enabled.
-                                    pinned: FeatureFlag::PinnedTabs.is_enabled()
-                                        && group_snapshot.pinned,
-                                },
-                            )
-                        })
-                        .collect();
-                }
+                self.tab_groups = window_snapshot
+                    .tab_groups
+                    .iter()
+                    .map(|group_snapshot| {
+                        (
+                            group_snapshot.id,
+                            TabGroup {
+                                id: group_snapshot.id,
+                                name: group_snapshot.name.clone(),
+                                color: group_snapshot.color,
+                                collapsed: group_snapshot.collapsed,
+                                draggable_state: Default::default(),
+                                // Only restore pinned state when the
+                                // Pinned Tabs feature is enabled.
+                                pinned: group_snapshot.pinned,
+                            },
+                        )
+                    })
+                    .collect();
 
                 window_snapshot
                     .tabs
@@ -2440,9 +2421,7 @@ impl Workspace {
                         self.tabs[tab_index].selected_color = saved_tab.selected_color;
                         // Only restore pinned state when the Pinned Tabs
                         // feature is enabled.
-                        if FeatureFlag::PinnedTabs.is_enabled() {
-                            self.tabs[tab_index].pinned = saved_tab.pinned;
-                        }
+                        self.tabs[tab_index].pinned = saved_tab.pinned;
                         // Drop the group reference if the group itself didn't restore.
                         self.tabs[tab_index].group_id = saved_tab
                             .group_id
@@ -2569,8 +2548,7 @@ impl Workspace {
         workspace_setting: &NewWorkspaceSource,
         ctx: &AppContext,
     ) -> bool {
-        let should_default_open =
-            FeatureFlag::VerticalTabs.is_enabled() && *TabSettings::as_ref(ctx).use_vertical_tabs;
+        let should_default_open = *TabSettings::as_ref(ctx).use_vertical_tabs;
 
         match workspace_setting {
             NewWorkspaceSource::Restored {
@@ -3117,10 +3095,7 @@ impl Workspace {
             self.tab_mru_order.retain(|id| *id != pane_group_id);
             self.tab_mru_order.insert(0, pane_group_id);
         }
-        if self.vertical_tabs_panel_open
-            && FeatureFlag::VerticalTabs.is_enabled()
-            && *TabSettings::as_ref(ctx).use_vertical_tabs
-        {
+        if self.vertical_tabs_panel_open && *TabSettings::as_ref(ctx).use_vertical_tabs {
             self.vertical_tabs_panel.scroll_to_tab(index);
         }
 
@@ -3268,11 +3243,7 @@ impl Workspace {
             return;
         }
         let next = if self.tabs[index].color() == Some(color) {
-            if FeatureFlag::DirectoryTabColors.is_enabled() {
-                SelectedTabColor::Cleared
-            } else {
-                SelectedTabColor::Unset
-            }
+            SelectedTabColor::Cleared
         } else {
             SelectedTabColor::Color(color)
         };
@@ -3694,9 +3665,6 @@ impl Workspace {
         position: Vector2F,
         ctx: &mut ViewContext<Self>,
     ) {
-        if !FeatureFlag::ConfigurableToolbar.is_enabled() {
-            return;
-        }
         let items = vec![
             MenuItemFields::new("Re-arrange toolbar items")
                 .with_on_select_action(WorkspaceAction::OpenHeaderToolbarEditor)
@@ -3710,9 +3678,6 @@ impl Workspace {
     }
 
     fn open_header_toolbar_editor(&mut self, ctx: &mut ViewContext<Self>) {
-        if !FeatureFlag::ConfigurableToolbar.is_enabled() {
-            return;
-        }
         self.header_toolbar_editor_modal
             .update(ctx, |modal, ctx| modal.open(ctx));
         self.close_all_overlays(ctx);
@@ -4006,27 +3971,25 @@ impl Workspace {
                 menu_items.push(terminal_item.into_item());
 
                 #[cfg(feature = "local_tty")]
-                if FeatureFlag::ShellSelector.is_enabled() {
-                    AvailableShells::handle(ctx).read(ctx, |model, _| {
-                        for shell in model.get_available_shells() {
-                            let shell_name = model.display_name_for_shell(shell);
-                            let icon = shell
-                                .get_valid_shell_path_and_type()
-                                .and_then(|shell_launch_data| {
-                                    ShellIndicatorType::try_from(&shell_launch_data).ok()
-                                })
-                                .map(|shell_indicator_type| shell_indicator_type.to_icon())
-                                .unwrap_or(icons::Icon::Terminal);
-                            let item = MenuItemFields::new(shell_name)
-                                .with_on_select_action(WorkspaceAction::AddTabWithShell {
-                                    shell: shell.clone(),
-                                    source: AddTabWithShellSource::ShellSelectorMenu,
-                                })
-                                .with_icon(icon);
-                            menu_items.push(item.into_item());
-                        }
-                    });
-                }
+                AvailableShells::handle(ctx).read(ctx, |model, _| {
+                    for shell in model.get_available_shells() {
+                        let shell_name = model.display_name_for_shell(shell);
+                        let icon = shell
+                            .get_valid_shell_path_and_type()
+                            .and_then(|shell_launch_data| {
+                                ShellIndicatorType::try_from(&shell_launch_data).ok()
+                            })
+                            .map(|shell_indicator_type| shell_indicator_type.to_icon())
+                            .unwrap_or(icons::Icon::Terminal);
+                        let item = MenuItemFields::new(shell_name)
+                            .with_on_select_action(WorkspaceAction::AddTabWithShell {
+                                shell: shell.clone(),
+                                source: AddTabWithShellSource::ShellSelectorMenu,
+                            })
+                            .with_icon(icon);
+                        menu_items.push(item.into_item());
+                    }
+                });
             }
 
             // On other platforms, Terminal is a regular item.
@@ -4043,76 +4006,70 @@ impl Workspace {
         }
 
         // 4. User tab configs
-        if FeatureFlag::TabConfigs.is_enabled() {
-            let tab_configs = WarpConfig::as_ref(ctx).tab_configs().to_vec();
+        let tab_configs = WarpConfig::as_ref(ctx).tab_configs().to_vec();
 
-            // Count occurrences of each config name so we can disambiguate
-            // duplicates in the menu (e.g. "My Tab Config", "My Tab Config (1)").
-            let mut name_totals: HashMap<String, usize> = HashMap::new();
-            for config in &tab_configs {
-                *name_totals.entry(config.name.clone()).or_default() += 1;
-            }
-            let mut name_seen: HashMap<String, usize> = HashMap::new();
+        // Count occurrences of each config name so we can disambiguate
+        // duplicates in the menu (e.g. "My Tab Config", "My Tab Config (1)").
+        let mut name_totals: HashMap<String, usize> = HashMap::new();
+        for config in &tab_configs {
+            *name_totals.entry(config.name.clone()).or_default() += 1;
+        }
+        let mut name_seen: HashMap<String, usize> = HashMap::new();
 
-            for tab_config in tab_configs {
-                let is_worktree = tab_config.is_worktree();
-                let icon = if is_worktree {
-                    icons::Icon::Dataflow02
-                } else {
-                    icons::Icon::LayoutAlt01
-                };
-                let display_name = if name_totals.get(&tab_config.name).copied().unwrap_or(0) > 1 {
-                    let seen = name_seen.entry(tab_config.name.clone()).or_default();
-                    *seen += 1;
-                    if *seen == 1 {
-                        tab_config.name.clone()
-                    } else {
-                        format!("{} ({})", tab_config.name, *seen - 1)
-                    }
-                } else {
+        for tab_config in tab_configs {
+            let is_worktree = tab_config.is_worktree();
+            let icon = if is_worktree {
+                icons::Icon::Dataflow02
+            } else {
+                icons::Icon::LayoutAlt01
+            };
+            let display_name = if name_totals.get(&tab_config.name).copied().unwrap_or(0) > 1 {
+                let seen = name_seen.entry(tab_config.name.clone()).or_default();
+                *seen += 1;
+                if *seen == 1 {
                     tab_config.name.clone()
-                };
+                } else {
+                    format!("{} ({})", tab_config.name, *seen - 1)
+                }
+            } else {
+                tab_config.name.clone()
+            };
 
-                let item = MenuItemFields::new(display_name)
-                    .with_on_select_action(WorkspaceAction::SelectTabConfig(tab_config))
-                    .with_icon(icon);
-                menu_items.push(item.into_item());
-            }
+            let item = MenuItemFields::new(display_name)
+                .with_on_select_action(WorkspaceAction::SelectTabConfig(tab_config))
+                .with_icon(icon);
+            menu_items.push(item.into_item());
         }
 
         // 5. Separator + worktree config entry + new tab config
-        if FeatureFlag::TabConfigs.is_enabled() {
-            menu_items.push(MenuItem::Separator);
-            menu_items.push(
-                MenuItemFields::new_submenu("New worktree config")
-                    .with_icon(icons::Icon::Dataflow02)
-                    .into_item(),
-            );
+        menu_items.push(MenuItem::Separator);
+        menu_items.push(
+            MenuItemFields::new_submenu("New worktree config")
+                .with_icon(icons::Icon::Dataflow02)
+                .into_item(),
+        );
 
-            // 6. New tab config — V0: opens the TOML template.
-            menu_items.push(
-                MenuItemFields::new("New tab config")
-                    .with_on_select_action(WorkspaceAction::SelectNewSessionMenuItem(
-                        NewSessionMenuItem::CreateNewTabConfig,
-                    ))
-                    .with_icon(icons::Icon::Plus)
-                    .into_item(),
-            );
-        }
+        // 6. New tab config — V0: opens the TOML template.
+        menu_items.push(
+            MenuItemFields::new("New tab config")
+                .with_on_select_action(WorkspaceAction::SelectNewSessionMenuItem(
+                    NewSessionMenuItem::CreateNewTabConfig,
+                ))
+                .with_icon(icons::Icon::Plus)
+                .into_item(),
+        );
 
         // 7. Separator + New tab group entry. Gated on the Grouped Tabs flag.
         // TODO(johnturcoo) add group actions.
-        if FeatureFlag::GroupedTabs.is_enabled() {
-            menu_items.push(MenuItem::Separator);
-            menu_items.push(
-                MenuItemFields::new("New tab group")
-                    .with_on_select_action(WorkspaceAction::SelectNewSessionMenuItem(
-                        NewSessionMenuItem::CreateNewTabGroup,
-                    ))
-                    .with_icon(icons::Icon::LayersThree01)
-                    .into_item(),
-            );
-        }
+        menu_items.push(MenuItem::Separator);
+        menu_items.push(
+            MenuItemFields::new("New tab group")
+                .with_on_select_action(WorkspaceAction::SelectNewSessionMenuItem(
+                    NewSessionMenuItem::CreateNewTabGroup,
+                ))
+                .with_icon(icons::Icon::LayersThree01)
+                .into_item(),
+        );
 
         menu_items.push(MenuItem::Separator);
         menu_items.push(
@@ -4174,8 +4131,7 @@ impl Workspace {
         anchor: NewSessionMenuAnchor,
         ctx: &ViewContext<Self>,
     ) -> f32 {
-        let use_vertical_tabs =
-            FeatureFlag::VerticalTabs.is_enabled() && *TabSettings::as_ref(ctx).use_vertical_tabs;
+        let use_vertical_tabs = *TabSettings::as_ref(ctx).use_vertical_tabs;
         match anchor {
             NewSessionMenuAnchor::AddTabButton(position)
                 if use_vertical_tabs && self.vertical_tabs_panel_open =>
@@ -4203,8 +4159,7 @@ impl Workspace {
     }
 
     fn toggle_tab_configs_menu(&mut self, ctx: &mut ViewContext<Self>) {
-        let use_vertical_tabs =
-            FeatureFlag::VerticalTabs.is_enabled() && *TabSettings::as_ref(ctx).use_vertical_tabs;
+        let use_vertical_tabs = *TabSettings::as_ref(ctx).use_vertical_tabs;
         if self.show_new_session_dropdown_menu.is_some() {
             self.close_new_session_dropdown_menu(ctx);
             return;
@@ -4271,9 +4226,7 @@ impl Workspace {
             #[cfg(not(feature = "local_fs"))]
             NewSessionMenuItem::CreateNewTabConfig => {}
             NewSessionMenuItem::CreateNewTabGroup => {
-                if FeatureFlag::GroupedTabs.is_enabled() {
-                    self.create_new_tab_group(ctx);
-                }
+                self.create_new_tab_group(ctx);
             }
         }
     }
@@ -4542,9 +4495,6 @@ impl Workspace {
     /// * If the tab was effectively pinned, clamp past the pinned region so
     ///   the new (unpinned) group doesn't land inside the pinned area.
     fn new_tab_group_from_tab(&mut self, tab_index: usize, ctx: &mut ViewContext<Self>) {
-        if !FeatureFlag::GroupedTabs.is_enabled() {
-            return;
-        }
         let Some(tab) = self.tabs.get(tab_index) else {
             log::debug!("new_tab_group_from_tab: tab_index {tab_index} out of bounds");
             return;
@@ -4596,9 +4546,6 @@ impl Workspace {
         group_id: TabGroupId,
         ctx: &mut ViewContext<Self>,
     ) {
-        if !FeatureFlag::GroupedTabs.is_enabled() {
-            return;
-        }
         let Some(tab) = self.tabs.get(tab_index) else {
             log::debug!("move_tab_to_group: tab_index {tab_index} out of bounds");
             return;
@@ -4630,9 +4577,6 @@ impl Workspace {
     /// the group's last remaining member, or further if the group was pinned
     /// (the removed tab is now unpinned and must clear the pinned region).
     fn remove_tab_from_group(&mut self, tab_index: usize, ctx: &mut ViewContext<Self>) {
-        if !FeatureFlag::GroupedTabs.is_enabled() {
-            return;
-        }
         let Some(tab) = self.tabs.get(tab_index) else {
             return;
         };
@@ -4661,7 +4605,7 @@ impl Workspace {
     }
 
     fn ungroup_tabs(&mut self, group_id: TabGroupId, ctx: &mut ViewContext<Self>) {
-        if !FeatureFlag::GroupedTabs.is_enabled() || !self.tab_groups.contains_key(&group_id) {
+        if !self.tab_groups.contains_key(&group_id) {
             return;
         }
         // Capture the group's contiguous member range and pinned state
@@ -4706,7 +4650,7 @@ impl Workspace {
     /// tab is created top-level (or in another group), so we pull it to the end
     /// of this group's run.
     fn new_tab_in_group(&mut self, group_id: TabGroupId, ctx: &mut ViewContext<Self>) {
-        if !FeatureFlag::GroupedTabs.is_enabled() || !self.tab_groups.contains_key(&group_id) {
+        if !self.tab_groups.contains_key(&group_id) {
             return;
         }
 
@@ -4784,9 +4728,6 @@ impl Workspace {
         direction: TabMovement,
         ctx: &mut ViewContext<Self>,
     ) {
-        if !FeatureFlag::GroupedTabs.is_enabled() {
-            return;
-        }
         if !self.can_move_tab_group(group_id, direction) {
             return;
         }
@@ -5356,10 +5297,9 @@ impl Workspace {
         additional_paths: &[PathBuf],
         ctx: &mut ViewContext<Self>,
     ) {
-        let grouping_on = FeatureFlag::TabbedEditorView.is_enabled()
-            && *EditorSettings::as_ref(ctx)
-                .prefer_tabbed_editor_view
-                .value();
+        let grouping_on = *EditorSettings::as_ref(ctx)
+            .prefer_tabbed_editor_view
+            .value();
 
         if grouping_on {
             let code_view = self
@@ -6181,7 +6121,7 @@ impl Workspace {
             items
         };
 
-        let pin_section = if FeatureFlag::PinnedTabs.is_enabled() {
+        let pin_section = {
             let (label, action) = if self.tab_groups.get(&group_id).is_some_and(|g| g.pinned) {
                 ("Unpin group", WorkspaceAction::UnpinTabGroup(group_id))
             } else {
@@ -6192,8 +6132,6 @@ impl Workspace {
                     .with_on_select_action(action)
                     .into_item(),
             ]
-        } else {
-            vec![]
         };
 
         // Color picker: same dot-based selector as individual tabs.
@@ -7423,15 +7361,10 @@ impl Workspace {
                         .unwrap_or_default(),
                     left_panel,
                     right_panel,
-                    group_id: if FeatureFlag::GroupedTabs.is_enabled() {
-                        self.tabs.get(tab_index).and_then(|tab| tab.group_id)
-                    } else {
-                        None
-                    },
+                    group_id: self.tabs.get(tab_index).and_then(|tab| tab.group_id),
                     // Only persist pinned state when the Pinned Tabs feature is
                     // enabled.
-                    pinned: FeatureFlag::PinnedTabs.is_enabled()
-                        && self.tabs.get(tab_index).is_some_and(|tab| tab.pinned),
+                    pinned: self.tabs.get(tab_index).is_some_and(|tab| tab.pinned),
                 }
             })
             .filter(|tab| {
@@ -7451,7 +7384,7 @@ impl Workspace {
 
         // Skip orphan groups whose members were all filtered out above.
         // This is a safety net and ensures empty groups are not saved/restored.
-        let tab_groups: Vec<TabGroupSnapshot> = if FeatureFlag::GroupedTabs.is_enabled() {
+        let tab_groups: Vec<TabGroupSnapshot> = {
             let referenced_group_ids: HashSet<TabGroupId> =
                 tabs.iter().filter_map(|tab| tab.group_id).collect();
             self.tab_groups
@@ -7462,11 +7395,9 @@ impl Workspace {
                     name: group.name.clone(),
                     color: group.color,
                     collapsed: group.collapsed,
-                    pinned: FeatureFlag::PinnedTabs.is_enabled() && group.pinned,
+                    pinned: group.pinned,
                 })
                 .collect()
-        } else {
-            Vec::new()
         };
 
         let resizable_data = ResizableData::handle(app);
@@ -8158,12 +8089,10 @@ impl Workspace {
     ///   there is always a way to open a top-level tab even when every tab is
     ///   grouped.
     fn new_tab_index_and_group(&self, ctx: &AppContext) -> (usize, Option<TabGroupId>) {
-        let active_group_id = if FeatureFlag::GroupedTabs.is_enabled() {
+        let active_group_id = {
             self.tabs
                 .get(self.active_tab_index)
                 .and_then(|tab| tab.group_id)
-        } else {
-            None
         };
 
         match TabSettings::as_ref(ctx).new_tab_placement {
@@ -8257,7 +8186,7 @@ impl Workspace {
 
             // preserve the current tab's default directory color when the new tab inherits the working directory
             // (otherwise the new tab's color flashes from no-color to default color during bootstrapping).
-            if FeatureFlag::DirectoryTabColors.is_enabled() && is_new_terminal {
+            if is_new_terminal {
                 let wd_config = &SessionSettings::as_ref(ctx).working_directory_config;
                 let inherits_cwd = wd_config.config_for_source(NewSessionSource::Tab).mode
                     == WorkingDirectoryMode::PreviousDir
@@ -8365,7 +8294,6 @@ impl Workspace {
             // Check if we can add the new file to an existing code pane (when using split pane
             // layout).
             if layout == EditorLayout::SplitPane
-                && FeatureFlag::TabbedEditorView.is_enabled()
                 && *EditorSettings::as_ref(ctx)
                     .prefer_tabbed_editor_view
                     .value()
@@ -8576,10 +8504,6 @@ impl Workspace {
             return ShowTabBar::Stacked;
         }
 
-        if !FeatureFlag::FullScreenZenMode.is_enabled() {
-            return ShowTabBar::default();
-        }
-
         let is_fullscreen = app
             .windows()
             .platform_window(self.window_id)
@@ -8592,9 +8516,8 @@ impl Workspace {
             || self.traffic_light_mouse_states.are_traffic_lights_hovered();
 
         // Check if any of the menus/popups rendered relative to the tab bar are open.
-        let is_vertical_tabs_active = FeatureFlag::VerticalTabs.is_enabled()
-            && *TabSettings::as_ref(app).use_vertical_tabs
-            && self.vertical_tabs_panel_open;
+        let is_vertical_tabs_active =
+            *TabSettings::as_ref(app).use_vertical_tabs && self.vertical_tabs_panel_open;
         let is_tab_menu_open = (self.show_tab_right_click_menu.is_some()
             && !is_vertical_tabs_active)
             || (self.show_new_session_dropdown_menu.is_some() && !is_vertical_tabs_active)
@@ -8630,11 +8553,10 @@ impl Workspace {
     #[cfg(target_os = "macos")]
     pub fn sync_window_button_visibility(&self, ctx: &mut ViewContext<Self>) {
         use warpui::platform::mac::WindowExt;
-        let show = if FeatureFlag::FullScreenZenMode.is_enabled()
-            && TabSettings::as_ref(ctx)
-                .workspace_decoration_visibility
-                .value()
-                == &WorkspaceDecorationVisibility::OnHover
+        let show = if TabSettings::as_ref(ctx)
+            .workspace_decoration_visibility
+            .value()
+            == &WorkspaceDecorationVisibility::OnHover
         {
             self.tab_bar_mode(ctx).has_tab_bar()
         } else {
@@ -9185,11 +9107,10 @@ impl Workspace {
                 self.refresh_working_directories_for_pane_group(&pane_group, ctx);
                 self.update_active_session(ctx);
 
-                if FeatureFlag::DirectoryTabColors.is_enabled()
-                    && let Some(tab) = self
-                        .tabs
-                        .iter_mut()
-                        .find(|t| t.pane_group.id() == pane_group.id())
+                if let Some(tab) = self
+                    .tabs
+                    .iter_mut()
+                    .find(|t| t.pane_group.id() == pane_group.id())
                 {
                     Self::sync_codebase_tab_color(tab, ctx);
                 }
@@ -9386,11 +9307,10 @@ impl Workspace {
                 // setup_code_review_panel here would race with refresh and
                 // re-create models that were just dropped.
 
-                if FeatureFlag::DirectoryTabColors.is_enabled()
-                    && let Some(tab) = self
-                        .tabs
-                        .iter_mut()
-                        .find(|t| t.pane_group.id() == pane_group.id())
+                if let Some(tab) = self
+                    .tabs
+                    .iter_mut()
+                    .find(|t| t.pane_group.id() == pane_group.id())
                 {
                     Self::sync_codebase_tab_color(tab, ctx);
                 }
@@ -9424,11 +9344,7 @@ impl Workspace {
                                 // `refine_hovered_tab_index` (group inheritance +
                                 // pinned clamping for vertical tabs), so use them
                                 // as-is. Grouping off => never inherit a group.
-                                let inherited_group = if FeatureFlag::GroupedTabs.is_enabled() {
-                                    group
-                                } else {
-                                    None
-                                };
+                                let inherited_group = group;
                                 self.add_tab_from_existing_pane(
                                     pane,
                                     workspace_tab_index,
@@ -9456,11 +9372,9 @@ impl Workspace {
                         TabBarHoverIndex::OverTab(workspace_tab_index) => {
                             #[cfg(not(target_family = "wasm"))]
                             {
-                                let prefers_tabbed_editor_view = FeatureFlag::TabbedEditorView
-                                    .is_enabled()
-                                    && *EditorSettings::as_ref(ctx)
-                                        .prefer_tabbed_editor_view
-                                        .value();
+                                let prefers_tabbed_editor_view = *EditorSettings::as_ref(ctx)
+                                    .prefer_tabbed_editor_view
+                                    .value();
 
                                 let target_pane_group =
                                     self.get_pane_group_view(workspace_tab_index);
@@ -9599,10 +9513,9 @@ impl Workspace {
                 hidden_pane_preview_direction,
             } => {
                 #[cfg(feature = "local_fs")]
-                let prefers_tabbed_editor_view = FeatureFlag::TabbedEditorView.is_enabled()
-                    && *EditorSettings::as_ref(ctx)
-                        .prefer_tabbed_editor_view
-                        .value();
+                let prefers_tabbed_editor_view = *EditorSettings::as_ref(ctx)
+                    .prefer_tabbed_editor_view
+                    .value();
 
                 #[cfg(not(feature = "local_fs"))]
                 let prefers_tabbed_editor_view = false;
@@ -10871,11 +10784,7 @@ impl Workspace {
         ctx: &AppContext,
     ) -> Box<dyn Element> {
         let tab = &self.tabs[tab_index];
-        let close_button_position = if FeatureFlag::TabCloseButtonOnLeft.is_enabled() {
-            TabSettings::as_ref(ctx).close_button_position
-        } else {
-            TabCloseButtonPosition::default()
-        };
+        let close_button_position = TabSettings::as_ref(ctx).close_button_position;
 
         let is_drag_target = self
             .hovered_tab_index
@@ -10975,11 +10884,7 @@ impl Workspace {
                 )
                 .finish(),
             );
-            let close_button_position = if FeatureFlag::TabCloseButtonOnLeft.is_enabled() {
-                TabSettings::as_ref(ctx).close_button_position
-            } else {
-                TabCloseButtonPosition::default()
-            };
+            let close_button_position = TabSettings::as_ref(ctx).close_button_position;
             // When a group has only one member, suppress that member's per-tab
             // `Draggable` so the parent group's `Draggable` picks up the drag
             // instead, dragging the whole group rather than orphaning it.
@@ -11167,7 +11072,7 @@ impl Workspace {
             .name
             .clone()
             .unwrap_or_else(|| "New Group".to_string());
-        let show_header_pin = FeatureFlag::PinnedTabs.is_enabled() && group.pinned;
+        let show_header_pin = group.pinned;
         let normal_right_pad = if is_collapsed { 8. } else { 9. };
 
         let build_inner = |name: Box<dyn Element>, reserve_pin: bool| -> Box<dyn Element> {
@@ -11410,11 +11315,7 @@ impl Workspace {
             vertical_tabs::render_tab_group_for_drag_ghost(self, tab_index, ctx)
         } else {
             let tab = &self.tabs[tab_index];
-            let close_button_position = if FeatureFlag::TabCloseButtonOnLeft.is_enabled() {
-                TabSettings::as_ref(ctx).close_button_position
-            } else {
-                TabCloseButtonPosition::default()
-            };
+            let close_button_position = TabSettings::as_ref(ctx).close_button_position;
             let tab_bar_state = TabBarState {
                 tab_count: self.tabs.len(),
                 active_tab_index: Some(tab_index),
@@ -11448,8 +11349,7 @@ impl Workspace {
         appearance: &Appearance,
         ctx: &AppContext,
     ) -> Box<dyn Element> {
-        let vertical_tabs_active =
-            FeatureFlag::VerticalTabs.is_enabled() && *TabSettings::as_ref(ctx).use_vertical_tabs;
+        let vertical_tabs_active = *TabSettings::as_ref(ctx).use_vertical_tabs;
 
         let (is_active, tooltip_text, action, keybinding_name, save_position_id) =
             if vertical_tabs_active {
@@ -11900,8 +11800,7 @@ impl Workspace {
         }
 
         // Check if vertical tabs mode is active
-        let vertical_tabs_active =
-            FeatureFlag::VerticalTabs.is_enabled() && *TabSettings::as_ref(ctx).use_vertical_tabs;
+        let vertical_tabs_active = *TabSettings::as_ref(ctx).use_vertical_tabs;
 
         // Render config-driven left-side toolbar buttons (both horizontal and vertical tabs)
         let knowledge_center_closed = true;
@@ -12138,8 +12037,7 @@ impl Workspace {
         if !item.is_available(ctx) {
             return None;
         }
-        let vertical_tabs_active =
-            FeatureFlag::VerticalTabs.is_enabled() && *TabSettings::as_ref(ctx).use_vertical_tabs;
+        let vertical_tabs_active = *TabSettings::as_ref(ctx).use_vertical_tabs;
         let inner = match item {
             HeaderToolbarItemKind::TabsPanel => self.render_left_toggle_button(appearance, ctx),
             HeaderToolbarItemKind::ToolsPanel => {
@@ -12332,36 +12230,6 @@ impl Workspace {
         let tab_configs_tool_tip_sublabel_text =
             keybinding_name_to_display_string(TOGGLE_TAB_CONFIGS_MENU_BINDING_NAME, ctx);
         let appearance = Appearance::as_ref(ctx);
-
-        if !FeatureFlag::ShellSelector.is_enabled() {
-            // Legacy new tab button, which shows the menu on right click.
-            let new_tab_button = self
-                .render_tab_bar_icon_button(
-                    appearance,
-                    icons::Icon::Plus,
-                    &self.mouse_states.new_tab_button.clone(),
-                    WorkspaceAction::AddDefaultTab,
-                    new_tab_tool_tip_label_text,
-                    new_tab_tool_tip_sublabel_text,
-                    false,
-                    false,
-                )
-                .on_right_click(move |ctx, _, position| {
-                    ctx.dispatch_typed_action(WorkspaceAction::ToggleNewSessionMenu {
-                        anchor: NewSessionMenuAnchor::AddTabButton(position),
-                    });
-                })
-                .finish();
-            return Container::new(
-                SavePosition::new(
-                    Align::new(new_tab_button).finish(),
-                    NEW_TAB_BUTTON_POSITION_ID,
-                )
-                .finish(),
-            )
-            .with_margin_left(BUTTON_LEFT_MARGIN)
-            .finish();
-        }
 
         let theme = appearance.theme();
 
@@ -12612,8 +12480,7 @@ impl Workspace {
             None => active_content,
         };
 
-        let vertical_tabs_active =
-            FeatureFlag::VerticalTabs.is_enabled() && *TabSettings::as_ref(app).use_vertical_tabs;
+        let vertical_tabs_active = *TabSettings::as_ref(app).use_vertical_tabs;
         let pane_group = self.active_tab_pane_group().as_ref(app);
         let is_right_open = pane_group.right_panel_open;
         let is_right_maximized = is_right_open && pane_group.is_right_panel_maximized;
@@ -12994,8 +12861,7 @@ impl Workspace {
         let mut contents = contents;
 
         let traffic_light_data = traffic_light_data(app, self.window_id);
-        let vertical_tabs_active =
-            FeatureFlag::VerticalTabs.is_enabled() && *TabSettings::as_ref(app).use_vertical_tabs;
+        let vertical_tabs_active = *TabSettings::as_ref(app).use_vertical_tabs;
         // Add a spacer for the traffic light buttons on Windows/Linux.
         if traffic_light_data.is_some_and(|data| data.side == TrafficLightSide::Right)
             && *side == PanelPosition::Right
@@ -13072,9 +12938,8 @@ impl Workspace {
         // Config-driven vertical-tabs-era panels (left side).
         // Hidden for simplified WASM views (notebooks, shared sessions, etc.)
         // where these panels are unnecessary.
-        let vertical_tabs_active = !hide_vertical_tabs
-            && FeatureFlag::VerticalTabs.is_enabled()
-            && *TabSettings::as_ref(app).use_vertical_tabs;
+        let vertical_tabs_active =
+            !hide_vertical_tabs && *TabSettings::as_ref(app).use_vertical_tabs;
 
         // In vertical tabs mode, config-driven panels are rendered here.
         // In horizontal tabs mode, they're rendered inside render_banner_and_active_tab.
@@ -13770,10 +13635,7 @@ impl Workspace {
         if cfg!(feature = "local_fs") && *CodeSettings::as_ref(ctx).show_project_explorer.value() {
             views.push(ToolPanelView::ProjectExplorer);
         }
-        if cfg!(feature = "local_fs")
-            && FeatureFlag::GlobalSearch.is_enabled()
-            && *CodeSettings::as_ref(ctx).show_global_search.value()
-        {
+        if cfg!(feature = "local_fs") && *CodeSettings::as_ref(ctx).show_global_search.value() {
             views.push(ToolPanelView::GlobalSearch {
                 entry_focus: GlobalSearchEntryFocus::Results,
             });
@@ -14321,10 +14183,7 @@ impl TypedActionView for Workspace {
                 }
             }
             ToggleVerticalTabsSettingsPopup => {
-                if FeatureFlag::VerticalTabs.is_enabled()
-                    && *TabSettings::as_ref(ctx).use_vertical_tabs
-                    && self.vertical_tabs_panel_open
-                {
+                if *TabSettings::as_ref(ctx).use_vertical_tabs && self.vertical_tabs_panel_open {
                     self.vertical_tabs_panel.show_settings_popup =
                         !self.vertical_tabs_panel.show_settings_popup;
                     ctx.notify();
@@ -14737,9 +14596,7 @@ impl TypedActionView for Workspace {
                 }
             }
             ToggleGlobalSearch => {
-                if FeatureFlag::GlobalSearch.is_enabled()
-                    && *CodeSettings::as_ref(ctx).show_global_search
-                {
+                if *CodeSettings::as_ref(ctx).show_global_search {
                     let is_showing = matches!(
                         self.left_panel_view.as_ref(ctx).active_view(),
                         ToolPanelView::GlobalSearch { .. }
@@ -14759,9 +14616,7 @@ impl TypedActionView for Workspace {
                 });
             }
             OpenGlobalSearch => {
-                if FeatureFlag::GlobalSearch.is_enabled()
-                    && *CodeSettings::as_ref(ctx).show_global_search
-                {
+                if *CodeSettings::as_ref(ctx).show_global_search {
                     if let Some(selected_text) = self.get_selected_text_from_focused_view(ctx)
                         && let Some(global_search_view) = self
                             .left_panel_view
@@ -15112,7 +14967,6 @@ impl View for Workspace {
         );
 
         if !use_simplified_wasm_tab_bar
-            && FeatureFlag::VerticalTabs.is_enabled()
             && *TabSettings::as_ref(app).use_vertical_tabs
             && self.vertical_tabs_panel_open
             && self.vertical_tabs_panel.show_settings_popup
@@ -15134,8 +14988,7 @@ impl View for Workspace {
             );
         }
 
-        if FeatureFlag::VerticalTabs.is_enabled()
-            && *TabSettings::as_ref(app).use_vertical_tabs
+        if *TabSettings::as_ref(app).use_vertical_tabs
             && self.vertical_tabs_panel_open
             && let Some(vertical_tabs::DetailSidecarOverlay {
                 anchor_position_id,
@@ -15251,9 +15104,8 @@ impl View for Workspace {
         // (whether stacked inside panels or as an overlay) so that tab bar button save
         // positions are committed to the position cache before these menus read them.
         if let Some((tab_idx, right_click_menu_anchor)) = self.show_tab_right_click_menu {
-            let is_vertical = FeatureFlag::VerticalTabs.is_enabled()
-                && *TabSettings::as_ref(app).use_vertical_tabs
-                && self.vertical_tabs_panel_open;
+            let is_vertical =
+                *TabSettings::as_ref(app).use_vertical_tabs && self.vertical_tabs_panel_open;
             if tab_bar_mode.has_tab_bar() || is_vertical {
                 let positioning = if is_vertical {
                     match right_click_menu_anchor {
@@ -15313,9 +15165,8 @@ impl View for Workspace {
         // Rendered for both the horizontal tab bar and the vertical tabs panel
         // — the right-click handlers on both surfaces dispatch the same action.
         if let Some((_tab_idx, anchor)) = self.show_tab_selection_right_click_menu {
-            let is_vertical = FeatureFlag::VerticalTabs.is_enabled()
-                && *TabSettings::as_ref(app).use_vertical_tabs
-                && self.vertical_tabs_panel_open;
+            let is_vertical =
+                *TabSettings::as_ref(app).use_vertical_tabs && self.vertical_tabs_panel_open;
             if tab_bar_mode.has_tab_bar() || is_vertical {
                 let position = match anchor {
                     TabContextMenuAnchor::Pointer(position) => position,
@@ -15345,9 +15196,8 @@ impl View for Workspace {
 
         // Tab group more-options menu (reuses the `tab_right_click_menu` view).
         if let Some((group_id, anchor)) = self.show_tab_group_right_click_menu {
-            let is_vertical = FeatureFlag::VerticalTabs.is_enabled()
-                && *TabSettings::as_ref(app).use_vertical_tabs
-                && self.vertical_tabs_panel_open;
+            let is_vertical =
+                *TabSettings::as_ref(app).use_vertical_tabs && self.vertical_tabs_panel_open;
             let positioning = match (is_vertical, anchor) {
                 (true, TabContextMenuAnchor::VerticalTabsKebab) => {
                     let tabs_side = Self::tabs_panel_side(
@@ -15400,9 +15250,8 @@ impl View for Workspace {
         // Render the new session dropdown menu. This is outside the tab bar visibility
         // gate because it can also be opened from the vertical tabs panel.
         if let Some(menu_anchor) = self.show_new_session_dropdown_menu {
-            let is_vertical = FeatureFlag::VerticalTabs.is_enabled()
-                && *TabSettings::as_ref(app).use_vertical_tabs
-                && self.vertical_tabs_panel_open;
+            let is_vertical =
+                *TabSettings::as_ref(app).use_vertical_tabs && self.vertical_tabs_panel_open;
 
             match (is_vertical, menu_anchor) {
                 (true, NewSessionMenuAnchor::AddTabButton(_)) => {
@@ -15437,11 +15286,7 @@ impl View for Workspace {
                     // TODO(CORE-2300): In the new version of the shell selector, this is not a
                     // context menu but a dropdown. Since it is quite wide, we need to reposition
                     // it so it does not render outside the bounds of the window.
-                    let bounds = if FeatureFlag::ShellSelector.is_enabled() {
-                        ParentOffsetBounds::WindowByPosition
-                    } else {
-                        ParentOffsetBounds::Unbounded
-                    };
+                    let bounds = ParentOffsetBounds::WindowByPosition;
                     stack.add_positioned_overlay_child(
                         ChildView::new(&self.new_session_dropdown_menu).finish(),
                         OffsetPositioning::offset_from_parent(
@@ -15623,9 +15468,8 @@ impl View for Workspace {
         }
 
         if self.should_show_session_config_tab_config_chip() {
-            let use_vertical = FeatureFlag::VerticalTabs.is_enabled()
-                && *TabSettings::as_ref(app).use_vertical_tabs
-                && self.vertical_tabs_panel_open;
+            let use_vertical =
+                *TabSettings::as_ref(app).use_vertical_tabs && self.vertical_tabs_panel_open;
             let chip =
                 self.render_session_config_tab_config_chip(use_vertical, Appearance::as_ref(app));
             if use_vertical {
@@ -15640,11 +15484,7 @@ impl View for Workspace {
                     ),
                 );
             } else {
-                let anchor_id = if FeatureFlag::ShellSelector.is_enabled() {
-                    NEW_SESSION_MENU_BUTTON_POSITION_ID
-                } else {
-                    NEW_TAB_BUTTON_POSITION_ID
-                };
+                let anchor_id = NEW_SESSION_MENU_BUTTON_POSITION_ID;
                 stack.add_positioned_overlay_child(
                     chip,
                     OffsetPositioning::offset_from_save_position_element(
@@ -15785,8 +15625,7 @@ impl View for Workspace {
         }
 
         // Add workspace-wide UI event handling.
-        let stack = if FeatureFlag::VerticalTabs.is_enabled()
-            && *TabSettings::as_ref(app).use_vertical_tabs
+        let stack = if *TabSettings::as_ref(app).use_vertical_tabs
             && self.vertical_tabs_panel_open
             // The vertical-tabs detail sidecar can become stale if the pointer moves through a
             // covered region (for example, its scrollbar gutter) and the row/sidecar hoverables
@@ -15831,12 +15670,10 @@ impl View for Workspace {
                     }
 
                     // If the control key is being held, scrolling should scale the zoom level or font size
-                    if FeatureFlag::UIZoom.is_enabled() {
-                        if delta.y() > 0.0 {
-                            ctx.dispatch_typed_action(WorkspaceAction::IncreaseZoom);
-                        } else if delta.y() < 0.0 {
-                            ctx.dispatch_typed_action(WorkspaceAction::DecreaseZoom);
-                        }
+                    if delta.y() > 0.0 {
+                        ctx.dispatch_typed_action(WorkspaceAction::IncreaseZoom);
+                    } else if delta.y() < 0.0 {
+                        ctx.dispatch_typed_action(WorkspaceAction::DecreaseZoom);
                     } else if delta.y() > 0.0 {
                         ctx.dispatch_typed_action(WorkspaceAction::IncreaseFontSize);
                     } else if delta.y() < 0.0 {
@@ -16041,14 +15878,9 @@ impl Workspace {
     /// and each contiguous run of same-group tabs becomes one `Group`. Shared by
     /// tab/group rendering and insertion index calculations.
     fn tab_bar_slots(&self) -> Vec<TabBarSlot> {
-        let grouped_tabs_enabled = FeatureFlag::GroupedTabs.is_enabled();
         let mut slots: Vec<TabBarSlot> = Vec::with_capacity(self.tabs.len());
         for (idx, tab) in self.tabs.iter().enumerate() {
-            let group_id = if grouped_tabs_enabled {
-                tab.group_id.filter(|gid| self.tab_groups.contains_key(gid))
-            } else {
-                None
-            };
+            let group_id = tab.group_id.filter(|gid| self.tab_groups.contains_key(gid));
             match group_id {
                 Some(group_id) => {
                     if let Some(TabBarSlot::Group {
@@ -16477,8 +16309,7 @@ impl Workspace {
                     // the normal reorder path below: the placeholder is
                     // detached mid cross-window drag and shouldn't churn group
                     // membership.
-                    let use_vertical_tabs = FeatureFlag::VerticalTabs.is_enabled()
-                        && *TabSettings::as_ref(ctx).use_vertical_tabs;
+                    let use_vertical_tabs = *TabSettings::as_ref(ctx).use_vertical_tabs;
                     let new_index = if use_vertical_tabs {
                         self.calculate_updated_tab_index_vertical(current_index, position, ctx)
                     } else {
@@ -16619,86 +16450,82 @@ impl Workspace {
             return;
         }
 
-        let use_vertical_tabs =
-            FeatureFlag::VerticalTabs.is_enabled() && *TabSettings::as_ref(ctx).use_vertical_tabs;
-        let groups_enabled = FeatureFlag::GroupedTabs.is_enabled();
+        let use_vertical_tabs = *TabSettings::as_ref(ctx).use_vertical_tabs;
 
-        if groups_enabled {
-            // Reassign membership when the dragged tab enters a different
-            // expanded group. Collapsed groups are handled by the safety-net
-            // hop below so we don't drop into it.
-            let midpoint_drag = if use_vertical_tabs {
-                (position.min_y() + position.max_y()) / 2.
-            } else {
-                (position.min_x() + position.max_x()) / 2.
-            };
-            let source_group = self.tabs[current_index].group_id;
-            let hovered_group =
-                self.target_group_at_axis(midpoint_drag, source_group, use_vertical_tabs, ctx);
-            let expanded_target =
-                hovered_group.filter(|gid| !self.tab_groups.get(gid).is_some_and(|g| g.collapsed));
-            // A pinned tab keeps its individual pin while dragging over a
-            // pinned group (it's committed on drop — see the `DropTab` handler).
-            let was_pinned = self.tabs[current_index].pinned;
-            let target_group_pinned = expanded_target
-                .and_then(|gid| self.tab_groups.get(&gid))
-                .is_some_and(|g| g.pinned);
-            // Check if we are dragging a pinned tab into an unpinned group.
-            // This is not supported as pinned items can not leave the pinned area.
-            let pinned_into_unpinned_group =
-                was_pinned && expanded_target.is_some() && !target_group_pinned;
+        // Reassign membership when the dragged tab enters a different
+        // expanded group. Collapsed groups are handled by the safety-net
+        // hop below so we don't drop into it.
+        let midpoint_drag = if use_vertical_tabs {
+            (position.min_y() + position.max_y()) / 2.
+        } else {
+            (position.min_x() + position.max_x()) / 2.
+        };
+        let source_group = self.tabs[current_index].group_id;
+        let hovered_group =
+            self.target_group_at_axis(midpoint_drag, source_group, use_vertical_tabs, ctx);
+        let expanded_target =
+            hovered_group.filter(|gid| !self.tab_groups.get(gid).is_some_and(|g| g.collapsed));
+        // A pinned tab keeps its individual pin while dragging over a
+        // pinned group (it's committed on drop — see the `DropTab` handler).
+        let was_pinned = self.tabs[current_index].pinned;
+        let target_group_pinned = expanded_target
+            .and_then(|gid| self.tab_groups.get(&gid))
+            .is_some_and(|g| g.pinned);
+        // Check if we are dragging a pinned tab into an unpinned group.
+        // This is not supported as pinned items can not leave the pinned area.
+        let pinned_into_unpinned_group =
+            was_pinned && expanded_target.is_some() && !target_group_pinned;
 
-            if expanded_target != source_group && !pinned_into_unpinned_group {
-                // Check if a tab is being dragged out of a pinned group.
-                // If the tab is currently pinned, that means the user is
-                // repositioning it within the pinned area, and passed over
-                // a group as part of the drag. In that case we do not want
-                // to flag this as a tab leaving a pinned group.
-                let leaving_pinned_group = expanded_target.is_none()
-                    && source_group
-                        .and_then(|gid| self.tab_groups.get(&gid))
-                        .is_some_and(|g| g.pinned)
-                    && !was_pinned;
+        if expanded_target != source_group && !pinned_into_unpinned_group {
+            // Check if a tab is being dragged out of a pinned group.
+            // If the tab is currently pinned, that means the user is
+            // repositioning it within the pinned area, and passed over
+            // a group as part of the drag. In that case we do not want
+            // to flag this as a tab leaving a pinned group.
+            let leaving_pinned_group = expanded_target.is_none()
+                && source_group
+                    .and_then(|gid| self.tab_groups.get(&gid))
+                    .is_some_and(|g| g.pinned)
+                && !was_pinned;
 
-                // Capture the beginning of the unpinned region during the drag.
-                // If a tab is leaving a pinned group, this is the next position
-                // that it can land.
-                let unpinned_region_start =
-                    leaving_pinned_group.then(|| self.pinned_boundary_index(&self.tabs));
+            // Capture the beginning of the unpinned region during the drag.
+            // If a tab is leaving a pinned group, this is the next position
+            // that it can land.
+            let unpinned_region_start =
+                leaving_pinned_group.then(|| self.pinned_boundary_index(&self.tabs));
 
-                // The bounds of the group that a tab could be dragged into.
-                let target_group_range =
-                    expanded_target.and_then(|gid| group_member_index_range(&self.tabs, gid));
+            // The bounds of the group that a tab could be dragged into.
+            let target_group_range =
+                expanded_target.and_then(|gid| group_member_index_range(&self.tabs, gid));
 
-                // Assign the tab to the group we're dragging over (or clear its
-                // group if none). This intentionally leaves the pin untouched:
-                // a pinned tab dragged into a pinned group keeps its pin for the
-                // duration of the drag and only loses it on drop (see the
-                // `DropTab` handler).
-                self.assign_tab_to_group(current_index, expanded_target, ctx);
+            // Assign the tab to the group we're dragging over (or clear its
+            // group if none). This intentionally leaves the pin untouched:
+            // a pinned tab dragged into a pinned group keeps its pin for the
+            // duration of the drag and only loses it on drop (see the
+            // `DropTab` handler).
+            self.assign_tab_to_group(current_index, expanded_target, ctx);
 
-                // Hop into the target group's contiguous block so the group
-                // stays one rendered container. Vertical tab rendering only
-                // groups consecutive tabs, so leaving `current_index` outside
-                // the block would split the group across the panel. Land at the
-                // near edge: the front when entering from above/left, the end
-                // when entering from below/right.
-                if let Some((first, last)) = target_group_range {
-                    let insert_at = if current_index < first {
-                        first - 1
-                    } else {
-                        last + 1
-                    };
-                    if insert_at != current_index {
-                        self.hop_tab_to_index(current_index, insert_at, ctx);
-                    }
-                } else if let Some(target) = unpinned_region_start {
-                    // Relocate the now-unpinned tab to the first unpinned slot
-                    // so the pinned region stays contiguous.
-                    self.move_tab_to_index(current_index, target, ctx);
+            // Hop into the target group's contiguous block so the group
+            // stays one rendered container. Vertical tab rendering only
+            // groups consecutive tabs, so leaving `current_index` outside
+            // the block would split the group across the panel. Land at the
+            // near edge: the front when entering from above/left, the end
+            // when entering from below/right.
+            if let Some((first, last)) = target_group_range {
+                let insert_at = if current_index < first {
+                    first - 1
+                } else {
+                    last + 1
+                };
+                if insert_at != current_index {
+                    self.hop_tab_to_index(current_index, insert_at, ctx);
                 }
-                return;
+            } else if let Some(target) = unpinned_region_start {
+                // Relocate the now-unpinned tab to the first unpinned slot
+                // so the pinned region stays contiguous.
+                self.move_tab_to_index(current_index, target, ctx);
             }
+            return;
         }
 
         let new_index = if use_vertical_tabs {
@@ -16930,15 +16757,11 @@ impl Workspace {
         // Resolve the group along whichever axis the active tab bar uses, then
         // clamp ungrouped insertions out of the pinned region below.
         let is_vertical = uses_vertical_tabs(ctx);
-        let group = if FeatureFlag::GroupedTabs.is_enabled() {
-            self.insertion_group(index, drag_position.center(), is_vertical, ctx)
-        } else {
-            None
-        };
+        let group = self.insertion_group(index, drag_position.center(), is_vertical, ctx);
         // An ungrouped insertion can't land in the pinned region, so clamp it to
         // the first unpinned slot so the indicator stays in sync with where the
         // pane lands. A drop into a group inherits that group's pinned status.
-        let index = if FeatureFlag::PinnedTabs.is_enabled() && group.is_none() {
+        let index = if group.is_none() {
             self.clamp_to_unpinned_region(&self.tabs, index)
         } else {
             index
@@ -17415,8 +17238,7 @@ pub(super) fn group_has_single_member(tabs: &[TabData], group_id: TabGroupId) ->
 /// otherwise the horizontal tab bar.
 ///
 /// Uses the shared `uses_vertical_tabs` predicate — the same
-/// `FeatureFlag::VerticalTabs` + `use_vertical_tabs` check the tab bar uses to
-/// decide what to render (see `render_tab_bar_contents`) — so the id always
+/// `use_vertical_tabs` check the tab bar uses to decide what to render (see `render_tab_bar_contents`) — so the id always
 /// points at wherever the tab strip is actually shown.
 pub(crate) fn active_tab_bar_position_id(app: &AppContext) -> &'static str {
     if uses_vertical_tabs(app) {
