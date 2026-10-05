@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
 
-use settings::{PrivatePreferences, PublicPreferences, Setting as _, SettingsManager, SyncToCloud};
+use settings::{PrivatePreferences, PublicPreferences, Setting as _, SettingsManager};
 use warp_core::channel::{Channel, ChannelState};
 use warpui::SingletonEntity as _;
 use warpui_extras::secure_storage::{self, AppContextExt as _};
@@ -182,8 +182,7 @@ fn mode_does_not_migrate_from_private_preferences() {
     });
 }
 #[test]
-fn mode_is_private_and_never_cloud_synced() {
-    assert_eq!(LocalControlModeSetting::sync_to_cloud(), SyncToCloud::Never);
+fn mode_is_private() {
     assert!(LocalControlModeSetting::is_private());
 }
 

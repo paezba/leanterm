@@ -6,7 +6,7 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use settings::macros::define_settings_group;
-use settings::{SecureSetting, Setting, SupportedPlatforms, SyncToCloud};
+use settings::{SecureSetting, Setting, SupportedPlatforms};
 use warp_core::channel::{Channel, ChannelState};
 use warpui::{AppContext, ModelContext};
 use warpui_extras::secure_storage;
@@ -118,10 +118,6 @@ impl Setting for LocalControlModeSetting {
 
     fn supported_platforms() -> SupportedPlatforms {
         SupportedPlatforms::DESKTOP
-    }
-
-    fn sync_to_cloud() -> SyncToCloud {
-        SyncToCloud::Never
     }
 
     fn is_private() -> bool {

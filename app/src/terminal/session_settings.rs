@@ -7,8 +7,8 @@ use lazy_static::lazy_static;
 pub use new_session_shell::*;
 use serde::{Deserialize, Serialize};
 pub use startup_shell::*;
+use warp_core::settings::SupportedPlatforms;
 use warp_core::settings::macros::define_settings_group;
-use warp_core::settings::{RespectUserSyncSetting, SupportedPlatforms, SyncToCloud};
 pub use working_directory_config::*;
 
 use crate::context_chips::prompt::PromptSelection;
@@ -134,7 +134,6 @@ define_settings_group!(SessionSettings, settings: [
         type: StartupShell,
         default: StartupShell::default(),
         supported_platforms: SupportedPlatforms::ALL,
-        sync_to_cloud: SyncToCloud::Never,
         surface: settings::SettingSurfaces::GUI,
         private: false,
         toml_path: "session.startup_shell_override",
@@ -144,7 +143,6 @@ define_settings_group!(SessionSettings, settings: [
         type: Option<NewSessionShell>,
         default: None,
         supported_platforms: SupportedPlatforms::ALL,
-        sync_to_cloud: SyncToCloud::Never,
         surface: settings::SettingSurfaces::GUI,
         private: false,
         toml_path: "session.new_session_shell_override",
@@ -154,7 +152,6 @@ define_settings_group!(SessionSettings, settings: [
         type: bool,
         default: false,
         supported_platforms: SupportedPlatforms::ALL,
-        sync_to_cloud: SyncToCloud::Globally(RespectUserSyncSetting::Yes),
         surface: settings::SettingSurfaces::GUI,
         private: false,
         toml_path: "terminal.input.honor_ps1",
@@ -164,7 +161,6 @@ define_settings_group!(SessionSettings, settings: [
         type: PromptSelection,
         default: PromptSelection::default(),
         supported_platforms: SupportedPlatforms::ALL,
-        sync_to_cloud: SyncToCloud::Globally(RespectUserSyncSetting::Yes),
         surface: settings::SettingSurfaces::GUI,
         private: true,
     },
@@ -172,7 +168,6 @@ define_settings_group!(SessionSettings, settings: [
         type: NotificationsSettings,
         default: NotificationsSettings::default(),
         supported_platforms: SupportedPlatforms::ALL,
-        sync_to_cloud: SyncToCloud::Globally(RespectUserSyncSetting::Yes),
         surface: settings::SettingSurfaces::GUI,
         private: false,
         toml_path: "notifications.preferences",
@@ -186,7 +181,6 @@ define_settings_group!(SessionSettings, settings: [
         type: bool,
         default: true,
         supported_platforms: SupportedPlatforms::ALL,
-        sync_to_cloud: SyncToCloud::Globally(RespectUserSyncSetting::Yes),
         surface: settings::SettingSurfaces::GUI,
         private: true,
         storage_key: "GitPromptDirtyIndicator",
@@ -195,7 +189,6 @@ define_settings_group!(SessionSettings, settings: [
         type: u64,
         default: 8,
         supported_platforms: SupportedPlatforms::ALL,
-        sync_to_cloud: SyncToCloud::Globally(RespectUserSyncSetting::Yes),
         surface: settings::SettingSurfaces::GUI,
         private: false,
         toml_path: "notifications.toast_duration_secs",
@@ -207,7 +200,6 @@ define_settings_group!(SessionSettings, settings: [
         type: GithubPrPromptChipDefaultValidation,
         default: GithubPrPromptChipDefaultValidation::Unvalidated,
         supported_platforms: SupportedPlatforms::ALL,
-        sync_to_cloud: SyncToCloud::Never,
         surface: settings::SettingSurfaces::GUI,
         private: true,
     },
@@ -217,7 +209,6 @@ settings::macros::implement_setting_for_enum!(
     WorkingDirectoryConfig,
     SessionSettings,
     SupportedPlatforms::ALL,
-    SyncToCloud::Never,
     surface: settings::SettingSurfaces::GUI,
     private: false,
     toml_path: "session.working_directory_config",
