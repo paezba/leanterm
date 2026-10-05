@@ -29,8 +29,6 @@ fn log_state(base_directory: &Path, frontend: LogFrontend, logfile_name: &str) -
     )
 }
 
-
-
 #[test]
 fn collects_active_in_session_and_old_logs_in_expected_order() {
     let tmp = tempfile::tempdir().unwrap();
@@ -247,7 +245,6 @@ fn remove_nested_chunks_deletes_every_chunk_of_the_target_slot() {
     // Other slots' chunks are untouched.
     assert!(survivor.is_file());
 }
-
 
 #[test]
 fn crash_recovery_paths_use_channel_name_in_tui_directory() {

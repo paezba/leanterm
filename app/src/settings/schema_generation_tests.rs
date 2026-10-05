@@ -1,9 +1,6 @@
-
 use serde_json::json;
 
-use super::{
-    settings_schema_json, strip_empty_enum_entries, strip_numeric_metadata,
-};
+use super::{settings_schema_json, strip_empty_enum_entries, strip_numeric_metadata};
 
 #[test]
 fn strips_numeric_metadata_recursively() {
@@ -71,4 +68,3 @@ fn generates_a_settings_schema() {
     assert_eq!(schema["type"], "object");
     assert!(schema["properties"].is_object());
 }
-

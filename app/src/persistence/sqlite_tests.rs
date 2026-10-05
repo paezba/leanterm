@@ -11,7 +11,6 @@ fn app_scope_database_path_matches_app_database_path() {
     );
 }
 
-
 #[test]
 fn remote_server_daemon_scope_database_path_uses_identity_data_dir() {
     let path = database_file_path_for_scope(&PersistenceScope::RemoteServerDaemon {

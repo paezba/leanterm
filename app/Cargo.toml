@@ -114,8 +114,6 @@ http.workspace = true
 http_client.workspace = true
 image.workspace = true
 infer = "0.19.0"
-jaq-json.workspace = true
-jaq-all.workspace = true
 # Built WITHOUT the `symbolize` feature: `dump_pprof()` then returns a raw
 # pprof (sample addresses + mappings + GNU build-id), which is symbolized
 # offline against the debug-info file uploaded to Sentry by the release
@@ -127,7 +125,6 @@ indexmap = { version = "2.0.2", features = ["serde"] }
 input_classifier.workspace = true
 instant.workspace = true
 ipc.workspace = true
-iso8601-duration.workspace = true
 itertools.workspace = true
 kmeans_colors = { version = "0.5", default-features = false, features = [
     "palette_color",
@@ -242,7 +239,6 @@ languages.workspace = true
 warp_terminal.workspace = true
 websocket.workspace = true
 wgpu = { workspace = true, optional = true }
-natural_language_detection.workspace = true
 onboarding.workspace = true
 aho-corasick = "1.1.3"
 strum.workspace = true
@@ -257,7 +253,6 @@ warp_multi_agent_api.workspace = true
 remote_server.workspace = true
 repo_metadata.workspace = true
 vim.workspace = true
-rmcp.workspace = true
 warp_isolation_platform.workspace = true
 warp_ripgrep.workspace = true
 warp_managed_secrets.workspace = true
@@ -313,21 +308,12 @@ http_server.workspace = true
 hyper.workspace = true
 libsqlite3-sys = { version = "0.33.0", features = ["bundled"] }
 mio = { version = "1.1.1", features = ["os-poll", "os-ext"] }
-opentelemetry.workspace = true
-opentelemetry-http.workspace = true
-opentelemetry-otlp.workspace = true
-opentelemetry_sdk.workspace = true
 tokio.workspace = true
 tokio-util.workspace = true
-tracing-opentelemetry.workspace = true
 tracing-subscriber.workspace = true
 warp_errors = { workspace = true, features = ["tokio-errors", "websocket-errors"] }
 
 # AWS SDK (loading credentials for BYO LLM)
-aws-config = { version = "1.8.16", features = ["credentials-login"] }
-aws-credential-types = "1"
-aws-sdk-sts = { version = "1", default-features = false, features = ["default-https-client", "rt-tokio"] }
-aws-types = "1"
 
 notify-debouncer-full.workspace = true
 rustls.workspace = true
@@ -484,7 +470,6 @@ crash_reporting = [
     "warp_logging/crash_reporting",
     "warp_errors/crash_reporting",
     "warp_terminal/crash_reporting",
-    "ai/crash_reporting",
 ]
 creating_shared_sessions = []
 cross_repo_context = []
