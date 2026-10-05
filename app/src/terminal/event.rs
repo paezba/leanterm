@@ -4,7 +4,6 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use instant::Instant;
-pub use remote_server::setup::RemoteServerSetupState;
 pub use warp_terminal::event::{ExecutedExecutorCommandEvent, ParseGeneratorOutputError};
 use warp_util::lazy::Lazy;
 
@@ -100,22 +99,6 @@ pub enum Event {
     /// buffer, and re-echoes them after Precmd.
     Typeahead,
     Handler(HandlerEvent),
-    /// Carries non-UGC lifecycle diagnostics to the model dispatcher for telemetry.
-    /// Emitted when the remote server binary has been successfully checked or
-    /// installed and is ready. The session is initialized independently on
-    /// `Bootstrapped`; when the remote server later connects, the client is
-    /// attached to the existing session's `RemoteServerCommandExecutor` via
-    /// the `RemoteServerManagerEvent::SessionConnected` subscription in
-    /// `Sessions::new`.
-    RemoteServerReady {
-        session_id: SessionId,
-    },
-    /// Emitted when the remote server setup failed. The session falls back to
-    /// the ControlMaster-based `RemoteCommandExecutor`.
-    RemoteServerFailed {
-        session_id: SessionId,
-        error: String,
-    },
     /// Emitted when the assisted auto-update has completed and we're ready to
     /// relaunch the app.
     FinishUpdate(FinishUpdateValue),
@@ -440,15 +423,6 @@ impl Debug for Event {
             Event::HonorPS1OutOfSync => write!(f, "HonorPS1OutOfSync"),
             Event::Typeahead => write!(f, "Typeahead"),
             Event::Handler(handler_event) => write!(f, "Handler({handler_event:?}))"),
-            Event::RemoteServerReady { session_id } => {
-                write!(f, "RemoteServerReady(session: {session_id:?})")
-            }
-            Event::RemoteServerFailed { session_id, error } => {
-                write!(
-                    f,
-                    "RemoteServerFailed(session: {session_id:?}, error: {error})"
-                )
-            }
             Event::FinishUpdate(data) => write!(f, "FinishUpdate({})", data.update_id),
             Event::ExternalShellWidgetSelection(data) => {
                 write!(

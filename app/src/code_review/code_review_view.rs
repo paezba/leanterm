@@ -707,7 +707,7 @@ impl CodeReviewView {
         let preferred_session = self.preferred_review_session(ctx);
         self.diff_state_model.update(ctx, |model, ctx| {
             model.set_code_review_metadata_refresh_enabled(true, ctx);
-            model.load_diffs_for_current_repo(false, true, preferred_session, ctx);
+            model.load_diffs_for_current_repo(false, true, ctx);
         });
     }
 
@@ -1493,7 +1493,7 @@ impl CodeReviewView {
 
         let preferred_session = self.preferred_review_session(ctx);
         self.diff_state_model.update(ctx, |model, ctx| {
-            model.set_diff_mode(mode, false, true, preferred_session, ctx);
+            model.set_diff_mode(mode, false, true, ctx);
         });
         self.update_diff_selector_selection(ctx);
         self.invalidate_all(None, None, ctx);
@@ -2718,9 +2718,7 @@ impl CodeReviewView {
             let is_wsl = session.as_ref().map(|s| s.is_wsl()).unwrap_or(false);
 
             let enablement = if is_remote {
-                CodingPanelEnablementState::RemoteSession {
-                    has_remote_server: false,
-                }
+                CodingPanelEnablementState::RemoteSession
             } else if is_wsl {
                 CodingPanelEnablementState::UnsupportedSession
             } else {
@@ -2749,7 +2747,7 @@ impl CodeReviewView {
         let open_repo_button = || Some(ChildView::new(&self.open_repository_button).finish());
         match self.session_env(app) {
             Some(GitSessionState {
-                enablement: CodingPanelEnablementState::RemoteSession { .. },
+                enablement: CodingPanelEnablementState::RemoteSession,
             }) => {
                 // No "Open repository" CTA when the session is remote — the
                 // button navigates to a local folder, which is not meaningful
@@ -2762,9 +2760,7 @@ impl CodeReviewView {
             None
             | Some(GitSessionState {
                 enablement:
-                    CodingPanelEnablementState::Enabled
-                    | CodingPanelEnablementState::PendingRemoteSession
-                    | CodingPanelEnablementState::Disabled,
+                    CodingPanelEnablementState::Enabled | CodingPanelEnablementState::Disabled,
             }) => Self::render_not_repo_state(appearance, open_repo_button()),
         }
     }
@@ -4522,7 +4518,7 @@ impl CodeReviewView {
             Some(editor_state)
                 if editor_state.has_unsaved_changes(app)
                     && (!auto_save_enabled
-                        || !editor_state.editor().as_ref(app).can_auto_save(app)) =>
+                        || !editor_state.editor().as_ref(app).can_auto_save()) =>
             {
                 let save_keystroke = Keystroke::parse("cmdorctrl-s").unwrap_or_default();
                 let save_shortcut = save_keystroke.displayed();
@@ -6264,7 +6260,7 @@ impl TypedActionView for CodeReviewView {
             CodeReviewAction::RefreshGitState => {
                 let preferred_session = self.preferred_review_session(ctx);
                 self.diff_state_model.update(ctx, |model, ctx| {
-                    model.load_diffs_for_current_repo(false, true, preferred_session, ctx);
+                    model.load_diffs_for_current_repo(false, true, ctx);
                     model.refresh_metadata_after_git_operation(ctx);
                 });
                 self.refresh_pr_info(ctx);

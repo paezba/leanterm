@@ -940,10 +940,6 @@ pub enum PaneEvent {
     AppStateChanged,
     /// Repo for this pane's terminal has changed
     RepoChanged,
-    /// A remote server resolved the repo root for a session in this pane.
-    RemoteRepoNavigated {
-        remote_path: RemotePath,
-    },
     ClearHoveredTabIndex,
     #[cfg(feature = "local_fs")]
     ReplaceWithCodePane {

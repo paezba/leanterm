@@ -7,10 +7,10 @@ use warpui::{Entity, ModelContext, ModelHandle, SingletonEntity, WeakModelHandle
 
 #[cfg(feature = "local_fs")]
 use super::git_repo_model::new_local_git_repo_status_model;
-use super::git_repo_model::{GitRepoStatusModel, new_remote_git_repo_status_model};
+use super::git_repo_model::GitRepoStatusModel;
 #[cfg(feature = "local_fs")]
 use super::github_repo_model::LocalGitHubRepoModel;
-use super::github_repo_model::{GitHubRepoModel, RemoteGitHubRepoModel};
+use super::github_repo_model::GitHubRepoModel;
 
 // ── GitRepoModels (singleton cache) ─────────────────────────────────────────
 
@@ -80,9 +80,7 @@ impl GitRepoModels {
                     );
                 }
             }
-            LocalOrRemotePath::Remote(remote_path) => {
-                new_remote_git_repo_status_model(remote_path.clone(), ctx)
-            }
+            LocalOrRemotePath::Remote(_) => anyhow::bail!("Remote repositories are not supported"),
         };
 
         self.git_status_models
@@ -138,16 +136,7 @@ impl GitRepoModels {
                     );
                 }
             }
-            LocalOrRemotePath::Remote(remote_path) => {
-                let inner =
-                    ctx.add_model(|ctx| RemoteGitHubRepoModel::new(remote_path.clone(), ctx));
-                ctx.add_model(|ctx| {
-                    ctx.subscribe_to_model(&inner, |me, _, event, ctx| {
-                        GitHubRepoModel::forward_event(me, event, ctx)
-                    });
-                    GitHubRepoModel::Remote(inner)
-                })
-            }
+            LocalOrRemotePath::Remote(_) => anyhow::bail!("Remote repositories are not supported"),
         };
 
         self.github_repo_models

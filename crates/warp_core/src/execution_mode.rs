@@ -12,8 +12,6 @@ pub enum ExecutionMode {
     App,
     /// Warp is running as a CLI.
     Sdk,
-    /// Warp is running as the remote server daemon.
-    RemoteServerDaemon,
 }
 
 impl ExecutionMode {
@@ -23,7 +21,6 @@ impl ExecutionMode {
         match self {
             ExecutionMode::App => "warp-app",
             ExecutionMode::Sdk => "warp-cli",
-            ExecutionMode::RemoteServerDaemon => "warp-remote-server-daemon",
         }
     }
 
@@ -35,15 +32,11 @@ impl ExecutionMode {
     /// and the TUI receive an authoritative PATH from their own launcher (an interactive shell
     /// or a CLI invocation) before Warp starts, so inheriting it is safe and is the only PATH
     /// available to a fresh SDK process before terminal bootstrap populates
-    /// `mcp_execution_path`. The remote server daemon is headless and long-lived with no user
-    /// present to open a terminal and populate that setting, and no window to show the
-    /// alternative's failure toast in, so it also inherits; since inheritance only ever fills
-    /// in a missing path rather than overriding a configured one, that's a better failure mode
-    /// than refusing to start the server.
+    /// `mcp_execution_path`.
     pub fn can_inherit_process_path_for_mcp(&self) -> bool {
         match self {
             ExecutionMode::App => false,
-            ExecutionMode::Sdk | ExecutionMode::RemoteServerDaemon => true,
+            ExecutionMode::Sdk => true,
         }
     }
 }
@@ -114,20 +107,14 @@ impl AppExecutionMode {
     /// In TUI, CLI, and daemon modes, we synchronously send events at shutdown because there's
     /// a higher likelihood that they will be lost otherwise.
     pub fn send_telemetry_at_shutdown(&self) -> bool {
-        matches!(
-            self.mode,
-            ExecutionMode::Sdk | ExecutionMode::RemoteServerDaemon
-        )
+        matches!(self.mode, ExecutionMode::Sdk)
     }
 
     /// If true, the app is running autonomously, without a user present.
     /// Wherever possible, prefer more targeted capability checks like
     /// [`Self::can_autostart_mcp_servers`].
     pub fn is_autonomous(&self) -> bool {
-        matches!(
-            self.mode,
-            ExecutionMode::Sdk | ExecutionMode::RemoteServerDaemon
-        )
+        matches!(self.mode, ExecutionMode::Sdk)
     }
 
     /// Returns the client ID to report to the server.

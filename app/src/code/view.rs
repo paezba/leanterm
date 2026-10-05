@@ -784,7 +784,7 @@ impl CodeView {
             .is_some_and(|t| t.editor_view.as_ref(ctx).is_new_file());
 
         let title = match &file_location {
-            Some(location) => display_path_with_host(location, false, ctx),
+            Some(location) => display_path_with_host(location, false),
             None => "Untitled".to_string(),
         };
 
@@ -825,14 +825,6 @@ impl CodeView {
             Err(ImmediateSaveError::NoFileId) => {
                 // If there's no file ID, this is a new file - trigger Save As
                 self.save_as(index, callback, ctx)
-            }
-            Err(ImmediateSaveError::RemoteDisconnected) => {
-                log::warn!("Cannot save: remote session disconnected");
-                CodeView::display_remote_disconnected_save_failure(ctx.window_id(), ctx);
-                if let Some(callback) = callback {
-                    callback(SaveOutcome::Failed, self, ctx);
-                }
-                SaveStatus::Failed(ImmediateSaveError::RemoteDisconnected)
             }
             Err(err) => {
                 log::warn!("Failed to save file. {err:?}");
@@ -898,15 +890,6 @@ impl CodeView {
         });
     }
 
-    fn display_remote_disconnected_save_failure(window_id: WindowId, ctx: &mut ViewContext<Self>) {
-        ToastStack::handle(ctx).update(ctx, |toast_stack, ctx| {
-            let toast =
-                DismissibleToast::error(String::from("Cannot save — remote session disconnected."))
-                    .with_object_id("failed_to_save_file_remote_disconnected".to_string());
-            toast_stack.add_ephemeral_toast(toast, window_id, ctx);
-        });
-    }
-
     fn display_save_success(window_id: WindowId, ctx: &mut ViewContext<Self>) {
         ToastStack::handle(ctx).update(ctx, |toast_stack, ctx| {
             let toast = DismissibleToast::success(String::from("File saved."))
@@ -967,7 +950,7 @@ impl CodeView {
         if !Self::has_unsaved_changes(tab, app) {
             return false;
         }
-        !*CodeSettings::as_ref(app).auto_save || !tab.editor_view.as_ref(app).can_auto_save(app)
+        !*CodeSettings::as_ref(app).auto_save || !tab.editor_view.as_ref(app).can_auto_save()
     }
 
     /// Flush-saves every unsaved tab that has a backing file, marking each save
@@ -984,7 +967,7 @@ impl CodeView {
             // the edits.
             let can_auto_save = self
                 .tab_at(index)
-                .is_some_and(|tab| tab.editor_view.as_ref(ctx).can_auto_save(ctx));
+                .is_some_and(|tab| tab.editor_view.as_ref(ctx).can_auto_save());
             if can_auto_save {
                 if let Some(tab) = self.tab_at(index) {
                     tab.editor_view
@@ -1048,7 +1031,7 @@ impl CodeView {
             let file_name = tab
                 .location
                 .as_ref()
-                .map(|loc| display_name_with_host(loc, ctx))
+                .map(|loc| display_name_with_host(loc))
                 .filter(|n| !n.is_empty());
             let summary = UnsavedStateSummary::for_editor_tab(
                 file_name,
@@ -1448,7 +1431,7 @@ impl CodeView {
         let file_name = tab_data
             .location
             .as_ref()
-            .map(|loc| display_name_with_host(loc, app))
+            .map(|loc| display_name_with_host(loc))
             .filter(|n| !n.is_empty())
             .unwrap_or_else(|| "Untitled".to_string());
         let language_icon =
@@ -1826,7 +1809,7 @@ impl CodeView {
             .and_then(|tab| {
                 tab.location
                     .as_ref()
-                    .map(|loc| display_name_with_host(loc, app))
+                    .map(|loc| display_name_with_host(loc))
                     .filter(|n| !n.is_empty())
             })
             .unwrap_or_else(|| "Untitled".to_string());

@@ -242,7 +242,7 @@ impl CodeReviewState {
         repo_path: &LocalOrRemotePath,
         ctx: &AppContext,
     ) -> Option<String> {
-        let name = display_name_with_host(repo_path, ctx);
+        let name = display_name_with_host(repo_path);
         (!name.is_empty()).then_some(name)
     }
 
@@ -839,7 +839,7 @@ impl RightPanelView {
         let diff_stats = crv.loaded_diff_stats();
 
         let repo_path_element = repo_path.map(|repo_path| {
-            let display_path = display_path_with_host(repo_path, true, app);
+            let display_path = display_path_with_host(repo_path, true);
             Container::new(
                 Text::new_inline(
                     format!("{display_path}:"),
@@ -1200,7 +1200,7 @@ impl RightPanelView {
                 .read(ctx, |pg, ctx| pg.active_session_view(ctx))
                 .and_then(|tv| tv.as_ref(ctx).active_block_session_id());
             let diff_state_model = self.working_directories_model.update(ctx, |model, ctx| {
-                model.get_or_create_diff_state_model(repo_path.clone(), preferred_session, ctx)
+                model.get_or_create_diff_state_model(repo_path.clone(), ctx)
             });
 
             let Some(diff_state_model) = diff_state_model else {

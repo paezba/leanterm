@@ -43,7 +43,6 @@ use parking_lot::FairMutex;
 use pathfinder_color::ColorU;
 use pathfinder_geometry::rect::RectF;
 #[cfg(feature = "local_fs")]
-use repo_metadata::RemoteRepositoryIdentifier;
 #[cfg(feature = "local_fs")]
 use repo_metadata::repositories::DetectedRepositories;
 use serde_json;
@@ -194,7 +193,6 @@ use crate::prompt::editor_modal::{
     OpenSource as PromptEditorOpenSource,
 };
 use crate::quit_warning::UnsavedStateSummary;
-use crate::remote_server::manager::RemoteServerManager;
 use crate::root_view::{NewWorkspaceSource, OpenLaunchConfigArg};
 use crate::search::command_palette::view::{
     Event as CommandPaletteEvent, NavigationMode, View as CommandPalette,
@@ -6781,7 +6779,7 @@ impl Workspace {
                 read_result.and_then(|(repo_path, preferred_session)| {
                     let diff_state_model = repo_path.as_ref().and_then(|rp| {
                         self.working_directories_model.update(ctx, |model, ctx| {
-                            model.get_or_create_diff_state_model(rp.clone(), preferred_session, ctx)
+                            model.get_or_create_diff_state_model(rp.clone(), ctx)
                         })
                     })?;
                     Some((repo_path, diff_state_model))
@@ -6824,7 +6822,7 @@ impl Workspace {
             .and_then(|tv| tv.as_ref(ctx).active_block_session_id());
         let diff_state_model = repo_location.as_ref().and_then(|rp| {
             self.working_directories_model.update(ctx, |model, ctx| {
-                model.get_or_create_diff_state_model(rp.clone(), preferred_session, ctx)
+                model.get_or_create_diff_state_model(rp.clone(), ctx)
             })
         });
         let Some(diff_state_model) = diff_state_model else {
@@ -6915,7 +6913,7 @@ impl Workspace {
             |(repo_path, preferred_session): (Option<LocalOrRemotePath>, Option<SessionId>)| {
                 let diff_state_model = repo_path.as_ref().and_then(|rp| {
                     self.working_directories_model.update(ctx, |model, ctx| {
-                        model.get_or_create_diff_state_model(rp.clone(), preferred_session, ctx)
+                        model.get_or_create_diff_state_model(rp.clone(), ctx)
                     })
                 })?;
                 Some(CodeReviewPaneContext {
@@ -10268,30 +10266,7 @@ impl Workspace {
             } => {
                 #[cfg(feature = "local_fs")]
                 {
-                    // Build a LocalOrRemotePath for the file. For remote sessions
-                    // the host_id comes from the active working directory.
-                    let location = {
-                        let window_id = ctx.window_id();
-                        ActiveSession::as_ref(ctx)
-                            .working_directory(window_id)
-                            .and_then(|wd| match wd {
-                                LocalOrRemotePath::Remote(remote) => {
-                                    let std_path =
-                                        warp_util::standardized_path::StandardizedPath::try_new(
-                                            path,
-                                        )
-                                        .ok()?;
-                                    Some(LocalOrRemotePath::Remote(
-                                        warp_util::remote_path::RemotePath::new(
-                                            remote.host_id.clone(),
-                                            std_path,
-                                        ),
-                                    ))
-                                }
-                                LocalOrRemotePath::Local(_) => None,
-                            })
-                            .unwrap_or_else(|| LocalOrRemotePath::Local(PathBuf::from(path)))
-                    };
+                    let location = LocalOrRemotePath::Local(PathBuf::from(path));
 
                     let code_source = CodeSource::CommandPalette { location };
 
@@ -10943,31 +10918,6 @@ impl Workspace {
                     Self::sync_codebase_tab_color(tab, ctx);
                 }
             }
-            #[cfg(feature = "local_fs")]
-            pane_group::Event::RemoteRepoNavigated { remote_path } => {
-                let remote_id = RemoteRepositoryIdentifier::new(
-                    remote_path.host_id.clone(),
-                    remote_path.path.clone(),
-                );
-                let pane_group_id = pane_group.id();
-                if let Some(file_tree_view) = self
-                    .working_directories_model
-                    .as_ref(ctx)
-                    .get_file_tree_view(pane_group_id)
-                {
-                    file_tree_view.update(ctx, |view, ctx| {
-                        view.set_remote_root_directories(std::slice::from_ref(&remote_id), ctx);
-                    });
-                }
-
-                // Remote repos now enter repository_roots through
-                // refresh_working_directories_for_pane_group (via
-                // pwd_as_local_or_remote). No need to register here —
-                // doing so would race with refresh and prevent stale
-                // DiffStateModels from being dropped.
-            }
-            #[cfg(not(feature = "local_fs"))]
-            pane_group::Event::RemoteRepoNavigated { .. } => {}
             pane_group::Event::DroppedOnTabBar { origin, pane_id } => {
                 if let Some(hovered_tab_index) = self.hovered_tab_index {
                     match hovered_tab_index {
@@ -11683,8 +11633,6 @@ impl Workspace {
                     _path_if_local,
                     is_local,
                     is_wsl_session,
-                    session_id,
-                    has_pending_ssh,
                 ) = terminal_handle.read(ctx, |terminal, ctx| {
                     let active_session_id = terminal.active_block_session_id();
                     let session = active_session_id
@@ -11693,15 +11641,12 @@ impl Workspace {
                     let path_if_local = terminal.active_session_path_if_local(ctx);
                     let is_local = terminal.active_session_is_local(ctx);
                     let is_wsl_session = session.as_ref().map(|s| s.is_wsl()).unwrap_or(false);
-                    let has_pending_ssh = terminal.has_pending_ssh_command();
                     (
                         session,
                         pwd_location,
                         path_if_local,
                         is_local,
                         is_wsl_session,
-                        active_session_id,
-                        has_pending_ssh,
                     )
                 });
 
@@ -11719,35 +11664,11 @@ impl Workspace {
                 let is_remote = matches!(is_local, Some(false));
                 let is_unsupported_session = is_wsl_session;
 
-                // Check whether this remote session has an active remote server
-                // connection (or is in the process of connecting). This is only
-                // true for Auto SSH Warpification (mode 1) sessions where
-                // `connect_session` was called at `InitShell` time.
-                let has_remote_server = is_remote
-                    && FeatureFlag::SshRemoteServer.is_enabled()
-                    && session_id.is_some_and(|sid| {
-                        RemoteServerManager::as_ref(ctx).is_session_potentially_active(sid)
-                    });
-
                 let enablement = CodingPanelEnablementState::from_session_env(
                     file_tree_and_global_search_are_enabled,
                     is_remote,
                     is_unsupported_session,
-                    has_remote_server,
                 );
-
-                // When an SSH command is running (pending host set + block
-                // still long-running), the old local session is still active
-                // so the enablement computes as `Enabled`. Override to
-                // `PendingRemoteSession` so the file tree shows loading
-                // instead of the stale local tree.
-                let enablement = if has_pending_ssh
-                    && matches!(enablement, CodingPanelEnablementState::Enabled)
-                {
-                    CodingPanelEnablementState::PendingRemoteSession
-                } else {
-                    enablement
-                };
 
                 self.left_panel_view.update(ctx, |left_panel, ctx| {
                     left_panel.update_coding_panel_enablement(enablement, ctx);
@@ -11768,7 +11689,6 @@ impl Workspace {
             _ => {
                 let enablement = CodingPanelEnablementState::from_session_env(
                     file_tree_and_global_search_are_enabled,
-                    false,
                     false,
                     false,
                 );
@@ -16706,7 +16626,6 @@ impl TypedActionView for Workspace {
                             self.working_directories_model.update(ctx, |model, ctx| {
                                 model.get_or_create_diff_state_model(
                                     rp.clone(),
-                                    preferred_session,
                                     ctx,
                                 )
                             })

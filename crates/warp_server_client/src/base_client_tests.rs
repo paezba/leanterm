@@ -11,6 +11,7 @@ use futures::{join, poll};
 use warp_core::channel::ChannelState;
 use warp_isolation_platform::{IsolationPlatformError, WorkloadToken};
 use warp_server_auth::auth_state::AuthState;
+use warp_server_auth::credentials::Credentials;
 
 use super::{
     AGENT_SOURCE_HEADER, AMBIENT_WORKLOAD_TOKEN_DURATION, AMBIENT_WORKLOAD_TOKEN_HEADER,
@@ -337,7 +338,7 @@ fn api_key_client(path_prefix: &str) -> (AuthClientImpl, Arc<Mutex<Option<String
             .map(|value| value.to_str().unwrap().to_string());
     }));
     let auth_state = AuthState::new_logged_out_for_test();
-    auth_state.set_remote_server_bearer_token("test-token".to_string());
+    auth_state.set_credentials(Some(Credentials::Bearer("test-token".to_string())));
     let (event_sender, _) = async_channel::unbounded();
     let base_client = BaseClient::new(
         Arc::new(http_client),

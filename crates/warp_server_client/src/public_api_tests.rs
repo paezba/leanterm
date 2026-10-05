@@ -6,6 +6,7 @@ use warp_errors::AnyhowErrorExt as _;
 use warp_graphql::ai::PlatformErrorCode;
 use warp_graphql::platform_error::PlatformErrorMessageFormat;
 use warp_server_auth::auth_state::AuthState;
+use warp_server_auth::credentials::Credentials;
 
 use super::HttpStatusError;
 use crate::auth::AuthEvent;
@@ -76,7 +77,7 @@ fn public_api_get_sends_bearer_auth() {
             .create()
     };
     let auth_state = AuthState::new_logged_out_for_test();
-    auth_state.set_remote_server_bearer_token("bearer-token".to_string());
+    auth_state.set_credentials(Some(Credentials::Bearer("bearer-token".to_string())));
     let (base_client, _) = base_client_with_auth(auth_state, None, false);
 
     block_on(base_client.get_public_api::<serde_json::Value>("test/bearer-auth")).unwrap();

@@ -23,8 +23,6 @@ mod pane_impl;
 pub mod rich_content;
 mod shell_terminated_banner;
 pub mod ssh_file_upload;
-pub(crate) mod ssh_remote_server_choice_view;
-pub(crate) mod ssh_remote_server_failed_banner;
 pub(crate) mod ssh_tmux_deprecation_banner;
 mod tab_metadata;
 #[cfg(any(test, feature = "integration_tests"))]
@@ -188,7 +186,6 @@ use crate::pane_group::{
 #[cfg(feature = "local_fs")]
 use crate::persisted_workspace::PersistedWorkspace;
 use crate::persistence::{self, FinishedCommandMetadata};
-use crate::remote_server::manager::{RemoteServerManager, RemoteServerManagerEvent};
 use crate::server::ids::{ObjectUid, SyncId};
 use crate::server::server_api::ServerApi;
 use crate::session_management::{CommandContext, SessionNavigationPromptElements};
@@ -223,7 +220,7 @@ use crate::terminal::block_list_viewport::{
 use crate::terminal::bootstrap::init_subshell_command;
 use crate::terminal::color::List;
 use crate::terminal::event::{
-    AfterBlockCompletedEvent, BlockType, RemoteServerSetupState, TerminalMode, UserBlockCompleted,
+    AfterBlockCompletedEvent, BlockType, TerminalMode, UserBlockCompleted,
 };
 use crate::terminal::find::{BlockGridMatch, BlockListMatch, TerminalFindModel};
 use crate::terminal::general_settings::GeneralSettings;
@@ -278,12 +275,6 @@ pub use crate::terminal::view::rich_content::{
     RichContent, RichContentInsertionPosition, RichContentMetadata,
 };
 use crate::terminal::view::ssh_file_upload::FileUploadId;
-use crate::terminal::view::ssh_remote_server_choice_view::{
-    SshRemoteServerChoiceView, SshRemoteServerChoiceViewEvent,
-};
-use crate::terminal::view::ssh_remote_server_failed_banner::{
-    SshRemoteServerFailedBanner, SshRemoteServerFailedBannerEvent,
-};
 use crate::terminal::view::ssh_tmux_deprecation_banner::{
     SshTmuxDeprecationBanner, SshTmuxDeprecationBannerEvent,
 };
@@ -321,7 +312,7 @@ use crate::util::file::external_editor::{EditorSettings, settings::EditorLayout}
 use crate::util::openable_file_type::{
     FileTarget, renders_in_warp_notebook_viewer, resolve_file_target,
 };
-use crate::util::repo_detection::{RepoDetectionSessionType, detect_possible_git_repo};
+use crate::util::repo_detection::detect_possible_git_repo;
 use crate::view_components::find::{Event as FindEvent, Find, FindDirection, FindWithinBlockState};
 use crate::view_components::{DismissibleToast, ToastFlavor};
 use crate::workflows::workflow::Workflow;
@@ -1238,14 +1229,6 @@ pub enum Event {
         buffer_text: String,
         results_tx: async_channel::Sender<(Vec<ShellCompletion>, Option<Span>)>,
     },
-    /// Emitted when the user clicks "install" in the SSH remote-server choice block.
-    RemoteServerInstallRequested {
-        session_id: SessionId,
-    },
-    /// Emitted when the user clicks "skip" in the SSH remote-server choice block.
-    RemoteServerSkipRequested {
-        session_id: SessionId,
-    },
     SignupAnonymousUser {
         entrypoint: AnonymousUserSignupEntrypoint,
     },
@@ -1861,9 +1844,6 @@ pub struct TerminalView {
     /// Per-session PTY recorder for writing PTY bytes to a file.
     pty_recorder: ModelHandle<PtyRecorder>,
 
-    /// State handle for the shimmering text animation in the remote server loading footer.
-    /// Persisted across renders so the animation doesn't restart.
-    remote_server_shimmer_handle: ShimmeringTextStateHandle,
 }
 
 /// Parameters stashed when a code review pane open is requested with
@@ -2533,7 +2513,6 @@ impl TerminalView {
             pane_configuration,
             focus_handle: None,
             sessions,
-            remote_server_shimmer_handle: ShimmeringTextStateHandle::new(),
             active_block_metadata: None,
             canonical_session_pwd_cache: RefCell::new(None),
             block_text_selection_start_position: None,
@@ -2589,269 +2568,6 @@ impl TerminalView {
                 .add_model(|ctx| PtyRecorder::new(inactive_pty_reads_rx, window_id, ctx)),
         };
 
-        // Forward RemoteServerManager setup events into the terminal event stream
-        // so the ModelEventDispatcher can gate session initialization on them.
-        if FeatureFlag::SshRemoteServer.is_enabled() {
-            let mgr_handle = RemoteServerManager::handle(ctx);
-            ctx.subscribe_to_model(&mgr_handle, |me, _, event, ctx| {
-                // `RemoteServerManager` is a singleton, so every `TerminalView` receives every event.
-                // Filter for session-scoped events that are specifically tracked by this view.
-                // Host-scoped variants return `None` and pass through unfiltered.
-                if let Some(sid) = event.session_id()
-                    && !me.sessions.as_ref(ctx).tracks_session(sid)
-                {
-                    return;
-                }
-                match event {
-                    RemoteServerManagerEvent::SetupStateChanged { .. } => {
-                        // Sessions handles the state update directly via its own
-                        // subscription to the manager. Notify the view so the
-                        // loading footer re-renders with the updated message.
-                        ctx.notify();
-                    }
-                    RemoteServerManagerEvent::SessionConnected { session_id, .. } => {
-                        me.model.lock().event_proxy.send_app_event(
-                            crate::terminal::event::Event::RemoteServerReady {
-                                session_id: *session_id,
-                            },
-                        );
-                        let (_remote_os, _remote_arch) = RemoteServerManager::handle(ctx)
-                            .as_ref(ctx)
-                            .platform_for_session(*session_id)
-                            .map(|p| {
-                                (
-                                    Some(p.os.as_str().to_owned()),
-                                    Some(p.arch.as_str().to_owned()),
-                                )
-                            })
-                            .unwrap_or((None, None));
-                    }
-                    RemoteServerManagerEvent::SessionConnectionFailed {
-                        session_id,
-                        phase: _,
-                        error,
-                        exit_status: _,
-                        proxy_stderr: _,
-                        is_cancelled,
-                    } => {
-                        me.model.lock().event_proxy.send_app_event(
-                            crate::terminal::event::Event::RemoteServerFailed {
-                                session_id: *session_id,
-                                error: error.clone(),
-                            },
-                        );
-
-                        if !is_cancelled {
-                            let (_remote_os, _remote_arch) = RemoteServerManager::handle(ctx)
-                                .as_ref(ctx)
-                                .platform_for_session(*session_id)
-                                .map(|p| {
-                                    (
-                                        Some(p.os.as_str().to_owned()),
-                                        Some(p.arch.as_str().to_owned()),
-                                    )
-                                })
-                                .unwrap_or((None, None));
-                            me.show_ssh_remote_server_failed_banner(
-                                *session_id,
-                                remote_server::transport::UserFacingError {
-                                    body: "Failed to start SSH extension".into(),
-                                    detail: if error.is_empty() {
-                                        None
-                                    } else {
-                                        Some(error.clone())
-                                    },
-                                },
-                                ctx,
-                            );
-                        }
-                    }
-                    RemoteServerManagerEvent::SessionDisconnected {
-                        session_id,
-                        exit_status: _,
-                        was_reconnect_attempt,
-                        ..
-                    } => {
-                        let (_remote_os, _remote_arch) = RemoteServerManager::handle(ctx)
-                            .as_ref(ctx)
-                            .platform_for_session(*session_id)
-                            .map(|p| {
-                                (
-                                    Some(p.os.as_str().to_owned()),
-                                    Some(p.arch.as_str().to_owned()),
-                                )
-                            })
-                            .unwrap_or((None, None));
-                        if *was_reconnect_attempt {
-                        } else {
-                        }
-                    }
-                    RemoteServerManagerEvent::SessionDeregistered { session_id } => {
-                        // Clean up any stale SSH remote-server choice block if the
-                        // session disappears (e.g. network drop, Ctrl-C, `exit`)
-                        // before the user picks an option.
-                        me.remove_ssh_remote_server_choice_block(*session_id, ctx);
-                        me.remove_ssh_remote_server_failed_banner(*session_id, ctx);
-                    }
-                    RemoteServerManagerEvent::BinaryInstallComplete {
-                        session_id,
-                        result,
-                        install_source: _,
-                    } => {
-                        let (_remote_os, _remote_arch) = RemoteServerManager::handle(ctx)
-                            .as_ref(ctx)
-                            .platform_for_session(*session_id)
-                            .map(|p| {
-                                (
-                                    Some(p.os.as_str().to_owned()),
-                                    Some(p.arch.as_str().to_owned()),
-                                )
-                            })
-                            .unwrap_or((None, None));
-                        if let Err(error) = result {
-                            log::warn!("Remote server install failed: {error:#}");
-                            me.show_ssh_remote_server_failed_banner(
-                                *session_id,
-                                error.user_facing_error(
-                                    remote_server::transport::SetupStage::InstallBinary,
-                                ),
-                                ctx,
-                            );
-                        }
-                    }
-                    RemoteServerManagerEvent::BinaryCheckComplete {
-                        session_id,
-                        result,
-                        remote_platform,
-                        ..
-                    } => {
-                        let (_remote_os, _remote_arch) = remote_platform
-                            .as_ref()
-                            .map(|p| {
-                                (
-                                    Some(p.os.as_str().to_owned()),
-                                    Some(p.arch.as_str().to_owned()),
-                                )
-                            })
-                            .unwrap_or((None, None));
-                        if let Err(error) = result {
-                            log::warn!("Remote server binary check failed: {error:#}");
-                            me.show_ssh_remote_server_failed_banner(
-                                *session_id,
-                                error.user_facing_error(
-                                    remote_server::transport::SetupStage::CheckBinary,
-                                ),
-                                ctx,
-                            );
-                        }
-                    }
-                    RemoteServerManagerEvent::ClientRequestFailed {
-                        session_id,
-                        operation: _,
-                        error_kind: _,
-                    } => {
-                        let (_remote_os, _remote_arch) = RemoteServerManager::handle(ctx)
-                            .as_ref(ctx)
-                            .platform_for_session(*session_id)
-                            .map(|p| {
-                                (
-                                    Some(p.os.as_str().to_owned()),
-                                    Some(p.arch.as_str().to_owned()),
-                                )
-                            })
-                            .unwrap_or((None, None));
-                    }
-                    RemoteServerManagerEvent::ServerMessageDecodingError { session_id } => {
-                        let (_remote_os, _remote_arch) = RemoteServerManager::handle(ctx)
-                            .as_ref(ctx)
-                            .platform_for_session(*session_id)
-                            .map(|p| {
-                                (
-                                    Some(p.os.as_str().to_owned()),
-                                    Some(p.arch.as_str().to_owned()),
-                                )
-                            })
-                            .unwrap_or((None, None));
-                    }
-                    RemoteServerManagerEvent::NavigatedToDirectory {
-                        session_id: nav_session_id,
-                        remote_path,
-                        is_git: _,
-                    } => {
-                        // Repo registration is now handled by the unified
-                        // detect_possible_git_repo callback in BlockMetadataReceived.
-                        // Check if this navigation belongs to our active session
-                        // using exact session_id match (no CWD heuristics).
-                        let is_relevant = me
-                            .active_block_session_id()
-                            .is_some_and(|sid| sid == *nav_session_id);
-                        if is_relevant {
-                            ctx.emit(Event::Pane(PaneEvent::RemoteRepoNavigated {
-                                remote_path: remote_path.clone(),
-                            }));
-                        }
-                    }
-                    RemoteServerManagerEvent::SessionReconnected {
-                        session_id,
-                        attempt: _,
-                        ..
-                    } => {
-                        let (_remote_os, _remote_arch) = RemoteServerManager::handle(ctx)
-                            .as_ref(ctx)
-                            .platform_for_session(*session_id)
-                            .map(|p| {
-                                (
-                                    Some(p.os.as_str().to_owned()),
-                                    Some(p.arch.as_str().to_owned()),
-                                )
-                            })
-                            .unwrap_or((None, None));
-                    }
-                    RemoteServerManagerEvent::HostDisconnected { host_id } => {
-                        #[cfg(target_family = "wasm")]
-                        let _ = host_id;
-                        #[cfg(not(target_family = "wasm"))]
-                        DetectedRepositories::handle(ctx).update(ctx, |repos, _| {
-                            repos.remove_roots_for_host(host_id);
-                        });
-
-                        // Drop and broadcast the stale remote repo so downstream consumers
-                        // stop acting on a host with no live client.
-                        let matches_host = matches!(
-                            me.current_repo_path.as_ref(),
-                            Some(LocalOrRemotePath::Remote(rp)) if &rp.host_id == host_id,
-                        );
-                        if matches_host {
-                            me.current_repo_path = None;
-                            ctx.emit(Event::Pane(PaneEvent::RepoChanged));
-                        }
-                    }
-                    RemoteServerManagerEvent::SessionConnecting { .. }
-                    | RemoteServerManagerEvent::HostConnected { .. }
-                    | RemoteServerManagerEvent::RemoteAgentContextSnapshot { .. }
-                    | RemoteServerManagerEvent::RepoMetadataSnapshot { .. }
-                    | RemoteServerManagerEvent::RepoMetadataUpdated { .. }
-                    | RemoteServerManagerEvent::RepoMetadataDirectoryLoaded { .. }
-                    | RemoteServerManagerEvent::CodebaseIndexStatusesSnapshot { .. }
-                    | RemoteServerManagerEvent::CodebaseIndexStatusUpdated { .. }
-                    | RemoteServerManagerEvent::CodebaseIndexMutationFailed { .. }
-                    | RemoteServerManagerEvent::BufferUpdated { .. }
-                    | RemoteServerManagerEvent::BufferConflictDetected { .. }
-                    | RemoteServerManagerEvent::DiffStateSnapshotReceived { .. }
-                    | RemoteServerManagerEvent::DiffStateMetadataUpdateReceived { .. }
-                    | RemoteServerManagerEvent::DiffStateFileDeltaReceived { .. }
-                    | RemoteServerManagerEvent::GetBranchesResponse { .. }
-                    | RemoteServerManagerEvent::CommitChainResponse { .. }
-                    | RemoteServerManagerEvent::GitPushResponse { .. }
-                    | RemoteServerManagerEvent::CreatePrResponse { .. }
-                    | RemoteServerManagerEvent::GenerateCommitMessageResponse { .. }
-                    | RemoteServerManagerEvent::GetCommittedBranchFilesResponse { .. }
-                    | RemoteServerManagerEvent::GitStatusPushReceived { .. }
-                    | RemoteServerManagerEvent::GitHubPrInfoPushReceived { .. }
-                    | RemoteServerManagerEvent::GitHubRepositoryInfoPushReceived { .. } => {}
-                }
-            });
-        }
         terminal_view.any_session_contains_restored_remote_blocks =
             terminal_view.contains_restored_remote_blocks();
 
@@ -3419,25 +3135,6 @@ impl TerminalView {
         }
 
         if self.active_env_var_collection_block(app).is_some() {
-            return false;
-        }
-
-        // Hide the input box while the SSH remote-server choice block is shown.
-        // User must choose to install or skip before any shell input is possible.
-        if self.active_ssh_remote_server_choice_block().is_some() {
-            return false;
-        }
-
-        // Hide the input box during the entire remote-server setup flow.
-        // The loading footer renders instead.
-        if FeatureFlag::SshRemoteServer.is_enabled()
-            && let Some(pending_sid) = model.pending_session_id()
-            && self
-                .sessions
-                .as_ref(app)
-                .remote_server_setup_state(pending_sid)
-                .is_some_and(|state| state.is_in_progress())
-        {
             return false;
         }
 
@@ -4947,41 +4644,27 @@ impl TerminalView {
                     // Derive locality directly from the incoming block's
                     // session_id. We cannot use `active_session_is_local(ctx)`
                     // here because `active_block_metadata` was just consumed
-                    // via `take()` above, so it would always return `None`
-                    // and misclassify every local session as Remote.
+                    // via `take()` above, so it would always return `None`.
                     //
                     // `session_is_local` keeps the shared-session viewer guard intact.
-                    let session_id = block_metadata.session_id();
-                    let session_type = session_id.map(|sid| {
-                        if self.session_is_local(sid, ctx) {
-                            RepoDetectionSessionType::Local
-                        } else {
-                            RepoDetectionSessionType::Remote { session_id: sid }
-                        }
-                    });
-                    if let Some(session_type) = session_type {
-                        let is_local = matches!(session_type, RepoDetectionSessionType::Local);
-
-                        // For local sessions, convert the shell-native CWD
-                        // (e.g. "/c/Users/..." for Git Bash/MSYS2) to a
-                        // Windows-native path before repo detection.
-                        let directory_for_detection = if is_local {
-                            block_metadata
-                                .session_id()
-                                .and_then(|sid| self.sessions.as_ref(ctx).get(sid))
-                                .and_then(|session| {
-                                    session.launch_data().and_then(|data| {
-                                        data.maybe_convert_absolute_path(active_directory)
-                                    })
+                    let is_local = block_metadata
+                        .session_id()
+                        .is_some_and(|sid| self.session_is_local(sid, ctx));
+                    if is_local {
+                        // Convert the shell-native CWD (e.g. "/c/Users/..." for Git
+                        // Bash/MSYS2) to a Windows-native path before repo detection.
+                        let directory_for_detection = block_metadata
+                            .session_id()
+                            .and_then(|sid| self.sessions.as_ref(ctx).get(sid))
+                            .and_then(|session| {
+                                session.launch_data().and_then(|data| {
+                                    data.maybe_convert_absolute_path(active_directory)
                                 })
-                                .map(|path| path.to_string_lossy().into_owned())
-                                .unwrap_or_else(|| active_directory.to_string())
-                        } else {
-                            active_directory.to_string()
-                        };
+                            })
+                            .map(|path| path.to_string_lossy().into_owned())
+                            .unwrap_or_else(|| active_directory.to_string());
 
                         let fut = detect_possible_git_repo(
-                            session_type,
                             &directory_for_detection,
                             RepoDetectionSource::TerminalNavigation,
                             ctx,
@@ -5011,33 +4694,7 @@ impl TerminalView {
                             }
 
                             match &repo_path_opt {
-                                Some(LocalOrRemotePath::Remote(remote_path)) => {
-                                    #[cfg(not(target_family = "wasm"))]
-                                    DetectedRepositories::handle(ctx).update(ctx, |repos, _| {
-                                        repos.register_remote_repo_root(remote_path.clone());
-                                    });
-
-                                    // Remote sessions can only materialize their working
-                                    // directory after repo detection has resolved the host.
-                                    // Re-run app-state propagation now that the remote path
-                                    // is known so the active session's working directory catches up.
-                                    ctx.emit(Event::AppStateChanged);
-
-                                    ctx.emit(Event::Pane(PaneEvent::RemoteRepoNavigated {
-                                        remote_path: remote_path.clone(),
-                                    }));
-
-                                    // Wire up the remote git-status chips when the
-                                    // remote repo changed (mirrors the local branch).
-                                    let changed = !matches!(
-                                        old_repo_path.as_ref(),
-                                        Some(LocalOrRemotePath::Remote(rp)) if rp == remote_path
-                                    );
-                                    if changed {
-                                        me.clear_git_repo_status_subscription(ctx);
-                                        me.update_git_status_subscription(ctx);
-                                    }
-                                }
+                                Some(LocalOrRemotePath::Remote(_)) => {}
                                 Some(LocalOrRemotePath::Local(repo_path)) => {
                                     #[cfg(feature = "local_fs")]
                                     {
@@ -5976,239 +5633,8 @@ impl TerminalView {
                     });
                 }
             }
-            ModelEvent::ExitShell { session_id } => {
-                // Drop the remote server client for this session before the
-                // user's outer ssh tunnel starts closing. The last
-                // `Arc<RemoteServerClient>` carries an owned `Child` for the
-                // `ssh … remote-server-proxy` subprocess; dropping it kills
-                // that child via `kill_on_drop`, which closes the
-                // multiplexed channel on the ControlMaster so the foreground
-                // ssh can exit cleanly instead of hanging.
-                #[cfg(not(target_family = "wasm"))]
-                if FeatureFlag::SshRemoteServer.is_enabled() {
-                    use crate::remote_server::manager::RemoteServerManager;
-                    RemoteServerManager::handle(ctx).update(
-                        ctx,
-                        |mgr: &mut RemoteServerManager, ctx| {
-                            mgr.deregister_session(*session_id, ctx);
-                        },
-                    );
-                }
-                // The remote-server manager only exists on non-wasm targets,
-                // so this handler is a no-op on wasm.
-                #[cfg(target_family = "wasm")]
-                let _ = session_id;
-            }
-            // Handled by RemoteServerController via model subscription.
-            ModelEvent::SshInitShell { .. } => {}
-            ModelEvent::RemoteServerBlockRequested { session_id } => {
-                self.show_ssh_remote_server_choice_block(*session_id, ctx);
-            }
+            ModelEvent::ExitShell { .. } => {}
         }
-    }
-
-    /// Creates the [`SshRemoteServerChoiceView`] and inserts it as a
-    /// rich content block pinned to the bottom of the block list.
-    fn show_ssh_remote_server_choice_block(
-        &mut self,
-        session_id: SessionId,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        let already_present = self.rich_content_views.iter().any(|view| {
-            matches!(
-                view.metadata(),
-                Some(RichContentMetadata::SshRemoteServerChoiceBlock { handle })
-                if handle.as_ref(ctx).session_id() == session_id
-            )
-        });
-        if already_present {
-            return;
-        }
-
-        let choice_view =
-            ctx.add_typed_action_view(|ctx| SshRemoteServerChoiceView::new(session_id, ctx));
-
-        ctx.subscribe_to_view(&choice_view, move |me, _, event, ctx| match event {
-            SshRemoteServerChoiceViewEvent::Install => {
-                me.remove_ssh_remote_server_choice_block(session_id, ctx);
-                ctx.emit(Event::RemoteServerInstallRequested { session_id });
-            }
-            SshRemoteServerChoiceViewEvent::Skip => {
-                me.remove_ssh_remote_server_choice_block(session_id, ctx);
-                ctx.emit(Event::RemoteServerSkipRequested { session_id });
-            }
-            SshRemoteServerChoiceViewEvent::OpenWarpifySettings => {
-                ctx.emit(Event::OpenSettings(SettingsSection::Warpify));
-            }
-        });
-
-        self.insert_rich_content(
-            None,
-            choice_view.clone(),
-            Some(RichContentMetadata::SshRemoteServerChoiceBlock {
-                handle: choice_view,
-            }),
-            RichContentInsertionPosition::PinToBottom,
-            ctx,
-        );
-
-        self.redetermine_global_focus(ctx);
-    }
-
-    /// Returns a clone of the `SshRemoteServerChoiceView` handle for the
-    /// first active SSH remote-server choice block, if any.
-    fn active_ssh_remote_server_choice_block(
-        &self,
-    ) -> Option<ViewHandle<SshRemoteServerChoiceView>> {
-        self.rich_content_views.iter().find_map(|view| {
-            if let Some(RichContentMetadata::SshRemoteServerChoiceBlock { handle }) =
-                view.metadata()
-            {
-                Some(handle.clone())
-            } else {
-                None
-            }
-        })
-    }
-
-    /// Returns `true` when the pending session has a connecting remote-server setup state
-    /// and no failure banner is already shown for that session.
-    fn show_remote_server_loading_footer(&self, model: &TerminalModel, app: &AppContext) -> bool {
-        if !FeatureFlag::SshRemoteServer.is_enabled() {
-            return false;
-        }
-        // Don't show the loading footer while the choice block is visible;
-        // the choice block replaces it.
-        if self.active_ssh_remote_server_choice_block().is_some() {
-            return false;
-        }
-        let Some(pending_sid) = model.pending_session_id() else {
-            return false;
-        };
-        let has_failed_banner = self.rich_content_views.iter().any(|view| {
-            matches!(
-                view.metadata(),
-                Some(RichContentMetadata::SshRemoteServerFailedBanner { handle })
-                if handle.as_ref(app).session_id() == pending_sid
-            )
-        });
-        if has_failed_banner {
-            return false;
-        }
-        self.sessions
-            .as_ref(app)
-            .remote_server_setup_state(pending_sid)
-            .is_some_and(|state| state.is_in_progress())
-    }
-
-    /// Renders a shimmering loading footer in place of the input editor
-    /// while the remote server is being installed or initialized.
-    fn render_remote_server_loading_footer(
-        &self,
-        model: &TerminalModel,
-        appearance: &Appearance,
-        app: &AppContext,
-    ) -> Box<dyn Element> {
-        let message = model
-            .pending_session_id()
-            .and_then(|sid| {
-                self.sessions
-                    .as_ref(app)
-                    .remote_server_setup_state(sid)
-                    .map(|state| match state {
-                        RemoteServerSetupState::Checking => "Checking...".to_string(),
-                        RemoteServerSetupState::Installing {
-                            progress_percent: Some(p),
-                        } => format!("Installing... ({p}%)"),
-                        RemoteServerSetupState::Installing {
-                            progress_percent: None,
-                        } => "Installing...".to_string(),
-                        RemoteServerSetupState::Updating => "Updating...".to_string(),
-                        RemoteServerSetupState::Initializing => "Initializing...".to_string(),
-                        _ => "Starting shell...".to_string(),
-                    })
-            })
-            .unwrap_or_else(|| "Starting shell...".to_string());
-
-        let shimmer_element = shimmering_warp_loading_text(
-            message,
-            appearance.monospace_font_size() - 2.,
-            self.remote_server_shimmer_handle.clone(),
-            app,
-        );
-
-        Container::new(shimmer_element)
-            .with_padding_left(*PADDING_LEFT)
-            .with_vertical_padding(8.)
-            .finish()
-    }
-
-    /// Creates and inserts the install-failed banner as rich content.
-    fn show_ssh_remote_server_failed_banner(
-        &mut self,
-        session_id: SessionId,
-        error: remote_server::transport::UserFacingError,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        let already_present = self.rich_content_views.iter().any(|view| {
-            matches!(
-                view.metadata(),
-                Some(RichContentMetadata::SshRemoteServerFailedBanner { handle })
-                if handle.as_ref(ctx).session_id() == session_id
-            )
-        });
-        if already_present {
-            return;
-        }
-
-        let banner =
-            ctx.add_typed_action_view(|_| SshRemoteServerFailedBanner::new(session_id, error));
-
-        ctx.subscribe_to_view(&banner, move |me, _, event, ctx| match event {
-            SshRemoteServerFailedBannerEvent::Dismissed => {
-                me.remove_ssh_remote_server_failed_banner(session_id, ctx);
-            }
-        });
-
-        self.insert_rich_content(
-            None,
-            banner.clone(),
-            Some(RichContentMetadata::SshRemoteServerFailedBanner { handle: banner }),
-            RichContentInsertionPosition::Append {
-                insert_below_long_running_block: true,
-            },
-            ctx,
-        );
-    }
-
-    /// Removes any install-failed banner for the given session.
-    fn remove_ssh_remote_server_failed_banner(
-        &mut self,
-        session_id: SessionId,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        let mut view_ids_to_remove = Vec::new();
-        for rich_content in self.rich_content_views.iter() {
-            if let Some(RichContentMetadata::SshRemoteServerFailedBanner { handle }) =
-                rich_content.metadata()
-                && handle.as_ref(ctx).session_id() == session_id
-            {
-                view_ids_to_remove.push(rich_content.view_id());
-            }
-        }
-
-        if view_ids_to_remove.is_empty() {
-            return;
-        }
-
-        let mut model = self.model.lock();
-        for view_id in &view_ids_to_remove {
-            model.block_list_mut().remove_rich_content(*view_id);
-        }
-        drop(model);
-        self.rich_content_views
-            .retain(|rich_content| !view_ids_to_remove.contains(&rich_content.view_id()));
-        ctx.notify();
     }
 
     /// Shows the one-time banner informing users who had opted into the deprecated tmux SSH
@@ -6264,36 +5690,6 @@ impl TerminalView {
         let mut view_ids_to_remove = Vec::new();
         for rich_content in self.rich_content_views.iter() {
             if let Some(RichContentMetadata::SshTmuxDeprecationBanner { handle }) =
-                rich_content.metadata()
-                && handle.as_ref(ctx).session_id() == session_id
-            {
-                view_ids_to_remove.push(rich_content.view_id());
-            }
-        }
-
-        if view_ids_to_remove.is_empty() {
-            return;
-        }
-
-        let mut model = self.model.lock();
-        for view_id in &view_ids_to_remove {
-            model.block_list_mut().remove_rich_content(*view_id);
-        }
-        drop(model);
-        self.rich_content_views
-            .retain(|rich_content| !view_ids_to_remove.contains(&rich_content.view_id()));
-        ctx.notify();
-    }
-
-    /// Removes [`SshRemoteServerChoiceView`] with the given `session_id`, if present.
-    fn remove_ssh_remote_server_choice_block(
-        &mut self,
-        session_id: SessionId,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        let mut view_ids_to_remove = Vec::new();
-        for rich_content in self.rich_content_views.iter() {
-            if let Some(RichContentMetadata::SshRemoteServerChoiceBlock { handle }) =
                 rich_content.metadata()
                 && handle.as_ref(ctx).session_id() == session_id
             {
@@ -9802,19 +9198,12 @@ impl TerminalView {
         if should_focus_terminal {
             self.focus_terminal(ctx);
         } else {
-            match self.active_ssh_remote_server_choice_block() {
-                Some(ssh_choice_view) => {
-                    ctx.focus(&ssh_choice_view);
-                }
-                _ => {
-                    if let Some(env_var_collection_block_handle) =
-                        self.active_env_var_collection_block(ctx)
-                    {
-                        ctx.focus(env_var_collection_block_handle);
-                    } else {
-                        self.focus_input_box(ctx);
-                    }
-                }
+            if let Some(env_var_collection_block_handle) =
+                self.active_env_var_collection_block(ctx)
+            {
+                ctx.focus(env_var_collection_block_handle);
+            } else {
+                self.focus_input_box(ctx);
             }
         }
     }
@@ -13828,10 +13217,6 @@ impl View for TerminalView {
                 let input_box_visible = self.is_input_box_visible(&model, app);
                 if input_box_visible {
                     column.add_child(self.render_input());
-                } else if self.show_remote_server_loading_footer(&model, app) {
-                    column.add_child(
-                        self.render_remote_server_loading_footer(&model, appearance, app),
-                    );
                 }
 
                 let stack = Stack::new()
@@ -14095,12 +13480,6 @@ impl View for TerminalView {
         if focus_ctx.is_self_focused() {
             self.maybe_report_focus_in(ctx);
             ctx.dispatch_typed_action(&PaneGroupAction::HandleFocusChange);
-
-            // Forward focus to the active SSH remote-server choice block so
-            // its keyboard-navigable buttons stay interactive.
-            if let Some(ssh_choice_view) = self.active_ssh_remote_server_choice_block() {
-                ctx.focus(&ssh_choice_view);
-            }
 
             ctx.notify();
         }

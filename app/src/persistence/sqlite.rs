@@ -51,7 +51,7 @@ use super::model::{
     WorkspaceMetadata as WorkspaceMetadataModel,
 };
 use super::{
-    BlockCompleted, FinishedCommandMetadata, ModelEvent, PersistedData, PersistedDataScope,
+    BlockCompleted, FinishedCommandMetadata, ModelEvent, PersistedData,
     PersistenceScope, StartedCommandMetadata, WriterHandles, schema,
 };
 use crate::app_state::{
@@ -109,7 +109,6 @@ const WARP_SQLITE_FILE_NAME: &str = "warp.sqlite";
 pub fn initialize(
     ctx: &mut AppContext,
     scope: PersistenceScope,
-    data_scope: PersistedDataScope,
 ) -> (Option<Box<PersistedData>>, Option<WriterHandles>) {
     unsafe {
         // Set up logging before any SQLite calls.
@@ -118,7 +117,7 @@ pub fn initialize(
     let database_path = database_file_path_for_scope(&scope);
     match init_db(&scope) {
         Ok(mut conn) => {
-            let persisted_data = read_persisted_data(&mut conn, ctx, data_scope);
+            let persisted_data = read_persisted_data(&mut conn, ctx);
 
             let writer_handles = match start_writer(conn, database_path.clone()) {
                 Ok(writer_handles) => Some(writer_handles),
@@ -140,10 +139,9 @@ pub fn initialize(
 fn read_persisted_data(
     conn: &mut SqliteConnection,
     ctx: &mut AppContext,
-    data_scope: PersistedDataScope,
 ) -> Option<Box<PersistedData>> {
     let user_uid = AuthStateProvider::as_ref(ctx).get().user_id();
-    match read_sqlite_data(conn, user_uid, data_scope) {
+    match read_sqlite_data(conn, user_uid) {
         Ok(app_state) => Some(Box::new(app_state)),
         Err(err) => {
             report_error!(anyhow::Error::new(err).context("Failed to read persisted data"));
@@ -273,18 +271,11 @@ pub(super) fn init_db(scope: &PersistenceScope) -> Result<SqliteConnection> {
             "Encountered an error while creating parent directories for sqlite database: {err:#}"
         );
     }
-    if matches!(scope, PersistenceScope::RemoteServerDaemon { .. }) {
-        ensure_owner_only_dir(db_parent)?;
-    }
-
     if matches!(scope, PersistenceScope::App) {
         migrate_old_sqlite_into_secure_container_if_needed(&db_path);
     }
 
     let conn = setup_database(&db_path)?;
-    if matches!(scope, PersistenceScope::RemoteServerDaemon { .. }) {
-        ensure_owner_only_file(&db_path)?;
-    }
     Ok(conn)
 }
 
@@ -362,9 +353,6 @@ fn setup_database(database_path: &Path) -> Result<SqliteConnection> {
 pub fn database_file_path_for_scope(scope: &PersistenceScope) -> PathBuf {
     match scope {
         PersistenceScope::App => app_database_file_path(),
-        PersistenceScope::RemoteServerDaemon { identity_key } => {
-            remote_server_daemon_database_file_path(identity_key)
-        }
     }
 }
 
@@ -372,43 +360,6 @@ fn app_database_file_path() -> PathBuf {
     warp_core::paths::secure_state_dir()
         .unwrap_or_else(warp_core::paths::state_dir)
         .join(WARP_SQLITE_FILE_NAME)
-}
-
-fn remote_server_daemon_database_file_path(identity_key: &str) -> PathBuf {
-    let data_dir = remote_server::setup::remote_server_daemon_data_dir(identity_key);
-    let expanded_data_dir = shellexpand::tilde(&data_dir).into_owned();
-    PathBuf::from(expanded_data_dir).join(WARP_SQLITE_FILE_NAME)
-}
-
-#[cfg(unix)]
-fn ensure_owner_only_dir(path: &Path) -> Result<()> {
-    use std::fs::Permissions;
-    use std::os::unix::fs::PermissionsExt;
-
-    std::fs::set_permissions(path, Permissions::from_mode(0o700))
-        .with_context(|| format!("setting permissions on directory {}", path.display()))
-}
-
-#[cfg(not(unix))]
-fn ensure_owner_only_dir(_path: &Path) -> Result<()> {
-    Ok(())
-}
-
-#[cfg(unix)]
-fn ensure_owner_only_file(path: &Path) -> Result<()> {
-    use std::fs::Permissions;
-    use std::os::unix::fs::PermissionsExt;
-
-    if path.exists() {
-        std::fs::set_permissions(path, Permissions::from_mode(0o600))
-            .with_context(|| format!("setting permissions on file {}", path.display()))?;
-    }
-    Ok(())
-}
-
-#[cfg(not(unix))]
-fn ensure_owner_only_file(_path: &Path) -> Result<()> {
-    Ok(())
 }
 
 pub(super) fn remove(sender: SyncSender<ModelEvent>) {
@@ -1891,26 +1842,8 @@ fn box_persisted_generic_string_object(
 fn read_sqlite_data(
     conn: &mut SqliteConnection,
     current_user_id: Option<UserUid>,
-    data_scope: PersistedDataScope,
 ) -> Result<PersistedData, Error> {
-    if matches!(data_scope, PersistedDataScope::CodebaseIndicesOnly) {
-        return Ok(PersistedData {
-            app_state: None,
-            cloud_objects: Default::default(),
-            workspaces: Default::default(),
-            current_workspace_uid: None,
-            command_history: Default::default(),
-            user_profiles: Default::default(),
-            time_of_next_force_object_refresh: None,
-            object_actions: Default::default(),
-            experiments: Default::default(),
-            workspace_metadata: get_all_workspace_metadata(conn)?,
-            workspace_language_servers: Default::default(),
-            ignored_suggestions: Default::default(),
-        });
-    }
-
-    let app_state = if data_scope.session_restoration() {
+    let app_state = {
         use schema::windows::dsl::*;
 
         let active_window_id = schema::app::dsl::app
@@ -2109,8 +2042,6 @@ fn read_sqlite_data(
             active_window_index,
             block_lists: Arc::new(restored_blocks),
         })
-    } else {
-        None
     };
 
     let read_context = load_cloud_object_read_context(conn, current_user_id)?;
@@ -2227,7 +2158,7 @@ fn read_sqlite_data(
 
     // The GUI and TUI both consume command history. Other headless launch
     // modes skip it.
-    let commands = if data_scope.command_history() {
+    let commands = {
         schema::commands::dsl::commands
             // The newest row for a duplicate command supplies its summary metadata.
             .order(schema::commands::columns::id.desc())
@@ -2235,28 +2166,22 @@ fn read_sqlite_data(
             .filter_map(|command| command.ok())
             .map(PersistedCommand::from)
             .collect()
-    } else {
-        Vec::new()
     };
 
-    let user_profiles = if data_scope.user_profiles() {
+    let user_profiles = {
         schema::user_profiles::dsl::user_profiles
             .load_iter::<model::UserProfile, DefaultLoadingMode>(conn)?
             .filter_map(|user_profile| user_profile.ok())
             .map(user_profile_from_persistence)
             .collect()
-    } else {
-        Vec::new()
     };
 
-    let object_actions: Vec<ObjectAction> = if data_scope.gui_only_data() {
+    let object_actions: Vec<ObjectAction> = {
         schema::object_actions::dsl::object_actions
             .load_iter::<model::PersistedObjectAction, DefaultLoadingMode>(conn)?
             .filter_map(|object_action| object_action.ok()) // parse into PersistedObjectAction
             .filter_map(|action| object_action_from_persisted(action).ok())
             .collect()
-    } else {
-        Vec::new()
     };
 
     let server_experiments = schema::server_experiments::dsl::server_experiments

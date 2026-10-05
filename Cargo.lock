@@ -9019,35 +9019,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "remote_server"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-channel",
- "async-io",
- "async-process",
- "bounded-vec-deque",
- "command",
- "dashmap",
- "futures",
- "futures-lite 1.13.0",
- "getrandom 0.2.16",
- "log",
- "prost",
- "prost-build",
- "repo_metadata",
- "serde",
- "thiserror 2.0.17",
- "tokio",
- "tokio-util",
- "uuid",
- "warp_core",
- "warp_errors",
- "warp_util",
- "warpui_core",
-]
-
-[[package]]
 name = "rend"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -11283,7 +11254,6 @@ checksum = "9ae9cec805b01e8fc3fd2fe289f89149a9b66dd16786abd8b19cfa7b48cb0098"
 dependencies = [
  "bytes",
  "futures-core",
- "futures-io",
  "futures-sink",
  "pin-project-lite",
  "tokio",
@@ -12281,7 +12251,6 @@ dependencies = [
  "rayon",
  "regex",
  "regex-automata",
- "remote_server",
  "repo_metadata",
  "reqwest",
  "rust-embed 8.7.2",
@@ -12654,7 +12623,6 @@ dependencies = [
  "futures",
  "log",
  "notify-debouncer-full",
- "remote_server",
  "repo_metadata",
  "tempfile",
  "thiserror 2.0.17",
