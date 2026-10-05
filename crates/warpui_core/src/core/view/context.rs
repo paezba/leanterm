@@ -1,5 +1,3 @@
-#[cfg(feature = "tui")]
-mod tui;
 
 use std::any::Any;
 use std::marker::PhantomData;

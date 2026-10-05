@@ -65,8 +65,6 @@ use crate::{
     assets, rendering,
 };
 
-#[cfg(feature = "tui")]
-mod tui;
 
 lazy_static! {
     static ref LAST_USER_ACTION_UNIX_TIMESTAMP: AtomicI64 = AtomicI64::new(0);
@@ -4867,8 +4865,6 @@ impl AppContext {
                     view.render(self)
                 }))
             }
-            #[cfg(feature = "tui")]
-            Some(StoredView::Tui(_)) => Err(anyhow!("view is not a GUI view")),
             None => Err(anyhow!("view not found")),
         }
     }
@@ -4887,8 +4883,6 @@ impl AppContext {
                     .iter()
                     .filter_map(|(id, view)| match view {
                         StoredView::Gui(view) => Some((*id, view.render(self))),
-                        #[cfg(feature = "tui")]
-                        StoredView::Tui(_) => None,
                     })
                     .collect::<EntityIdMap<_>>()
             })
