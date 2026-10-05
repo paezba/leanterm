@@ -1077,7 +1077,7 @@ impl SettingsWidget for KeybindingsWidget {
         appearance: &Appearance,
         _app: &AppContext,
     ) -> Box<dyn Element> {
-        let subheader = render_sub_header(appearance, "Configure keyboard shortcuts", None);
+        let subheader = render_sub_header(appearance, "Configure keyboard shortcuts");
         let description = self.render_description(view.bindings.as_ref(), appearance);
 
         Flex::column()
