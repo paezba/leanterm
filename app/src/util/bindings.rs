@@ -30,7 +30,6 @@ pub enum CustomAction {
     ShowAboutWarp,
     ShowSettings,
     ConfigureKeybindings,
-    ShowAccount,
     ShowAppearance,
     FocusInput,
     ClearBlocks,
@@ -79,7 +78,6 @@ pub enum CustomAction {
     CopyBlock,
     CopyBlockCommand,
     CopyBlockOutput,
-    ViewSharedBlocks,
     CloseTab,
     CloseOtherTabs,
     CloseTabsRight,
@@ -99,13 +97,6 @@ pub enum CustomAction {
     AddWindow,
     CloseCurrentSession,
     CloseWindow,
-    NewPersonalWorkflow,
-    NewPersonalNotebook,
-    NewPersonalEnvVars,
-    NewTeamWorkflow,
-    NewTeamNotebook,
-    NewTeamEnvVars,
-    SearchDrive,
     #[cfg(windows)]
     WindowsPaste,
     #[cfg(windows)]
@@ -114,14 +105,9 @@ pub enum CustomAction {
     NewAgentModePane,
     /// Also applies to legacy Warp AI (attaches the selection to the panel editor)
     AttachSelectionAsAgentModeContext,
-    OpenAIFactCollection,
-    OpenMCPServerCollection,
     ToggleProjectExplorer,
-    NewPersonalAIPrompt,
-    NewTeamAIPrompt,
     OpenRepository,
     NewTerminalTab,
-    NewAgentTab,
     GoToLine,
     ToggleGlobalSearch,
     ToggleConversationListView,
@@ -434,26 +420,12 @@ pub fn custom_tag_to_keystroke(custom: CustomTag) -> Option<Keystroke> {
         | CustomAction::CloseTab
         | CustomAction::CloseOtherTabs
         | CustomAction::CloseTabsRight
-        | CustomAction::ViewSharedBlocks
-        | CustomAction::ShowAccount
         | CustomAction::ShowAppearance
         | CustomAction::SaveCurrentConfig
         | CustomAction::TriggerWelcomeBlock
         | CustomAction::HistorySearch
         | CustomAction::DisableSyncTerminalInputs
-        | CustomAction::ToggleSyncAllTerminalInputsInAllTabs
-        | CustomAction::NewPersonalWorkflow
-        | CustomAction::NewPersonalNotebook
-        | CustomAction::NewPersonalEnvVars
-        | CustomAction::NewTeamWorkflow
-        | CustomAction::NewTeamNotebook
-        | CustomAction::NewTeamEnvVars
-        | CustomAction::SearchDrive
-        | CustomAction::OpenAIFactCollection
-        | CustomAction::OpenMCPServerCollection
-        | CustomAction::NewPersonalAIPrompt
-        | CustomAction::NewTeamAIPrompt
-        | CustomAction::NewAgentTab => None,
+        | CustomAction::ToggleSyncAllTerminalInputsInAllTabs => None,
     }
 }
 
