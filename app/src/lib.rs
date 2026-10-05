@@ -586,12 +586,6 @@ pub fn run() -> Result<()> {
         {
             eprintln!("Error: Invalid websocket server URL: {e:#}");
         }
-
-        if let Some(url) = args.session_sharing_server_url()
-            && let Err(e) = ChannelState::override_session_sharing_server_url(url.to_owned())
-        {
-            eprintln!("Error: Invalid session sharing server URL: {e:#}");
-        }
     }
 
     if let Some(command) = args.command() {
@@ -1831,13 +1825,6 @@ pub(crate) fn initialize_app(
 
     // Add a singleton model for resizable modals whose size should be persisted through restarts.
     ctx.add_singleton_model(|_| ResizableData::default());
-
-    // Add a singleton model to maintain state of shared session across all windows.
-    ctx.add_singleton_model(terminal::shared_session::manager::Manager::new);
-
-    ctx.add_singleton_model(
-        terminal::shared_session::permissions_manager::SessionPermissionsManager::new,
-    );
 
     ctx.add_singleton_model(EnvVarCollectionManager::new);
     ctx.add_singleton_model(WorkflowManager::new);

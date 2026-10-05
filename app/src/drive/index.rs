@@ -166,7 +166,6 @@ const INDEX_AGENT_MODE_WORKFLOW_LABEL: &str = "New prompt";
 const INDEX_ENV_VAR_COLLECTION_LABEL: &str = "New environment variables";
 
 const IMPORT_LABEL: &str = "Import";
-const REMOVE_LABEL: &str = "Remove";
 const OFFLINE_BANNER_TEXT: &str = "You are offline. Some files will be read only.";
 
 pub const DRIVE_INDEX_VIEW_POSITION_ID: &str = "drive_index_view_id";

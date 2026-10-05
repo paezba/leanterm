@@ -13,7 +13,6 @@ use std::str::FromStr;
 
 use anyhow::{Result, anyhow, ensure};
 use itertools::Itertools;
-use session_sharing_protocol::common::SessionId;
 use url::Url;
 use warp_util::path::LineAndColumnArg;
 use warpui::notification::UserNotification;
@@ -71,8 +70,6 @@ pub enum UriHost {
     Action,
     /// A host prefix for all actions that involve launch configurations
     Launch,
-    /// Supports joining shared sessions via a warp:// URI.
-    SharedSession,
     /// Supports WD object actions
     Drive,
     /// Supports opening warp's settings panel via URI
@@ -187,38 +184,6 @@ impl UriHost {
             }
             UriHost::TabConfig => {
                 handle_tab_config_uri(primary_window_id, url, ctx);
-            }
-            UriHost::SharedSession => {
-                // We expect the uri to have the ID of the session to join as the last segment.
-                // e.g. warp://shared_session/{id}
-                let session_id = url
-                    .path_segments()
-                    .into_iter()
-                    .flatten()
-                    .last()
-                    .and_then(|id| SessionId::from_str(id).ok());
-                if let Some(session_id) = session_id {
-                    // If there's an existing window, join the session inc a new tab. Otherwise, open a new window.
-                    match primary_window_id.and_then(|window_id| {
-                        ctx.root_view_id(window_id)
-                            .map(|view_id| (window_id, view_id))
-                    }) {
-                        Some((primary_window_id, root_view_id)) => {
-                            ctx.dispatch_action(
-                                primary_window_id,
-                                &[root_view_id],
-                                "root_view:join_shared_session_in_existing_window",
-                                &session_id,
-                                log::Level::Info,
-                            );
-                        }
-                        None => {
-                            ctx.dispatch_global_action("root_view:join_shared_session", &session_id)
-                        }
-                    }
-                } else {
-                    log::warn!("Failed to join shared session with uri={url}");
-                }
             }
             UriHost::Drive => {
                 // We expect the uri to have the ID of the object we are trying to open and the object_type.
@@ -445,7 +410,7 @@ impl UriHost {
             }),
             Self::Team | Self::Drive | Self::Settings => W::default(),
             // These URLs always open new windows.
-            Self::Launch | Self::SharedSession | Self::Home => W::Nothing,
+            Self::Launch | Self::Home => W::Nothing,
             // This will actually be handled by [`Action::window_behavior_hint`].
             Self::Action => W::Nothing,
             // Handler picks the window itself based on `?new_window=true`.
@@ -1238,7 +1203,6 @@ fn validate_custom_uri(url: &Url) -> Result<UriHost> {
     let host_allows_arbitrary_path = match host {
         UriHost::Action
         | UriHost::Launch
-        | UriHost::SharedSession
         | UriHost::Drive
         | UriHost::Team
         | UriHost::Settings

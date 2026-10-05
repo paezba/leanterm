@@ -2,7 +2,6 @@ mod action;
 mod active_session;
 #[cfg(target_os = "macos")]
 pub(crate) mod cli_install;
-mod close_session_confirmation_dialog;
 pub(crate) mod cross_window_tab_drag;
 mod global_actions;
 pub mod header_toolbar_editor;
@@ -210,7 +209,7 @@ pub fn init(app: &mut AppContext) {
         WorkspaceAction::NewCodeFile,
     )
     .with_custom_action(CustomAction::NewFile)
-    .with_context_predicate(id!("Workspace") & !id!("Workspace_ViewOnlySharedSession"))]);
+    .with_context_predicate(id!("Workspace"))]);
 
     if FeatureFlag::UIZoom.is_enabled() {
         app.register_fixed_bindings([
@@ -979,7 +978,7 @@ pub fn init(app: &mut AppContext) {
                 source: PaletteSource::Keybinding,
             },
         )
-        .with_context_predicate(id!("Workspace") & !id!("Workspace_ViewOnlySharedSession"))
+        .with_context_predicate(id!("Workspace"))
         .with_custom_action(CustomAction::FilesPalette),
         EditableBinding::new(
             "workspace:open_launch_config_save_modal",

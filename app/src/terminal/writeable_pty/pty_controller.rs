@@ -487,9 +487,6 @@ impl<T: EventLoopSender> PtyController<T> {
 
             // Explicitly start the block now that the command is executed.
             let outcome = match source {
-                CommandExecutionSource::SharedSession { participant_id, .. } => {
-                    model.start_command_execution_for_shared_session(participant_id)
-                }
                 CommandExecutionSource::User | CommandExecutionSource::QueuedCommand => {
                     model.start_command_execution()
                 }

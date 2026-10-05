@@ -32,7 +32,7 @@ use crate::workspaces::workspace::{
 pub(crate) mod team_workspace_settings;
 #[cfg(test)]
 pub(crate) use team_workspace_settings::TeamlessScopeForTest;
-pub use team_workspace_settings::{ResolvedTeamScope, TeamContext, TeamScope};
+pub use team_workspace_settings::{TeamContext, TeamScope};
 
 const STRIPE_SUBSCRIPTION_INTERVAL_PAGE_PREFIX: &str = "/upgrade";
 

@@ -89,7 +89,7 @@ impl WasmNUXDialog {
         // Warp" header button remains available as the unobtrusive path to the app.
         if matches!(
             web_intent_parser::current_web_intent(),
-            Some(WebIntent::SessionView(_)) | Some(WebIntent::ConversationView(_))
+            Some(WebIntent::ConversationView(_))
         ) {
             return false;
         }
@@ -229,7 +229,6 @@ impl View for WasmNUXDialog {
         } else {
             let object_kind = match web_intent_parser::current_web_intent() {
                 Some(WebIntent::DriveObject(_)) => "Warp Drive objects",
-                Some(WebIntent::SessionView(_)) => "shared sessions",
                 _ => "Warp links",
             };
 

@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use session_sharing_protocol::common::SessionId;
 use ui_components::lightbox;
 use warp_util::path::LineAndColumnArg;
 use warpui::accessibility::AccessibilityVerbosity;
@@ -10,7 +9,7 @@ use warpui::geometry::rect::RectF;
 use warpui::geometry::vector::Vector2F;
 use warpui::platform::Cursor;
 use warpui::platform::keyboard::KeyCode;
-use warpui::{EntityId, WeakViewHandle, WindowId};
+use warpui::{EntityId, WindowId};
 
 use super::tab_settings::{
     VerticalTabsCompactSubtitle, VerticalTabsDisplayGranularity, VerticalTabsPrimaryInfo,
@@ -21,7 +20,6 @@ use crate::auth::auth_manager::LoginGatedFeature;
 use crate::drive::CloudObjectTypeAndId;
 use crate::drive::items::WarpDriveItemId;
 use crate::palette::PaletteMode;
-use crate::pane_group::PaneGroup;
 use crate::prompt::editor_modal::OpenSource as PromptEditorOpenSource;
 use crate::search;
 use crate::server::ids::{ServerId, SyncId};
@@ -419,19 +417,6 @@ pub enum WorkspaceAction {
     #[cfg(target_family = "wasm")]
     OpenLinkOnDesktop(url::Url),
     ReopenClosedSession,
-    OpenShareSessionModal(usize),
-    StopSharingSessionFromTabMenu {
-        terminal_view_id: EntityId,
-    },
-    StopSharingAllSessionsInTab {
-        pane_group: WeakViewHandle<PaneGroup>,
-    },
-    CopySharedSessionLinkFromTab {
-        tab_index: usize,
-    },
-    OpenSharedSessionQrCode {
-        session_id: SessionId,
-    },
     AddWindow,
     AddWindowWithShell {
         shell: AvailableShell,
@@ -614,7 +599,6 @@ impl From<&WorkspaceAction> for LoginGatedFeature {
             CreateTeamWorkflow => "Creating a team workflow",
             CreateTeamFolder => "Creating a team folder",
             CreateTeamEnvVarCollection => "Creating a team environment variable collection",
-            OpenShareSessionModal(_) => "Sharing a session",
             _ => "Unknown reason",
         }
     }
@@ -630,7 +614,6 @@ impl WorkspaceAction {
                 | CreateTeamWorkflow
                 | CreateTeamFolder
                 | CreateTeamEnvVarCollection
-                | OpenShareSessionModal(_)
         )
     }
 
@@ -823,11 +806,6 @@ impl WorkspaceAction {
             | SignupAnonymousUser
             | LogOut
             | OpenLink(_)
-            | OpenShareSessionModal(_)
-            | StopSharingSessionFromTabMenu { .. }
-            | StopSharingAllSessionsInTab { .. }
-            | CopySharedSessionLinkFromTab { .. }
-            | OpenSharedSessionQrCode { .. }
             | ReopenClosedSession
             | FocusLeftPanel
             | FocusRightPanel

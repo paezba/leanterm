@@ -6,10 +6,8 @@ use pane_group::{NotebookPane, PaneState, SplitPaneState, TerminalPaneId};
 use repo_metadata::RepoMetadataModel;
 use repo_metadata::repositories::DetectedRepositories;
 use repo_metadata::watcher::DirectoryWatcher;
-use session_sharing_protocol::common::SessionId;
 #[cfg(feature = "local_fs")]
 use tempfile::TempDir;
-use terminal::shared_session::permissions_manager::SessionPermissionsManager;
 use terminal::view::ActiveSessionState;
 #[cfg(feature = "local_fs")]
 use warp_files::FileModel;
@@ -48,9 +46,6 @@ use crate::tab_configs::tab_config::{TabConfigPaneNode, TabConfigPaneType};
 use crate::terminal::history::History;
 use crate::terminal::keys::TerminalKeybindings;
 use crate::terminal::local_tty::spawner::PtySpawner;
-use crate::terminal::shared_session::{
-    SharedSessionScrollbackType, SharedSessionSource, SharedSessionStatus,
-};
 use crate::test_util::settings::initialize_settings_for_tests;
 use crate::undo_close::UndoCloseSettings;
 #[cfg(windows)]
@@ -107,7 +102,6 @@ pub(crate) fn initialize_app_with_team_client(app: &mut App, team_client: Arc<dy
     app.add_singleton_model(|_| ResizableData::default());
     app.add_singleton_model(LocalWorkflows::new);
     app.add_singleton_model(UndoCloseStack::new);
-    app.add_singleton_model(terminal::shared_session::manager::Manager::new);
     app.add_singleton_model(|_| ActiveSession::default());
     app.add_singleton_model(|_| WorkspaceToastStack);
     app.add_singleton_model(|_| ObjectActions::new(Vec::new()));
@@ -127,7 +121,6 @@ pub(crate) fn initialize_app_with_team_client(app: &mut App, team_client: Arc<dy
     // The blocklist controller created during terminal bootstrap subscribes to
     // OrchestrationEventService and OrchestrationEventStreamer unconditionally,
     // so both singletons must be registered before bootstrap.
-    app.add_singleton_model(SessionPermissionsManager::new);
     app.add_singleton_model(|_| SettingsPaneManager::new());
 
     // Initialize file-based MCP dependencies.
@@ -551,90 +544,7 @@ fn test_open_markdown_viewer_target_preserves_requested_line() {
     });
 }
 
-/// Creates a workspace with a single, shared session.
-fn mock_workspace_with_shared_session(app: &mut App) -> ViewHandle<Workspace> {
-    use crate::terminal::shared_session::manager::Manager;
-
-    // Create the workspace as a session-sharing sharer.
-    let global_resource_handles = GlobalResourceHandles::mock(app);
-    let (_, workspace) = app.add_window(WindowStyle::NotStealFocus, |ctx| {
-        Workspace::new(
-            global_resource_handles,
-            None,
-            NewWorkspaceSource::Empty {
-                previous_active_window: None,
-                shell: None,
-            },
-            ctx,
-        )
-    });
-
-    // Get the single terminal view in the workspace.
-    let terminal_view = workspace.read(app, |workspace, ctx| {
-        assert_eq!(workspace.tabs.len(), 1);
-        workspace
-            .active_tab_pane_group()
-            .as_ref(ctx)
-            .focused_session_view(ctx)
-            .unwrap()
-    });
-
-    terminal_view.update(app, |view, ctx| {
-        view.model.lock().block_list_mut().set_bootstrapped();
-        view.attempt_to_share_session(
-            SharedSessionScrollbackType::All,
-            None,
-            SharedSessionSource::user(None),
-            false,
-            ctx,
-        );
-    });
-
-    // Make sure the view is registered with the shared session manager.
-    app.read(|ctx| {
-        let manager = Manager::as_ref(ctx);
-        let shared_sessions = manager.shared_views(ctx).collect_vec();
-        assert_eq!(shared_sessions.len(), 1);
-        assert_eq!(shared_sessions[0].id(), terminal_view.id());
-    });
-
-    workspace
-}
-
 // Creates a workspace as a viewer of a shared session.
-pub(crate) fn mock_workspace_viewing_shared_session(app: &mut App) -> ViewHandle<Workspace> {
-    // Create the workspace as a session-sharing sharer.
-    let global_resource_handles = GlobalResourceHandles::mock(app);
-
-    let session_id = SessionId::new();
-
-    let (_, workspace) = app.add_window(WindowStyle::NotStealFocus, |ctx| {
-        Workspace::new(
-            global_resource_handles,
-            None,
-            NewWorkspaceSource::SharedSessionAsViewer { session_id },
-            ctx,
-        )
-    });
-
-    // Get the single terminal view in the workspace.
-    let terminal_view = workspace.read(app, |workspace, ctx| {
-        assert_eq!(workspace.tabs.len(), 1);
-        workspace
-            .active_tab_pane_group()
-            .as_ref(ctx)
-            .focused_session_view(ctx)
-            .unwrap()
-    });
-
-    // Ensure session is opened as a viewer.
-    terminal_view.read(app, |terminal, _ctx| {
-        let model = terminal.model.clone();
-        assert!(model.lock().shared_session_status().is_viewer());
-    });
-
-    workspace
-}
 
 /// Disable the warn-before-quit setting. Because we don't fully bootstrap the shell in tests, this
 /// is generally needed in tests that close tabs.
@@ -1145,59 +1055,6 @@ fn test_workspace_sessions_retrieves_panes() {
     });
 }
 
-fn number_of_shared_sessions_in_tab(
-    workspace: &Workspace,
-    index: usize,
-    ctx: &AppContext,
-) -> usize {
-    workspace
-        .get_pane_group_view(index)
-        .map_or(0, |view| view.as_ref(ctx).number_of_shared_sessions(ctx))
-}
-
-/// Sets up the workspace with three tabs. The middle tab has two panes, where one is shared.
-fn setup_session_sharing_test(workspace: &ViewHandle<Workspace>, app: &mut App) -> PaneId {
-    let shared_pane_id = workspace.update(app, |workspace, ctx| {
-        workspace.add_terminal_tab(false, ctx);
-        workspace.add_terminal_tab(false, ctx);
-
-        let tab_view = workspace.get_pane_group_view(1).unwrap();
-
-        tab_view.update(ctx, |view, ctx| {
-            assert_eq!(view.pane_count(), 1);
-            view.focused_session_view(ctx)
-                .unwrap()
-                .update(ctx, |terminal, ctx| {
-                    terminal.attempt_to_share_session(
-                        SharedSessionScrollbackType::None,
-                        None,
-                        SharedSessionSource::user(None),
-                        false,
-                        ctx,
-                    );
-                });
-
-            view.handle_action(&PaneGroupAction::Add(Direction::Right), ctx);
-            assert_eq!(view.pane_count(), 2);
-
-            view.pane_id_by_index(0).unwrap()
-        })
-    });
-
-    workspace.read(app, |workspace, ctx| {
-        assert_eq!(number_of_shared_sessions_in_tab(workspace, 1, ctx), 1);
-
-        // Confirmation dialog starts not open.
-        assert!(
-            !workspace
-                .current_workspace_state
-                .is_close_session_confirmation_dialog_open
-        );
-    });
-
-    shared_pane_id
-}
-
 #[test]
 fn test_close_active_horizontal_tab_activates_tab_to_right() {
     let _vertical_tabs_guard = FeatureFlag::VerticalTabs.override_enabled(true);
@@ -1591,24 +1448,6 @@ fn test_open_or_toggle_warp_drive() {
                     .contains(&Tip::Action(TipAction::OpenWarpDrive)),
                 "Warp drive welcome tip should not be completed"
             );
-        });
-    });
-}
-
-#[test]
-fn test_view_only_session() {
-    App::test((), |mut app| async move {
-        initialize_app(&mut app);
-
-        // Trying to open command search
-        let workspace = mock_workspace_viewing_shared_session(&mut app);
-        workspace.update(&mut app, |workspace: &mut Workspace, ctx| {
-            workspace.handle_action(&WorkspaceAction::ShowCommandSearch(Default::default()), ctx);
-        });
-
-        // Ensure command search doesn't work for read-only shared sessions
-        workspace.read(&app, |workspace, _ctx| {
-            assert!(!workspace.current_workspace_state.is_command_search_open);
         });
     });
 }
@@ -3298,10 +3137,6 @@ mod simplified_wasm_tab_bar {
             .expect("restored pane should have an active terminal view");
         let model = terminal_view.as_ref(ctx).model.lock();
         assert!(!model.is_conversation_transcript_viewer());
-        assert!(matches!(
-            model.shared_session_status(),
-            SharedSessionStatus::NotShared
-        ));
     }
 
     #[test]
@@ -3312,21 +3147,6 @@ mod simplified_wasm_tab_bar {
             workspace.read(&app, |workspace, ctx| {
                 assert!(!workspace.opened_from_content_deep_link);
                 assert_eq!(workspace.get_simplified_wasm_tab_bar_content(ctx), None);
-            });
-        });
-    }
-
-    #[test]
-    fn simplified_wasm_tab_bar_is_some_for_shared_session_viewer() {
-        App::test((), |mut app| async move {
-            initialize_app(&mut app);
-            let workspace = mock_workspace_viewing_shared_session(&mut app);
-            workspace.read(&app, |workspace, ctx| {
-                assert!(workspace.opened_from_content_deep_link);
-                assert!(matches!(
-                    workspace.get_simplified_wasm_tab_bar_content(ctx),
-                    Some(SimplifiedWasmTabBarContent::SharedSession { .. })
-                ));
             });
         });
     }

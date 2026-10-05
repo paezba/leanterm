@@ -518,42 +518,6 @@ fn make_new_blocks_menu(ctx: &AppContext) -> Menu {
     Menu::new("Blocks", items)
 }
 
-fn make_new_drive_menu(ctx: &AppContext) -> Menu {
-    let mut items = vec![
-        updateable_custom_item_without_checkmark(CustomAction::NewPersonalWorkflow, ctx),
-        updateable_custom_item_without_checkmark(CustomAction::NewPersonalNotebook, ctx),
-        updateable_custom_item_without_checkmark(CustomAction::NewPersonalAIPrompt, ctx),
-    ];
-    items.push(updateable_custom_item_without_checkmark(
-        CustomAction::NewPersonalEnvVars,
-        ctx,
-    ));
-    items.extend([
-        MenuItem::Separator,
-        updateable_custom_item_without_checkmark(CustomAction::NewTeamWorkflow, ctx),
-        updateable_custom_item_without_checkmark(CustomAction::NewTeamNotebook, ctx),
-        updateable_custom_item_without_checkmark(CustomAction::NewTeamAIPrompt, ctx),
-    ]);
-    items.push(updateable_custom_item_without_checkmark(
-        CustomAction::NewTeamEnvVars,
-        ctx,
-    ));
-    items.extend([
-        MenuItem::Separator,
-        updateable_custom_item_without_checkmark(CustomAction::ToggleWarpDrive, ctx),
-        updateable_custom_item_without_checkmark(CustomAction::SearchDrive, ctx),
-        updateable_custom_item_without_checkmark(CustomAction::OpenTeamSettings, ctx),
-        updateable_custom_item_without_checkmark(CustomAction::OpenAIFactCollection, ctx),
-    ]);
-
-    items.push(updateable_custom_item_without_checkmark(
-        CustomAction::SharePaneContents,
-        ctx,
-    ));
-
-    Menu::new("Drive", items)
-}
-
 /// Returns [`MenuItem`]s that aid debugging to be included in the Block menu.
 fn block_menu_debug_items() -> Vec<MenuItem> {
     let mut items = vec![];
@@ -834,32 +798,6 @@ fn link_menu_item(title: &'static str, link: Cow<'static, str>) -> MenuItem {
         no_updates,
         None,
     ))
-}
-
-fn feedback_menu_item() -> MenuItem {
-    MenuItem::Custom(CustomMenuItem::new(
-        "Send Feedback...",
-        move |ctx| {
-            // Route through the root-view action so workspace windows can open the
-            // guided AI flow, while non-workspace windows still fall back to the
-            // browser-based feedback form.
-            ctx.dispatch_global_action("root_view:send_feedback", &());
-        },
-        no_updates,
-        None,
-    ))
-}
-
-fn make_new_help_menu() -> Menu {
-    Menu::new(
-        "Help",
-        vec![
-            feedback_menu_item(),
-            link_menu_item("Warp Documentation...", links::USER_DOCS_URL.into()),
-            link_menu_item("GitHub Issues...", links::GITHUB_ISSUES_URL.into()),
-            link_menu_item("Join our Slack community...", links::SLACK_URL.into()),
-        ],
-    )
 }
 
 fn make_launch_config_menu_items(ctx: &mut AppContext) -> Vec<MenuItem> {

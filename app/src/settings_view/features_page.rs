@@ -92,7 +92,7 @@ use crate::terminal::session_settings::StartupShellOverride;
 use crate::terminal::session_settings::WorkingDirectoryConfig;
 use crate::terminal::session_settings::{
     Notifications, NotificationsMode, NotificationsSettings, SessionSettings,
-    SessionSettingsChangedEvent, ShouldConfirmCloseSession,
+    SessionSettingsChangedEvent,
 };
 use crate::terminal::settings::{
     AsyncFindEnabled, MaximumGridSize, Osc52ClipboardAccess, Osc52ClipboardAccessSetting,
@@ -718,7 +718,6 @@ pub enum FeaturesPageAction {
     SetOsc52ClipboardAccess(Osc52ClipboardAccess),
     SearchForKeybinding(String),
     ToggleAutosuggestions,
-    ToggleConfirmCloseSession,
     ToggleShowChangelogAfterUpdate,
     #[cfg(any(target_os = "linux", target_os = "freebsd"))]
     ToggleForceX11,
@@ -1163,10 +1162,6 @@ impl FeaturesPageAction {
             Self::SetPreferredGraphicsBackend(backend) => TelemetryEvent::FeaturesPageAction {
                 action: "SetPreferredGraphicsBackend".to_string(),
                 value: format!("{backend:?}"),
-            },
-            Self::ToggleConfirmCloseSession => TelemetryEvent::FeaturesPageAction {
-                action: "ToggleConfirmCloseSession".to_string(),
-                value: to_string(*SessionSettings::as_ref(ctx).should_confirm_close_session),
             },
             Self::ToggleShowChangelogAfterUpdate => {
                 let changelog_settings = ChangelogSettings::as_ref(ctx);
@@ -1902,15 +1897,6 @@ impl TypedActionView for FeaturesPageView {
                 });
                 ctx.update_rendering_config(|config| config.backend_preference = *graphics_backend);
                 self.graphics_backend_preference_changed = true;
-            }
-            ToggleConfirmCloseSession => {
-                SessionSettings::handle(ctx).update(ctx, |session_settings, ctx| {
-                    session_settings
-                        .should_confirm_close_session
-                        .toggle_and_save_value(ctx)
-                        .expect("failed to serialize ShouldConfirmCloseSession");
-                    ctx.notify();
-                })
             }
             ToggleShowChangelogAfterUpdate => {
                 ChangelogSettings::handle(ctx).update(ctx, |changelog_settings, ctx| {
@@ -5020,53 +5006,6 @@ impl SettingsWidget for UndoCloseWidget {
         _app: &AppContext,
     ) -> Box<dyn Element> {
         ChildView::new(&view.undo_close_view).finish()
-    }
-}
-
-#[derive(Default)]
-struct ConfirmCloseSharedSessionWidget {
-    switch_state: SwitchStateHandle,
-}
-
-impl SettingsWidget for ConfirmCloseSharedSessionWidget {
-    type View = FeaturesPageView;
-
-    fn search_terms(&self) -> &str {
-        "warning popup modal dialog shared session close"
-    }
-
-    fn render(
-        &self,
-        view: &Self::View,
-        appearance: &Appearance,
-        app: &AppContext,
-    ) -> Box<dyn Element> {
-        let ui_builder = appearance.ui_builder();
-        let session_settings = SessionSettings::as_ref(app);
-        render_body_item::<FeaturesPageAction>(
-            "Confirm before closing shared session".into(),
-            None,
-            LocalOnlyIconState::for_setting(
-                ShouldConfirmCloseSession::storage_key(),
-                ShouldConfirmCloseSession::sync_to_cloud(),
-                &mut view
-                    .button_mouse_states
-                    .local_only_icon_tooltip_states
-                    .borrow_mut(),
-                app,
-            ),
-            ToggleState::Enabled,
-            appearance,
-            ui_builder
-                .switch(self.switch_state.clone())
-                .check(*session_settings.should_confirm_close_session)
-                .build()
-                .on_click(move |ctx, _, _| {
-                    ctx.dispatch_typed_action(FeaturesPageAction::ToggleConfirmCloseSession);
-                })
-                .finish(),
-            None,
-        )
     }
 }
 

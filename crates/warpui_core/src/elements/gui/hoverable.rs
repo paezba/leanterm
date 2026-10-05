@@ -113,9 +113,6 @@ impl MouseState {
         self.click_count
     }
 
-    /// Sets or clears the pressed state used for press-then-release click
-    /// pairing (the TUI hoverable arms this on mouse-down).
-
     /// True iff the element is considered hovered.
     ///
     /// This does not necessarily imply that the mouse

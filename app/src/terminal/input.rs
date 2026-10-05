@@ -12,7 +12,6 @@ use std::collections::HashMap;
 use std::fmt::Write;
 use std::ops::Range;
 use std::path::{Path, PathBuf};
-use std::rc::Rc;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -25,7 +24,6 @@ use ordered_float::Float;
 use parking_lot::FairMutex;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use session_sharing_protocol::common::ParticipantId;
 use settings::{Setting as _, ToggleableSetting};
 use string_offset::{ByteOffset, CharOffset};
 use vec1::Vec1;
@@ -56,7 +54,7 @@ use warpui::elements::{
 };
 pub use warpui::elements::{ParentElement as _, Stack};
 pub use warpui::geometry::vector::{Vector2F, vec2f};
-use warpui::keymap::{BindingDescription, EditableBinding, FixedBinding, Keystroke};
+use warpui::keymap::{EditableBinding, FixedBinding, Keystroke};
 use warpui::platform::OperatingSystem;
 use warpui::presenter::ChildView;
 use warpui::text_layout::TextStyle;
@@ -82,9 +80,6 @@ use super::safe_mode_settings::{
 };
 use super::session_settings::{SessionSettings, SessionSettingsChangedEvent};
 use super::settings::{SpacingMode, TerminalSettings, TerminalSettingsChangedEvent};
-use super::shared_session::SharedSessionStatus;
-use super::shared_session::presence_manager::PresenceManager;
-use super::shared_session::viewer::history_model::SharedSessionHistoryModel;
 use super::shell::ShellType;
 use super::view::{
     ExecuteCommandEvent, PADDING_LEFT as TERMINAL_VIEW_PADDING_LEFT, SyncInputType, TerminalAction,
@@ -110,7 +105,7 @@ use crate::editor::{
     EditorDecoratorElements, EditorOptions, EditorSnapshot, EditorView, Event as EditorEvent,
     InteractionState, PathTransformerFn, PlainTextEditorViewAction, Point as BufferPoint,
     PropagateAndNoOpEscapeKey, PropagateAndNoOpNavigationKeys, PropagateHorizontalNavigationKeys,
-    ReplicaId, TextColors, TextRun, default_cursor_colors, position_id_for_cached_point,
+    TextColors, TextRun, default_cursor_colors, position_id_for_cached_point,
     position_id_for_cursor, position_id_for_first_cursor,
 };
 use crate::env_vars::EnvVarCollectionExt;
@@ -122,7 +117,6 @@ use crate::input_suggestions::{
 use crate::pane_group::PaneGroupAction;
 use crate::pane_group::focus_state::PaneFocusHandle;
 use crate::prefix::longest_common_prefix;
-use crate::prompt::editor_modal::OpenSource as PromptEditorOpenSource;
 use crate::resource_center::{
     Tip, TipAction, TipHint, TipsCompleted, mark_feature_used_and_write_to_user_defaults,
 };
@@ -431,42 +425,9 @@ impl InputSuggestionsMode {
     }
 }
 
-struct SharedSessionInputState {
-    /// History model for viewers in a shared session.
-    // TODO: With this current approach, the shared session history crosses
-    // subshell boundaries, we'll need to make it work with our current history model
-    // to ensure we show the right shell history.
-    history_model: ModelHandle<SharedSessionHistoryModel>,
-
-    // Is [`Some`] iff a command execution was requested by a shared session executor.
-    pending_command_execution_request: Option<ViewerCommandExecutionRequest>,
-}
-
-struct ViewerCommandExecutionRequest {
-    /// Text in buffer when command execution was requested.
-    original_buffer: String,
-}
-
 /// Where a command execution request originates from.
 #[derive(Clone)]
 pub enum CommandExecutionSource {
-    /// A command execution request in a shared session (by a viewer or sharer).
-    ///
-    /// For a sharer, this will be processed similar to [`CommandExecutionSource::User`]
-    /// except the resulting block will be annotated with the participant ID.
-    ///
-    /// For a viewer, this will be handled by sending the request to the sharer.
-    SharedSession {
-        /// The participant ID of the
-        participant_id: ParticipantId,
-        /// The block ID associated to the active block when
-        /// the request was fired.
-        block_id: BlockId,
-        /// True when the command was dispatched by a queued command row rather than the current
-        /// editor buffer, so input draft state should be preserved.
-        preserve_input: bool,
-    },
-
     /// A normal command execution request.
     User,
     /// A command dispatched by the queued-prompts panel. It should execute like a user command but
@@ -480,14 +441,7 @@ pub enum CommandExecutionSource {
 
 impl CommandExecutionSource {
     pub fn should_preserve_input(&self) -> bool {
-        matches!(
-            self,
-            CommandExecutionSource::QueuedCommand
-                | CommandExecutionSource::SharedSession {
-                    preserve_input: true,
-                    ..
-                }
-        )
+        matches!(self, CommandExecutionSource::QueuedCommand)
     }
 }
 
@@ -566,16 +520,6 @@ pub enum Event {
     },
     ExecuteCommand(Box<ExecuteCommandEvent>),
     EmacsBindingUsed,
-    /// The input editor was locally edited and
-    /// peers should be notified, if applicable.
-    EditorUpdated {
-        /// The block ID associated to the buffer that
-        /// these operations were made in.
-        block_id: BlockId,
-
-        /// The CRDT-compliant operations.
-        operations: Rc<Vec<CrdtOperation>>,
-    },
     InputFocusedFromMiddleClick,
     EditorFocused,
     SignupAnonymousUser {
@@ -595,8 +539,6 @@ pub enum Event {
         message: String,
         flavor: ToastFlavor,
     },
-
-    OpenShareSessionModal,
 }
 
 pub enum InputState {
@@ -1084,15 +1026,6 @@ pub struct Input {
     // a settings read on every typed character).
     enable_autosuggestions_setting: bool,
 
-    /// Manages the input state for a shared session.
-    /// Is [`Some`] iff this is a viewer in a shared session.
-    shared_session_input_state: Option<SharedSessionInputState>,
-
-    /// Manages presence state for shared session.
-    ///
-    /// Only [`Some`] if this is a shared session.
-    shared_session_presence_manager: Option<ModelHandle<PresenceManager>>,
-
     /// A cache of the local buffer operations for the latest instance
     /// of the input buffer. Specifically, these only include operations
     /// resulting from local changes to the buffer (not remote changes / operations).
@@ -1280,21 +1213,6 @@ pub fn init(app: &mut AppContext) {
         .with_key_binding("pagedown"),
     ]);
 
-    app.register_editable_bindings([EditableBinding::new(
-        "workspace:edit_prompt",
-        BindingDescription::new("Edit Prompt")
-            .with_custom_description(bindings::MAC_MENUS_CONTEXT, "Edit Prompt"),
-        WorkspaceAction::OpenPromptEditor {
-            open_source: PromptEditorOpenSource::CommandPalette,
-        },
-    )
-    .with_group(bindings::BindingGroup::Settings.as_str())
-    .with_context_predicate(
-        id!("Input")
-            & id!(SharedSessionStatus::ActiveSharer.as_keymap_context())
-            & !id!("LongRunningCommand"),
-    )]);
-
     if FeatureFlag::ClassicCompletions.is_enabled()
         && !FeatureFlag::ForceClassicCompletions.is_enabled()
     {
@@ -1449,8 +1367,6 @@ impl Input {
             completer_data.completion_session_context(ctx)
         };
 
-        let is_shared_session_viewer = model.lock().shared_session_status().is_viewer();
-
         let prompt_view = ctx.add_typed_action_view(|ctx| {
             PromptDisplay::new(
                 current_prompt.clone(),
@@ -1458,7 +1374,6 @@ impl Input {
                 initial_session_context.clone(),
                 current_repo_path.clone(),
                 model_events.clone(),
-                is_shared_session_viewer,
                 ctx,
             )
         });
@@ -1713,8 +1628,6 @@ impl Input {
                 .enable_autosuggestions,
             latest_buffer_operations: Vec::new(),
             deferred_remote_operations,
-            shared_session_input_state: None,
-            shared_session_presence_manager: None,
             last_user_block_completed: None,
             hoverable_handle: Default::default(),
             terminal_view_id,
@@ -1723,26 +1636,13 @@ impl Input {
             pending_shell_widget_handoff: None,
         };
 
-        if input.model.lock().shared_session_status().is_viewer() {
-            input.editor.update(ctx, |editor, ctx| {
-                editor.set_interaction_state(InteractionState::Selectable, ctx);
-            });
-        } else {
-            input.set_zero_state_hint_text(ctx);
-        }
+        input.set_zero_state_hint_text(ctx);
 
         input
     }
 
     // Cloud handoff methods — candidates for extraction to a separate file
     // following the pattern used by `agent.rs`, `classic.rs`, etc.
-
-    pub fn set_shared_session_presence_manager(
-        &mut self,
-        presence_manager: ModelHandle<PresenceManager>,
-    ) {
-        self.shared_session_presence_manager = Some(presence_manager);
-    }
 
     // Auto-attach the last block for this query.
 
@@ -2052,10 +1952,7 @@ impl Input {
         // TODO: we should investigate why we need to check for bootstrapped here.
         // It's confusing and might actually be implied
         // (session history is only queryable if the session is bootstrapped).
-
-        // We also return true for shared session executors since they're able to view the history
-        // of a shared session without yet being hooked up to the history model.
-        is_bootstrapped && (is_history_queryable || model.shared_session_status().is_executor())
+        is_bootstrapped && is_history_queryable
     }
 
     /// Returns enum indicating if we can execute a command in the active session.
@@ -2065,9 +1962,7 @@ impl Input {
     ///    with the PTY while bootstrapping is in progress
     /// 2. there isn't an active, long-running command (in-band commands are okay)
     /// 3. if the history for the session is appendable, because we want to
-    ///    acknowledge the command in the session's history. Except when viewing
-    ///    a shared session, since those sessions aren't registered in the [`History`]
-    ///    model.
+    ///    acknowledge the command in the session's history.
     fn can_execute_command(&self, ctx: &AppContext) -> CanExecuteCommand {
         let model = self.model.lock();
         let active_block = model.block_list().active_block();
@@ -2078,10 +1973,9 @@ impl Input {
             && !active_block.is_in_band_command_block()
         {
             CanExecuteCommand::No(DenyExecutionReason::ExistingActiveCommand)
-        } else if !model.shared_session_status().is_executor()
-            && active_block
-                .session_id()
-                .is_none_or(|session_id| !History::as_ref(ctx).is_appendable(&session_id))
+        } else if active_block
+            .session_id()
+            .is_none_or(|session_id| !History::as_ref(ctx).is_appendable(&session_id))
         {
             CanExecuteCommand::No(DenyExecutionReason::HistoryNotAppendable)
         } else {
@@ -2105,30 +1999,6 @@ impl Input {
         self.editor.update(ctx, |editor, ctx| {
             editor.set_interaction_state(InteractionState::Editable, ctx);
         });
-    }
-
-    /// Try to execute a command in the local session that was
-    /// requested by a shared session participant (sharer or viewer).
-    ///
-    /// Returns `true` if the command was executed, `false` otherwise.
-    pub fn try_execute_command_on_behalf_of_shared_session_participant(
-        &mut self,
-        command: &str,
-        participant_id: ParticipantId,
-        preserve_input: bool,
-        ctx: &mut ViewContext<Self>,
-    ) -> bool {
-        let block_id = self.model.lock().block_list().active_block_id().clone();
-        self.try_execute_command_from_source(
-            command,
-            CommandExecutionSource::SharedSession {
-                participant_id,
-                block_id,
-                preserve_input,
-            },
-            true,
-            ctx,
-        )
     }
 
     /// Freeze the editor and put it in a loading state.
@@ -2229,40 +2099,7 @@ impl Input {
         preserve_input: bool,
         ctx: &mut ViewContext<Self>,
     ) -> bool {
-        let shared_session_status = self.model.lock().shared_session_status().clone();
-        if shared_session_status.is_sharer_or_viewer() {
-            // If this is a viewer who isn't also an executor, they should not
-            // be allowed to execute commands.
-            if shared_session_status.is_reader() {
-                // TODO: consider showing a toast in this scenario. It should be unlikely
-                // that a viewer can get here without being an executor because the main
-                // caller of this API is the `enter` handler.
-                log::warn!("Viewer tried to execute a command as a reader");
-                return false;
-            } else if shared_session_status.is_executor() && !preserve_input {
-                let original_buffer = self.freeze_input_in_loading_state(ctx);
-
-                if let Some(shared_session_input_state) = self.shared_session_input_state.as_mut() {
-                    shared_session_input_state.pending_command_execution_request =
-                        Some(ViewerCommandExecutionRequest { original_buffer });
-                }
-            }
-
-            // Get our own shared session participant ID.
-            let Some(participant_id) = self
-                .shared_session_presence_manager
-                .as_ref()
-                .map(|m| m.as_ref(ctx).id())
-            else {
-                return false;
-            };
-            self.try_execute_command_on_behalf_of_shared_session_participant(
-                command,
-                participant_id,
-                preserve_input,
-                ctx,
-            )
-        } else if preserve_input {
+        if preserve_input {
             self.try_execute_command_from_source(
                 command,
                 CommandExecutionSource::QueuedCommand,
@@ -2400,95 +2237,6 @@ impl Input {
         // Close the input suggestions menu if it was open.
         self.close_input_suggestions(/*should_focus_input=*/ false, ctx);
         did_execute
-    }
-
-    /// We locked the viewer's input when they attempted to execute a command.
-    /// On failure, we must restore the editor to its original state before the attempt.
-    pub fn on_execute_command_for_shared_session_participant_failure(
-        &mut self,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        let Some(shared_session_input_state) = self.shared_session_input_state.as_mut() else {
-            return;
-        };
-        let Some(ViewerCommandExecutionRequest { original_buffer }) = shared_session_input_state
-            .pending_command_execution_request
-            .as_ref()
-        else {
-            return;
-        };
-
-        // Unfreeze the editor
-        if let SharedSessionStatus::ActiveViewer { role } =
-            self.model.lock().shared_session_status()
-        {
-            self.editor.update(ctx, |editor, ctx| {
-                // Restore the original buffer and interaction state based on the viewer's role.
-                editor.set_buffer_text(original_buffer, ctx);
-                editor.set_interaction_state(role.into(), ctx);
-
-                // Shared-session pending-command and cloud-followup flows can swap the editor into
-                // a frozen/pending color treatment, so restore the normal palette alongside the
-                // buffer + interaction state reset.
-                let appearance: &Appearance = Appearance::as_ref(ctx);
-                editor.set_text_colors(TextColors::from_appearance(appearance), ctx);
-            });
-        }
-        shared_session_input_state.pending_command_execution_request = None;
-    }
-
-    /// Restores the frozen/loading visual state of the agent input for both the sharer
-    /// and viewer without touching the CRDT buffer contents.
-    ///
-    /// Does NOT clear or reinitialize the buffer. Buffer clearing for agent prompts is
-    /// handled by the sharer emitting CRDT delete operations via `system_clear_buffer`
-    /// (triggered when `BlocklistAIControllerEvent::SentRequest` fires). Viewers receive
-    /// those delete ops through `InputUpdated` and apply them via the normal CRDT path.
-    ///
-    /// For viewers, this exits the ephemeral loading state created by
-    /// `freeze_input_in_loading_state`. When `is_shared_session_viewer_prompt_inflight` is true,
-    /// we optimistically clear the buffer using a display-only empty ephemeral
-    /// so the viewer sees an empty buffer immediately before crdt operations for actually clearing
-    /// the real buffer are received from the sharer.
-    ///
-    /// The display-only ephemeral is safe for CRDT: when the viewer next makes an edit
-    /// (materializing the ephemeral), its empty content is **discarded** — no delete ops
-    /// are generated for the regular buffer's contents. The edit proceeds directly on
-    /// the regular buffer (which the sharer's delete ops will have cleared by then).
-    pub fn unfreeze_agent_input(
-        &mut self,
-        is_shared_session_viewer_prompt_inflight: bool,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        if matches!(
-            self.model.lock().shared_session_status(),
-            SharedSessionStatus::ActiveViewer { .. } | SharedSessionStatus::ActiveSharer
-        ) {
-            self.editor.update(ctx, |editor, ctx| {
-                if let SharedSessionStatus::ActiveViewer { role } =
-                    self.model.lock().shared_session_status()
-                {
-                    // reinstate role for viewers
-                    editor.set_interaction_state(role.into(), ctx);
-                    // Exit the ephemeral loading state so the regular CRDT buffer is
-                    // accessible. The sharer's delete ops (arriving via InputUpdated)
-                    // will clear the regular buffer.
-                    editor.exit_ephemeral_loading_state(ctx);
-                    if is_shared_session_viewer_prompt_inflight {
-                        // Create a display-only empty ephemeral for immediate visual
-                        // feedback. This is an optimistic clear for UI purposes, without
-                        // affecting the real buffer synced by crdt operations.
-                        // Unlike a regular ephemeral, materializing this one
-                        // discards its content instead of restoring it to the regular
-                        // buffer, so no spurious CRDT delete ops are generated.
-                        editor.show_display_only_empty_buffer(ctx);
-                    }
-                }
-
-                let appearance: &Appearance = Appearance::as_ref(ctx);
-                editor.set_text_colors(TextColors::from_appearance(appearance), ctx);
-            });
-        }
     }
 
     pub fn reset_after_cloud_followup_submission(&mut self, ctx: &mut ViewContext<Self>) {
@@ -2686,8 +2434,6 @@ impl Input {
         argument_override: Option<HashMap<String, String>>,
         ctx: &mut ViewContext<Input>,
     ) {
-        // Should not show workflows info box for read-only viewers
-        let should_show_more_info_view = !self.model.lock().shared_session_status().is_reader();
         let env_vars = workflow_type.as_workflow().default_env_vars();
         self.insert_workflow_into_input(
             workflow_type,
@@ -2696,7 +2442,7 @@ impl Input {
             argument_override,
             None,
             env_vars,
-            should_show_more_info_view,
+            true,
             ctx,
         );
     }
@@ -2709,8 +2455,6 @@ impl Input {
         workflow_selection_source: WorkflowSelectionSource,
         ctx: &mut ViewContext<Input>,
     ) {
-        // Should not show workflows info box for read-only viewers
-        let should_show_more_info_view = !self.model.lock().shared_session_status().is_reader();
         let env_vars = workflow_type.as_workflow().default_env_vars();
         self.insert_workflow_into_input(
             workflow_type,
@@ -2719,7 +2463,7 @@ impl Input {
             None,
             Some(history_command),
             env_vars,
-            should_show_more_info_view,
+            true,
             ctx,
         );
     }
@@ -3356,11 +3100,7 @@ impl Input {
                     self.suggestions_mode_model.as_ref(ctx).mode(),
                     InputSuggestionsMode::HistoryUp { .. }
                 ) {
-                    let history = if self.model.lock().shared_session_status().is_executor() {
-                        self.shared_session_history(ctx)
-                    } else {
-                        self.command_history(ctx)
-                    };
+                    let history = self.command_history(ctx);
                     let original_buffer = if let InputSuggestionsMode::HistoryUp {
                         original_buffer,
                         ..
@@ -3574,12 +3314,6 @@ impl Input {
     }
 
     fn editor_up(&mut self, ctx: &mut ViewContext<Self>) {
-        // History and input suggestions are not available for
-        // read-only viewers in a shared session
-        if self.model.lock().shared_session_status().is_reader() {
-            return;
-        }
-
         // If the input suggestions menu is open, always cycle to the next option.
         if self.suggestions_mode_model.as_ref(ctx).is_visible() && self.can_query_history(ctx) {
             self.input_suggestions.update(ctx, |suggestions, ctx| {
@@ -3592,11 +3326,7 @@ impl Input {
         // history up menu.
         let editor = self.editor.as_ref(ctx);
         if editor.single_cursor_on_first_row(ctx) {
-            let history = if self.model.lock().shared_session_status().is_executor() {
-                self.shared_session_history(ctx)
-            } else {
-                self.command_history(ctx)
-            };
+            let history = self.command_history(ctx);
             let original_buffer = self.editor.as_ref(ctx).buffer_text(ctx);
 
             let matches = InputSuggestions::history_prefix_search(&original_buffer, history);
@@ -4413,18 +4143,7 @@ impl Input {
             EditorEvent::EmacsBindingUsed => {
                 ctx.emit(Event::EmacsBindingUsed);
             }
-            EditorEvent::UpdatePeers { operations } => {
-                self.latest_buffer_operations.extend(operations.to_vec());
-
-                // TODO (suraj): we might want to push down the buffer ID to the buffer
-                // and have it returned as part of the event. That way, we aren't subject
-                // to any skew of the block ID from the time the event is emitted (when the edit
-                // is processed) to the time when we query the block ID (now).
-                ctx.emit(Event::EditorUpdated {
-                    block_id: self.model.lock().block_list().active_block_id().clone(),
-                    operations: operations.clone(),
-                })
-            }
+            EditorEvent::UpdatePeers { .. } => {}
             EditorEvent::MiddleClickPaste => {
                 ctx.emit(Event::InputFocusedFromMiddleClick);
             }
@@ -4607,50 +4326,6 @@ impl Input {
         self.select_and_refresh_voltron(VoltronItem::History, ctx);
 
         ctx.notify();
-    }
-
-    pub fn on_session_share_joined(
-        &mut self,
-        replica_id: ReplicaId,
-        presence_manager: ModelHandle<PresenceManager>,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        // Shared session history model should only be set if we are a viewer
-        debug_assert!(self.model.lock().shared_session_status().is_viewer());
-        self.set_shared_session_presence_manager(presence_manager);
-
-        // Set the history model which is only available for a shared session viewer.
-        let history_model = ctx.add_model(|_| SharedSessionHistoryModel::new());
-        self.shared_session_input_state = Some(SharedSessionInputState {
-            history_model,
-            pending_command_execution_request: None,
-        });
-
-        self.editor().update(ctx, |editor, ctx| {
-            editor.reinitialize_buffer(Some(replica_id), ctx);
-        });
-    }
-
-    /// Returns a collection of history entries that are shell commands from
-    /// the shared session (run on the sharer's machine).
-    fn shared_session_history<'b>(
-        &'b self,
-        ctx: &'b ViewContext<Self>,
-    ) -> Vec<HistoryInputSuggestion<'b>> {
-        let Some(history_model) = self
-            .shared_session_input_state
-            .as_ref()
-            .map(|state| state.history_model.clone())
-        else {
-            return Vec::new();
-        };
-
-        // TODO: append viewer's local shell history
-        history_model
-            .as_ref(ctx)
-            .entries()
-            .map(|entry| HistoryInputSuggestion::Command { entry })
-            .collect()
     }
 
     /// Returns the shell command history entries in order from oldest to most recent.
@@ -6192,24 +5867,6 @@ impl Input {
                 }
             }
 
-            // Make sure the viewer's interaction state is correct based on their role.
-            // We may have locked up their input if they tried to execute a command.
-            if let SharedSessionStatus::ActiveViewer { role } =
-                self.model.lock().shared_session_status()
-            {
-                self.editor.update(ctx, |editor, ctx| {
-                    editor.set_interaction_state(role.into(), ctx);
-
-                    // Also need to set the text colors back to normal.
-                    let appearance: &Appearance = Appearance::as_ref(ctx);
-                    editor.set_text_colors(TextColors::from_appearance(appearance), ctx);
-                });
-
-                if let Some(shared_session_input_state) = self.shared_session_input_state.as_mut() {
-                    shared_session_input_state.pending_command_execution_request = None;
-                };
-            }
-
             // Generate autosuggestion if the input is not empty (user had type-ahead).
             self.maybe_generate_autosuggestion(ctx);
         }
@@ -6234,43 +5891,6 @@ impl Input {
     ) {
         if let BlockType::User(block_completed) = block {
             self.last_user_block_completed = Some(block_completed.clone());
-
-            let viewing_shared_session = self.model.lock().shared_session_status().is_viewer();
-            if viewing_shared_session {
-                // As we switch to the new block ID, if there were any remote
-                // edits that were pending for that block ID, we should flush them.
-                // Today, we only expect this to be the case with session-sharing viewers.
-                self.flush_deferred_remote_operations(ctx);
-
-                // Update shared session history model
-                match self
-                    .shared_session_input_state
-                    .as_ref()
-                    .map(|state| state.history_model.clone())
-                {
-                    Some(shared_session_history_model) => {
-                        let command = block_completed
-                            .command
-                            .get_with(|compute| {
-                                let model = self.model.lock();
-                                compute(model.block_list())
-                            })
-                            .to_owned();
-                        let serialized_block =
-                            block_completed.serialized_block.get_with(|compute| {
-                                let model = self.model.lock();
-                                compute(model.block_list())
-                            });
-                        shared_session_history_model.update(ctx, move |history_model, _ctx| {
-                            history_model
-                                .push(HistoryEntry::for_completed_block(command, serialized_block))
-                        })
-                    }
-                    _ => {
-                        log::warn!("Tried to access non-existent shared session history model")
-                    }
-                }
-            }
 
             ctx.emit(Event::InputStateChanged(InputState::Enabled));
         } else if block.is_bootstrap_block()
@@ -6644,11 +6264,6 @@ impl Input {
         feature_item: VoltronItem,
         ctx: &mut ViewContext<Input>,
     ) {
-        // View-only sessions should not show workflows menu
-        if self.model.lock().shared_session_status().is_reader() {
-            return;
-        }
-
         let welcome_tip_feature = match feature_item {
             VoltronItem::AiCommands => Some(Tip::Action(TipAction::AiCommandSearch)),
             VoltronItem::History => Some(Tip::Action(TipAction::HistorySearch)),
@@ -6840,8 +6455,6 @@ impl View for Input {
         }
 
         let model_lock = self.model.lock();
-        ctx.set
-            .insert(model_lock.shared_session_status().as_keymap_context());
 
         if model_lock
             .block_list()

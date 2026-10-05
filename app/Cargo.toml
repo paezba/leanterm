@@ -151,7 +151,6 @@ serde_regex = "1.1.0"
 serde_urlencoded.workspace = true
 serde_with.workspace = true
 serde_yaml.workspace = true
-session-sharing-protocol.workspace = true
 settings.workspace = true
 settings_value = { workspace = true, features = ["derive"] }
 sha2.workspace = true
@@ -440,7 +439,6 @@ factory_mcp = []
 default = [
     "osc_hyperlinks",
     "render_continuous_block_selections_with_single_border",
-    "session_sharing_acls",
     "external_agent_mode_context",
     "shell_selector",
     "minimalist_ui",
@@ -511,7 +509,6 @@ default = [
     "create_environment_slash_command",
     "code_review_find",
     "async_find",
-    "shared_session_long_running_commands",
     "mcp_grouped_server_context",
     "fork_from_command",
     "context_window_usage_v2",
@@ -715,7 +712,6 @@ runtime_feature_flags = []
 selectable_prompt = []
 settings_file = []
 sequential_storage = []
-session_sharing_acls = []
 skip_login = ["warp_server_client/skip_login"]
 # This feature should only be enabled when building a self-contained binary with the bundle script.
 standalone = ["warp_assets/standalone", "warp_core/standalone"]
@@ -747,7 +743,6 @@ alacritty_settings_import = []
 ai_rules = []
 am_workflows = []
 shell_selector = []
-shared_session_long_running_commands = []
 blocklist_markdown_table_rendering = []
 blocklist_markdown_images = []
 minimalist_ui = []

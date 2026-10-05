@@ -1768,7 +1768,6 @@ pub(super) enum FilteredPageType<'a, V: warpui::View> {
 const LEAN_TERMINAL_HIDDEN_WIDGETS: &[&str] = &[
     // Features
     "AtContextMenuInTerminalModeWidget",
-    "ConfirmCloseSharedSessionWidget",
     "DefaultSessionModeWidget",
     "OutlineCodebaseSymbolsForAtContextMenuWidget",
     "ShowTerminalInputMessageLineWidget",
