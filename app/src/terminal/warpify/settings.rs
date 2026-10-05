@@ -6,7 +6,6 @@ use settings::{
     ChangeEventReason, RespectUserSyncSetting, Setting, SupportedPlatforms, SyncToCloud,
 };
 use strum_macros::EnumIter;
-use warp_core::features::FeatureFlag;
 use warp_errors::report_error;
 use warp_util::path::ShellFamily;
 use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
@@ -166,11 +165,7 @@ maybe_define_setting!(SshExtensionInstallModeSetting, group: WarpifySettings, {
 impl SshExtensionInstallMode {
     /// Lean terminal builds never install the extension, since it is downloaded from Warp's servers.
     fn default_for_channel() -> Self {
-        if FeatureFlag::LeanTerminal.is_enabled() {
-            Self::NeverInstall
-        } else {
-            Self::default()
-        }
+        Self::NeverInstall
     }
 
     pub fn display_name(&self) -> &'static str {

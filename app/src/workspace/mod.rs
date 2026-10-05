@@ -20,7 +20,6 @@ mod toast_stack;
 pub mod util;
 pub mod view;
 
-use crate::server::telemetry::PaletteSource;
 pub use action::{
     AutoCloudHandoffTrigger, CommandSearchOptions, InitContent, RestoreConversationLayout,
     TabContextMenuAnchor, VerticalTabsPaneContextMenuTarget, WorkspaceAction,
@@ -41,6 +40,7 @@ use warpui::keymap::{BindingDescription, EditableBinding, FixedBinding};
 use crate::channel::{Channel, ChannelState};
 use crate::features::FeatureFlag;
 use crate::palette::PaletteMode;
+use crate::server::telemetry::PaletteSource;
 use crate::settings_view::{self, SettingsSection, flags};
 use crate::tab::{NewSessionMenuItem, uses_vertical_tabs};
 use crate::util::bindings::{self, CustomAction, cmd_or_ctrl_shift, is_binding_pty_compliant};
@@ -1033,16 +1033,14 @@ pub fn init(app: &mut AppContext) {
     .with_group(bindings::BindingGroup::Settings.as_str())
     .with_context_predicate(id!("Workspace") & !id!("IsAnonymousUser"))]);
 
-    if !FeatureFlag::AvatarInTabBar.is_enabled() {
-        app.register_editable_bindings([EditableBinding::new(
-            "workspace:toggle_resource_center",
-            "Toggle resource center",
-            WorkspaceAction::ToggleResourceCenter,
-        )
-        .with_group(bindings::BindingGroup::Navigation.as_str())
-        .with_context_predicate(id!("Workspace"))
-        .with_custom_action(CustomAction::ToggleResourceCenter)]);
-    }
+    app.register_editable_bindings([EditableBinding::new(
+        "workspace:toggle_resource_center",
+        "Toggle resource center",
+        WorkspaceAction::ToggleResourceCenter,
+    )
+    .with_group(bindings::BindingGroup::Navigation.as_str())
+    .with_context_predicate(id!("Workspace"))
+    .with_custom_action(CustomAction::ToggleResourceCenter)]);
 
     if cfg!(not(target_family = "wasm")) {
         app.register_editable_bindings([EditableBinding::new(

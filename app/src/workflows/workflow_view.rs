@@ -1,6 +1,3 @@
-use crate::settings::app_installation_detection::{
-    UserAppInstallDetectionSettings, UserAppInstallStatus,
-};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
@@ -10,6 +7,7 @@ use env_var_selector::{EnvVarSelector, EnvVarSelectorEvent};
 use itertools::Itertools;
 use pathfinder_color::ColorU;
 use pathfinder_geometry::vector::vec2f;
+use secret_redaction::find_secrets_in_text;
 use string_offset::CharOffset;
 use syntax_highlightable::SyntaxHighlightable;
 use url::Url;
@@ -79,6 +77,9 @@ use crate::server::ids::{ClientId, ServerId, SyncId};
 use crate::server::telemetry::{
     CloudObjectTelemetryMetadata, SharingDialogSource, TelemetryCloudObjectType, TelemetryEvent,
 };
+use crate::settings::app_installation_detection::{
+    UserAppInstallDetectionSettings, UserAppInstallStatus,
+};
 use crate::terminal::safe_mode_settings::get_secret_obfuscation_mode;
 use crate::ui_components::breadcrumb::{BreadcrumbState, render_breadcrumbs};
 use crate::ui_components::buttons::{accent_icon_button, icon_button};
@@ -92,7 +93,6 @@ use crate::workflows::CloudWorkflow;
 use crate::workflows::workflow::{Argument, Workflow};
 use crate::workspace::ToastStack;
 use crate::{FeatureFlag, send_telemetry_from_ctx};
-use secret_redaction::find_secrets_in_text;
 
 mod alias_argument_selector;
 mod alias_bar;
@@ -2746,11 +2746,7 @@ impl View for WorkflowView {
             .finish(),
         );
 
-        let editability = if FeatureFlag::SharedWithMe.is_enabled() {
-            self.editability(app)
-        } else {
-            ContentEditability::Editable
-        };
+        let editability = ContentEditability::Editable;
         let mode_toggleable = match (ContextFlag::RunWorkflow.is_enabled(), editability) {
             // If logging in would allow editing, show the toggle for discoverability.
             (_, ContentEditability::RequiresLogin) => true,
@@ -3000,10 +2996,8 @@ impl BackingView for WorkflowView {
         }
 
         // Add "Trash" to menu
-        let access_level = self.access_level(ctx);
-        if self.is_online(ctx)
-            && (!FeatureFlag::SharedWithMe.is_enabled() || access_level.can_trash())
-        {
+        let _access_level = self.access_level(ctx);
+        if self.is_online(ctx) {
             menu_items.push(
                 MenuItemFields::new("Trash")
                     .with_on_select_action(WorkflowAction::Trash)

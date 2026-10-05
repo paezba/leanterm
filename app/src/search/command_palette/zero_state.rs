@@ -1,5 +1,4 @@
 mod items;
-use crate::workspace::Workspace;
 use std::collections::HashMap;
 
 pub use items::Items;
@@ -15,6 +14,7 @@ use crate::appearance::Appearance;
 use crate::drive::settings::WarpDriveSettings;
 use crate::search::QueryFilter;
 use crate::search::command_palette::FilterChipRenderer;
+use crate::workspace::Workspace;
 
 /// A zero-state view for the command palette.
 pub struct ZeroState {

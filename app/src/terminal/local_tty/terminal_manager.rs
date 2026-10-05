@@ -1,4 +1,3 @@
-use crate::terminal::model::block::SerializedBlockListItem;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ffi::OsString;
@@ -42,6 +41,7 @@ use crate::terminal::event_listener::ChannelEventListener;
 #[cfg(unix)]
 use crate::terminal::local_tty::terminal_attributes::Event as TerminalAttributesPollerEvent;
 use crate::terminal::local_tty::{Pty, PtyOptions};
+use crate::terminal::model::block::SerializedBlockListItem;
 use crate::terminal::model::session::Sessions;
 #[cfg(unix)]
 use crate::terminal::model::terminal_model::BlockIndex;
@@ -50,8 +50,8 @@ use crate::terminal::model::terminal_model::{ExitReason, ShellProcessInfo};
 use crate::terminal::model_events::ModelEvent as TerminalModelEvent;
 use crate::terminal::model_events::{ModelEventDispatcher, SshRemoteServerSupport};
 use crate::terminal::session_settings::SessionSettings;
+use crate::terminal::shared_session::IsSharedSessionCreator;
 use crate::terminal::shared_session::sharer::network::Network;
-use crate::terminal::shared_session::{IsSharedSessionCreator, SharedSessionStatus};
 use crate::terminal::shell::ShellName;
 use crate::terminal::terminal_manager::BlockSpacing;
 use crate::terminal::warpify::settings::WarpifySettings;
@@ -354,14 +354,6 @@ impl<S> TerminalManager<S> {
         // shared-session state before the surface is constructed, so that bootstrap
         // events can observe the correct pending status and source type.
         match is_shared_session_creator {
-            IsSharedSessionCreator::Yes { source }
-                if FeatureFlag::CreatingSharedSessions.is_enabled() =>
-            {
-                model.lock().set_shared_session_status(
-                    SharedSessionStatus::SharePendingPreBootstrap { source },
-                );
-                log::info!("Configured terminal to start sharing after bootstrap");
-            }
             IsSharedSessionCreator::Yes { .. } => {
                 log::warn!(
                     "Session sharing was requested, but CreatingSharedSessions is disabled; \

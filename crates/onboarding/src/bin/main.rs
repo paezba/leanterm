@@ -72,7 +72,6 @@ fn main() -> Result<()> {
     // channel; this demo has no channel, so it previews the flag defaults.
     if demo_offer_variant().is_some() {
         // Except for this one, which the offer slides live behind.
-        warp_core::features::FeatureFlag::AccountFirstOnboarding.set_enabled(true);
     }
     warp_core::features::mark_initialized();
 

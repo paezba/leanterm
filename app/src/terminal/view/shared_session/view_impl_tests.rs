@@ -51,9 +51,6 @@ fn test_prompt_context_menu_items_shared_session_viewer_no_edit_prompt() {
 
 #[test]
 fn test_resize_shared_session_viewer_independent_of_sharer() {
-    let _create_flag = FeatureFlag::CreatingSharedSessions.override_enabled(true);
-    let _view_flag = FeatureFlag::ViewingSharedSessions.override_enabled(true);
-
     App::test((), |mut app| async move {
         let terminal = terminal_view_for_viewer(&mut app);
         terminal.update(&mut app, |view, ctx| {

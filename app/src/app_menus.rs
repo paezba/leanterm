@@ -8,7 +8,6 @@ use enclose::enclose;
 use itertools::Itertools;
 use settings::Setting as _;
 use settings::manager::SettingsManager;
-use warp_core::context_flag::ContextFlag;
 use warp_errors::{report_error, report_if_error};
 use warp_util::path::user_friendly_path;
 use warpui::actions::StandardAction;
@@ -19,7 +18,7 @@ use warpui::platform::menu::{
 use warpui::windowing::WindowManager;
 use warpui::{AppContext, SingletonEntity};
 
-use crate::auth::AuthStateProvider;
+use crate::channel;
 use crate::default_terminal::DefaultTerminal;
 use crate::features::{FeatureFlag, runtime_flags_menu_items};
 use crate::persisted_workspace::PersistedWorkspace;
@@ -34,7 +33,6 @@ use crate::user_config::WarpConfig;
 use crate::util::bindings::{self, CustomAction, trigger_to_keystroke};
 use crate::util::links;
 use crate::workspace::sync_inputs::SyncedInputState;
-use crate::{auth, channel};
 
 type CheckmarkStatusGetter = dyn 'static + Fn(&mut AppContext) -> bool;
 
@@ -69,13 +67,7 @@ pub fn menu_bar(ctx: &mut AppContext) -> MenuBar {
         make_new_tab_menu(ctx),
         make_new_blocks_menu(ctx),
     ];
-    if !FeatureFlag::LeanTerminal.is_enabled() {
-        menus.push(make_new_drive_menu(ctx));
-    }
     menus.push(make_new_window_menu());
-    if !FeatureFlag::LeanTerminal.is_enabled() {
-        menus.push(make_new_help_menu());
-    }
     MenuBar::new(menus)
 }
 
@@ -146,22 +138,7 @@ fn make_new_app_menu(ctx: &AppContext) -> Menu {
         ctx,
     )];
 
-    let is_lean_terminal = FeatureFlag::LeanTerminal.is_enabled();
-
-    if !FeatureFlag::AvatarInTabBar.is_enabled() && !is_lean_terminal {
-        menu_items.push(updateable_custom_item_without_checkmark(
-            CustomAction::ToggleResourceCenter,
-            ctx,
-        ))
-    }
-
     menu_items.push(MenuItem::Separator);
-    if !is_lean_terminal {
-        menu_items.extend([
-            updateable_custom_item_without_checkmark(CustomAction::ReferAFriend, ctx),
-            MenuItem::Separator,
-        ]);
-    }
 
     let preferences_menu_items = vec![
         updateable_custom_item_without_checkmark(CustomAction::ShowSettings, ctx),
@@ -235,23 +212,6 @@ fn make_new_app_menu(ctx: &AppContext) -> Menu {
         None,
     )));
     menu_items.push(MenuItem::Separator);
-    if !is_lean_terminal {
-        menu_items.push(MenuItem::Custom(CustomMenuItem::new(
-            "Log out",
-            auth::maybe_log_out,
-            move |_, ctx| {
-                let is_anonymous = AuthStateProvider::handle(ctx)
-                    .as_ref(ctx)
-                    .get()
-                    .is_anonymous_or_logged_out();
-                MenuItemPropertyChanges {
-                    disabled: Some(is_anonymous),
-                    ..Default::default()
-                }
-            },
-            None,
-        )));
-    }
     menu_items.push(MenuItem::Standard(StandardAction::Quit));
     Menu::new(channel::product_name(), menu_items)
 }
@@ -382,14 +342,7 @@ fn make_new_edit_menu(ctx: &AppContext) -> Menu {
 }
 
 fn make_new_view_menu(ctx: &AppContext) -> Menu {
-    let is_lean_terminal = FeatureFlag::LeanTerminal.is_enabled();
     let mut items = Vec::new();
-    if !is_lean_terminal {
-        items.extend([
-            updateable_custom_item_without_checkmark(CustomAction::ToggleWarpDrive, ctx),
-            MenuItem::Separator,
-        ]);
-    }
     items.extend([
         updateable_custom_item_without_checkmark(CustomAction::CommandPalette, ctx),
         updateable_custom_item_without_checkmark(CustomAction::NavigationPalette, ctx),
@@ -397,12 +350,6 @@ fn make_new_view_menu(ctx: &AppContext) -> Menu {
         updateable_custom_item_without_checkmark(CustomAction::FilesPalette, ctx),
         updateable_custom_item_without_checkmark(CustomAction::ToggleProjectExplorer, ctx),
     ]);
-    if !is_lean_terminal {
-        items.push(updateable_custom_item_without_checkmark(
-            CustomAction::ToggleConversationListView,
-            ctx,
-        ));
-    }
     items.extend([
         updateable_custom_item_without_checkmark(CustomAction::ToggleGlobalSearch, ctx),
         MenuItem::Separator,
@@ -553,12 +500,6 @@ fn make_new_blocks_menu(ctx: &AppContext) -> Menu {
         ctx,
     ));
     items.push(MenuItem::Separator);
-    if !FeatureFlag::LeanTerminal.is_enabled() {
-        items.extend([
-            updateable_custom_item_without_checkmark(CustomAction::CreateBlockPermalink, ctx),
-            non_updateable_custom_item(CustomAction::ViewSharedBlocks, ctx),
-        ]);
-    }
     items.extend([
         updateable_custom_item_without_checkmark(CustomAction::ToggleBookmarkBlock, ctx),
         updateable_custom_item_without_checkmark(CustomAction::FindWithinBlock, ctx),
@@ -604,24 +545,11 @@ fn make_new_drive_menu(ctx: &AppContext) -> Menu {
         updateable_custom_item_without_checkmark(CustomAction::OpenTeamSettings, ctx),
         updateable_custom_item_without_checkmark(CustomAction::OpenAIFactCollection, ctx),
     ]);
-    if FeatureFlag::McpServer.is_enabled() && ContextFlag::ShowMCPServers.is_enabled() {
-        items.push(updateable_custom_item_without_checkmark(
-            CustomAction::OpenMCPServerCollection,
-            ctx,
-        ));
-    }
 
     items.push(updateable_custom_item_without_checkmark(
         CustomAction::SharePaneContents,
         ctx,
     ));
-
-    if FeatureFlag::CreatingSharedSessions.is_enabled() {
-        items.extend([
-            MenuItem::Separator,
-            updateable_custom_item_without_checkmark(CustomAction::ShareCurrentSession, ctx),
-        ])
-    }
 
     Menu::new("Drive", items)
 }

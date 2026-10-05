@@ -3,7 +3,6 @@ use std::sync::Arc;
 pub use cloud_object_models::{CloudWorkflow, CloudWorkflowModel, WorkflowId};
 use serde::{Deserialize, Serialize};
 use warp_core::context_flag::ContextFlag;
-use warp_core::features::FeatureFlag;
 use warpui::{AppContext, SingletonEntity};
 
 pub mod categories;
@@ -93,7 +92,7 @@ impl WorkflowViewMode {
     ///
     /// Editing is disabled if the user does not have edit permissions.
     pub fn supported_edit_mode(workflow_id: Option<SyncId>, app: &AppContext) -> Self {
-        let can_edit = workflow_id
+        let _can_edit = workflow_id
             .map(|id| {
                 CloudViewModel::as_ref(app)
                     .object_editability(&id.uid(), app)
@@ -101,11 +100,7 @@ impl WorkflowViewMode {
             })
             .unwrap_or(true);
 
-        if !FeatureFlag::SharedWithMe.is_enabled() || can_edit {
-            Self::Edit
-        } else {
-            Self::View
-        }
+        Self::Edit
     }
 
     /// The viewing mode supported for this workflow.
@@ -113,7 +108,7 @@ impl WorkflowViewMode {
     /// Viewing is disabled if the user is allowed to edit the workflow and in a context where
     /// running workflows is supported.
     pub fn supported_view_mode(workflow_id: Option<SyncId>, app: &AppContext) -> Self {
-        let can_edit = workflow_id
+        let _can_edit = workflow_id
             .map(|id| {
                 CloudViewModel::as_ref(app)
                     .object_editability(&id.uid(), app)
@@ -121,9 +116,7 @@ impl WorkflowViewMode {
             })
             .unwrap_or(true);
 
-        if FeatureFlag::SharedWithMe.is_enabled() && !can_edit {
-            Self::View
-        } else if ContextFlag::RunWorkflow.is_enabled() {
+        if ContextFlag::RunWorkflow.is_enabled() {
             Self::Edit
         } else {
             Self::View

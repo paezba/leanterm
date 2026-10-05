@@ -164,11 +164,7 @@ impl ImportModal {
             None => (
                 // Convert to a Space for display, in case we're importing into a shared folder.
                 self.owner
-                    .map(|owner| {
-                        UserWorkspaces::as_ref(app)
-                            .owner_to_space(owner, app)
-                            .name(app)
-                    })
+                    .map(|owner| UserWorkspaces::as_ref(app).owner_to_space(owner).name(app))
                     .unwrap_or_default(),
                 0,
             ),

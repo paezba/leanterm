@@ -1,4 +1,3 @@
-use crate::settings::PrivacySettings;
 use anyhow::anyhow;
 use lazy_static::lazy_static;
 use warp_core::features::FeatureFlag;
@@ -37,6 +36,7 @@ use crate::experiments::{AuthFlowInstructions, Experiment};
 use crate::modal::MODAL_CORNER_RADIUS;
 use crate::network::NetworkStatus;
 use crate::server::telemetry::{AnonymousUserSignupEntrypoint, LoginEventSource, TelemetryEvent};
+use crate::settings::PrivacySettings;
 use crate::themes::theme::Fill as ThemeFill;
 use crate::util::color::{darken, lighten};
 use crate::{send_telemetry_from_ctx, send_telemetry_sync_from_ctx};

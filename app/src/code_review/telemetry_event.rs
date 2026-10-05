@@ -1,4 +1,3 @@
-use crate::view_components::find::FindDirection;
 use std::fmt::Display;
 use std::time::Duration;
 
@@ -10,6 +9,7 @@ use warp_core::telemetry::{EnablementState, TelemetryEvent, TelemetryEventDesc};
 
 use crate::code_review::diff_state::{BackendOrigin, DiffMode, DiffOperation};
 use crate::features::FeatureFlag;
+use crate::view_components::find::FindDirection;
 
 /// Identifies which git button the user clicked in the code review header.
 /// Each variant maps to one of the primary action button / dropdown items.

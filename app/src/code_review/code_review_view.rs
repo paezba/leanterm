@@ -1,5 +1,3 @@
-use crate::settings::CodeSettings;
-use crate::terminal::view::{TerminalAction, TerminalView};
 use std::collections::HashMap;
 use std::mem;
 use std::ops::Range;
@@ -109,8 +107,10 @@ use crate::quit_warning::UnsavedStateSummary;
 use crate::send_telemetry_from_ctx;
 #[cfg(feature = "local_fs")]
 use crate::server::telemetry::CodePanelsFileOpenEntrypoint;
+use crate::settings::CodeSettings;
 use crate::settings_view::SettingsSection;
 use crate::terminal::input::MenuPositioning;
+use crate::terminal::view::{TerminalAction, TerminalView};
 use crate::themes::theme::WarpTheme;
 use crate::ui_components::blended_colors::{neutral_2, neutral_3};
 use crate::ui_components::buttons::icon_button_with_color;

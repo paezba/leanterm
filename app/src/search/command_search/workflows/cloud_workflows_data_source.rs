@@ -1,4 +1,3 @@
-use crate::workflows::{CloudWorkflowModel, WorkflowSource};
 use std::sync::Arc;
 
 use futures_lite::future::yield_now;
@@ -12,6 +11,7 @@ use crate::search::data_source::{Query, QueryResult};
 use crate::search::mixer::{BoxFuture, DataSourceRunErrorWrapper};
 use crate::search::workflows::fuzzy_match::FuzzyMatchWorkflowResult;
 use crate::server::ids::SyncId;
+use crate::workflows::{CloudWorkflowModel, WorkflowSource};
 use crate::workspaces::user_workspaces::UserWorkspaces;
 
 pub(crate) struct WorkflowMatchCandidate {

@@ -1,4 +1,3 @@
-use crate::terminal::model::block::SerializedBlockListItem;
 use std::any::Any;
 use std::sync::Arc;
 
@@ -13,6 +12,7 @@ use super::terminal_manager::BlockSpacing;
 use super::{ShellLaunchState, TerminalManager, TerminalModel, TerminalView};
 use crate::context_chips::prompt_type::PromptType;
 use crate::pane_group::TerminalViewResources;
+use crate::terminal::model::block::SerializedBlockListItem;
 
 pub struct MockTerminalManager {
     model: Arc<FairMutex<TerminalModel>>,

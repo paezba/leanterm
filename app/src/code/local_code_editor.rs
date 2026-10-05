@@ -1,15 +1,8 @@
-/// This module contains a model that can be used for loading and saving text files
-/// and displaying them in a code editor.
-/// It also handles applying an optional diff to the file content that will be applied
-/// when the file is loaded.
-use crate::settings::CodeSettings;
-use std::{
-    ops::Range,
-    path::{Path, PathBuf},
-    rc::Rc,
-    sync::Arc,
-    time::Duration,
-};
+use std::ops::Range;
+use std::path::{Path, PathBuf};
+use std::rc::Rc;
+use std::sync::Arc;
+use std::time::Duration;
 
 use ai::diff_validation::DiffType;
 use futures::stream::AbortHandle;
@@ -63,6 +56,11 @@ use crate::code::{SaveOutcome, ShowFindReferencesCardProvider};
 use crate::code_review::comments::CommentId;
 use crate::menu::{Event, Menu, MenuItem, MenuItemFields};
 use crate::persisted_workspace::{PersistedWorkspace, PersistedWorkspaceEvent};
+/// This module contains a model that can be used for loading and saving text files
+/// and displaying them in a code editor.
+/// It also handles applying an optional diff to the file content that will be applied
+/// when the file is loaded.
+use crate::settings::CodeSettings;
 
 const HOVER_DEBOUNCE_PERIOD: Duration = Duration::from_millis(500);
 

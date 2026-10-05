@@ -2,7 +2,6 @@ use std::time::Duration;
 
 use ai::LLMId;
 use instant::Instant;
-use warp_core::features::FeatureFlag;
 use warp_core::send_telemetry_from_ctx;
 use warpui_core::assets::asset_cache::AssetSource;
 use warpui_core::image_cache::ImageType;
@@ -16,8 +15,8 @@ use crate::model::{
 };
 use crate::slides::{
     AgentSlide, AiAccessSlide, AiAccessSlideEvent, AiSetupSlide, CustomizeUISlide, IntentionSlide,
-    IntroSlide, IntroSlideEvent, OfferSlide, OfferSlideEvent, OfferVariant, OnboardingModelInfo,
-    OnboardingSlide, ThemePickerSlide, ThemePickerSlideEvent, ThirdPartySlide,
+    IntroSlide, IntroSlideEvent, OfferSlide, OfferVariant, OnboardingModelInfo, OnboardingSlide,
+    ThemePickerSlide, ThemePickerSlideEvent, ThirdPartySlide,
 };
 use crate::telemetry::OnboardingEvent;
 
@@ -150,7 +149,6 @@ impl AgentOnboardingView {
         auth_state: OnboardingAuthState,
         ctx: &mut ViewContext<Self>,
     ) -> Self {
-        let account_first = FeatureFlag::AccountFirstOnboarding.is_enabled();
         let onboarding_state = ctx.add_model(|_| {
             OnboardingStateModel::new(
                 models,
@@ -205,16 +203,12 @@ impl AgentOnboardingView {
             })
         };
 
-        let intention_slide = if account_first {
-            None
-        } else {
+        let intention_slide = {
             let onboarding_state = onboarding_state.clone();
             Some(ctx.add_typed_action_view(move |_| IntentionSlide::new(onboarding_state)))
         };
 
-        let ai_setup_slide = if account_first {
-            None
-        } else {
+        let ai_setup_slide = {
             let onboarding_state = onboarding_state.clone();
             Some(ctx.add_typed_action_view(move |_| AiSetupSlide::new(onboarding_state)))
         };
@@ -228,16 +222,12 @@ impl AgentOnboardingView {
             me.handle_theme_picker_slide_event(event, ctx);
         });
 
-        let agent_slide = if account_first {
-            None
-        } else {
+        let agent_slide = {
             let onboarding_state = onboarding_state.clone();
             Some(ctx.add_typed_action_view(move |ctx| AgentSlide::new(onboarding_state, ctx)))
         };
 
-        let ai_access_slide = if account_first {
-            None
-        } else {
+        let ai_access_slide = {
             let onboarding_state = onboarding_state.clone();
             Some(ctx.add_typed_action_view(move |_| AiAccessSlide::new(onboarding_state)))
         };
@@ -253,28 +243,9 @@ impl AgentOnboardingView {
             });
         }
 
-        let offer_slide = if account_first {
-            let onboarding_state = onboarding_state.clone();
-            let offer_slide = ctx.add_typed_action_view(move |_| OfferSlide::new(onboarding_state));
-            ctx.subscribe_to_view(&offer_slide, |_me, _view, event, ctx| match event {
-                OfferSlideEvent::SetUpLaterSelected { variant } => {
-                    ctx.emit(AgentOnboardingEvent::OfferSetUpLaterSelected { variant: *variant });
-                }
-                OfferSlideEvent::CopyUpgradeUrlRequested => {
-                    ctx.emit(AgentOnboardingEvent::UpgradeCopyUrlRequested);
-                }
-                OfferSlideEvent::PasteAuthTokenFromClipboardRequested => {
-                    ctx.emit(AgentOnboardingEvent::UpgradePasteTokenFromClipboardRequested);
-                }
-            });
-            Some(offer_slide)
-        } else {
-            None
-        };
+        let offer_slide = None;
 
-        let third_party_slide = if account_first {
-            None
-        } else {
+        let third_party_slide = {
             let onboarding_state = onboarding_state.clone();
             Some(ctx.add_typed_action_view(move |ctx| ThirdPartySlide::new(onboarding_state, ctx)))
         };
@@ -417,12 +388,7 @@ impl AgentOnboardingView {
         send_telemetry_from_ctx!(OnboardingEvent::OnboardingStarted, ctx);
         send_telemetry_from_ctx!(
             OnboardingEvent::SlideViewed {
-                slide_name: if FeatureFlag::AccountFirstOnboarding.is_enabled() {
-                    "welcome"
-                } else {
-                    "intro"
-                }
-                .to_string(),
+                slide_name: "intro".to_string(),
             },
             ctx
         );
@@ -436,18 +402,6 @@ impl AgentOnboardingView {
         asset_cache.load_asset::<ImageType>(AssetSource::Bundled {
             path: crate::slides::layout::ONBOARDING_BG_PATH,
         });
-        if FeatureFlag::AccountFirstOnboarding.is_enabled() {
-            for path in CustomizeUISlide::VISUAL_IMAGE_PATHS {
-                asset_cache.load_asset::<ImageType>(AssetSource::Bundled { path });
-            }
-            for path in ThemePickerSlide::VISUAL_IMAGE_PATHS {
-                asset_cache.load_asset::<ImageType>(AssetSource::Bundled { path });
-            }
-            for path in OfferSlide::VISUAL_IMAGE_PATHS {
-                asset_cache.load_asset::<ImageType>(AssetSource::Bundled { path });
-            }
-            return;
-        }
         for path in IntentionSlide::VISUAL_IMAGE_PATHS {
             asset_cache.load_asset::<ImageType>(AssetSource::Bundled { path });
         }

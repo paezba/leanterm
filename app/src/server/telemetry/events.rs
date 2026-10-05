@@ -1,4 +1,3 @@
-use crate::terminal::ShareBlockType;
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
@@ -39,6 +38,7 @@ use crate::settings::import::config::ParsedTerminalSetting;
 use crate::settings::import::model::TerminalType;
 use crate::settings_view::TeamsInviteOption;
 use crate::tab::TabTelemetryAction;
+use crate::terminal::ShareBlockType;
 use crate::terminal::block_list_viewport::InputMode;
 use crate::terminal::input::TelemetryInputSuggestionsMode;
 use crate::terminal::model::session::SessionId;
@@ -2459,7 +2459,7 @@ impl TelemetryEventDesc for TelemetryEventDiscriminants {
             Self::ObjectLinkCopied => EnablementState::Always,
             Self::FileTreeToggled => EnablementState::Flag(FeatureFlag::FileTree),
             Self::FileTreeItemCreated => EnablementState::Flag(FeatureFlag::FileTree),
-            Self::GetStartedSkipToTerminal => EnablementState::Flag(FeatureFlag::GetStartedTab),
+            Self::GetStartedSkipToTerminal => EnablementState::Never,
             Self::PtyThroughput => EnablementState::Flag(FeatureFlag::RecordPtyThroughput),
             #[cfg(feature = "local_fs")]
             Self::CodePaneOpened { .. } => EnablementState::Always,
@@ -2478,10 +2478,8 @@ impl TelemetryEventDesc for TelemetryEventDiscriminants {
 
             Self::StartedSharingCurrentSession
             | Self::StoppedSharingCurrentSession
-            | Self::SharedSessionModalUpgradePressed => {
-                EnablementState::Flag(FeatureFlag::CreatingSharedSessions)
-            }
-            Self::JoinedSharedSession => EnablementState::Flag(FeatureFlag::ViewingSharedSessions),
+            | Self::SharedSessionModalUpgradePressed
+            | Self::JoinedSharedSession => EnablementState::Never,
             Self::OpenNotebook | Self::EditNotebook | Self::NotebookAction => {
                 EnablementState::Always
             }

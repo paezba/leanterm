@@ -4,7 +4,6 @@ use std::sync::mpsc::SyncSender;
 use chrono::{DateTime, Duration, Utc};
 use itertools::Itertools;
 use rand::Rng;
-use warp_core::features::FeatureFlag;
 use warp_errors::report_error;
 use warp_graphql::scalars::time::ServerTimestamp;
 use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
@@ -1109,7 +1108,7 @@ impl CloudModel {
         let user_uid = AuthStateProvider::as_ref(app).get().user_id();
         self.objects_by_id.values().any(|object| {
             // We can't use CloudObject::is_in_space, because that reborrows UserWorkspaces.
-            user_workspaces.owner_to_space(object.permissions().owner, app) == Space::Shared
+            user_workspaces.owner_to_space(object.permissions().owner) == Space::Shared
                 && user_uid.is_some_and(|uid| object.permissions().has_direct_user_access(uid))
         })
     }
@@ -1459,7 +1458,7 @@ impl CloudModel {
                     }
                 }
             }
-            None => !FeatureFlag::SharedWithMe.is_enabled(),
+            None => true,
         };
 
         cache.insert(uid.to_owned(), result);

@@ -1,4 +1,3 @@
-use crate::terminal;
 use std::sync::Arc;
 
 use chrono::Local;
@@ -13,6 +12,7 @@ use crate::search::async_snapshot_data_source::AsyncSnapshotDataSource;
 use crate::search::command_search::searcher::CommandSearchItemAction;
 use crate::search::data_source::{Query, QueryResult};
 use crate::search::mixer::{BoxFuture, DataSourceRunErrorWrapper};
+use crate::terminal;
 use crate::terminal::HistoryEntry;
 use crate::terminal::model::session::SessionId;
 

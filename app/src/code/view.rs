@@ -1,4 +1,3 @@
-use crate::settings::CodeSettings;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
@@ -58,6 +57,7 @@ use crate::pane_group::{
 use crate::quit_warning::UnsavedStateSummary;
 use crate::search::ItemHighlightState;
 use crate::search::files::icon::icon_from_file_path;
+use crate::settings::CodeSettings;
 use crate::tab::TAB_BAR_BORDER_HEIGHT;
 use crate::ui_components::blended_colors;
 use crate::ui_components::buttons::icon_button;

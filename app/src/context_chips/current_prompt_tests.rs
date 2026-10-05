@@ -223,7 +223,6 @@ fn test_fingerprint_skips_contextual_chip_recompute_when_context_is_unchanged() 
 
 #[test]
 fn test_github_pr_chip_runtime_policy_configuration() {
-    let _flag_guard = FeatureFlag::GithubPrPromptChip.override_enabled(true);
     let chip = ContextChipKind::GithubPullRequest
         .to_chip()
         .expect("github pr chip should exist");

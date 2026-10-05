@@ -13,12 +13,6 @@ mod vertical_tabs;
 #[cfg(target_family = "wasm")]
 mod wasm_view;
 
-use crate::server::telemetry::SharingDialogSource;
-use crate::settings::CodeSettingsChangedEvent;
-use crate::terminal::model::block::SerializedBlockListItem;
-use crate::terminal::model::blockgrid::BlockGrid;
-use parking_lot::FairMutex;
-use pathfinder_color::ColorU;
 use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
@@ -49,6 +43,8 @@ use futures::Future;
 use instant::Instant;
 use itertools::Itertools;
 use lazy_static::lazy_static;
+use parking_lot::FairMutex;
+use pathfinder_color::ColorU;
 use pathfinder_geometry::rect::RectF;
 #[cfg(feature = "local_fs")]
 use repo_metadata::RemoteRepositoryIdentifier;
@@ -243,16 +239,16 @@ use crate::server::server_api::{ServerApi, ServerApiProvider, ServerTime};
 use crate::server::telemetry::{
     AddTabWithShellSource, AnonymousUserSignupEntrypoint, CloseTarget, EnvVarTelemetryMetadata,
     FileTreeSource, LaunchConfigUiLocation, NotificationsTurnedOnSource, PaletteSource,
-    TabRenameEvent, TierLimitHitEvent, WarpDriveSource,
+    SharingDialogSource, TabRenameEvent, TierLimitHitEvent, WarpDriveSource,
 };
 use crate::session_management::{SessionNavigationData, SessionSource, TabNavigationData};
 use crate::settings::cloud_preferences::CloudPreferencesSettings;
 use crate::settings::{
     AccessibilitySettings, AliasExpansionSettings, AppEditorSettings, BlockVisibilitySettings,
-    ChangelogSettings, CodeSettings, CtrlTabBehavior, CursorBlink, DebugSettings, FontSettings,
-    GPUSettings, InputModeSettings, InputSettings, MonospaceFontSize, PaneSettings,
-    PrivacySettings, SelectionSettings, Settings, SshSettings, ThemeSettings, active_theme_kind,
-    respect_system_theme,
+    ChangelogSettings, CodeSettings, CodeSettingsChangedEvent, CtrlTabBehavior, CursorBlink,
+    DebugSettings, FontSettings, GPUSettings, InputModeSettings, InputSettings, MonospaceFontSize,
+    PaneSettings, PrivacySettings, SelectionSettings, Settings, SshSettings, ThemeSettings,
+    active_theme_kind, respect_system_theme,
 };
 use crate::settings_view::keybindings::{KeybindingChangedEvent, KeybindingChangedNotifier};
 use crate::settings_view::pane_manager::SettingsPaneManager;
@@ -288,6 +284,8 @@ use crate::terminal::general_settings::GeneralSettings;
 use crate::terminal::input::{EXTERNAL_ALT_C_BINDING_CONTEXT, Input, MenuPositioning};
 use crate::terminal::keys_settings::KeysSettings;
 use crate::terminal::ligature_settings::should_use_ligature_rendering;
+use crate::terminal::model::block::SerializedBlockListItem;
+use crate::terminal::model::blockgrid::BlockGrid;
 use crate::terminal::model::escape_sequences::C0;
 #[cfg(feature = "local_fs")]
 use crate::terminal::model::session::Session;
@@ -329,9 +327,7 @@ use crate::user_config::{
     find_unused_worktree_config_path, materialize_default_worktree_config, sanitize_toml_base_name,
     tab_configs_dir,
 };
-use crate::util::bindings::{
-    keybinding_name_to_display_string, keybinding_name_to_keystroke, trigger_to_keystroke,
-};
+use crate::util::bindings::{keybinding_name_to_display_string, keybinding_name_to_keystroke};
 #[cfg(feature = "local_fs")]
 use crate::util::file::external_editor::Editor;
 #[cfg(feature = "local_fs")]
@@ -10056,16 +10052,13 @@ impl Workspace {
         ctx.notify();
     }
 
-    fn should_confirm_close_session(&self, ctx: &mut ViewContext<Self>) -> bool {
+    fn should_confirm_close_session(&self, _ctx: &mut ViewContext<Self>) -> bool {
         // If we're closing the only remaining tab, we're actually going to close the window.
         // We don't need a user confirmation here because there's already another one on window close.
         if self.tab_count() == 1 {
             return false;
         }
-        // TODO: remove session sharing flag check when long-running commands are included
-        FeatureFlag::CreatingSharedSessions.is_enabled()
-            && ContextFlag::CreateSharedSession.is_enabled()
-            && *SessionSettings::as_ref(ctx).should_confirm_close_session
+        false
     }
 
     /// Checks if the provided tab indices need to be confirmed before closing, unless skip_confirmation is true.
@@ -10548,7 +10541,7 @@ impl Workspace {
     ) {
         // Remember whether the left panel was open on the current active pane group
         // before creating a new active pane group.
-        let left_panel_was_open = if self.tabs.is_empty() {
+        let _left_panel_was_open = if self.tabs.is_empty() {
             false
         } else {
             self.active_tab_pane_group().as_ref(ctx).left_panel_open
@@ -10628,14 +10621,6 @@ impl Workspace {
 
         // If the previous tab's left panel was open, maintain that state with the new tab
         // (unless we're restoring the tab from a persisted snapshot).
-        if FeatureFlag::AgentViewConversationListView.is_enabled()
-            && !is_restoration
-            && left_panel_was_open
-        {
-            self.active_tab_pane_group().update(ctx, |pg, ctx| {
-                pg.set_left_panel_open(true, ctx);
-            });
-        }
     }
 
     pub fn add_tab_from_existing_pane(
@@ -11774,34 +11759,13 @@ impl Workspace {
             (true, Some(ChangelogRequestType::WindowLaunch), _) => {
                 if let Some(version) = ChannelState::app_version() {
                     Settings::mark_changelog_shown(version, ctx);
-                    if FeatureFlag::AvatarInTabBar.is_enabled() {
-                        self.update_toast_stack.update(ctx, |stack, ctx| {
-                            // Get keybinding for view changelog action
-                            let keystroke = ctx
-                                .editable_bindings()
-                                .find(|binding| binding.name == "workspace:view_changelog")
-                                .and_then(|binding| trigger_to_keystroke(binding.trigger));
-
-                            let mut link = ToastLink::new("View changelog".to_owned())
-                                .with_onclick_action(WorkspaceAction::ViewLatestChangelog);
-                            if let Some(keystroke) = keystroke {
-                                link = link.with_keystroke(keystroke);
-                            }
-
-                            let toast = DismissibleToast::default(String::from("Warp updated!"))
-                                .with_link(link);
-
-                            stack.add_ephemeral_toast(toast, ctx);
-                        });
-                    } else {
-                        // If resource center isn't already open and Warp AI isn't open, then open resource center
-                        if !self.current_workspace_state.is_resource_center_open
-                            && !self.current_workspace_state.is_ai_assistant_panel_open
-                        {
-                            self.open_resource_center_main_page(ctx);
-                            self.update_resource_center_action_target(ctx);
-                            ctx.notify();
-                        }
+                    // If resource center isn't already open and Warp AI isn't open, then open resource center
+                    if !self.current_workspace_state.is_resource_center_open
+                        && !self.current_workspace_state.is_ai_assistant_panel_open
+                    {
+                        self.open_resource_center_main_page(ctx);
+                        self.update_resource_center_action_target(ctx);
+                        ctx.notify();
                     }
                 }
             }
@@ -16004,31 +15968,11 @@ impl Workspace {
             target.add_child(pill);
         }
 
-        if FeatureFlag::AvatarInTabBar.is_enabled() {
-            target.add_child(
-                Container::new(self.render_avatar_button(appearance, ctx))
-                    .with_margin_left(TAB_BAR_PADDING_LEFT)
-                    .finish(),
-            );
-        } else {
-            let resource_center_closed = !self.current_workspace_state.is_resource_center_open;
-            if resource_center_closed
-                && ContextFlag::WarpEssentials.is_enabled()
-                && !FeatureFlag::LeanTerminal.is_enabled()
-            {
-                target.add_child(
-                    Container::new(self.render_resource_center_button(appearance, ctx))
-                        .with_margin_left(TAB_BAR_PADDING_LEFT)
-                        .finish(),
-                );
-            }
-
-            target.add_child(
-                Container::new(self.render_settings_button(appearance))
-                    .with_margin_left(TAB_BAR_PADDING_LEFT)
-                    .finish(),
-            );
-        }
+        target.add_child(
+            Container::new(self.render_settings_button(appearance))
+                .with_margin_left(TAB_BAR_PADDING_LEFT)
+                .finish(),
+        );
 
         let zoom_factor = WindowSettings::as_ref(ctx).zoom_level.as_zoom_factor();
         let traffic_light_data = traffic_light_data(ctx, self.window_id);
@@ -18093,11 +18037,6 @@ impl Workspace {
                 entry_focus: GlobalSearchEntryFocus::Results,
             });
         }
-        if *WarpDriveSettings::as_ref(ctx).enable_warp_drive
-            && !FeatureFlag::LeanTerminal.is_enabled()
-        {
-            views.push(ToolPanelView::WarpDrive);
-        }
         views
     }
 
@@ -19366,10 +19305,9 @@ impl TypedActionView for Workspace {
                     .did_check_to_trigger_openwarp_launch_modal
                     .value();
                 log::info!(
-                    "OpenWarp launch modal state: old={}, new={}, feature_flag_enabled={}",
+                    "OpenWarp launch modal state: old={}, new={}",
                     old_value,
-                    new_value,
-                    FeatureFlag::OpenWarpLaunchModal.is_enabled()
+                    new_value
                 );
             }
             #[cfg(target_os = "macos")]
@@ -20677,23 +20615,6 @@ impl View for Workspace {
             stack.add_child(ChildView::new(lightbox_view).finish());
         }
 
-        if FeatureFlag::CreatingSharedSessions.is_enabled()
-            && ContextFlag::CreateSharedSession.is_enabled()
-            && self
-                .current_workspace_state
-                .is_close_session_confirmation_dialog_open
-        {
-            stack.add_positioned_overlay_child(
-                ChildView::new(&self.close_session_confirmation_dialog).finish(),
-                OffsetPositioning::offset_from_parent(
-                    Vector2F::zero(),
-                    ParentOffsetBounds::WindowByPosition,
-                    ParentAnchor::Center,
-                    ChildAnchor::Center,
-                ),
-            );
-        }
-
         if self.current_workspace_state.is_native_quit_modal_open {
             stack.add_positioned_overlay_child(
                 ChildView::new(&self.native_modal).finish(),
@@ -20717,19 +20638,6 @@ impl View for Workspace {
                     ParentOffsetBounds::WindowByPosition,
                     ParentAnchor::Center,
                     ChildAnchor::Center,
-                ),
-            );
-        }
-
-        if FeatureFlag::AvatarInTabBar.is_enabled() && self.is_user_menu_open {
-            stack.add_positioned_overlay_child(
-                ChildView::new(&self.user_menu).finish(),
-                OffsetPositioning::offset_from_save_position_element(
-                    USER_AVATAR_BUTTON_POSITION_ID,
-                    Vector2F::zero(),
-                    PositionedElementOffsetBounds::WindowByPosition,
-                    PositionedElementAnchor::BottomRight,
-                    ChildAnchor::TopRight,
                 ),
             );
         }
@@ -20795,7 +20703,7 @@ impl View for Workspace {
             }
         }
 
-        let input_position_id = self
+        let _input_position_id = self
             .get_active_input_view_handle(app)
             .map(|input| app.view(&input).save_position_id());
 
@@ -20803,17 +20711,6 @@ impl View for Workspace {
             ChildView::new(&self.toast_stack).finish(),
             self.global_toast_positioning(),
         );
-
-        if let Some(input_position_id) = input_position_id
-            && FeatureFlag::AvatarInTabBar.is_enabled()
-            && self.is_input_box_visible(app)
-        {
-            let positioning = self.update_toast_positioning(input_position_id, app);
-            stack.add_positioned_overlay_child(
-                ChildView::new(&self.update_toast_stack).finish(),
-                positioning,
-            );
-        }
 
         #[cfg(target_family = "wasm")]
         if self.show_wasm_nux_dialog {

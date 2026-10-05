@@ -3,7 +3,6 @@ use std::path::Path;
 
 use settings::macros::define_settings_group;
 use settings::{RespectUserSyncSetting, SupportedPlatforms, SyncToCloud};
-use warp_core::features::FeatureFlag;
 use warp_core::ui::theme::AnsiColorIdentifier;
 
 #[derive(
@@ -500,7 +499,7 @@ define_settings_group!(TabSettings, settings: [
     },
     use_vertical_tabs: UseVerticalTabs {
         type: bool,
-        default: FeatureFlag::LeanTerminal.is_enabled(),
+        default: true,
         supported_platforms: SupportedPlatforms::ALL,
         sync_to_cloud: SyncToCloud::Globally(RespectUserSyncSetting::Yes),
         surface: settings::SettingSurfaces::GUI,

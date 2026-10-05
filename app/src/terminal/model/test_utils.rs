@@ -4,8 +4,6 @@
 //!
 //! The example code in this module's documentation is marked `no_run`: it is
 //! compiled to keep the examples correct, but not executed.
-use crate::terminal::model::block::SerializedBlockListItem;
-
 use std::collections::HashMap;
 use std::io::sink;
 use std::sync::Arc;
@@ -31,6 +29,7 @@ use super::terminal_model::BlockIndex;
 use super::{ObfuscateSecrets, TerminalModel};
 use crate::terminal::color::{self, Colors};
 use crate::terminal::event_listener::ChannelEventListener;
+use crate::terminal::model::block::SerializedBlockListItem;
 use crate::terminal::{BlockPadding, SizeInfo};
 
 pub fn block_size() -> BlockSize {

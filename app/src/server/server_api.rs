@@ -7,6 +7,11 @@ pub mod referral;
 pub mod team;
 pub mod workspace;
 
+use std::ops::Deref;
+use std::path::Path;
+use std::sync::Arc;
+use std::time::Duration;
+
 use ::http::header::CONTENT_LENGTH;
 use anyhow::{Context, Result, anyhow};
 use auth::AuthClient;
@@ -19,10 +24,6 @@ use parking_lot::Mutex;
 use referral::ReferralsClient;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
-use std::ops::Deref;
-use std::path::Path;
-use std::sync::Arc;
-use std::time::Duration;
 use team::TeamClient;
 use url::Url;
 use warp_core::context_flag::ContextFlag;

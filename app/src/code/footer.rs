@@ -1,4 +1,3 @@
-use crate::ui_components::blended_colors;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
@@ -35,6 +34,7 @@ use crate::code::lsp_telemetry::{LspControlActionType, LspEnablementSource, LspT
 #[cfg(feature = "local_fs")]
 use crate::persisted_workspace::PersistedWorkspaceEvent;
 use crate::persisted_workspace::{LSPEnablementResultForFile, LspRepoStatus, PersistedWorkspace};
+use crate::ui_components::blended_colors;
 use crate::view_components::action_button::{ActionButton, ButtonSize, NakedTheme};
 
 const FOOTER_HEIGHT: f32 = 24.;

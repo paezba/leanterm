@@ -1,4 +1,3 @@
-use crate::terminal::model::block::SerializedBlockListItem;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -70,6 +69,7 @@ use crate::settings_view::{OpenTeamsSettingsModalArgs, SettingsSection, flags};
 use crate::terminal::available_shells::AvailableShell;
 use crate::terminal::general_settings::GeneralSettings;
 use crate::terminal::keys_settings::KeysSettings;
+use crate::terminal::model::block::SerializedBlockListItem;
 use crate::terminal::shell::ShellType;
 use crate::terminal::view::cell_size_and_padding;
 use crate::themes::theme::{AnsiColorIdentifier, Blend, Fill};
@@ -268,17 +268,6 @@ pub fn init(app: &mut AppContext) {
         RootView::toggle_maximize_window,
     );
     app.add_action("root_view:toggle_fullscreen", RootView::toggle_fullscreen);
-
-    if FeatureFlag::ViewingSharedSessions.is_enabled() {
-        app.add_global_action(
-            "root_view:join_shared_session",
-            open_shared_session_as_viewer,
-        );
-        app.add_action(
-            "root_view:join_shared_session_in_existing_window",
-            RootView::join_shared_session_in_existing_window,
-        );
-    }
 
     app.add_global_action(
         "root_view:open_drive_object_new_window",

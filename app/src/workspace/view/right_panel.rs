@@ -1,4 +1,3 @@
-use crate::terminal::input::MenuPositioning;
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -39,6 +38,7 @@ use crate::pane_group::pane::view::header::components::HEADER_EDGE_PADDING;
 use crate::pane_group::{
     Event as PaneGroupEvent, PaneGroup, WorkingDirectoriesEvent, WorkingDirectoriesModel,
 };
+use crate::terminal::input::MenuPositioning;
 use crate::terminal::resizable_data::{ModalType, ResizableData};
 use crate::terminal::view::TerminalView;
 use crate::ui_components::buttons::icon_button_with_color;

@@ -1,11 +1,9 @@
 use settings::Setting as _;
-use warp_core::features::FeatureFlag;
 use warpui::{Entity, ModelContext, SingletonEntity, WindowId};
 
 use super::hoa_onboarding;
 use crate::auth::AuthManager;
 use crate::auth::auth_manager::AuthManagerEvent;
-use crate::channel::{Channel, ChannelState};
 use crate::settings::CodeSettings;
 use crate::settings::cloud_preferences_syncer::{
     CloudPreferencesSyncer, CloudPreferencesSyncerEvent,
@@ -149,61 +147,6 @@ impl OneTimeModalModel {
                 log::warn!("Failed to mark code toolbelt new feature popup as dismissed: {e}");
             }
         });
-
-        if self.check_and_trigger_openwarp_launch_modal(ctx) {
-            return;
-        }
-
-        self.check_and_trigger_hoa_onboarding(ctx);
-    }
-
-    fn check_and_trigger_hoa_onboarding(&mut self, ctx: &mut ModelContext<Self>) -> bool {
-        if !FeatureFlag::HOAOnboardingFlow.is_enabled() {
-            return false;
-        }
-
-        if hoa_onboarding::has_completed_hoa_onboarding(ctx) {
-            return false;
-        }
-
-        // All required dependent feature flags must be enabled.
-        if !FeatureFlag::VerticalTabs.is_enabled()
-            || !FeatureFlag::HOANotifications.is_enabled()
-            || !FeatureFlag::TabConfigs.is_enabled()
-        {
-            return false;
-        }
-
-        self.set_hoa_onboarding_open(true, ctx)
-    }
-
-    fn check_and_trigger_openwarp_launch_modal(&mut self, ctx: &mut ModelContext<Self>) -> bool {
-        // Only show if the feature flag is enabled.
-        if !FeatureFlag::OpenWarpLaunchModal.is_enabled() {
-            return false;
-        }
-
-        let general_settings = GeneralSettings::as_ref(ctx);
-        let openwarp_modal_shown = *general_settings
-            .did_check_to_trigger_openwarp_launch_modal
-            .value();
-
-        if openwarp_modal_shown {
-            return false;
-        }
-
-        GeneralSettings::handle(ctx).update(ctx, |settings, ctx| {
-            if let Err(e) = settings
-                .did_check_to_trigger_openwarp_launch_modal
-                .set_value(true, ctx)
-            {
-                log::warn!("Failed to mark OpenWarp launch modal as dismissed: {e}");
-            }
-        });
-
-        let should_show_openwarp_modal = !matches!(ChannelState::channel(), Channel::Integration);
-        self.set_openwarp_launch_modal_open(should_show_openwarp_modal, ctx);
-        should_show_openwarp_modal
     }
 }
 

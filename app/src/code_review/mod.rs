@@ -12,9 +12,10 @@ mod git_repo_models;
 pub mod github_repo_model;
 mod hidden_lines;
 pub mod telemetry_event;
-use crate::terminal::view::TerminalView;
 #[cfg_attr(not(feature = "local_fs"), allow(unused_imports))]
 pub use telemetry_event::CodeReviewTelemetryEvent;
+
+use crate::terminal::view::TerminalView;
 
 pub(crate) mod code_review_header;
 pub(crate) mod comment_rendering;

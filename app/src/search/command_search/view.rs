@@ -1,4 +1,3 @@
-use crate::terminal::input::MenuPositioning;
 use std::collections::HashSet;
 use std::ops::Range;
 use std::sync::Arc;
@@ -44,6 +43,7 @@ use crate::search::result_renderer::{QueryResultRenderer, QueryResultRendererSty
 use crate::search::search_bar::{SearchBar, SearchBarEvent, SearchBarState, SearchResultOrdering};
 use crate::send_telemetry_from_ctx;
 use crate::server::telemetry::TelemetryEvent;
+use crate::terminal::input::MenuPositioning;
 use crate::terminal::model::session::SessionId;
 use crate::terminal::resizable_data::{DEFAULT_UNIVERSAL_SEARCH_WIDTH, ModalType, ResizableData};
 use crate::terminal::{History, HistoryEvent};

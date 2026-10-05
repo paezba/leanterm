@@ -1,9 +1,9 @@
-use crate::ui_components::icons::Icon;
 use serde::{Deserialize, Serialize};
 use settings::Setting as _;
 use warpui::{AppContext, SingletonEntity};
 
 use crate::features::FeatureFlag;
+use crate::ui_components::icons::Icon;
 use crate::workspace::tab_settings::TabSettings;
 
 /// A configurable item in the vertical tabs header toolbar.

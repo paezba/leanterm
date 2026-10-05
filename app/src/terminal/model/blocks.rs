@@ -1,6 +1,5 @@
 mod selection;
 
-use crate::terminal::model::block::SerializedBlockListItem;
 use std::collections::{HashMap, HashSet};
 use std::io;
 use std::ops::{AddAssign, Range, RangeInclusive};
@@ -44,7 +43,9 @@ use crate::terminal::model::ansi::{
     CursorShape, CursorStyle, LineClearMode, Mode, PrecmdValue, PreexecValue, Processor,
     PromptMetadata, StandardCharset, TabulationClearMode,
 };
-use crate::terminal::model::block::{Block, SerializedBlock, TranscriptScope};
+use crate::terminal::model::block::{
+    Block, SerializedBlock, SerializedBlockListItem, TranscriptScope,
+};
 use crate::terminal::model::blockgrid::BlockGrid;
 use crate::terminal::model::bootstrap::BootstrapStage;
 use crate::terminal::model::grid::Dimensions;

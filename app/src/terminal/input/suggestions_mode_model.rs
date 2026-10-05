@@ -1,5 +1,6 @@
-use super::{DynamicEnumSuggestionStatus, InputSuggestionsMode};
 use warpui::{Entity, ModelContext};
+
+use super::{DynamicEnumSuggestionStatus, InputSuggestionsMode};
 
 /// Model responsible for managing the input suggestions mode state.
 pub struct InputSuggestionsModeModel {

@@ -7,7 +7,6 @@ use markdown_parser::{FormattedText, FormattedTextFragment, FormattedTextLine};
 use pathfinder_color::ColorU;
 use pathfinder_geometry::vector::vec2f;
 use settings::Setting;
-use warp_core::features::FeatureFlag;
 use warp_core::settings::SyncToCloud;
 use warp_core::ui::color::blend::Blend;
 use warp_core::ui::theme::color::internal_colors;
@@ -1792,12 +1791,10 @@ const LEAN_TERMINAL_HIDDEN_WIDGETS: &[&str] = &[
 fn without_lean_terminal_hidden_widgets<V: warpui::View>(
     mut widgets: Vec<Box<dyn SettingsWidget<View = V>>>,
 ) -> Vec<Box<dyn SettingsWidget<View = V>>> {
-    if FeatureFlag::LeanTerminal.is_enabled() {
-        widgets.retain(|widget| {
-            let type_name = widget.widget_id().rsplit("::").next().unwrap_or_default();
-            !LEAN_TERMINAL_HIDDEN_WIDGETS.contains(&type_name)
-        });
-    }
+    widgets.retain(|widget| {
+        let type_name = widget.widget_id().rsplit("::").next().unwrap_or_default();
+        !LEAN_TERMINAL_HIDDEN_WIDGETS.contains(&type_name)
+    });
     widgets
 }
 

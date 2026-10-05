@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 #[cfg(feature = "local_fs")]
+use std::path::PathBuf;
+#[cfg(feature = "local_fs")]
 use std::time::Duration;
 
 use warp_completer::completer::{
@@ -8,6 +10,8 @@ use warp_completer::completer::{
 };
 use warp_completer::meta::Spanned;
 use warp_completer::parsers::ParsedExpression;
+#[cfg(feature = "local_fs")]
+use warp_completer::parsers::hir::ArgType;
 use warp_completer::parsers::hir::{Command, Expression, FlagType};
 use warp_core::features::FeatureFlag;
 #[cfg(feature = "local_fs")]
@@ -17,11 +21,6 @@ use warpui::{AppContext, SingletonEntity};
 use super::CompleterData;
 use crate::completer::SessionContext;
 use crate::terminal::{History, HistoryEntry};
-
-#[cfg(feature = "local_fs")]
-use std::path::PathBuf;
-#[cfg(feature = "local_fs")]
-use warp_completer::parsers::hir::ArgType;
 
 #[cfg(feature = "local_fs")]
 const ARG_GENERATOR_VALIDATION_TIMEOUT: Duration = Duration::from_millis(150);

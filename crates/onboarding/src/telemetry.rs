@@ -1,15 +1,12 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use strum_macros::{EnumDiscriminants, EnumIter};
-use warp_core::features::FeatureFlag;
 use warp_core::telemetry::{EnablementState, TelemetryEvent, TelemetryEventDesc};
 
 pub const ACCOUNT_FIRST_FLOW_VERSION: &str = "account_first_v1";
 
 fn flow_version() -> Option<&'static str> {
-    FeatureFlag::AccountFirstOnboarding
-        .is_enabled()
-        .then_some(ACCOUNT_FIRST_FLOW_VERSION)
+    None
 }
 
 fn with_flow_version(mut payload: Value) -> Value {

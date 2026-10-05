@@ -6,8 +6,6 @@ pub mod decorations;
 mod suggestions_mode_menu;
 pub mod suggestions_mode_model;
 
-use crate::send_telemetry_from_ctx;
-use crate::terminal::model::session::active_session::ActiveSession;
 use std::any::Any;
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -129,6 +127,7 @@ use crate::resource_center::{
     Tip, TipAction, TipHint, TipsCompleted, mark_feature_used_and_write_to_user_defaults,
 };
 use crate::search::QueryFilter;
+use crate::send_telemetry_from_ctx;
 use crate::server::ids::SyncId;
 use crate::server::server_api::ServerApi;
 use crate::server::telemetry::{
@@ -144,6 +143,7 @@ use crate::settings_view::{SettingsSection, flags};
 use crate::suggestions::ignored_suggestions_model::{IgnoredSuggestionsModel, SuggestionType};
 use crate::terminal::input::buffer_model::InputBufferModel;
 use crate::terminal::input::suggestions_mode_model::InputSuggestionsModeModel;
+use crate::terminal::model::session::active_session::ActiveSession;
 use crate::terminal::model::session::shell_quote_arg;
 use crate::user_config::WarpConfig;
 use crate::util::bindings::{self, CustomAction};

@@ -1,4 +1,3 @@
-use crate::terminal::model::block::SerializedBlockListItem;
 use std::cmp::{max, min};
 use std::collections::{HashMap, HashSet};
 use std::ops::{Range, RangeInclusive};
@@ -66,6 +65,7 @@ use crate::terminal::model::ansi::{
     PreInteractiveSSHSessionValue, PrecmdValue, PreexecValue, PromptMetadata, SSHValue,
     SourcedRcFileForWarpValue,
 };
+use crate::terminal::model::block::SerializedBlockListItem;
 use crate::terminal::model::bootstrap::BootstrapStage;
 use crate::terminal::model::completions::{ShellCompletion, ShellCompletionUpdate};
 use crate::terminal::model::escape_sequences::ModeProvider;

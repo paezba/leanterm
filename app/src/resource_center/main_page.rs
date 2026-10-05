@@ -511,14 +511,11 @@ impl View for ResourceCenterMainView {
         if !AuthStateProvider::as_ref(app)
             .get()
             .is_anonymous_or_logged_out()
-            && !FeatureFlag::AvatarInTabBar.is_enabled()
         {
             main_page = main_page.with_child(invite_button);
         }
 
-        if !self.tips_completed.as_ref(app).skipped_or_completed
-            && !FeatureFlag::AvatarInTabBar.is_enabled()
-        {
+        if !self.tips_completed.as_ref(app).skipped_or_completed {
             main_page.add_child(skip_tips);
         }
 

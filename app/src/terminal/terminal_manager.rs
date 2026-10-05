@@ -1,4 +1,3 @@
-use crate::terminal::model::block::SerializedBlockListItem;
 use std::any::Any;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -18,6 +17,7 @@ use super::{BlockPadding, ShellLaunchState, SizeInfo, TerminalModel, color};
 use crate::appearance::Appearance;
 use crate::pane_group::pane::DetachType;
 use crate::settings::{BlockVisibilitySettings, DebugSettings, InputModeSettings};
+use crate::terminal::model::block::SerializedBlockListItem;
 
 pub trait TerminalManager: Any {
     /// Returns the backing terminal model.

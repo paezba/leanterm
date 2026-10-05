@@ -1,4 +1,3 @@
-use crate::terminal::view::Event as TerminalViewEvent;
 use std::any::Any;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -44,6 +43,7 @@ use crate::terminal::shared_session::{
     SharedSessionActionSource, SharedSessionScrollbackType, SharedSessionSource,
     SharedSessionStatus, max_session_size,
 };
+use crate::terminal::view::Event as TerminalViewEvent;
 use crate::terminal::writeable_pty::terminal_manager_util::wire_up_remote_server_controller_with_view;
 use crate::terminal::{TerminalManager as TerminalManagerTrait, TerminalModel, TerminalView};
 use crate::view_components::ToastFlavor;
@@ -921,37 +921,20 @@ impl TerminalManager<TerminalView> {
 
     fn wire_up_session_sharer_with_view(
         terminal_view: &ViewHandle<TerminalView>,
-        prompt_type: ModelHandle<PromptType>,
+        _prompt_type: ModelHandle<PromptType>,
         shared_session_model: Rc<RefCell<Option<ModelHandle<Network>>>>,
         model: Arc<FairMutex<TerminalModel>>,
-        window_id: WindowId,
-        sharer_remote_update_guard: RemoteUpdateGuard,
+        _window_id: WindowId,
+        _sharer_remote_update_guard: RemoteUpdateGuard,
         ctx: &mut AppContext,
     ) {
         let session_sharer = shared_session_model.clone();
         let model = model.clone();
 
         // TODO(ben): This is a very suboptimal way of exposing this; lifetime should be a user-visible option.
-        let session_lifetime = Lifetime::Ephemeral;
+        let _session_lifetime = Lifetime::Ephemeral;
 
         ctx.subscribe_to_view(terminal_view, move |view, event, ctx| match event {
-            TerminalViewEvent::StartSharingCurrentSession {
-                scrollback_type,
-                source,
-            } if FeatureFlag::CreatingSharedSessions.is_enabled() => {
-                Self::start_sharing_session(
-                    view.clone(),
-                    prompt_type.clone(),
-                    session_sharer.clone(),
-                    *scrollback_type,
-                    session_lifetime,
-                    source.clone(),
-                    model.clone(),
-                    window_id,
-                    sharer_remote_update_guard.clone(),
-                    ctx,
-                );
-            }
             TerminalViewEvent::StartSharingCurrentSession { .. } => {
                 log::warn!(
                     "Ignoring request to start sharing current session because \

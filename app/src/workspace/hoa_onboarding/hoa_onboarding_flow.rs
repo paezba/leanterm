@@ -1,4 +1,3 @@
-use crate::tab_configs::session_config::{SessionConfigSelection, SessionType, is_git_repo};
 use std::path::PathBuf;
 
 use markdown_parser::{
@@ -26,6 +25,7 @@ use warpui::{
 
 use super::{tab_config_step, welcome_banner};
 use crate::appearance::Appearance;
+use crate::tab_configs::session_config::{SessionConfigSelection, SessionType, is_git_repo};
 use crate::tab_configs::session_config_rendering;
 use crate::ui_components::icons::Icon;
 use crate::view_components::action_button::{

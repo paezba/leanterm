@@ -1,4 +1,3 @@
-use crate::server::telemetry::TelemetryEvent;
 use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -56,6 +55,7 @@ use crate::editor::{
 use crate::features::FeatureFlag;
 use crate::gpu_state::{GPUState, GPUStateEvent};
 use crate::prompt::editor_modal::OpenSource as PromptEditorOpenSource;
+use crate::server::telemetry::TelemetryEvent;
 use crate::settings::app_icon::{AppIcon, AppIconSettings, ShowDockIconState};
 use crate::settings::{
     AIFontName, AppEditorSettings, CodeSettings, CursorBlink, CursorBlinkEnabled,

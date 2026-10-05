@@ -1,7 +1,5 @@
 mod serialized_block;
 
-use pathfinder_color::ColorU;
-use secret_redaction::redact_secrets;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::io;
@@ -15,7 +13,9 @@ use chrono::{DateTime, Duration, FixedOffset, Local};
 use enum_iterator::all;
 use hex;
 use instant::Instant;
+use pathfinder_color::ColorU;
 use pathfinder_geometry::vector::Vector2F;
+use secret_redaction::redact_secrets;
 pub use serialized_block::*;
 use warp_core::command::ExitCode;
 use warp_errors::report_error;

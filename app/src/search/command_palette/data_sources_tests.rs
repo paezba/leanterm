@@ -820,7 +820,6 @@ fn current_user_uid(app: &App) -> UserUid {
 /// widens the scope of an index that already exists.
 #[test]
 fn test_full_text_drive_data_source_indexes_the_first_directly_shared_object() {
-    let _shared_with_me = FeatureFlag::SharedWithMe.override_enabled(true);
     let _tantivy = FeatureFlag::UseTantivySearch.override_enabled(true);
     let team = team_for_test(123, "selected");
     let workspace = workspace_for_test(vec![team.clone()]);
@@ -859,84 +858,6 @@ fn test_full_text_drive_data_source_indexes_the_first_directly_shared_object() {
             &mixer,
             "bequeathed",
             &[workflow_label("bequeathed workflow")],
-            &mut app,
-        )
-        .await;
-    })
-}
-
-/// Leaving a team remaps its objects to the shared space without touching the objects themselves
-/// and without changing which spaces the window can see, so the visible space list alone cannot
-/// tell the corpus it is stale.
-#[test]
-fn test_full_text_drive_data_source_reindexes_when_a_team_stops_being_a_member_team() {
-    let _shared_with_me = FeatureFlag::SharedWithMe.override_enabled(true);
-    let _tantivy = FeatureFlag::UseTantivySearch.override_enabled(true);
-    let window_team = team_for_test(123, "window");
-    let departing_team = team_for_test(456, "departing");
-    let workspace = workspace_for_test(vec![window_team.clone(), departing_team.clone()]);
-
-    App::test((), |mut app| async move {
-        initialize_app(&mut app, vec![workspace]);
-
-        let window_id = WindowId::new();
-        UserWorkspaces::handle(&app).update(&mut app, |user_workspaces, ctx| {
-            user_workspaces.set_team_for_window(window_id, window_team.uid, ctx);
-        });
-
-        // A directly shared object puts the shared space in scope up front, so the window's
-        // visible space list is identical before and after the membership change.
-        let shared_with = current_user_uid(&app);
-        CloudModel::handle(&app).update(&mut app, |model, ctx| {
-            model.upsert_from_server_workflow(
-                ServerWorkflow::new(
-                    SyncId::ServerId(WorkflowId::from(1).into()),
-                    CloudWorkflowModel::new(Workflow::new("preexisting shared", "echo shared")),
-                    mock_server_metadata(),
-                    mock_shared_server_permissions(shared_with),
-                ),
-                ctx,
-            );
-            model.upsert_from_server_workflow(
-                mock_named_server_workflow(
-                    2.into(),
-                    Owner::Team {
-                        team_uid: departing_team.uid,
-                    },
-                    "remapped workflow",
-                    "echo remapped",
-                ),
-                ctx,
-            );
-        });
-
-        let mixer = app.add_model(|_| CommandPaletteMixer::new());
-        let data_source_handle = app.add_model(|ctx| warp_drive::DataSource::new(window_id, ctx));
-        mixer.update(&mut app, |mixer, _| {
-            mixer.add_sync_source(data_source_handle, [QueryFilter::Workflows]);
-        });
-
-        let spaces_before =
-            app.read(|app| UserWorkspaces::as_ref(app).spaces_for_window(window_id, app));
-        drain_index(INDEX_MARKER_ID, &mixer, &mut app).await;
-        assert_workflow_labels_eventually(&mixer, "remapped", &[], &mut app).await;
-
-        // The user leaves the departing team; its objects now resolve to the shared space.
-        UserWorkspaces::handle(&app).update(&mut app, |user_workspaces, ctx| {
-            user_workspaces.update_workspaces(vec![workspace_for_test(vec![window_team])], ctx);
-        });
-
-        app.read(|app| {
-            assert_eq!(
-                UserWorkspaces::as_ref(app).spaces_for_window(window_id, app),
-                spaces_before,
-                "the visible space list must be unchanged for this test to be meaningful"
-            );
-        });
-        assert_workflow_labels_eventually(
-            &mixer,
-            "remapped",
-            &[workflow_label("remapped workflow")],
             &mut app,
         )
         .await;

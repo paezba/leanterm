@@ -47,12 +47,6 @@ fn enabled_features() -> HashSet<FeatureFlag> {
         FeatureFlag::Ligatures,
         #[cfg(feature = "selectable_prompt")]
         FeatureFlag::SelectablePrompt,
-        #[cfg(feature = "viewing_shared_sessions")]
-        FeatureFlag::ViewingSharedSessions,
-        #[cfg(feature = "creating_shared_sessions")]
-        FeatureFlag::CreatingSharedSessions,
-        #[cfg(feature = "agent_mode")]
-        FeatureFlag::AgentMode,
         #[cfg(feature = "shared_session_long_running_commands")]
         FeatureFlag::SharedSessionWriteToLongRunningCommands,
         #[cfg(feature = "resize_fix")]
@@ -71,8 +65,6 @@ fn enabled_features() -> HashSet<FeatureFlag> {
         FeatureFlag::AlacrittySettingsImport,
         #[cfg(feature = "dynamic_workflow_enums")]
         FeatureFlag::DynamicWorkflowEnums,
-        #[cfg(feature = "shared_with_me")]
-        FeatureFlag::SharedWithMe,
         #[cfg(feature = "am_workflows")]
         FeatureFlag::AgentModeWorkflows,
         #[cfg(feature = "ai_rules")]
@@ -83,14 +75,10 @@ fn enabled_features() -> HashSet<FeatureFlag> {
         FeatureFlag::IntegrationCommand,
         #[cfg(feature = "artifact_command")]
         FeatureFlag::ArtifactCommand,
-        #[cfg(feature = "cloud_environments")]
-        FeatureFlag::CloudEnvironments,
         #[cfg(feature = "cloud_runners")]
         FeatureFlag::CloudRunners,
         #[cfg(feature = "cloud_agent_runners")]
         FeatureFlag::CloudAgentRunners,
-        #[cfg(feature = "account_first_onboarding")]
-        FeatureFlag::AccountFirstOnboarding,
         #[cfg(all(feature = "simulate_github_unauthed", debug_assertions))]
         FeatureFlag::SimulateGithubUnauthed,
         #[cfg(feature = "session_sharing_acls")]
@@ -99,8 +87,6 @@ fn enabled_features() -> HashSet<FeatureFlag> {
         FeatureFlag::FullScreenZenMode,
         #[cfg(feature = "minimalist_ui")]
         FeatureFlag::MinimalistUI,
-        #[cfg(feature = "avatar_in_tab_bar")]
-        FeatureFlag::AvatarInTabBar,
         #[cfg(feature = "workflow_aliases")]
         FeatureFlag::WorkflowAliases,
         #[cfg(feature = "ssh_drag_and_drop")]
@@ -127,8 +113,6 @@ fn enabled_features() -> HashSet<FeatureFlag> {
         FeatureFlag::AutoupdateUIRevamp,
         #[cfg(all(not(windows), feature = "kitty_images"))]
         FeatureFlag::KittyImages,
-        #[cfg(feature = "warp_packs")]
-        FeatureFlag::WarpPacks,
         #[cfg(feature = "global_ai_analytics_banner")]
         FeatureFlag::GlobalAIAnalyticsBanner,
         #[cfg(feature = "global_ai_analytics_collection")]
@@ -139,10 +123,6 @@ fn enabled_features() -> HashSet<FeatureFlag> {
         FeatureFlag::AgentModePrimaryXML,
         #[cfg(feature = "agent_mode_pre_plan_xml")]
         FeatureFlag::AgentModePrePlanXML,
-        #[cfg(feature = "agent_onboarding")]
-        FeatureFlag::AgentOnboarding,
-        #[cfg(feature = "agent_shared_sessions")]
-        FeatureFlag::AgentSharedSessions,
         #[cfg(feature = "suggested_rules")]
         FeatureFlag::SuggestedRules,
         #[cfg(feature = "suggested_agent_mode_workflows")]
@@ -159,8 +139,6 @@ fn enabled_features() -> HashSet<FeatureFlag> {
         FeatureFlag::UseTantivySearch,
         #[cfg(feature = "grep_tool")]
         FeatureFlag::GrepTool,
-        #[cfg(feature = "mcp_server")]
-        FeatureFlag::McpServer,
         #[cfg(feature = "mcp_debugging_ids")]
         FeatureFlag::McpDebuggingIds,
         #[cfg(feature = "markdown_tables")]
@@ -189,8 +167,6 @@ fn enabled_features() -> HashSet<FeatureFlag> {
         FeatureFlag::RetryTruncatedCodeResponses,
         #[cfg(feature = "read_image_files")]
         FeatureFlag::ReadImageFiles,
-        #[cfg(feature = "usage_based_pricing")]
-        FeatureFlag::UsageBasedPricing,
         #[cfg(feature = "cross_repo_context")]
         FeatureFlag::CrossRepoContext,
         #[cfg(feature = "codebase_index_persistence")]
@@ -201,8 +177,6 @@ fn enabled_features() -> HashSet<FeatureFlag> {
         FeatureFlag::AtMenuOutsideOfAIMode,
         #[cfg(feature = "ai_resume_button")]
         FeatureFlag::AIResumeButton,
-        #[cfg(feature = "figma_detection")]
-        FeatureFlag::FigmaDetection,
         #[cfg(feature = "agent_decides_command_execution")]
         FeatureFlag::AgentDecidesCommandExecution,
         #[cfg(feature = "codebase_index_speedbump")]
@@ -245,8 +219,6 @@ fn enabled_features() -> HashSet<FeatureFlag> {
         FeatureFlag::ConversationArtifacts,
         #[cfg(feature = "sync_ambient_plans")]
         FeatureFlag::SyncAmbientPlans,
-        #[cfg(feature = "get_started_tab")]
-        FeatureFlag::GetStartedTab,
         #[cfg(feature = "projects")]
         FeatureFlag::Projects,
         #[cfg(feature = "drive_objects_as_context")]
@@ -259,10 +231,6 @@ fn enabled_features() -> HashSet<FeatureFlag> {
         FeatureFlag::SelectionAsContext,
         #[cfg(feature = "code_mode_chip")]
         FeatureFlag::CodeModeChip,
-        #[cfg(feature = "github_pr_prompt_chip")]
-        FeatureFlag::GithubPrPromptChip,
-        #[cfg(feature = "create_project_flow")]
-        FeatureFlag::CreateProjectFlow,
         #[cfg(feature = "vim_code_editor")]
         FeatureFlag::VimCodeEditor,
         #[cfg(feature = "allow_opening_file_links_using_editor_env")]
@@ -275,22 +243,12 @@ fn enabled_features() -> HashSet<FeatureFlag> {
         FeatureFlag::FileTree,
         #[cfg(feature = "allow_ignoring_input_suggestions")]
         FeatureFlag::AllowIgnoringInputSuggestions,
-        #[cfg(feature = "ambient_agents_command_line")]
-        FeatureFlag::AmbientAgentsCommandLine,
         #[cfg(feature = "ambient_agents_image_upload")]
         FeatureFlag::AmbientAgentsImageUpload,
-        #[cfg(feature = "scheduled_ambient_agents")]
-        FeatureFlag::ScheduledAmbientAgents,
         #[cfg(feature = "conversation_api")]
         FeatureFlag::ConversationApi,
-        #[cfg(feature = "code_launch_modal")]
-        FeatureFlag::CodeLaunchModal,
-        #[cfg(feature = "api_key_management")]
-        FeatureFlag::APIKeyManagement,
         #[cfg(feature = "mcp_oauth")]
         FeatureFlag::McpOauth,
-        #[cfg(feature = "file_based_mcp")]
-        FeatureFlag::FileBasedMcp,
         #[cfg(feature = "diff_set_as_context")]
         FeatureFlag::DiffSetAsContext,
         #[cfg(feature = "discard_per_file_and_all_changes")]
@@ -335,32 +293,20 @@ fn enabled_features() -> HashSet<FeatureFlag> {
         FeatureFlag::RevertToCheckpoints,
         #[cfg(feature = "rewind_slash_command")]
         FeatureFlag::RewindSlashCommand,
-        #[cfg(feature = "agent_management_view")]
-        FeatureFlag::AgentManagementView,
         #[cfg(feature = "agent_management_details_view")]
         FeatureFlag::AgentManagementDetailsView,
         #[cfg(feature = "agent_view")]
         FeatureFlag::AgentView,
         #[cfg(feature = "agent_view_block_context")]
         FeatureFlag::AgentViewBlockContext,
-        #[cfg(feature = "warp_managed_secrets")]
-        FeatureFlag::WarpManagedSecrets,
         #[cfg(feature = "v4a_file_diffs")]
         FeatureFlag::V4AFileDiffs,
         #[cfg(feature = "interactive_conversation_management_view")]
         FeatureFlag::InteractiveConversationManagementView,
-        #[cfg(feature = "agent_tips")]
-        FeatureFlag::AgentTips,
         #[cfg(feature = "local_claude_codex_child_harnesses")]
         FeatureFlag::LocalClaudeCodexChildHarnesses,
-        #[cfg(feature = "team_api_keys")]
-        FeatureFlag::TeamApiKeys,
         #[cfg(feature = "named_agents")]
         FeatureFlag::NamedAgents,
-        #[cfg(feature = "cloud_conversations")]
-        FeatureFlag::CloudConversations,
-        #[cfg(feature = "agent_toolbar_editor")]
-        FeatureFlag::AgentToolbarEditor,
         #[cfg(feature = "configurable_toolbar")]
         FeatureFlag::ConfigurableToolbar,
         #[cfg(feature = "agent_view_prompt_chip")]
@@ -373,14 +319,10 @@ fn enabled_features() -> HashSet<FeatureFlag> {
         FeatureFlag::ForceClassicCompletions,
         #[cfg(feature = "native_shell_completions")]
         FeatureFlag::NativeShellCompletions,
-        #[cfg(feature = "agent_view_conversation_list_view")]
-        FeatureFlag::AgentViewConversationListView,
         #[cfg(feature = "inline_history_menu")]
         FeatureFlag::InlineHistoryMenu,
         #[cfg(feature = "inline_repo_menu")]
         FeatureFlag::InlineRepoMenu,
-        #[cfg(feature = "cloud_mode")]
-        FeatureFlag::CloudMode,
         #[cfg(feature = "cloud_mode_from_local_session")]
         FeatureFlag::CloudModeFromLocalSession,
         #[cfg(feature = "cloud_mode_image_context")]
@@ -403,18 +345,8 @@ fn enabled_features() -> HashSet<FeatureFlag> {
         FeatureFlag::OzPlatformSkills,
         #[cfg(feature = "oz_identity_federation")]
         FeatureFlag::OzIdentityFederation,
-        #[cfg(feature = "oz_changelog_updates")]
-        FeatureFlag::OzChangelogUpdates,
         #[cfg(feature = "bundled_skills")]
         FeatureFlag::BundledSkills,
-        #[cfg(feature = "oz_launch_modal")]
-        FeatureFlag::OzLaunchModal,
-        #[cfg(feature = "open_warp_launch_modal")]
-        FeatureFlag::OpenWarpLaunchModal,
-        #[cfg(feature = "orchestration_launch_modal")]
-        FeatureFlag::OrchestrationLaunchModal,
-        #[cfg(feature = "agent_cli_launch_modal")]
-        FeatureFlag::AgentCliLaunchModal,
         #[cfg(feature = "new_tab_styling")]
         FeatureFlag::NewTabStyling,
         #[cfg(feature = "skill_arguments")]
@@ -459,8 +391,6 @@ fn enabled_features() -> HashSet<FeatureFlag> {
         FeatureFlag::OzHandoff,
         #[cfg(feature = "handoff_local_cloud")]
         FeatureFlag::HandoffLocalCloud,
-        #[cfg(feature = "hoa_notifications")]
-        FeatureFlag::HOANotifications,
         #[cfg(feature = "open_code_notifications")]
         FeatureFlag::OpenCodeNotifications,
         #[cfg(feature = "cli_agent_rich_input")]
@@ -469,16 +399,12 @@ fn enabled_features() -> HashSet<FeatureFlag> {
         FeatureFlag::TransferControlTool,
         #[cfg(feature = "warpify_footer")]
         FeatureFlag::WarpifyFooter,
-        #[cfg(feature = "solo_user_byok")]
-        FeatureFlag::SoloUserByok,
         #[cfg(feature = "billing_and_usage_page_v2")]
         FeatureFlag::BillingAndUsagePageV2,
         #[cfg(feature = "gpt_configurable_context_window")]
         FeatureFlag::GPTConfigurableContextWindow,
         #[cfg(feature = "skip_firebase_anonymous_user")]
         FeatureFlag::SkipFirebaseAnonymousUser,
-        #[cfg(feature = "hoa_onboarding_flow")]
-        FeatureFlag::HOAOnboardingFlow,
         #[cfg(feature = "git_operations_in_code_review")]
         FeatureFlag::GitOperationsInCodeReview,
         #[cfg(feature = "hoa_remote_control")]
@@ -501,12 +427,6 @@ fn enabled_features() -> HashSet<FeatureFlag> {
         FeatureFlag::RemoteCodeReview,
         #[cfg(feature = "custom_model_routers")]
         FeatureFlag::CustomModelRouters,
-        #[cfg(feature = "supergrok")]
-        FeatureFlag::SuperGrok,
-        #[cfg(feature = "chatgpt_subscription")]
-        FeatureFlag::ChatGPTSubscription,
-        #[cfg(feature = "gemini_enterprise")]
-        FeatureFlag::GeminiEnterprise,
         #[cfg(feature = "nld_prompt_history_match")]
         FeatureFlag::NldPromptHistoryMatch,
         #[cfg(feature = "prompt_cache_expiry_warning")]
@@ -524,10 +444,6 @@ fn enabled_features() -> HashSet<FeatureFlag> {
         #[cfg(feature = "stored_screenshots")]
         FeatureFlag::StoredScreenshots,
     ]);
-
-    for flag in ChannelState::disabled_features() {
-        flags.remove(&flag);
-    }
 
     flags
 }

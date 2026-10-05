@@ -1,6 +1,5 @@
 use pathfinder_color::ColorU;
 use ui_components::{Component as _, Options as _, button};
-use warp_core::features::FeatureFlag;
 use warp_core::send_telemetry_from_ctx;
 use warp_core::ui::appearance::Appearance;
 use warp_core::ui::theme::WarpTheme;
@@ -177,7 +176,7 @@ impl ThemePickerSlide {
         let state = self.onboarding_state.as_ref(app);
         let is_terminal = matches!(state.intention(), OnboardingIntention::Terminal);
         let warp_drive_enabled = state.ui_customization().show_warp_drive;
-        if !FeatureFlag::AccountFirstOnboarding.is_enabled() && is_terminal && !warp_drive_enabled {
+        if is_terminal && !warp_drive_enabled {
             content.push(self.render_disclaimer_section(appearance));
         }
 
@@ -270,8 +269,7 @@ impl ThemePickerSlide {
             },
         );
 
-        let account_first = FeatureFlag::AccountFirstOnboarding.is_enabled();
-        let next_label = if account_first { "Next" } else { "Get Warping" };
+        let next_label = "Get Warping";
 
         let enter = Keystroke::parse("enter").unwrap_or_default();
         let next_button = self.next_button.render(
@@ -289,9 +287,7 @@ impl ThemePickerSlide {
             },
         );
 
-        let (step_index, step_count) = if account_first {
-            self.onboarding_state.as_ref(app).progress()
-        } else {
+        let (step_index, step_count) = {
             let is_terminal = matches!(
                 self.onboarding_state.as_ref(app).intention(),
                 OnboardingIntention::Terminal

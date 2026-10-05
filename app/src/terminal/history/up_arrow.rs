@@ -1,10 +1,10 @@
-use crate::suggestions::ignored_suggestions_model::{IgnoredSuggestionsModel, SuggestionType};
 use std::collections::HashSet;
 
 use warpui::{AppContext, SingletonEntity};
 
 use super::History;
 use crate::input_suggestions::HistoryInputSuggestion;
+use crate::suggestions::ignored_suggestions_model::{IgnoredSuggestionsModel, SuggestionType};
 use crate::terminal::model::session::SessionId;
 
 fn sort_and_dedupe_suggestions<'a>(

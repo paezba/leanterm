@@ -11,7 +11,6 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use url::Url;
 use warp_core::channel::Channel;
-use warp_core::features::FeatureFlag;
 use warp_graphql::queries::get_updated_cloud_objects::UpdatedObjectInput;
 use warp_graphql::scalars::time::ServerTimestamp;
 use warpui::{AppContext, SingletonEntity};
@@ -178,7 +177,7 @@ pub trait CloudObject: Debug {
     /// If the object is shared with the current user, the space will reflect that, not the
     /// object's actual owner.
     fn space(&self, app: &AppContext) -> Space {
-        UserWorkspaces::as_ref(app).owner_to_space(self.permissions().owner, app)
+        UserWorkspaces::as_ref(app).owner_to_space(self.permissions().owner)
     }
 
     /// Whether or not this object can be "left". For shared objects, this removes all ACLs for the
@@ -290,12 +289,9 @@ pub trait CloudObject: Debug {
 
                 match parent {
                     Some(parent) => parent.is_trashed_internal(cloud_model, ancestors),
-                    None => {
-                        // If the object has a parent, but the parent is not in CloudModel, assume
-                        // the object is shared, but not its parent. For backwards compatibility,
-                        // if sharing is disabled, default to trashed rather than untrashed.
-                        !FeatureFlag::SharedWithMe.is_enabled()
-                    }
+                    // If the object has a parent, but the parent is not in CloudModel, default to
+                    // trashed rather than untrashed.
+                    None => true,
                 }
             }
             None => false,

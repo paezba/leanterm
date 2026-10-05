@@ -20,7 +20,7 @@ use crate::features::FeatureFlag;
 mod convert;
 mod model;
 
-pub use model::{Event as ServerExperimentsEvent, ServerExperiments};
+pub use model::ServerExperiments;
 
 /// The known server-side experiments.
 #[allow(clippy::enum_variant_names)]
@@ -67,15 +67,9 @@ impl ServerExperiment {
     //    have been initialized and can thus be referenced.
     fn on_added_to(&self, _ctx: &mut AppContext) {
         match self {
-            Self::SessionSharingExperiment => {
-                FeatureFlag::CreatingSharedSessions.set_enabled(true);
-            }
-            Self::SessionSharingControl => {
-                FeatureFlag::CreatingSharedSessions.set_enabled(false);
-            }
-            Self::DisableAgentModeExperiment => {
-                FeatureFlag::AgentMode.set_enabled(false);
-            }
+            Self::SessionSharingExperiment => {}
+            Self::SessionSharingControl => {}
+            Self::DisableAgentModeExperiment => {}
             Self::EnvVarsEarlyAccessExperiment => {
                 // EnvVars is now always enabled; no-op.
             }

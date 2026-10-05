@@ -6,6 +6,7 @@ use async_channel::Sender;
 use futures_util::stream::AbortHandle;
 use lazy_static::lazy_static;
 use regex::Regex;
+use secret_redaction::find_secrets_in_text;
 use settings::Setting as _;
 use url::Url;
 use warp_core::context_flag::ContextFlag;
@@ -57,7 +58,6 @@ use crate::editor::{
     EditOrigin, EditorView, Event as EditorEvent, InteractionState, PropagateAndNoOpNavigationKeys,
     SingleLineEditorOptions, TextColors, TextOptions,
 };
-use crate::features::FeatureFlag;
 use crate::menu::{MenuItem, MenuItemFields};
 use crate::network::{NetworkStatus, NetworkStatusEvent};
 use crate::notebooks::CloudNotebook;
@@ -90,7 +90,6 @@ use crate::workflows::{WorkflowSource, WorkflowType};
 use crate::workspace::ToastStack;
 use crate::workspaces::user_workspaces::UserWorkspaces;
 use crate::{cmd_or_ctrl_shift, safe_info, send_telemetry_from_ctx};
-use secret_redaction::find_secrets_in_text;
 
 mod details_bar;
 
@@ -1101,9 +1100,6 @@ impl NotebookView {
             // Do not allow grabbing edit access if the notebook is trashed or feature flag is turned off.
             return;
         }
-        if FeatureFlag::SharedWithMe.is_enabled() && !active_notebook.editability(ctx).can_edit() {
-            return;
-        }
 
         let id = active_notebook.id();
         UpdateManager::handle(ctx).update(ctx, |update_manager, ctx| {
@@ -1348,7 +1344,7 @@ impl NotebookView {
     /// Items to show in the pane header overflow menu.
     fn overflow_menu_items(&self, ctx: &AppContext) -> Vec<MenuItem<NotebookAction>> {
         let active_notebook_data = self.active_notebook_data.as_ref(ctx);
-        let access_level = active_notebook_data.access_level(ctx);
+        let _access_level = active_notebook_data.access_level(ctx);
         let mut menu_items = Vec::new();
 
         if !active_notebook_data.is_on_server()
@@ -1434,9 +1430,7 @@ impl NotebookView {
         }
 
         // Add "Trash" to menu
-        if self.is_online(ctx)
-            && (!FeatureFlag::SharedWithMe.is_enabled() || access_level.can_trash())
-        {
+        if self.is_online(ctx) {
             menu_items.push(
                 MenuItemFields::new("Trash")
                     .with_on_select_action(NotebookAction::Trash)
@@ -1591,9 +1585,7 @@ impl NotebookView {
         let baton_future = ctx.spawn(has_metadata, |me, _, ctx| {
             let active_notebook_data = me.active_notebook_data.as_ref(ctx);
 
-            if FeatureFlag::SharedWithMe.is_enabled() && !active_notebook_data.editability(ctx).can_edit() {
-                log::debug!("Notebook is view-only, opening in view mode");
-            } else if active_notebook_data.has_conflicts(ctx) {
+            if active_notebook_data.has_conflicts(ctx) {
                 log::debug!("Notebook has conflicts, opening in view mode");
             } else {
                 let current_editor = active_notebook_data.current_editor(ctx);
@@ -1668,7 +1660,7 @@ impl NotebookView {
         });
         self.input.update(ctx, |input_editor, ctx| {
             input_editor.system_clear_buffer(ctx);
-            let space = UserWorkspaces::as_ref(ctx).owner_to_space(owner, ctx);
+            let space = UserWorkspaces::as_ref(ctx).owner_to_space(owner);
             input_editor.set_space(space, ctx);
         });
 
@@ -1930,34 +1922,28 @@ impl NotebookView {
 
             let active_notebook_data = self.active_notebook_data.as_ref(app);
 
-            if !FeatureFlag::SharedWithMe.is_enabled()
-                || active_notebook_data.access_level(app).can_trash()
-            {
-                let ui_builder = appearance.ui_builder().clone();
-                action_row.add_child(
-                    Align::new(
-                        appearance
-                            .ui_builder()
-                            .button(
-                                ButtonVariant::Basic,
-                                self.button_mouse_states.restore_from_trash_button.clone(),
-                            )
-                            .with_tooltip(move || {
-                                ui_builder
-                                    .tool_tip("Restore notebook from trash".to_string())
-                                    .build()
-                                    .finish()
-                            })
-                            .with_text_label("Restore".to_string())
-                            .build()
-                            .on_click(|ctx, _, _| {
-                                ctx.dispatch_typed_action(NotebookAction::Untrash)
-                            })
-                            .finish(),
-                    )
-                    .finish(),
-                );
-            }
+            let ui_builder = appearance.ui_builder().clone();
+            action_row.add_child(
+                Align::new(
+                    appearance
+                        .ui_builder()
+                        .button(
+                            ButtonVariant::Basic,
+                            self.button_mouse_states.restore_from_trash_button.clone(),
+                        )
+                        .with_tooltip(move || {
+                            ui_builder
+                                .tool_tip("Restore notebook from trash".to_string())
+                                .build()
+                                .finish()
+                        })
+                        .with_text_label("Restore".to_string())
+                        .build()
+                        .on_click(|ctx, _, _| ctx.dispatch_typed_action(NotebookAction::Untrash))
+                        .finish(),
+                )
+                .finish(),
+            );
 
             if active_notebook_data.space(app) != Some(Space::Personal) {
                 let ui_builder = appearance.ui_builder().clone();
@@ -2216,15 +2202,7 @@ impl View for NotebookView {
             Mode::View => context.set.insert("NotebookViewing"),
         };
 
-        if !FeatureFlag::SharedWithMe.is_enabled()
-            || self
-                .active_notebook_data
-                .as_ref(app)
-                .editability(app)
-                .can_edit()
-        {
-            context.set.insert("NotebookIsEditable");
-        }
+        context.set.insert("NotebookIsEditable");
 
         let font_settings = FontSettings::as_ref(app);
         if !font_settings.match_notebook_to_monospace_font_size.value() {

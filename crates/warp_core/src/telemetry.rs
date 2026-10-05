@@ -200,6 +200,7 @@ macro_rules! send_telemetry_from_app_ctx {
 #[derive(Debug)]
 pub enum EnablementState {
     Always,
+    Never,
     /// The telemetry event is enabled when a particular feature flag is enabled.
     Flag(FeatureFlag),
     /// The event is enabled if the app is running in one of the contained channels.
@@ -212,6 +213,7 @@ impl EnablementState {
     pub fn is_enabled(&self) -> bool {
         match self {
             EnablementState::Always => true,
+            EnablementState::Never => false,
             EnablementState::Flag(flag) => flag.is_enabled(),
             EnablementState::ChannelSpecific { channels } => {
                 let app_channel = ChannelState::channel();

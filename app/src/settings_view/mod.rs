@@ -1,5 +1,3 @@
-use crate::settings::{BlockVisibilitySettings, SettingsFileError};
-use crate::terminal::SizeInfo;
 use std::path::PathBuf;
 
 use about_page::AboutPageView;
@@ -53,6 +51,8 @@ use crate::pane_group::focus_state::PaneFocusHandle;
 use crate::pane_group::pane::view;
 use crate::pane_group::{BackingView, Direction, PaneConfiguration, PaneEvent, SplitPaneState};
 use crate::server::server_api::ServerApiProvider;
+use crate::settings::{BlockVisibilitySettings, SettingsFileError};
+use crate::terminal::SizeInfo;
 use crate::terminal::model::blockgrid::BlockGrid;
 use crate::ui_components::icons;
 use crate::util::bindings::{BindingGroup, CustomAction, keybinding_name_to_display_string};
@@ -234,9 +234,6 @@ pub enum SettingsSection {
 impl SettingsSection {
     /// Whether this section is removed from settings in lean terminal builds.
     fn is_hidden_in_lean_terminal(self) -> bool {
-        if !FeatureFlag::LeanTerminal.is_enabled() {
-            return false;
-        }
         match self {
             Self::Account
             | Self::Referrals
@@ -1220,30 +1217,25 @@ impl SettingsView {
             );
         }
 
-        if FeatureFlag::LeanTerminal.is_enabled() {
-            settings_pages.retain(|page| !page.section.is_hidden_in_lean_terminal());
-            nav_items = nav_items
-                .into_iter()
-                .filter_map(|item| match item {
-                    SettingsNavItem::Page(section) => {
-                        (!section.is_hidden_in_lean_terminal()).then_some(item)
-                    }
-                    SettingsNavItem::Umbrella(umbrella) => {
-                        let subpages = umbrella
-                            .subpages
-                            .into_iter()
-                            .filter(|section| !section.is_hidden_in_lean_terminal())
-                            .collect_vec();
-                        (!subpages.is_empty()).then(|| {
-                            SettingsNavItem::Umbrella(SettingsUmbrella::new(
-                                umbrella.label,
-                                subpages,
-                            ))
-                        })
-                    }
-                })
-                .collect();
-        }
+        settings_pages.retain(|page| !page.section.is_hidden_in_lean_terminal());
+        nav_items = nav_items
+            .into_iter()
+            .filter_map(|item| match item {
+                SettingsNavItem::Page(section) => {
+                    (!section.is_hidden_in_lean_terminal()).then_some(item)
+                }
+                SettingsNavItem::Umbrella(umbrella) => {
+                    let subpages = umbrella
+                        .subpages
+                        .into_iter()
+                        .filter(|section| !section.is_hidden_in_lean_terminal())
+                        .collect_vec();
+                    (!subpages.is_empty()).then(|| {
+                        SettingsNavItem::Umbrella(SettingsUmbrella::new(umbrella.label, subpages))
+                    })
+                }
+            })
+            .collect();
 
         let initial_page = match page {
             Some(SettingsSection::Scripting) if !FeatureFlag::WarpControlCli.is_enabled() => {

@@ -1,4 +1,3 @@
-use crate::tab_configs::TabConfig;
 use warp_util::path::user_friendly_path;
 use warpui::elements::{
     Border, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Flex, MainAxisSize,
@@ -10,6 +9,7 @@ use warpui::ui_components::components::{UiComponent, UiComponentStyles};
 use warpui::{AppContext, Element, SingletonEntity};
 
 use crate::appearance::Appearance;
+use crate::tab_configs::TabConfig;
 use crate::terminal::available_shells::AvailableShell;
 use crate::workspace::WorkspaceAction;
 

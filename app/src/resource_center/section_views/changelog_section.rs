@@ -1,6 +1,5 @@
 use instant::Instant;
 use markdown_parser::{FormattedText, FormattedTextFragment, FormattedTextLine};
-use warp_core::features::FeatureFlag;
 use warpui::elements::{
     Border, CacheOption, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Element,
     Flex, FormattedTextElement, HighlightedHyperlink, Icon, Image, MouseStateHandle, ParentElement,
@@ -406,7 +405,7 @@ impl View for ChangelogSectionView {
 
         let mut section = Flex::column().with_child(header);
 
-        if self.is_expanded || FeatureFlag::AvatarInTabBar.is_enabled() {
+        if self.is_expanded {
             let mut content_flex = Flex::column();
             match &changelog_model.changelog {
                 ChangelogState::Some(_) => {

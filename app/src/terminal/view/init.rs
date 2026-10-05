@@ -1,5 +1,3 @@
-use crate::server::telemetry::ToggleBlockFilterSource;
-use warp_core::context_flag::ContextFlag;
 use warpui::AppContext;
 use warpui::keymap::{EditableBinding, FixedBinding, PerPlatformKeystroke};
 use warpui::platform::OperatingSystem;
@@ -8,6 +6,7 @@ use warpui::units::IntoLines;
 use super::TerminalAction;
 use crate::channel::{Channel, ChannelState};
 use crate::features::FeatureFlag;
+use crate::server::telemetry::ToggleBlockFilterSource;
 use crate::settings_view::flags;
 use crate::terminal::TerminalView;
 use crate::terminal::model::escape_sequences::{self, EscCodes};
@@ -654,10 +653,7 @@ pub fn init(app: &mut AppContext) {
             id!("Terminal") & id!(SharedSessionStatus::NotShared.as_keymap_context()),
         )
         .with_custom_action(CustomAction::ShareCurrentSession)
-        .with_enabled(|| {
-            FeatureFlag::CreatingSharedSessions.is_enabled()
-                && ContextFlag::CreateSharedSession.is_enabled()
-        }),
+        .with_enabled(|| false),
         EditableBinding::new(
             "terminal:stop_sharing_current_session",
             "Stop sharing current session",

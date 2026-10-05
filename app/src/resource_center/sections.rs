@@ -1,5 +1,4 @@
 use warp_core::context_flag::ContextFlag;
-use warp_core::features::FeatureFlag;
 use warpui::ViewContext;
 
 use super::{
@@ -9,10 +8,6 @@ use super::{
 
 pub fn sections(ctx: &mut ViewContext<ResourceCenterMainView>) -> Vec<Section> {
     let mut sections = vec![Section::Changelog()];
-
-    if FeatureFlag::AvatarInTabBar.is_enabled() {
-        return sections;
-    }
 
     let get_started = FeatureSectionData {
         section_name: FeatureSection::GettingStarted,

@@ -443,18 +443,10 @@ embed-resource = "3.0"
 [features]
 ai_resume_button = []
 autoupdate = []
-figma_detection = []
 bundled_skills = []
-supergrok = []
-chatgpt_subscription = []
-gemini_enterprise = []
-agent_mode = []
 agent_mode_debug = []
 agent_mode_primary_xml = []
 agent_mode_pre_plan_xml = []
-agent_onboarding = []
-account_first_onboarding = []
-agent_shared_sessions = []
 ask_user_question = []
 async_find = []
 changelog = []
@@ -471,22 +463,17 @@ crash_reporting = [
     "warp_errors/crash_reporting",
     "warp_terminal/crash_reporting",
 ]
-creating_shared_sessions = []
 cross_repo_context = []
 codebase_index_persistence = ["full_source_code_embedding"]
 well_known_mcp_ids = []
 factory_mcp = []
 default = [
-    "agent_mode",
     "osc_hyperlinks",
-    "viewing_shared_sessions",
     "render_continuous_block_selections_with_single_border",
-    "shared_with_me",
     "session_sharing_acls",
     "external_agent_mode_context",
     "shell_selector",
     "minimalist_ui",
-    "avatar_in_tab_bar",
     "full_screen_zen_mode",
     "workflow_aliases",
     "ligatures",
@@ -494,7 +481,6 @@ default = [
     "rect_selection",
     "reload_stale_conversation_files",
     "loginless_conversion",
-    "warp_packs",
     "ai_rules",
     "suggested_rules",
     "default_waterfall_mode",
@@ -510,14 +496,11 @@ default = [
     "validate_autosuggestions",
     "clear_autosuggestion_on_escape",
     "file_retrieval_tools",
-    "mcp_server",
     "fast_forward_autoexecute_button",
     "image_as_context",
     "command_palette_file_search",
-    "usage_based_pricing",
     "ai_context_menu",
     "at_menu_outside_of_ai_mode",
-    "agent_management_view",
     "agent_management_details_view",
     "interactive_conversation_management_view",
     "shared_block_title_generation",
@@ -538,16 +521,12 @@ default = [
     "undo_closed_panes",
     "revert_diff_hunk",
     "code_review_save_changes",
-    "create_project_flow",
-    "get_started_tab",
     "file_tree",
     "vim_code_editor",
-    "code_launch_modal",
     "allow_ignoring_input_suggestions",
     "mcp_oauth",
     "expand_edit_to_pane",
     "fallback_model_load_output_messaging",
-    "api_key_management",
     "summarization_cancellation_confirmation",
     "ui_zoom",
     "discard_per_file_and_all_changes",
@@ -556,11 +535,9 @@ default = [
     "summarize_conversation_command",
     "inline_code_review",
     "web_search_ui",
-    "agent_shared_sessions",
     "integration_command",
     "artifact_command",
     "conversation_api",
-    "cloud_environments",
     "create_environment_slash_command",
     "code_review_find",
     "async_find",
@@ -569,26 +546,17 @@ default = [
     "fork_from_command",
     "context_window_usage_v2",
     "context_window_usage_breakdown",
-    "ambient_agents_command_line",
     "ambient_agents_image_upload",
-    "scheduled_ambient_agents",
-    "warp_managed_secrets",
     "v4a_file_diffs",
     "classic_completions",
     "force_classic_completions",
-    "team_api_keys",
     "named_agents",
-    "agent_tips",
     "pluggable_notifications",
-    "agent_onboarding",
-    "account_first_onboarding",
     "global_search",
-    "cloud_conversations",
     "list_skills",
     "ask_user_question",
     "bundled_skills",
     "ambient_agents_rtc",
-    "cloud_mode",
     "cloud_mode_from_local_session",
     "cloud_mode_image_context",
     "oz_platform_skills",
@@ -597,29 +565,20 @@ default = [
     "conversation_artifacts",
     "agent_view",
     "agent_view_block_context",
-    "agent_view_conversation_list_view",
     "inline_slash_commands",
     "inline_history_menu",
     "inline_model_selector",
     "restore_prompt_on_inline_model_selector_search",
-    "oz_launch_modal",
-    "open_warp_launch_modal",
-    "orchestration_launch_modal",
-    "agent_cli_launch_modal",
     "new_tab_styling",
     "richtext_multiselect",
     "inline_profile_selector",
     "web_fetch_ui",
-    "oz_changelog_updates",
     "skill_arguments",
     "incremental_auto_reload",
     "active_conversation_requires_interaction",
-    "figma_detection",
-    "file_based_mcp",
     "inline_repo_menu",
     "kitty_keyboard_protocol",
     "inline_menu_headers",
-    "github_pr_prompt_chip",
     "conversations_as_context",
     "markdown_tables",
     "blocklist_markdown_table_rendering",
@@ -631,10 +590,8 @@ default = [
     "rewind_slash_command",
     "hoa_code_review",
     "warpify_footer",
-    "agent_toolbar_editor",
     "configurable_toolbar",
     "transfer_control_tool",
-    "hoa_notifications",
     "open_code_notifications",
     "cli_agent_rich_input",
     "vertical_tabs",
@@ -643,7 +600,6 @@ default = [
     "grouped_tabs",
     "pinned_tabs",
     "agent_harness",
-    "hoa_onboarding_flow",
     "hoa_remote_control",
     "codex_notifications",
     "codex_plugin",
@@ -661,11 +617,7 @@ default = [
     "cloud_mode_setup_v2",
     "handoff_cloud_cloud",
     "remote_codebase_indexing",
-    "solo_user_byok",
     "custom_model_routers",
-    "supergrok",
-    "chatgpt_subscription",
-    "gemini_enterprise",
     "billing_and_usage_page_v2",
     "remote_code_review",
     "git_operations_in_code_review",
@@ -689,7 +641,6 @@ editable_markdown_mermaid = []
 default_adeberry_theme = []
 drag_tabs_to_windows = []
 embedded_code_review_comments = []
-agent_management_view = []
 agent_management_details_view = []
 interactive_conversation_management_view = []
 default_waterfall_mode = []
@@ -715,10 +666,7 @@ nld_prompt_history_match = []
 msys2_shells = []
 file_backed_execution_profiles = []
 file_retrieval_tools = []
-get_started_tab = []
 code_mode_chip = []
-github_pr_prompt_chip = []
-create_project_flow = []
 agent_mode_evals = [
     "integration_tests",
     "warpui/defer_scene_build",
@@ -730,9 +678,7 @@ agent_mode_evals = [
     "warp_logging/agent_mode_evals",
     "warp_server_client/agent_mode_evals",
 ]
-ambient_agents_command_line = []
 ambient_agents_image_upload = []
-scheduled_ambient_agents = []
 allow_ignoring_input_suggestions = []
 inline_slash_commands = ["agent_view"]
 
@@ -775,10 +721,8 @@ log_expensive_frames_in_sentry = []
 jupyter_notebook_rendering = []
 markdown_tables = []
 markdown_mermaid = []
-mcp_server = []
 mcp_oauth = []
 mcp_debugging_ids = []
-oz_changelog_updates = []
 # Remote-backed tty that connects to a PTY-like interface via a server.
 remote_tty = ["warp_terminal/remote_tty"]
 # Fix for cursor reflow bug during window resize, from Alacritty resizing logic.
@@ -832,11 +776,9 @@ integration_tests = [
     "warp_server_client/integration_tests",
 ]
 traces = []
-viewing_shared_sessions = []
 workflow_aliases = []
 rect_selection = []
 alacritty_settings_import = []
-shared_with_me = []
 ai_rules = []
 am_workflows = []
 shell_selector = []
@@ -846,7 +788,6 @@ blocklist_markdown_images = []
 minimalist_ui = []
 loginless_conversion = []
 external_agent_mode_context = []
-avatar_in_tab_bar = []
 ssh_drag_and_drop = []
 cycle_next_command_suggestion = []
 multi_workspace = []
@@ -856,7 +797,6 @@ drive_objects_as_context = []
 iterm_images = []
 validate_autosuggestions = []
 autoupdate_ui_revamp = []
-warp_packs = []
 suggested_rules = []
 command_correction_key = []
 full_source_code_embedding = []
@@ -865,7 +805,6 @@ simulate_github_unauthed = []
 reload_stale_conversation_files = []
 shared_block_title_generation = []
 retry_truncated_code_responses = []
-usage_based_pricing = []
 ai_context_menu = []
 at_menu_outside_of_ai_mode = []
 agent_decides_command_execution = []
@@ -899,8 +838,6 @@ revert_diff_hunk = []
 code_review_save_changes = []
 remote_code_review = []
 file_tree = []
-code_launch_modal = []
-api_key_management = []
 diff_set_as_context = []
 discard_per_file_and_all_changes = []
 ui_zoom = []
@@ -910,7 +847,6 @@ auto_open_code_review_pane = []
 inline_code_review = []
 integration_command = []
 artifact_command = []
-cloud_environments = []
 cloud_runners = []
 cloud_agent_runners = []
 create_environment_slash_command = []
@@ -927,22 +863,15 @@ revert_to_checkpoints = []
 rewind_slash_command = []
 agent_view = []
 agent_view_block_context = ["agent_view"]
-warp_managed_secrets = []
 v4a_file_diffs = []
-agent_tips = []
-agent_toolbar_editor = ["agent_view"]
-cloud_conversations = []
 agent_view_prompt_chip = ["agent_view"]
 ambient_agents_rtc = []
-team_api_keys = []
 named_agents = []
 classic_completions = []
 native_shell_completions = []
-cloud_mode = []
 cloud_mode_from_local_session = []
 cloud_mode_image_context = []
 force_classic_completions = []
-agent_view_conversation_list_view = ["agent_view"]
 inline_history_menu = ["agent_view"]
 inline_repo_menu = ["agent_view"]
 summarization_via_message_replacement = []
@@ -952,12 +881,7 @@ inline_profile_selector = ["agent_view"]
 restore_prompt_on_inline_model_selector_search = []
 oz_platform_skills = []
 oz_identity_federation = []
-oz_launch_modal = []
-open_warp_launch_modal = []
-orchestration_launch_modal = []
-agent_cli_launch_modal = []
 new_tab_styling = []
-file_based_mcp = []
 skill_arguments = []
 active_conversation_requires_interaction = []
 incremental_auto_reload = []
@@ -976,23 +900,20 @@ warp_control_cli = []
 agent_harness = []
 oz_handoff = []
 handoff_local_cloud = []
-hoa_notifications = []
 open_code_notifications = []
 transfer_control_tool = []
 skip_firebase_anonymous_user = []
 custom_model_routers = []
-solo_user_byok = []
 billing_and_usage_page_v2 = []
 gpt_configurable_context_window = []
 configurable_toolbar = []
 warpify_footer = []
-hoa_onboarding_flow = []
 git_operations_in_code_review = []
 hoa_remote_control = []
 codex_notifications = []
 codex_plugin = []
-cloud_mode_setup_v2 = ["cloud_mode"]
-cloud_mode_input_v2 = ["cloud_mode"]
+cloud_mode_setup_v2 = []
+cloud_mode_input_v2 = []
 handoff_cloud_cloud = ["cloud_mode_setup_v2"]
 git_credential_refresh = []
 prompt_cache_expiry_warning = []

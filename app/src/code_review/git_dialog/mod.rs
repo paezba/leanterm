@@ -9,7 +9,6 @@
 //! + confirm async, extend `GitDialogMode`, add the per-mode action and
 //! outcome variant, and wire up dispatch.
 
-use crate::ui_components::dialog::{Dialog, dialog_styles};
 use pathfinder_geometry::vector::vec2f;
 use warp_core::send_telemetry_from_ctx;
 use warp_core::ui::appearance::Appearance;
@@ -35,6 +34,7 @@ use crate::code_review::diff_state::{
 use crate::code_review::telemetry_event::{
     CodeReviewTelemetryEvent, GitDialogStatus, GitOperationKind,
 };
+use crate::ui_components::dialog::{Dialog, dialog_styles};
 use crate::ui_components::icons::Icon;
 use crate::util::git::{Commit, FileChangeEntry};
 use crate::view_components::DismissibleToast;

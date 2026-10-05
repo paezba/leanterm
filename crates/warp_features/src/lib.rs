@@ -19,8 +19,6 @@ pub enum FeatureFlag {
 
     RuntimeFeatureFlags,
 
-
-
     /// Does grid storage go forwards or backwards
     SequentialStorage,
 
@@ -37,19 +35,6 @@ pub enum FeatureFlag {
     /// menu bar.
     ToggleBootstrapBlock,
 
-    /// A runtime flag to enable the creation of shared sessions.
-    ///
-    /// It is enabled if the logged in user is part of a paying team
-    /// or part of the allowlist (via [`ServerExperiment::SessionSharingExperiment`]).
-    ///
-    /// We also use [`ServerExperiment::SessionSharingControl`] as a
-    /// killswitch for abuse prevention.
-    CreatingSharedSessions,
-
-    /// Enables the joining / viewing of shared sessions (_not_ creation).
-    ViewingSharedSessions,
-
-
     /// Ligature Support in the Editor and Grid
     Ligatures,
 
@@ -61,11 +46,6 @@ pub enum FeatureFlag {
     /// Used to gate an experiment we're doing on WarpDev ONLY
     /// to get a sense of PTY throughput over time.
     RecordPtyThroughput,
-
-
-
-    /// Warp Agent Mode.
-    AgentMode,
 
     /// Whether the user is part of the Warp Alpha Program (AI Trusted Testers).
     /// This is enabled automatically for local and dev builds.
@@ -112,10 +92,6 @@ pub enum FeatureFlag {
     /// Enable dynamic enum parameter types for workflow arguments
     DynamicWorkflowEnums,
 
-
-    /// Enables receiving shared Warp Drive objects.
-    SharedWithMe,
-
     /// Enables workflows for use with Agent Mode.
     AgentModeWorkflows,
 
@@ -128,7 +104,6 @@ pub enum FeatureFlag {
 
     /// Enables writing to long-running commands in shared sessions.
     SharedSessionWriteToLongRunningCommands,
-
 
     /// Enables support for ACLs in Session Sharing. Should be disabled if the
     /// corresponding `use_acls` flag in the session sharing server is disabled.
@@ -146,15 +121,11 @@ pub enum FeatureFlag {
     /// completion specs.
     NativeShellCompletions,
 
-    /// Adds avatar to the tab bar.
-    AvatarInTabBar,
-
     /// Adds aliases for executing Warp Drive workflows.
     WorkflowAliases,
 
     SshDragAndDrop,
     DragTabsToWindows,
-
 
     /// Enables cycling through the next command suggestions with down arrow.
     CycleNextCommandSuggestion,
@@ -173,7 +144,6 @@ pub enum FeatureFlag {
 
     /// Enables partial next command suggestions with a prefix.
     PartialNextCommandSuggestions,
-
 
     /// Enables iTerm image rendering
     ITermImages,
@@ -196,9 +166,6 @@ pub enum FeatureFlag {
     /// Enables Kitty image rendering
     KittyImages,
 
-    /// Enables support for Warp Packs.
-    WarpPacks,
-
     /// Enables the revised AI analytics policy banner.
     ///
     /// This does not gate actual collection of data under the new policy.
@@ -207,15 +174,11 @@ pub enum FeatureFlag {
     /// Enables actual collection of AI analytics data per the revised AI analytics policy.
     GlobalAIAnalyticsCollection,
 
-
     /// Enables the XML output system prompt for the primary (terminal) agent in Agent Mode.
     AgentModePrimaryXML,
 
     /// Enables the XML output system prompt for the pre-plan agent in Agent Mode.
     AgentModePrePlanXML,
-
-    /// Enables Agent Mode onboarding.
-    AgentOnboarding,
 
     /// Enables suggested rules.
     SuggestedRules,
@@ -241,9 +204,6 @@ pub enum FeatureFlag {
     /// Allows AI to call the grep tool.
     GrepTool,
 
-    /// MCP server v0 functionality.
-    McpServer,
-
     /// Enables image as context for AM.
     ImageAsContext,
 
@@ -264,8 +224,6 @@ pub enum FeatureFlag {
 
     /// Enables reading images with the `read_files` tool.
     ReadImageFiles,
-
-    UsageBasedPricing,
 
     /// Enables cross-repo codebase context.
     CrossRepoContext,
@@ -305,7 +263,6 @@ pub enum FeatureFlag {
 
     /// Enables the AI context menu nesting and commands
     AIContextMenuCommands,
-
 
     /// Enables code symbols in AI context menu
     AIContextMenuCode,
@@ -354,9 +311,6 @@ pub enum FeatureFlag {
     /// Gates the bundled skill-based implementation of PR comment fetching.
     PRCommentsSkill,
 
-    /// A new first-time user experience which prioritizes choosing a coding repository.
-    GetStartedTab,
-
     /// Enables Projects and Project management
     Projects,
 
@@ -365,12 +319,6 @@ pub enum FeatureFlag {
 
     /// A context chip that shows when the PWD is inside of a git repository.
     CodeModeChip,
-
-    /// Enables the prompt chip that displays the GitHub PR for the current branch.
-    GithubPrPromptChip,
-
-    /// A button on the homepage for easily creating new projects.
-    CreateProjectFlow,
 
     /// Enables vim keybindings in the code editor.
     VimCodeEditor,
@@ -392,12 +340,6 @@ pub enum FeatureFlag {
 
     /// Enables ignoring input suggestions.
     AllowIgnoringInputSuggestions,
-
-    /// Enables the one-time modal on app startup for existing users for the Code launch.
-    CodeLaunchModal,
-
-    /// Enables API key management UI in settings
-    APIKeyManagement,
 
     /// Enables OAuth support for MCP.
     McpOauth,
@@ -423,14 +365,8 @@ pub enum FeatureFlag {
     /// Enables asynchronous find in terminal, running search on a background thread.
     AsyncFind,
 
-    /// Enables using Agent Mode in shared sessions.
-    AgentSharedSessions,
-
     /// Enables auto-opening code review pane on first agent change and its setting UI.
     AutoOpenCodeReviewPane,
-
-    /// Enables the ambient agents command-line interface.
-    AmbientAgentsCommandLine,
 
     /// Feature flags for the Build Plan Auto Reload experiment.
     BuildPlanAutoReloadBannerToggle,
@@ -439,12 +375,8 @@ pub enum FeatureFlag {
     /// Enables inline code review functionality
     InlineCodeReview,
 
-    /// Enables cloud environments management via CLI.
-    CloudEnvironments,
-
     /// Enables the /create-environment slash command for setting up Warp Environments
     CreateEnvironmentSlashCommand,
-
 
     /// Enables the /compact slash command.
     SummarizationConversationCommand,
@@ -509,14 +441,8 @@ pub enum FeatureFlag {
     /// Enables the /rewind slash command.
     RewindSlashCommand,
 
-    /// Agent Management View.
-    AgentManagementView,
-
     /// Agent Management Details View - enables new details panel on card click.
     AgentManagementDetailsView,
-
-    /// Enables scheduled ambient agents.
-    ScheduledAmbientAgents,
 
     AgentView,
 
@@ -529,26 +455,14 @@ pub enum FeatureFlag {
     /// Enables the inline repo switcher menu for switching between indexed repos.
     InlineRepoMenu,
 
-    /// Enables cloud mode functionality for ambient agents.
-    CloudMode,
-
     /// Enables starting cloud mode from a local session.
     CloudModeFromLocalSession,
-
-
-    /// Enables Warp Managed Secrets functionality.
-    WarpManagedSecrets,
 
     /// Enables support for AM file diffs backed by the V4A patch format.
     V4AFileDiffs,
 
     /// Enables loading conversations in the Agent Management View.
     InteractiveConversationManagementView,
-
-    /// Enables agent tips displayed below the warping indicator in Agent Mode.
-    AgentTips,
-
-
 
     /// Enables background, per-window computer use: driving a specific window directly without
     /// raising it or moving the cursor.  Currently only supported on macOS.
@@ -557,20 +471,10 @@ pub enum FeatureFlag {
     /// Enables video recording of computer-use sessions for cloud agents.
     VideoRecording,
 
-
-    /// Enables team API key creation in the API key management UI.
-    TeamApiKeys,
-
-    /// Enables cloud conversation loading via the CLI --conversation flag.
-    CloudConversations,
-
     /// Enables the "New agent" prompt chip in terminal mode when AgentView is enabled.
     ///
     /// When disabled (the default), the terminal message bar is shown instead.
     AgentViewPromptChip,
-
-    /// Enables editing the agent input footer layout from the prompt context menu.
-    AgentToolbarEditor,
 
     /// Enables configuring header toolbar item order, side placement, and visibility.
     ConfigurableToolbar,
@@ -579,8 +483,6 @@ pub enum FeatureFlag {
     AmbientAgentsRTC,
 
     // Enables a side panel conversation list view for AgentView mode.
-    AgentViewConversationListView,
-
     /// When enabled, the server will use message replacement + retroactive subtasks for
     /// summarization.
     SummarizationViaMessageReplacement,
@@ -619,9 +521,6 @@ pub enum FeatureFlag {
     /// Enables Oz identity federation commands.
     OzIdentityFederation,
 
-    /// Gates populating/reading oz updates from channel versions in the changelog model.
-    OzChangelogUpdates,
-
     /// Enables image upload for ambient agents.
     AmbientAgentsImageUpload,
 
@@ -631,24 +530,8 @@ pub enum FeatureFlag {
     /// Enables loading and returning bundled skills in the SkillManager.
     BundledSkills,
 
-    /// Enables the Oz launch modal for introducing cloud agent features.
-    OzLaunchModal,
-
-    /// Enables the OpenWarp launch modal announcing Warp going open-source.
-    /// When enabled, the HOA onboarding flow is suppressed.
-    OpenWarpLaunchModal,
-
-    /// Enables the orchestration launch modal announcing multi-agent orchestration features.
-    OrchestrationLaunchModal,
-
-    /// Enables the launch modal announcing the Warp Agent CLI.
-    AgentCliLaunchModal,
-
     /// Updated tab styling (background colors, border, close button positioning, margins).
     NewTabStyling,
-
-    /// Enables file-based MCP server support via .mcp.json files in repo roots.
-    FileBasedMcp,
 
     /// Enables passing user query arguments to skill invocations ($ARGUMENTS, $N).
     SkillArguments,
@@ -699,10 +582,6 @@ pub enum FeatureFlag {
     /// Enables Kitty keyboard protocol support (CSI u encoding, progressive enhancement).
     KittyKeyboardProtocol,
 
-    /// Detects the word "figma" in the terminal input in real-time and shows a
-    /// contextual button above the input.
-    FigmaDetection,
-
     /// Enables header rows on all inline menus (label, tabs, resize handle).
     InlineMenuHeaders,
     /// Clears the current prompt when opening the inline model selector from the
@@ -734,9 +613,6 @@ pub enum FeatureFlag {
     ///   block snapshot from the server.
     OzHandoff,
 
-    /// Enables the upgraded CLI agent session tracking and notifications infrastructure.
-    HOANotifications,
-
     /// Enables the install/update chip for the OpenCode Warp plugin.
     /// Requires HOANotifications to also be enabled.
     OpenCodeNotifications,
@@ -758,9 +634,6 @@ pub enum FeatureFlag {
     /// login-gated features are disabled until they sign in.
     SkipFirebaseAnonymousUser,
 
-    /// Hides AI, cloud, and account UI so the app presents as a standalone terminal.
-    LeanTerminal,
-
     /// Enables tab configs — user-definable TOML templates for launching custom tab layouts.
     TabConfigs,
 
@@ -770,18 +643,11 @@ pub enum FeatureFlag {
     /// Enables the ask_user_question tool allowing the agent to ask clarifying questions.
     AskUserQuestion,
 
-    /// When enabled, solo users (not on a team) can use BYO API keys.
-    SoloUserByok,
-
     /// Replaces the in-block warpification banner with a warpify footer.
     WarpifyFooter,
 
     /// Enables conversation retrieval via the CLI (oz run conversation get, oz run get --conversation).
     ConversationApi,
-
-    /// Guided onboarding flow for existing users introducing HOA features
-    /// (vertical tabs, agent inbox, tab configs).
-    HOAOnboardingFlow,
 
     /// Enables commit, push, and create-PR actions in the code review panel.
     GitOperationsInCodeReview,
@@ -831,7 +697,6 @@ pub enum FeatureFlag {
     /// Enables configurable expanded context windows for eligible GPT models.
     GPTConfigurableContextWindow,
 
-
     /// Enables the code review view for remote sessions.
     RemoteCodeReview,
 
@@ -842,18 +707,6 @@ pub enum FeatureFlag {
     /// and whole tab groups so they stay at the front of the tab list and
     /// are protected from reordering.
     PinnedTabs,
-
-    /// Gates the SuperGrok feature, which lets users
-    /// connect a Grok subscription instead of pasting an API key.
-    SuperGrok,
-
-    /// Gates connecting a ChatGPT subscription via Sign in with ChatGPT.
-    /// Account linking is server-side (iss+client_id+sub), not local tokens.
-    ChatGPTSubscription,
-
-    /// Gates Gemini Enterprise (GEAP) BYOLLM, which lets users
-    /// route eliglible models to GEAP instead of Warp-managed inference.
-    GeminiEnterprise,
 
     /// Gates NLD input classification matching the buffer against agent
     /// prompt history (in addition to shell command history). Still in
@@ -877,7 +730,6 @@ pub enum FeatureFlag {
     /// compute (docker image, instance shape, setup commands) by runner ID.
     CloudRunners,
 
-
     /// Renders supported solid box-drawing characters (`U+2500..=U+257F`)
     /// procedurally as cell-filling rectangles instead of from the font,
     /// eliminating seams between adjacent box-drawing cells in the terminal.
@@ -888,10 +740,6 @@ pub enum FeatureFlag {
     /// orchestration (`run_agents`) confirmation card and plan-card config
     /// block for choosing a runner when starting remote child agents.
     CloudAgentRunners,
-
-    /// Gates the account-first onboarding flow, including the reordered
-    /// pre-auth slides and post-auth account offer.
-    AccountFirstOnboarding,
 
     /// Accepts well-known non-UUID managed MCP ids (e.g. `"linear"`) as
     /// `warp_id` values in MCP configs and as bare identifiers in CLI
@@ -904,8 +752,6 @@ pub enum FeatureFlag {
     /// setup or API key required.
     FactoryMcp,
 
-
-
     /// Observes Ctrl-C (`0x03`) written on the shared-session viewer input
     /// path to a terminal with a working, rich-status-capable CLI agent
     /// session (e.g. Claude Code). Arms a short grace window; if no further
@@ -917,7 +763,6 @@ pub enum FeatureFlag {
 
     /// Uses fzf or atuin for history search instead of Warp's command search.
     ShellWidgetHandoff,
-
 
     /// Gates Ctrl+R / Command Search history ranking on match quality and usage priors (recency,
     /// session, exit status) plus whitespace space-AND tokenization, instead of Skim's raw
@@ -955,7 +800,6 @@ pub const LOCAL_FLAGS: &[FeatureFlag] = &[FeatureFlag::LocalClaudeCodexChildHarn
 pub const DOGFOOD_FLAGS: &[FeatureFlag] = &[
     FeatureFlag::LogExpensiveFramesInSentry,
     FeatureFlag::ToggleBootstrapBlock,
-    FeatureFlag::CreatingSharedSessions,
     FeatureFlag::RemoveAutosuggestionDuringTabCompletions,
     FeatureFlag::ResizeFix,
     FeatureFlag::AgentModeWorkflows,
@@ -972,7 +816,6 @@ pub const DOGFOOD_FLAGS: &[FeatureFlag] = &[
     FeatureFlag::FileAndDiffSetComments,
     FeatureFlag::SummarizationViaMessageReplacement,
     FeatureFlag::VideoRecording,
-    FeatureFlag::OzLaunchModal,
     // These are enabled via 100% experiment on prod warp-server,
     // but we need to enable here for dogfood builds.
     FeatureFlag::CrossRepoContext,
@@ -1082,15 +925,9 @@ impl FeatureFlag {
         // very least, the feature flag should be removed from the Preview changelog by removing it from PREVIEW_FLAGS.
         // ** ONLY Preview-exclusive features should be added to this list! **
         match self {
-            AgentSharedSessions => {
-                Some("Enables viewing agent conversations within shared sessions.")
-            }
             CodeReviewFind => Some("Enables the find bar in the code review pane."),
             BlocklistMarkdownImages => {
                 Some("Enables rendering markdown images inline in AI block list responses.")
-            }
-            CloudEnvironments => {
-                Some("Enables creating and managing Warp Environments via the CLI.")
             }
             CreateEnvironmentSlashCommand => Some(
                 "Enables the /create environment slash command for setting up Warp Environments with custom configurations.",

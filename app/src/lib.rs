@@ -121,8 +121,6 @@ pub mod settings_view;
 pub mod tab_configs;
 pub mod terminal;
 pub mod themes;
-use crate::persisted_workspace::PersistedWorkspace;
-use crate::settings::{AccessibilitySettings, ScrollSettings, SelectionSettings};
 use auth::auth_manager::AuthManager;
 use auth::auth_state::{AuthState, AuthStateProvider};
 use code::editor_management::CodeManager;
@@ -149,6 +147,8 @@ use warp_cli::{CliCommand, GlobalOptions};
 #[cfg(feature = "local_fs")]
 use watcher::HomeDirectoryWatcher;
 
+use crate::persisted_workspace::PersistedWorkspace;
+use crate::settings::{AccessibilitySettings, ScrollSettings, SelectionSettings};
 use crate::uri::web_intent_parser::maybe_rewrite_web_url_to_intent;
 use crate::view_components::DismissibleToast;
 pub mod workflows;

@@ -5,51 +5,6 @@
 use anyhow::Result;
 use warp_core::AppId;
 use warp_core::channel::{Channel, ChannelConfig, ChannelState, OzConfig, WarpServerConfig};
-use warp_core::features::FeatureFlag;
-
-/// AI, cloud, account, and onboarding features turned off to keep this build a lean terminal.
-const LEAN_TERMINAL_DISABLED_FLAGS: &[FeatureFlag] = &[
-    FeatureFlag::AgentMode,
-    FeatureFlag::AgentOnboarding,
-    FeatureFlag::AccountFirstOnboarding,
-    FeatureFlag::HOAOnboardingFlow,
-    FeatureFlag::AgentTips,
-    FeatureFlag::OzLaunchModal,
-    FeatureFlag::OpenWarpLaunchModal,
-    FeatureFlag::OrchestrationLaunchModal,
-    FeatureFlag::AgentCliLaunchModal,
-    FeatureFlag::CodeLaunchModal,
-    FeatureFlag::OzChangelogUpdates,
-    FeatureFlag::GetStartedTab,
-    FeatureFlag::CreateProjectFlow,
-    FeatureFlag::AvatarInTabBar,
-    FeatureFlag::ViewingSharedSessions,
-    FeatureFlag::CreatingSharedSessions,
-    FeatureFlag::SharedWithMe,
-    FeatureFlag::AgentSharedSessions,
-    FeatureFlag::CloudMode,
-    FeatureFlag::CloudConversations,
-    FeatureFlag::CloudEnvironments,
-    FeatureFlag::WarpManagedSecrets,
-    FeatureFlag::AmbientAgentsCommandLine,
-    FeatureFlag::ScheduledAmbientAgents,
-    FeatureFlag::McpServer,
-    FeatureFlag::FileBasedMcp,
-    FeatureFlag::UsageBasedPricing,
-    FeatureFlag::WarpPacks,
-    FeatureFlag::AgentManagementView,
-    FeatureFlag::AgentViewConversationListView,
-    FeatureFlag::HOANotifications,
-    FeatureFlag::GithubPrPromptChip,
-    FeatureFlag::AgentToolbarEditor,
-    FeatureFlag::FigmaDetection,
-    FeatureFlag::SuperGrok,
-    FeatureFlag::ChatGPTSubscription,
-    FeatureFlag::GeminiEnterprise,
-    FeatureFlag::SoloUserByok,
-    FeatureFlag::TeamApiKeys,
-    FeatureFlag::APIKeyManagement,
-];
 
 // Simple wrapper around warp::run() for Warp OSS builds.
 fn main() -> Result<()> {
@@ -65,9 +20,7 @@ fn main() -> Result<()> {
             autoupdate_config: None,
             mcp_static_config: None,
         },
-    )
-    .with_additional_features(&[FeatureFlag::LeanTerminal])
-    .with_disabled_features(LEAN_TERMINAL_DISABLED_FLAGS);
+    );
     if cfg!(debug_assertions) {
         state = state.with_additional_features(warp_core::features::DEBUG_FLAGS);
     }

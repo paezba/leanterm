@@ -1,4 +1,3 @@
-use crate::settings::native_preference::{NativePreferenceSettings, UserNativePreference};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ops::Not as _;
@@ -9,7 +8,6 @@ use ::settings::{Setting, ToggleableSetting};
 use lazy_static::lazy_static;
 use strum::IntoEnumIterator;
 use warp_core::channel::ChannelState;
-use warp_core::context_flag::ContextFlag;
 use warp_core::semantic_selection::{
     SemanticSelection, SemanticSelectionChangedEvent, SmartSelectEnabled,
 };
@@ -62,6 +60,7 @@ use crate::search::command_search::settings::{
     CommandSearchSettings, ShowGlobalWorkflowsInUniversalSearch,
 };
 use crate::server::telemetry::TelemetryEvent;
+use crate::settings::native_preference::{NativePreferenceSettings, UserNativePreference};
 use crate::settings::{
     AliasExpansionEnabled, AliasExpansionSettings, AppEditorSettings, AutocompleteSymbols,
     AutosuggestionKeybindingHint, ChangelogSettings, CloudPreferencesSettings, CodeSettings,
@@ -2616,15 +2615,6 @@ impl FeaturesPageView {
             .is_supported_on_current_platform()
         {
             session_widgets.push(Box::new(UndoCloseWidget::default()));
-        }
-
-        if FeatureFlag::CreatingSharedSessions.is_enabled()
-            && ContextFlag::CreateSharedSession.is_enabled()
-            && session_settings
-                .should_confirm_close_session
-                .is_supported_on_current_platform()
-        {
-            session_widgets.push(Box::new(ConfirmCloseSharedSessionWidget::default()));
         }
 
         let mut keys_widgets: Vec<Box<dyn SettingsWidget<View = Self>>> = vec![];
