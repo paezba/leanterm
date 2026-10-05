@@ -190,9 +190,6 @@ pub enum FeatureFlag {
     /// Enables full source code embedding of repos when using codebase context.
     FullSourceCodeEmbedding,
 
-    /// Enables codebase indexing inside remote server daemon processes.
-    RemoteCodebaseIndexing,
-
     /// If enabled, command palette searches will use Tantivy search instead of the default fuzzy search.
     UseTantivySearch,
 
@@ -813,8 +810,6 @@ pub const DOGFOOD_FLAGS: &[FeatureFlag] = &[
     FeatureFlag::CodeReviewScrollPreservation,
     FeatureFlag::RememberFastForwardState,
     FeatureFlag::GeminiNotifications,
-    #[cfg(not(windows))]
-    FeatureFlag::RemoteCodebaseIndexing,
     FeatureFlag::GPTConfigurableContextWindow,
     FeatureFlag::WarpControlCli,
     FeatureFlag::TerminalLifecycleRecovery,
@@ -839,8 +834,6 @@ pub const RELEASE_FLAGS: &[FeatureFlag] = &[
     FeatureFlag::Changelog,
     FeatureFlag::VideoRecording,
     FeatureFlag::ImeMarkedText,
-    // Remote server binary is not yet supported on Windows.
-    #[cfg(not(windows))]
     #[cfg(any(target_os = "macos", target_os = "windows"))]
     FeatureFlag::DragTabsToWindows,
 ];

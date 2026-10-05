@@ -564,7 +564,6 @@ default = [
     "cloud_mode_input_v2",
     "cloud_mode_setup_v2",
     "handoff_cloud_cloud",
-    "remote_codebase_indexing",
     "custom_model_routers",
     "billing_and_usage_page_v2",
     "git_operations_in_code_review",
@@ -677,7 +676,6 @@ pprof_cpu_profiling = ["dep:pprof"]
 predict_am_queries = []
 record_app_active_events = []
 recording_mode = []
-remote_codebase_indexing = ["full_source_code_embedding"]
 
 # This feature should only be enabled when building a release bundle with
 # the bundle script, and can be used to conditionally enable functionality

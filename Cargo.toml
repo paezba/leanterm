@@ -510,12 +510,6 @@ codegen-units = 1
 inherits = "release-wasm"
 debug-assertions = true
 
-# A dev profile optimized for remote server deployment. Strips symbols to
-# reduce binary size and improve rsync delta transfer efficiency.
-[profile.dev-remote]
-inherits = "dev"
-strip = "symbols"
-
 [profile.dev-wasm]
 inherits = "dev"
 opt-level = "s"
