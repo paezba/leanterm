@@ -24,8 +24,6 @@ use super::shell::{ShellStarter, ShellStarterSource};
 #[cfg(unix)]
 use super::terminal_attributes::TerminalAttributesPoller;
 use super::{mio_channel, recorder};
-use crate::auth::AuthStateProvider;
-use crate::auth::auth_state::AuthState;
 use crate::banner::BannerState;
 use crate::context_chips::ContextChipKind;
 use crate::context_chips::prompt::Prompt;
@@ -437,14 +435,13 @@ fn on_shell_determined<S: TerminalSurface>(
 
     log::debug!("Using shell starter source {shell_starter_source:?}");
     let bg_executor = ctx.background_executor();
-    let auth_state = AuthStateProvider::as_ref(ctx).get();
 
     let is_fallback_shell = matches!(
         shell_starter_source,
         Some(ShellStarterSource::Fallback { .. })
     );
     let shell_starter = shell_starter_source
-        .map(|source| get_shell_starter_internal(source, bg_executor, auth_state));
+        .map(|source| get_shell_starter_internal(source, bg_executor));
     let shell_starter = match shell_starter {
         Some(shell_starter) => shell_starter,
         None => {
@@ -829,34 +826,9 @@ fn wire_up_terminal_attribute_poller_with_surface<S: TerminalSurface>(
     );
 }
 
-pub fn get_shell_starter(
-    chosen_shell: Option<AvailableShell>,
-    auth_state: &AuthState,
-    ctx: &mut AppContext,
-) -> Option<ShellStarter> {
-    let preferred_shell = chosen_shell.unwrap_or_else(|| {
-        AvailableShells::handle(ctx).read(ctx, |shells, ctx| shells.get_user_preferred_shell(ctx))
-    });
-    let shell_starter_or_wsl_name = ShellStarter::init(preferred_shell);
-
-    // TODO(alokedesai): Further refactor this function to make it clear that it's expensive.
-    shell_starter_or_wsl_name
-        .and_then(|starter| {
-            warpui::r#async::block_on(async { starter.to_shell_starter_source().await })
-        })
-        .map(|starter_source| {
-            get_shell_starter_internal(
-                starter_source,
-                ctx.background_executor().clone(),
-                auth_state,
-            )
-        })
-}
-
 fn get_shell_starter_internal(
     shell_starter_source: ShellStarterSource,
     _background_executor: Arc<Background>,
-    _auth_state: &AuthState,
 ) -> ShellStarter {
     match shell_starter_source {
         ShellStarterSource::Override(shell_starter) => shell_starter,

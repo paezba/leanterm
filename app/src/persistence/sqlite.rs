@@ -42,14 +42,11 @@ use crate::app_state::{
     NotebookPaneSnapshot, PaneFlex, PaneNodeSnapshot, RightPanelSnapshot, SettingsPaneSnapshot,
     SplitDirection, TabGroupSnapshot, TabSnapshot, TerminalPaneSnapshot, WindowSnapshot,
 };
-use crate::auth::UserUid;
-use crate::auth::auth_state::AuthStateProvider;
 use crate::code::editor_management::CodeSource;
 use crate::persisted_workspace::EnablementState;
 use crate::persistence::block_list::get_all_restored_blocks;
 use crate::persistence::model::CODE_REVIEW_PANE_KIND;
 use crate::safe_info;
-use crate::server::ids::ServerId;
 use crate::settings_view::SettingsSection;
 use crate::suggestions::ignored_suggestions_model::SuggestionType;
 use crate::tab::SelectedTabColor;
@@ -83,7 +80,7 @@ pub fn initialize(
     let database_path = database_file_path_for_scope(&scope);
     match init_db(&scope) {
         Ok(mut conn) => {
-            let persisted_data = read_persisted_data(&mut conn, ctx);
+            let persisted_data = read_persisted_data(&mut conn);
 
             let writer_handles = match start_writer(conn, database_path.clone()) {
                 Ok(writer_handles) => Some(writer_handles),
@@ -102,12 +99,8 @@ pub fn initialize(
     }
 }
 
-fn read_persisted_data(
-    conn: &mut SqliteConnection,
-    ctx: &mut AppContext,
-) -> Option<Box<PersistedData>> {
-    let user_uid = AuthStateProvider::as_ref(ctx).get().user_id();
-    match read_sqlite_data(conn, user_uid) {
+fn read_persisted_data(conn: &mut SqliteConnection) -> Option<Box<PersistedData>> {
+    match read_sqlite_data(conn) {
         Ok(app_state) => Some(Box::new(app_state)),
         Err(err) => {
             report_error!(anyhow::Error::new(err).context("Failed to read persisted data"));
@@ -609,7 +602,7 @@ fn save_app_state(conn: &mut SqliteConnection, app_state: &AppState) -> Result<(
                 vertical_tabs_panel_open: Some(window.vertical_tabs_panel_open),
                 fullscreen_state: window.fullscreen_state as i32,
                 agent_management_filters: None,
-                team_uid: window.team_uid.map(Into::into),
+                team_uid: None,
             };
             diesel::insert_into(schema::windows::dsl::windows)
                 .values(new_window)
@@ -1329,10 +1322,7 @@ fn read_node(conn: &mut SqliteConnection, node: model::PaneNode) -> Result<PaneN
 /// happen is the user won't have session restoration.
 ///
 /// In the future, the awkwardness of the transaction interface is resolved in diesel 2.0.0.
-fn read_sqlite_data(
-    conn: &mut SqliteConnection,
-    _current_user_id: Option<UserUid>,
-) -> Result<PersistedData, Error> {
+fn read_sqlite_data(conn: &mut SqliteConnection) -> Result<PersistedData, Error> {
     let app_state = {
         use schema::windows::dsl::*;
 
@@ -1506,9 +1496,6 @@ fn read_sqlite_data(
                     WindowSnapshot {
                         tabs: saved_tabs,
                         active_tab_index: tab_index,
-                        team_uid: window.team_uid.and_then(|persisted_team_uid| {
-                            ServerId::try_from(persisted_team_uid).ok()
-                        }),
                         quake_mode: window.quake_mode,
                         bounds,
                         universal_search_width: window.universal_search_width,

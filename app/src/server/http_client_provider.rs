@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use warp_core::context_flag::ContextFlag;
-use warp_server_client::network_logging::NetworkLogModel;
+use crate::server::network_logging::NetworkLogModel;
 use warpui::{Entity, ModelContext, SingletonEntity};
 
 /// Singleton that owns the shared HTTP client used for outbound requests.

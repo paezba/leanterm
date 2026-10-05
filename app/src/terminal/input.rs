@@ -115,7 +115,6 @@ use crate::pane_group::PaneGroupAction;
 use crate::pane_group::focus_state::PaneFocusHandle;
 use crate::prefix::longest_common_prefix;
 use crate::search::QueryFilter;
-use crate::server::ids::SyncId;
 use crate::session_management::SessionNavigationPromptElements;
 use crate::settings::{
     AliasExpansionSettings, AppEditorSettings, AppEditorSettingsChangedEvent, InputModeSettings,
@@ -144,7 +143,6 @@ use crate::workflows::command_parser::{
 };
 use crate::workflows::info_box::{WORKFLOW_PARAMETER_HIGHLIGHT_COLOR, WorkflowsMoreInfoView};
 use crate::workflows::local_workflows::LocalWorkflows;
-use crate::workflows::workflow_enum::EnumVariants;
 use crate::workflows::{self, WorkflowSelectionSource, WorkflowSource, WorkflowType};
 use crate::workspace::sync_inputs::SyncedInputState;
 use crate::workspace::{CommandSearchOptions, InitContent, ToastStack, WorkspaceAction};
@@ -612,10 +610,6 @@ struct WorkflowsState {
     selected_workflow_state: Option<SelectedWorkflowState>,
 }
 
-struct EnvVarCollectionState {
-    selected_env_vars: Option<SyncId>,
-}
-
 /// State when a workflow is selected.
 #[derive(Clone)]
 struct SelectedWorkflowState {
@@ -631,9 +625,6 @@ struct SelectedWorkflowState {
     /// Map of arguments to the corresponding index of highlights. This is necessary so that we can
     /// select all instances of an argument when a user changes the selected argument.
     argument_index_to_highlight_index: HashMap<WorkflowArgumentIndex, Vec<usize>>,
-
-    /// Map of arguments with enum variants to those variants, which are used as suggested inputs to the argument.
-    argument_index_to_enum_variants: HashMap<WorkflowArgumentIndex, EnumVariants>,
 
     workflow_source: WorkflowSource,
     workflow_type: WorkflowType,
@@ -958,7 +949,6 @@ pub struct Input {
     view_id: EntityId,
     input_render_state_model_handle: ModelHandle<InputRenderStateModel>,
     workflows_state: WorkflowsState,
-    env_var_collection_state: EnvVarCollectionState,
     voltron_view: ViewHandle<Voltron>,
     is_voltron_open: bool,
     command_x_ray_description: Option<Arc<Description>>,
@@ -1522,10 +1512,6 @@ impl Input {
             selected_workflow_state: None,
         };
 
-        let env_var_collection_state = EnvVarCollectionState {
-            selected_env_vars: None,
-        };
-
         let last_word_insertion = LastWordInsertion {
             insert_command_from_history_index: 0,
             is_latest_editor_event: false,
@@ -1562,7 +1548,6 @@ impl Input {
             view_id,
             input_render_state_model_handle,
             workflows_state,
-            env_var_collection_state,
             voltron_view,
             is_voltron_open: false,
             command_x_ray_description: None,
@@ -2185,15 +2170,8 @@ impl Input {
         });
     }
 
-    fn clear_selected_env_var_collection(&mut self) {
-        self.env_var_collection_state.selected_env_vars = None;
-    }
-
     /// Closes the workflows panel.
     fn clear_selected_workflow(&mut self, ctx: &mut ViewContext<Self>) {
-        // Clear the env var state if we had one.
-        self.clear_selected_env_var_collection();
-
         // `take()` closes the Workflows panel because the panel is only
         // rendered if `selected_workflow_state` is Some(..).
         if let Some(state) = self.workflows_state.selected_workflow_state.take() {
@@ -2341,14 +2319,12 @@ impl Input {
         argument_override: Option<HashMap<String, String>>,
         ctx: &mut ViewContext<Input>,
     ) {
-        let env_vars = workflow_type.as_workflow().default_env_vars();
         self.insert_workflow_into_input(
             workflow_type,
             workflow_source,
             workflow_selection_source,
             argument_override,
             None,
-            env_vars,
             true,
             ctx,
         );
@@ -2362,14 +2338,12 @@ impl Input {
         workflow_selection_source: WorkflowSelectionSource,
         ctx: &mut ViewContext<Input>,
     ) {
-        let env_vars = workflow_type.as_workflow().default_env_vars();
         self.insert_workflow_into_input(
             workflow_type,
             workflow_source,
             workflow_selection_source,
             None,
             Some(history_command),
-            env_vars,
             true,
             ctx,
         );
@@ -2412,7 +2386,6 @@ impl Input {
         workflow_selection_source: WorkflowSelectionSource,
         argument_overrides: Option<HashMap<String, String>>,
         history_command: Option<&str>,
-        selected_env_vars: Option<SyncId>,
         should_show_more_info_view: bool,
         ctx: &mut ViewContext<Input>,
     ) {
@@ -2480,8 +2453,6 @@ impl Input {
                     );
                 });
 
-                let enum_variants_map = HashMap::new();
-
                 self.workflows_state.selected_workflow_state = Some(SelectedWorkflowState {
                     more_info_view: self.create_workflows_info_view(
                         workflow_type.clone(),
@@ -2489,7 +2460,6 @@ impl Input {
                         ctx,
                     ),
                     argument_index_to_highlight_index: argument_index_to_highlight_index_map,
-                    argument_index_to_enum_variants: enum_variants_map,
                     workflow_source,
                     workflow_type,
                     workflow_selection_source,
@@ -2512,7 +2482,6 @@ impl Input {
                         ctx,
                     ),
                     argument_index_to_highlight_index: HashMap::new(),
-                    argument_index_to_enum_variants: HashMap::new(),
                     workflow_source,
                     workflow_type,
                     workflow_selection_source,
@@ -2520,8 +2489,6 @@ impl Input {
                 });
             }
         };
-
-        self.env_var_collection_state.selected_env_vars = selected_env_vars;
 
         // Emit the a11y content as the last step so that it overwrites any of the a11y content
         // emitted by the editor (if multiple `AccessibilityContent`s are emitted within the same
@@ -2661,9 +2628,6 @@ impl Input {
         text_style_ranges: Vec<Range<ByteOffset>>,
         ctx: &mut ViewContext<Self>,
     ) {
-        let mut variants = None;
-        let mut selected_ranges = Vec::new();
-
         if let Some(active_workflow_state) = self.workflows_state.selected_workflow_state.as_ref() {
             active_workflow_state
                 .more_info_view
@@ -2678,10 +2642,6 @@ impl Input {
                         ) {
                             selected_workflow_state.set_argument_cycling_enabled(false);
                         } else {
-                            variants = active_workflow_state
-                                .argument_index_to_enum_variants
-                                .get(&selected_workflow_state.currently_selected_argument());
-
                             selected_workflow_state.set_argument_cycling_enabled(true);
                             // Get all of the highlighted ranges for the currently selected argument.
                             let byte_ranges = active_workflow_state
@@ -2694,7 +2654,6 @@ impl Input {
                                 });
 
                             if let Some(byte_ranges) = byte_ranges {
-                                selected_ranges = byte_ranges.clone().collect();
                                 editor.select_ranges_by_byte_offset(byte_ranges, ctx);
                             }
                         }
@@ -2702,72 +2661,9 @@ impl Input {
                 });
         }
 
-        if let Some(enum_variants) = variants {
-            self.populate_enum_suggestions_menu(enum_variants.clone(), selected_ranges, ctx);
-        } else {
-            self.suggestions_mode_model.update(ctx, |m, ctx| {
-                m.set_mode(InputSuggestionsMode::Closed, ctx);
-            });
-        }
-        ctx.notify();
-    }
-
-    fn populate_enum_suggestions_menu(
-        &mut self,
-        enum_variants: EnumVariants,
-        selected_ranges: Vec<Range<ByteOffset>>,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        // If the newly highlighted argument has enum variants, populate the suggestions menu
-        let position = self.editor.as_ref(ctx).first_selection_end_to_point(ctx);
-
-        self.editor.update(ctx, |editor, ctx| {
-            editor.cache_buffer_point(
-                position,
-                COMPLETIONS_START_OF_REPLACEMENT_SPAN_POSITION_ID,
-                ctx,
-            );
+        self.suggestions_mode_model.update(ctx, |m, ctx| {
+            m.set_mode(InputSuggestionsMode::Closed, ctx);
         });
-
-        let variants = match enum_variants {
-            EnumVariants::Static(variants) => {
-                self.suggestions_mode_model.update(ctx, |m, ctx| {
-                    m.set_mode(
-                        InputSuggestionsMode::StaticWorkflowEnumSuggestions {
-                            suggestions: variants.clone(),
-                            menu_position: TabCompletionsMenuPosition::AtFirstCursor,
-                            selected_ranges,
-                            cursor_point: position,
-                        },
-                        ctx,
-                    );
-                });
-                variants
-            }
-            EnumVariants::Dynamic(command) => {
-                if FeatureFlag::DynamicWorkflowEnums.is_enabled() {
-                    self.suggestions_mode_model.update(ctx, |m, ctx| {
-                        m.set_mode(
-                            InputSuggestionsMode::DynamicWorkflowEnumSuggestions {
-                                suggestions: vec![],
-                                menu_position: TabCompletionsMenuPosition::AtFirstCursor,
-                                selected_ranges,
-                                cursor_point: position,
-                                dynamic_enum_status: DynamicEnumSuggestionStatus::Unapproved,
-                                command,
-                            },
-                            ctx,
-                        );
-                    });
-                }
-                vec![]
-            }
-        };
-
-        self.input_suggestions.update(ctx, |input, ctx| {
-            input.set_enum_variants(variants, ctx);
-        });
-
         ctx.notify();
     }
 
@@ -2828,16 +2724,12 @@ impl Input {
                                 linked_workflow_data.linked_workflow(ctx)
                             })
                         {
-                            // TODO(ben): We should include the chosen env vars in the history
-                            // entry.
-                            let env_vars = workflow_type.as_workflow().default_env_vars();
                             self.insert_workflow_into_input(
                                 workflow_type,
                                 workflow_source,
                                 WorkflowSelectionSource::UpArrowHistory,
                                 None,
                                 Some(selected_item.text()),
-                                env_vars,
                                 /*should_show_more_info_view=*/ false,
                                 ctx,
                             );
@@ -2914,10 +2806,7 @@ impl Input {
 
     /// Resets the SelectedWorkflowState back to the original workflow, with its original arguments. This
     /// is useful when the command does not match the original workflow.
-    fn reset_workflow_state(&mut self, env_vars: Option<SyncId>, ctx: &mut ViewContext<Input>) {
-        // We want to also initially clear the stored selected env var.
-        self.clear_selected_env_var_collection();
-
+    fn reset_workflow_state(&mut self, ctx: &mut ViewContext<Input>) {
         if let Some(state) = self.workflows_state.selected_workflow_state.take() {
             self.insert_workflow_into_input(
                 state.workflow_type,
@@ -2925,7 +2814,6 @@ impl Input {
                 state.workflow_selection_source,
                 None,
                 None,
-                env_vars,
                 true,
                 ctx,
             )
@@ -3202,9 +3090,6 @@ impl Input {
     }
 
     fn clear_current_workflow(&mut self, ctx: &mut ViewContext<Input>) {
-        // Whenever we clear the workflow we also want to clear the env vars
-        self.clear_selected_env_var_collection();
-
         if let Some(state) = self.workflows_state.selected_workflow_state.take() {
             self.update_workflows_info_box_expanded_setting(ctx, &state);
         }
@@ -6055,7 +5940,7 @@ impl TypedActionView for Input {
                 self.maybe_open_completion_suggestions(ctx);
             }
             InputAction::HideWorkflowInfoCard => self.hide_workflows_info_box(ctx),
-            InputAction::ResetWorkflowState => self.reset_workflow_state(None, ctx),
+            InputAction::ResetWorkflowState => self.reset_workflow_state(ctx),
             InputAction::ToggleClassicCompletionsMode => {
                 InputSettings::handle(ctx).update(ctx, |settings, ctx| {
                     if let Err(e) = settings.classic_completions_mode.toggle_and_save_value(ctx) {

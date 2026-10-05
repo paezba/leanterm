@@ -51,9 +51,6 @@ byte-unit = "5.1.4"
 cfg-if.workspace = true
 chrono.workspace = true
 clap.workspace = true
-cloud_object_client.workspace = true
-cloud_object_models.workspace = true
-cloud_objects.workspace = true
 command = { workspace = true }
 command-corrections.workspace = true
 crc.workspace = true
@@ -195,10 +192,7 @@ warp_completer.workspace = true
 warp_core.workspace = true
 warp_errors = { workspace = true, features = ["reqwest-errors"] }
 warp_editor.workspace = true
-warp_graphql.workspace = true
 warp_search_core.workspace = true
-warp_server_auth.workspace = true
-warp_server_client.workspace = true
 warp_util.workspace = true
 warpui = { workspace = true, features = ["schema_gen", "settings_value"] }
 warpui_core.workspace = true
@@ -259,7 +253,6 @@ wgpu.workspace = true
 app-installation-detection.workspace = true
 async-io.workspace = true
 axum.workspace = true
-cloud_object_persistence.workspace = true
 comfy-table = "7.1.4"
 inquire = "0.9.1"
 diesel = { workspace = true, features = ["sqlite", "chrono"] }
@@ -361,12 +354,10 @@ winreg.workspace = true
 [dev-dependencies]
 ai = { workspace = true, features = ["test-util"] }
 async-process.workspace = true
-firebase.workspace = true
 jsonschema = { workspace = true, default-features = false }
 async-executor = "1.5.1"
 command = { workspace = true, features = ["test-util"] }
 ctor = "0.1.18"
-cloud_object_client = { workspace = true, features = ["test-util"] }
 http_client = { workspace = true, features = ["test-util"] }
 mockall.workspace = true
 mockito.workspace = true
@@ -376,8 +367,6 @@ virtual-fs.workspace = true
 warp_completer = { workspace = true, features = ["test-util"] }
 warp_core = { workspace = true, features = ["test-util"] }
 warp_editor = { workspace = true, features = ["test-util"] }
-warp_server_client = { workspace = true, features = ["test-util"] }
-warp_server_auth = { workspace = true, features = ["test-util"] }
 warp_terminal = { workspace = true, features = ["test-util"] }
 warpui = { workspace = true, features = ["test-util"] }
 warpui_core = { workspace = true, features = ["test-util"] }
@@ -613,10 +602,8 @@ agent_mode_evals = [
     "warpui/defer_scene_build",
     "full_source_code_embedding",
     "cross_repo_context",
-    "cloud_object_models/agent_mode_evals",
     "rust-embed/debug-embed",
     "warp_logging/agent_mode_evals",
-    "warp_server_client/agent_mode_evals",
 ]
 ambient_agents_image_upload = []
 allow_ignoring_input_suggestions = []
@@ -688,19 +675,16 @@ runtime_feature_flags = []
 selectable_prompt = []
 settings_file = []
 sequential_storage = []
-skip_login = ["warp_server_client/skip_login"]
+skip_login = []
 # This feature should only be enabled when building a self-contained binary with the bundle script.
 standalone = ["warp_assets/standalone", "warp_core/standalone"]
 prompt_suggestions_via_maa = []
 tab_close_button_on_left = []
 test-util = [
-    "cloud_object_client/test-util",
-    "warp_server_auth/test-util",
     "http_client/test-util",
     "warp_core/test-util",
     "warp_terminal/test-util",
     "ai/test-util",
-    "warp_server_client/test-util",
 ]
 terminal_lifecycle_recovery = []
 # Feature enabled only when app is compiled for integration tests.
@@ -710,7 +694,6 @@ integration_tests = [
     "warpui/test-util",
     "warp_core/integration_tests",
     "warp_terminal/integration_tests",
-    "warp_server_client/integration_tests",
 ]
 traces = []
 workflow_aliases = []

@@ -10,8 +10,6 @@ use warp_errors::report_error;
 pub use warp_terminal::model::secrets::RegexDisplayInfo;
 use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
 
-use crate::auth::AuthStateProvider;
-use crate::auth::auth_state::AuthState;
 
 pub const TELEMETRY_ENABLED_DEFAULTS_KEY: &str = "TelemetryEnabled";
 pub const CRASH_REPORTING_ENABLED_DEFAULTS_KEY: &str = "CrashReportingEnabled";
@@ -120,7 +118,6 @@ maybe_define_setting!(HasInitializedDefaultSecretRegexes, group: PrivacySettings
 /// Singleton model for managing the user's privacy settings (whether the user has enabled crash
 /// reporting and/or telemetry).
 pub struct PrivacySettings {
-    auth_state: Arc<AuthState>,
     pub is_telemetry_enabled: bool,
     pub is_crash_reporting_enabled: bool,
     pub is_cloud_conversation_storage_enabled: bool,
@@ -215,7 +212,6 @@ impl PrivacySettings {
     /// settings are fetched later via `fetch_or_update_settings`, which is called from
     /// `on_user_fetched` after the user's auth state is established.
     fn new(ctx: &mut ModelContext<Self>) -> Self {
-        let auth_state = AuthStateProvider::as_ref(ctx).get().clone();
 
         // Initialize from `WarpDrivePrivacySettings`, which is the source of truth for these
         // booleans.
@@ -264,7 +260,6 @@ impl PrivacySettings {
             HasInitializedDefaultSecretRegexes::new_from_storage(ctx);
 
         Self {
-            auth_state,
             is_crash_reporting_enabled,
             is_telemetry_enabled,
             is_cloud_conversation_storage_enabled,
@@ -301,7 +296,6 @@ impl PrivacySettings {
     #[cfg(any(test, feature = "test-util"))]
     pub fn mock(_ctx: &mut ModelContext<Self>) -> Self {
         Self {
-            auth_state: Arc::new(AuthState::new_for_test()),
             is_crash_reporting_enabled: true,
             is_telemetry_enabled: true,
             is_cloud_conversation_storage_enabled: true,

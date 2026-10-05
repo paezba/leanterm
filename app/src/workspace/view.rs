@@ -119,9 +119,6 @@ use crate::app_state::{
     TabSnapshot, TerminalPaneSnapshot, WindowSnapshot,
 };
 use crate::appearance::{Appearance, AppearanceManager};
-use crate::auth::AuthStateProvider;
-use crate::auth::auth_manager::AuthManager;
-use crate::auth::auth_state::AuthState;
 use crate::banner::BannerState;
 use crate::channel::ChannelState;
 use crate::code::editor::{add_color, remove_color};
@@ -649,7 +646,6 @@ pub struct Workspace {
     tab_group_rename_editor: ViewHandle<EditorView>,
     vertical_tabs_search_input: ViewHandle<EditorView>,
     user_default_shell_unsupported_banner_model_handle: ModelHandle<BannerState>,
-    auth_state: Arc<AuthState>,
     tab_right_click_menu: ViewHandle<Menu<WorkspaceAction>>,
     show_tab_right_click_menu: Option<(usize, TabContextMenuAnchor)>,
     /// Open tab group more-options menu; reuses the `tab_right_click_menu` view.
@@ -1844,8 +1840,6 @@ impl Workspace {
             me.handle_palette_event(event, ctx);
         });
 
-        let _auth_manager = AuthManager::handle(ctx);
-
         // Handle theme updates when there is a cloud update to themes while the picker is open.
         ctx.subscribe_to_model(&ThemeSettings::handle(ctx), |me, _, _, ctx| {
             if me.is_theme_chooser_open() {
@@ -2015,7 +2009,6 @@ impl Workspace {
             tab_group_rename_editor: Self::tab_group_rename_editor(ctx),
             vertical_tabs_search_input: Self::vertical_tabs_search_input(ctx),
             user_default_shell_unsupported_banner_model_handle,
-            auth_state: AuthStateProvider::as_ref(ctx).get().clone(),
             tab_right_click_menu,
             show_tab_right_click_menu: None,
             show_tab_group_right_click_menu: None,
@@ -2498,13 +2491,6 @@ impl Workspace {
                     ctx,
                 );
             }
-            NewWorkspaceSource::TeamSwitched { .. } => {
-                self.configure_empty_workspace(
-                    None, /* previous_active_window */
-                    None, /* shell */
-                    ctx,
-                );
-            }
             NewWorkspaceSource::NotebookFromFilePath { file_path } => {
                 self.add_tab_for_file_notebook(file_path, ctx);
             }
@@ -2607,7 +2593,6 @@ impl Workspace {
             NewWorkspaceSource::Empty { .. }
             | NewWorkspaceSource::FromTemplate { .. }
             | NewWorkspaceSource::Session { .. }
-            | NewWorkspaceSource::TeamSwitched { .. }
             | NewWorkspaceSource::NotebookFromFilePath { .. } => should_default_open,
         }
     }
@@ -6017,11 +6002,6 @@ impl Workspace {
 
     fn user_menu_items(&self, app: &AppContext) -> Vec<MenuItem<WorkspaceAction>> {
         let mut items = Vec::new();
-        if !self.auth_state.is_anonymous_or_logged_out() {
-            let name = self.auth_state.username_for_display().unwrap_or_default();
-            items.push(MenuItemFields::new(name).with_disabled(true).into_item())
-        }
-
         let _appearance = Appearance::as_ref(app);
 
         items.extend([
@@ -7532,7 +7512,6 @@ impl Workspace {
         WindowSnapshot {
             tabs,
             active_tab_index,
-            team_uid: None,
             bounds: window_bounds,
             fullscreen_state: window_fullscreen_state,
             quake_mode,
@@ -10272,9 +10251,7 @@ impl Workspace {
         fallback_behavior: TerminalSessionFallbackBehavior,
         ctx: &mut ViewContext<Self>,
     ) {
-        if self.auth_state.is_anonymous_or_logged_out()
-            && workflow.as_workflow().is_agent_mode_workflow()
-        {
+        if workflow.as_workflow().is_agent_mode_workflow() {
             return;
         }
         if let Some(terminal_view_handle) =
@@ -11843,10 +11820,7 @@ impl Workspace {
         ctx: &AppContext,
     ) -> Box<dyn Element> {
         let mut tab_bar = Flex::row().with_cross_axis_alignment(CrossAxisAlignment::Center);
-        let is_web_anonymous_user = self
-            .auth_state
-            .is_user_web_anonymous_user()
-            .unwrap_or_default();
+        let is_web_anonymous_user = false;
 
         // Simplified mode for viewing Warp Drive objects, shared sessions, or conversation transcripts on WASM
         #[cfg(target_family = "wasm")]
@@ -14986,9 +14960,7 @@ impl View for Workspace {
             context.set.insert(flags::SHOW_HIDDEN_FILES);
         }
 
-        if self.auth_state.is_anonymous_or_logged_out() {
-            context.set.insert("IsAnonymousUser");
-        }
+        context.set.insert("IsAnonymousUser");
 
         self.add_toggle_setting_context_flags(app, &mut context);
 

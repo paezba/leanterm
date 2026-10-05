@@ -22,8 +22,6 @@ use watcher::HomeDirectoryWatcher;
 use workflows::workflow::{Argument, ArgumentType, Workflow};
 
 use super::*;
-use crate::auth::AuthStateProvider;
-use crate::auth::auth_manager::AuthManager;
 use crate::context_chips::prompt::Prompt;
 use crate::editor::{DisplayPoint, EditorAction, TextStyleOperation};
 use crate::input_suggestions::Item;
@@ -230,8 +228,6 @@ pub fn initialize_app(app: &mut App) {
     // The blocklist controller created during terminal bootstrap subscribes to
     // OrchestrationEventService and OrchestrationEventStreamer unconditionally,
     // so both singletons must be registered before bootstrap.
-    app.add_singleton_model(|_| AuthStateProvider::new_for_test());
-    app.add_singleton_model(AuthManager::new_for_test);
     app.add_singleton_model(DirectoryWatcher::new);
     app.add_singleton_model(|_| DetectedRepositories::default());
     app.add_singleton_model(|_| crate::code_review::git_repo_model::GitRepoModels::new());

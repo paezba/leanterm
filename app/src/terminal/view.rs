@@ -139,8 +139,6 @@ use super::warpify::WarpificationSource;
 use super::warpify::success_block::{WarpifySuccessBlock, WarpifySuccessBlockEvent};
 use super::warpify::trigger_state::{SshBlockState, WarpifyState};
 use crate::appearance::{Appearance, AppearanceEvent};
-use crate::auth::AuthStateProvider;
-use crate::auth::auth_state::AuthState;
 use crate::banner::{
     Banner, BannerAction, BannerEvent, BannerState, BannerTextButton, BannerTextContent,
     DismissalType,
@@ -1538,7 +1536,6 @@ pub struct TerminalView {
 
     mouse_states: TerminalViewMouseStates,
 
-    auth_state: Arc<AuthState>,
 
     /// A sender used to handle messages for whenever the entire terminal view
     /// changes size.  Note that this size contains not just the content element
@@ -2414,7 +2411,6 @@ impl TerminalView {
             mouse_states: Default::default(),
             open_grid_link_tool_tip: None,
             open_rich_content_link_tool_tip: None,
-            auth_state: AuthStateProvider::as_ref(ctx).get().clone(),
             find_bar,
             resize_tx,
             find_link_tx,
@@ -12030,7 +12026,6 @@ impl TypedActionView for TerminalView {
             | NotificationsErrorBanner(_)
             | ToggleSnackbarInActivePane
             | HyperlinkClick { .. }
-            | AttemptLoginGatedFeature
             | StartFileDropTarget
             | StopFileDropTarget
             | RunNativeShellCompletions { .. }
@@ -12300,7 +12295,6 @@ impl TypedActionView for TerminalView {
             HyperlinkClick(hyperlink) => {
                 self.open_hyperlink_uri(&hyperlink.url, ctx);
             }
-            AttemptLoginGatedFeature => {}
             StartFileDropTarget => {
                 let Some(session) = self
                     .active_block_session_id()

@@ -10,7 +10,6 @@ use regex::Regex;
 use string_offset::{ByteOffset, CharCounter, CharOffset};
 
 use super::workflow::{ArgumentType, Workflow};
-use crate::server::ids::SyncId;
 
 lazy_static! {
     /// Regex for escaped arguments in workflow command.
@@ -75,8 +74,6 @@ pub struct WorkflowDisplayData {
     /// if workflow.arguments = ["foo", "bar"] and the workflow is "echo {{foo}} {{bar}} {{foo}}",
     /// the entry for "foo" would be [5-8, 13-16].
     pub argument_index_to_char_range_map: HashMap<WorkflowArgumentIndex, Vec<Range<CharOffset>>>,
-
-    pub argument_index_to_object_id_map: HashMap<WorkflowArgumentIndex, SyncId>,
 }
 
 #[derive(Clone)]
@@ -275,7 +272,6 @@ fn compute_workflow_display_data_internal(
     let mut replaced_ranges = vec![];
     let mut argument_index_to_highlight_index_map = HashMap::new();
     let mut argument_index_to_char_range_map = HashMap::new();
-    let mut argument_index_to_object_id_map = HashMap::new();
 
     // Compute the final command (with the argument identifiers replaced with the argument name)
     // and its corresponding text style ranges.
@@ -324,10 +320,6 @@ fn compute_workflow_display_data_internal(
             .push(
                 text_char_range.start..(text_char_range.start + replacement_text.chars().count()),
             );
-
-        if let ArgumentType::Enum { enum_id } = workflow_argument.argument_type {
-            argument_index_to_object_id_map.insert(workflow_argument.argument_index, *enum_id);
-        }
     }
 
     WorkflowDisplayData {
@@ -335,7 +327,6 @@ fn compute_workflow_display_data_internal(
         replaced_ranges,
         argument_index_to_highlight_index_map,
         argument_index_to_char_range_map,
-        argument_index_to_object_id_map,
     }
 }
 

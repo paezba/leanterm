@@ -27,7 +27,6 @@ use warpui::{
 use crate::editor::{
     EditorOptions, EditorView, Event as EditorEvent, PropagateAndNoOpNavigationKeys, TextOptions,
 };
-use crate::server::ids::{ClientId, HashableId, ServerId, SyncId};
 use crate::ui_components::icons::Icon;
 
 /// Trait for items that can be displayed in a generic menu
@@ -535,14 +534,6 @@ impl DisplayChipMenu {
     fn close(&mut self, ctx: &mut ViewContext<Self>) {
         ctx.emit(PromptDisplayMenuEvent::CloseMenu);
         ctx.notify();
-    }
-
-    fn parse_sync_id_lossy(s: &str) -> SyncId {
-        if let Some(hashed) = ClientId::from_hash(s) {
-            SyncId::ClientId(hashed)
-        } else {
-            SyncId::ServerId(ServerId::from_string_lossy(s))
-        }
     }
 
     fn render_fixed_footer_option(

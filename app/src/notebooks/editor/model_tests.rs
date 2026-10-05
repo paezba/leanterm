@@ -32,7 +32,6 @@ use warpui::{
 use super::super::rich_text_styles;
 use super::NotebooksEditorModel;
 use crate::appearance::Appearance;
-use crate::auth::AuthStateProvider;
 use crate::editor::InteractionState;
 use crate::notebooks::editor::keys::NotebookKeybindings;
 use crate::notebooks::editor::model::DEBOUNCED_RESIZE_PERIOD;
@@ -41,7 +40,6 @@ use crate::notebooks::editor::view::{RichTextEditorConfig, RichTextEditorView};
 use crate::notebooks::file::MarkdownDisplayMode;
 use crate::notebooks::link::{NotebookLinks, SessionSource};
 use crate::search::files::model::FileSearchModel;
-use crate::server::ids::{ServerId, SyncId};
 use crate::settings::FontSettings;
 use crate::settings_view::keybindings::KeybindingChangedNotifier;
 use crate::terminal::keys::TerminalKeybindings;
@@ -131,7 +129,6 @@ fn setup_editor_window(app: &mut App, should_initialize_cloud_model: bool) -> wa
 
 fn initialize_deps(app: &mut App) {
     app.add_singleton_model(|_| Appearance::mock());
-    app.add_singleton_model(|_| AuthStateProvider::new_for_test());
     initialize_settings_for_tests(app);
 }
 

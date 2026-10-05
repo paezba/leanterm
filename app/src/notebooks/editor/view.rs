@@ -63,7 +63,6 @@ use crate::notebooks::editor::model::word_unit;
 use crate::notebooks::file::MarkdownDisplayMode;
 use crate::notebooks::link::{LinkTarget, NotebookLinks, ResolveError};
 use crate::notebooks::telemetry::{ActionEntrypoint, BlockInfo, SelectionMode};
-use crate::server::ids::SyncId;
 use crate::settings::{AppEditorSettings, FontSettings, SelectionSettings};
 use crate::terminal::grid_renderer::URL_COLOR;
 use crate::terminal::links::directly_open_link_keybinding_string;
@@ -846,8 +845,6 @@ pub enum EditorViewAction {
     /// Signal from a child model ([`NotebookCommand`] or [`EmbeddedItemModel`]) to run a
     /// workflow-like command.
     RunWorkflow(NotebookWorkflow),
-    /// Signal from [`NotebookCommand`] to open a workflow.
-    EditWorkflow(SyncId),
     /// Signal from [`NotebookCommand`] that a new code block type has been selected.
     CodeBlockTypeSelectedAtOffset {
         start_anchor: Anchor,
@@ -944,7 +941,6 @@ pub enum EditorViewEvent {
     /// Emitted when the user runs a notebook workflow. The parent `NotebookView` is responsible
     /// for sending it to the active terminal.
     RunWorkflow(NotebookWorkflow),
-    EditWorkflow(SyncId),
     /// The block insertion menu was opened.
     OpenedBlockInsertionMenu(BlockInsertionSource),
     /// The find bar was opened.
@@ -3016,7 +3012,6 @@ impl TypedActionView for RichTextEditorView {
                 self.model
                     .update(ctx, |model, ctx| model.select_command_at_cursor(ctx))
             }
-            EditWorkflow(id) => ctx.emit(EditorViewEvent::EditWorkflow(*id)),
             RunWorkflow(workflow) => ctx.emit(EditorViewEvent::RunWorkflow(workflow.clone())),
             CodeBlockTypeSelectedAtOffset {
                 start_anchor,
@@ -3284,7 +3279,6 @@ impl TypedActionView for RichTextEditorView {
             | EditorViewAction::MaybeOpenFileOrUrl { .. }
             | EditorViewAction::RunSelectedCommands
             | EditorViewAction::CmdEnter
-            | EditorViewAction::EditWorkflow(_)
             | EditorViewAction::RunWorkflow(_)
             | EditorViewAction::RemoveEmbeddingAt(_)
             | EditorViewAction::OpenFile { .. }

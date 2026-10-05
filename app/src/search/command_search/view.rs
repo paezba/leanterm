@@ -28,8 +28,6 @@ use warpui::{
 use super::history::history_data_source_for_session;
 use super::zero_state::{CommandSearchZeroStateEvent, CommandSearchZeroStateView};
 use crate::appearance::Appearance;
-use crate::auth::AuthStateProvider;
-use crate::auth::auth_state::AuthState;
 use crate::completer::SessionContext;
 use crate::search::QueryFilter;
 use crate::search::command_search::searcher::{CommandSearchItemAction, CommandSearchMixer};
@@ -103,7 +101,6 @@ pub struct CommandSearchView {
     zero_state_handle: ViewHandle<CommandSearchZeroStateView>,
     handle: WeakViewHandle<Self>,
     menu_positioning: MenuPositioning,
-    auth_state: Arc<AuthState>,
     state: CommandSearchViewState,
     visible_results_range_sender: Sender<Range<usize>>,
     resizable_state_handle: ResizableStateHandle,
@@ -177,7 +174,6 @@ impl CommandSearchView {
             });
 
         Self {
-            auth_state: AuthStateProvider::as_ref(ctx).get().clone(),
             zero_state_handle,
             menu_positioning: Default::default(),
             handle: ctx.handle(),

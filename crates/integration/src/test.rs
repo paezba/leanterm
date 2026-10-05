@@ -14,7 +14,6 @@ mod input;
 mod keyboard_protocol;
 mod launch_configs;
 mod native_shell_completions;
-mod notebooks;
 mod osc8_hyperlinks;
 mod pane_restoration;
 #[cfg(target_os = "macos")]
@@ -31,7 +30,6 @@ mod subshell;
 mod sync_inputs;
 mod typeahead;
 mod video_recording;
-mod websockets;
 mod workflows;
 mod workspace;
 
@@ -55,7 +53,6 @@ pub use input::*;
 pub use keyboard_protocol::*;
 pub use launch_configs::*;
 pub use native_shell_completions::*;
-pub use notebooks::*;
 pub use osc8_hyperlinks::*;
 pub use pane_restoration::*;
 use parking_lot::Mutex;
@@ -85,7 +82,7 @@ use warp::appearance::Appearance;
 use warp::cmd_or_ctrl_shift;
 use warp::features::FeatureFlag;
 use warp::integration_testing::assertions::{
-    assert_binding_display_string, go_offline, go_online, join_a_workspace,
+    assert_binding_display_string,
 };
 use warp::integration_testing::block::{
     BlockPosition, LinePosition, assert_block_visible, assert_bottom_of_block_approx_at,
@@ -136,9 +133,6 @@ use warp::integration_testing::view_getters::{
     single_input_suggestions_view_for_tab, single_input_view_for_tab,
     single_terminal_pane_view_for_tab, single_terminal_view, single_terminal_view_for_tab,
 };
-use warp::integration_testing::warp_drive::{
-    assert_is_left_panel_open, assert_warp_drive_is_closed, assert_warp_drive_is_open,
-};
 use warp::integration_testing::window::{
     add_and_save_window, add_window, add_window_and_check_bounds, close_window,
     save_active_window_id,
@@ -181,7 +175,6 @@ use warpui_core::windowing::WindowManager;
 use warpui_core::{
     AssetProvider, Event, SingletonEntity, UpdateView, ViewHandle, async_assert, async_assert_eq,
 };
-pub use websockets::*;
 pub use workflows::*;
 pub use workspace::*;
 
@@ -570,9 +563,8 @@ pub fn test_suggestions_menu_positioning() -> Builder {
                 ),
         )
         .with_step(
-            new_step_with_default_assertions("Open Warp Drive")
-                .with_click_on_saved_position("workspace:toggle_left_panel")
-                .add_assertion(assert_is_left_panel_open()),
+            new_step_with_default_assertions("Open left panel")
+                .with_click_on_saved_position("workspace:toggle_left_panel"),
         )
         .with_step(
             new_step_with_default_assertions("Assert that suggestions menu updated")
@@ -6663,32 +6655,6 @@ pub fn test_pane_group_state_clear_blocks() -> Builder {
             new_step_with_default_assertions("clear the pane")
                 .with_keystrokes(&[cmd_or_ctrl_shift("k")])
                 .add_assertion(assert_pane_group_has_state(0, TerminalViewState::Normal)),
-        )
-}
-
-// cheating a little bit in this test; it's hard to tell if the create folder dialog is open from
-// the workspace view, but we DO force warp drive open to show the dialog, so we can look for that
-pub fn test_create_folder_from_command_palette() -> Builder {
-    new_builder()
-        .with_step(wait_until_bootstrapped_single_pane_for_tab(0))
-        .with_step(join_a_workspace())
-        .with_step(go_offline())
-        .with_steps(
-            open_command_palette_and_run_action("Create a New Team Folder")
-                .add_assertion(assert_warp_drive_is_closed()),
-        )
-        .with_steps(
-            open_command_palette_and_run_action("Create a New Personal Folder")
-                .add_assertion(assert_warp_drive_is_closed()),
-        )
-        .with_step(go_online())
-        .with_steps(
-            open_command_palette_and_run_action("Create a New Team Folder")
-                .add_assertion(assert_warp_drive_is_open()),
-        )
-        .with_steps(
-            open_command_palette_and_run_action("Create a New Personal Folder")
-                .add_assertion(assert_warp_drive_is_open()),
         )
 }
 

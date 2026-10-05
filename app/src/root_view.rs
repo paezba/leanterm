@@ -29,7 +29,6 @@ use crate::interval_timer::IntervalTimer;
 use crate::launch_configs::launch_config;
 use crate::pane_group::{NewTerminalOptions, PanesLayout};
 use crate::persistence::ModelEvent;
-use crate::server::ids::ServerId;
 use crate::settings::QuakeModeSettings;
 use crate::settings_view::{SettingsSection, flags};
 use crate::terminal::available_shells::AvailableShell;
@@ -636,7 +635,6 @@ pub(crate) fn open_new_from_path(
                 NewTerminalOptions::default()
                     .with_initial_directory_opt(path_if_directory(&arg.path).map(Into::into)),
             ),
-            initial_team_uid: None,
         },
         ctx,
     )
@@ -1052,15 +1050,11 @@ pub enum NewWorkspaceSource {
     },
     Session {
         options: Box<NewTerminalOptions>,
-        initial_team_uid: Option<ServerId>,
     },
     NotebookFromFilePath {
         file_path: Option<PathBuf>,
     },
     /// Opens a new window pre-scoped to a specific team, chosen via the title-bar team switcher.
-    TeamSwitched {
-        team_uid: ServerId,
-    },
     /// A tab is being transferred from another window via the transferable views framework.
     /// The workspace will create a placeholder tab, which will be replaced by the transferred
     /// PaneGroup after window creation.

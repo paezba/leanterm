@@ -1,8 +1,38 @@
-pub use cloud_object_models::{EnvVar, EnvVarValue};
+use serde::{Deserialize, Serialize};
 use itertools::Itertools;
 use warp_util::path::ShellFamily;
 
 use crate::terminal::shell::ShellType;
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct EnvVarSecretCommand {
+    pub name: String,
+    pub command: String,
+}
+
+/// Defines the data model for a single environment variable.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
+pub struct EnvVar {
+    pub name: String,
+    pub value: EnvVarValue,
+    pub description: Option<String>,
+}
+
+/// Defines the various forms a value can take.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub enum EnvVarValue {
+    /// A string variable, i.e. PORT=4000.
+    Constant(String),
+    /// A computed secret, i.e. gcloud print auth token.
+    Command(EnvVarSecretCommand),
+}
+
+impl Default for EnvVarValue {
+    fn default() -> Self {
+        EnvVarValue::Constant(String::new())
+    }
+}
+
 
 pub trait EnvVarExt {
     fn get_initialization_string(&self, shell_type: ShellType) -> String;
@@ -35,9 +65,6 @@ fn get_init_command_for_env_var(value: &EnvVarValue, shell_family: ShellFamily) 
             ShellFamily::PowerShell => format!("'{}'", val.replace("'", "''")),
         },
         EnvVarValue::Command(cmd) => format!("$({})", cmd.command),
-        EnvVarValue::Secret(secret) => {
-            format!("$({})", secret.get_secret_extraction_command(shell_family))
-        }
     }
 }
 

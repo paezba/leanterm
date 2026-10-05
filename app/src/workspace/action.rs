@@ -16,7 +16,6 @@ use super::tab_settings::{
     VerticalTabsTabItemMode, VerticalTabsViewMode,
 };
 use super::view::WorkspaceBanner;
-use crate::auth::auth_manager::LoginGatedFeature;
 use crate::event_sources::{AddTabWithShellSource, PaletteSource};
 use crate::palette::PaletteMode;
 use crate::prompt::editor_modal::OpenSource as PromptEditorOpenSource;
@@ -524,14 +523,6 @@ pub enum WorkspaceAction {
     /// Opens (or focuses) the in-app network log pane as a right-split of the
     /// active pane group. Gated on `ContextFlag::NetworkLogConsole`.
     OpenNetworkLogPane,
-}
-
-impl From<&WorkspaceAction> for LoginGatedFeature {
-    fn from(val: &WorkspaceAction) -> LoginGatedFeature {
-        match val {
-            _ => "Unknown reason",
-        }
-    }
 }
 
 impl WorkspaceAction {

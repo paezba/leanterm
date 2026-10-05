@@ -9,7 +9,6 @@ pub mod command_parser;
 pub mod info_box;
 pub mod local_workflows;
 pub mod workflow;
-pub mod workflow_enum;
 
 pub use categories::{CategoriesView, CategoriesViewEvent, WorkflowsViewAction};
 

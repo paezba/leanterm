@@ -6,7 +6,6 @@ mod antivirus;
 mod app_menus;
 mod app_services;
 mod app_state;
-mod auth;
 mod banner;
 mod chip_configurator;
 mod code;
@@ -20,12 +19,10 @@ mod context_chips;
 mod crash_recovery;
 mod debug_dump;
 mod default_terminal;
-mod download_method;
 #[cfg(windows)]
 mod dynamic_libraries;
 mod env_vars;
 mod event_sources;
-mod external_secrets;
 #[cfg(target_family = "wasm")]
 mod font_fallback;
 mod global_resource_handles;
@@ -47,7 +44,6 @@ mod platform;
 mod prefix;
 #[cfg(target_os = "macos")]
 mod preview_config_migration;
-mod pricing;
 mod profiling;
 mod prompt;
 mod quit_warning;
@@ -105,8 +101,6 @@ pub mod settings_view;
 pub mod tab_configs;
 pub mod terminal;
 pub mod themes;
-use auth::auth_manager::AuthManager;
-use auth::auth_state::{AuthState, AuthStateProvider};
 use code::editor_management::CodeManager;
 use code::opened_files::OpenedFilesModel;
 use code_review::GlobalCodeReviewModel;
@@ -161,7 +155,7 @@ use warp_errors::report_if_error;
 #[cfg(feature = "local_fs")]
 use warp_files::FileModel;
 use warp_logging::{LogDestination, LogFrontend};
-use warp_server_client::network_logging::NetworkLogModel;
+use crate::server::network_logging::NetworkLogModel;
 use warpui::integration::TestDriver;
 use warpui::platform::TerminationMode;
 use warpui::platform::app::{ApproveTerminateResult, TerminationRequestSource};
@@ -891,20 +885,12 @@ pub(crate) fn initialize_app(
         ctx.set_zoom_factor(WindowSettings::as_ref(ctx).zoom_level.as_zoom_factor());
     }
 
-    let auth_state = AuthState::initialize(ctx);
-    let auth_state = Arc::new(auth_state);
-    timer.mark_interval_end("AUTH_MANAGER_SET_USER");
-
     // NetworkLogModel must be registered before HttpClientProvider so that
     // `NetworkLogModel::install_on_clients` can reach it when forwarding items
     // captured by the HTTP client hooks.
     ctx.add_singleton_model(|_ctx| NetworkLogModel::default());
 
     ctx.add_singleton_model(server::http_client_provider::HttpClientProvider::new);
-
-    ctx.add_singleton_model(|_ctx| AuthStateProvider::new(auth_state.clone()));
-
-    ctx.add_singleton_model(AuthManager::new);
 
     ctx.add_singleton_model(|_ctx| GPUState::new());
 
@@ -1027,41 +1013,6 @@ pub(crate) fn initialize_app(
             crash_recovery.on_draw_frame_error(window_id);
         });
     });
-
-    let user_is_logged_in = auth_state.is_logged_in();
-
-    if user_is_logged_in {
-        // Set the first frame callback to record the app's startup time.
-        // This is only sent for logged-in users so that new users don't skew performance metrics.
-        ctx.on_first_frame_drawn(move |ctx| {
-            GPUState::handle(ctx).update(ctx, |gpu_state, ctx| {
-                gpu_state
-                    .set_has_lower_power_gpu(warpui::rendering::is_low_power_gpu_available(), ctx);
-            });
-
-            for window_id in ctx.window_ids().collect_vec() {
-                SettingsPaneManager::handle(ctx)
-                    .read(ctx, |model, _| model.settings_view(window_id))
-                    .update(ctx, |settings, ctx| {
-                        settings.refresh_preferred_graphics_backend_dropdown(ctx);
-                    })
-            }
-        });
-
-        #[cfg(enable_crash_recovery)]
-        ctx.on_frame_drawn(|ctx, window_id| {
-            crash_recovery::CrashRecovery::handle(ctx).update(ctx, |crash_recovery, ctx| {
-                crash_recovery.on_frame_drawn(window_id, ctx);
-            });
-        })
-    } else {
-        // If the app was opened while logged out, record an event for measuring new users.
-        // This is sent immediately in case they quit the app on the signup screen.
-        download_method::determine_and_report(
-            auth_state.clone(),
-            ctx.background_executor().clone(),
-        );
-    }
 
     #[cfg(not(target_family = "wasm"))]
     {
