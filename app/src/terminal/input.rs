@@ -2576,18 +2576,6 @@ impl Input {
 
         self.env_var_collection_state.selected_env_vars = selected_env_vars;
 
-        // Ensure the env var selector dropdown is consistent with the selected env vars.
-        if let Some(more_info_view) = self
-            .workflows_state
-            .selected_workflow_state
-            .as_ref()
-            .map(|state| &state.more_info_view)
-        {
-            more_info_view.update(ctx, |info_view, ctx| {
-                info_view.set_environment_variables_selection(selected_env_vars, ctx);
-            })
-        }
-
         // Emit the a11y content as the last step so that it overwrites any of the a11y content
         // emitted by the editor (if multiple `AccessibilityContent`s are emitted within the same
         // event loop, the last one wins).
@@ -2651,26 +2639,7 @@ impl Input {
             )
         });
 
-        ctx.subscribe_to_view(&workflow_more_info_view, move |me, _, event, ctx| {
-            me.handle_workflow_more_info_event(event, ctx);
-        });
-
         workflow_more_info_view
-    }
-
-    fn handle_workflow_more_info_event(
-        &mut self,
-        event: &WorkflowsInfoBoxViewEvent,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        match event {
-            WorkflowsInfoBoxViewEvent::PrefixCommandWithEnvironmentVariables(env_vars) => {
-                self.reset_workflow_state(*env_vars, ctx);
-
-                // The ID may be `None` if the user is *clearing* environment variables.
-                if let Some(_env_vars_id) = env_vars {}
-            }
-        }
     }
 
     /// Returns the a11y text for a workflow that is selected. `None`, if there is no workflow

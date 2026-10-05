@@ -6,8 +6,6 @@ use warp_core::features::FeatureFlag;
 use warpui::keymap::BindingId;
 use warpui::{AppContext, Entity, ModelContext, ModelHandle, SingletonEntity, WindowId};
 
-use super::warp_drive;
-use crate::drive::settings::WarpDriveSettings;
 use crate::search::QueryFilter;
 use crate::search::action::CommandBindingDataSource;
 use crate::search::binding_source::BindingSource;
@@ -24,7 +22,6 @@ use crate::session_management::SessionSource;
 pub struct DataSourceStore {
     actions_data_source: ModelHandle<CommandBindingDataSource>,
     sessions_data_source: ModelHandle<navigation::DataSource>,
-    warp_drive_data_source: ModelHandle<warp_drive::DataSource>,
     launch_config_data_source: ModelHandle<launch_config::DataSource>,
     new_session_data_source: Option<ModelHandle<NewSessionDataSource>>,
     repo_data_source: ModelHandle<RepoDataSource>,
@@ -44,9 +41,6 @@ impl DataSourceStore {
         let sessions_data_source =
             ctx.add_model(|_| navigation::DataSource::new(active_session_handle));
 
-        let warp_drive_data_source =
-            ctx.add_model(|ctx| warp_drive::DataSource::new(window_id, ctx));
-
         let launch_config_data_source = ctx.add_model(launch_config::DataSource::new);
 
         let new_session_data_source = (FeatureFlag::ShellSelector.is_enabled()
@@ -58,7 +52,6 @@ impl DataSourceStore {
         Self {
             actions_data_source,
             sessions_data_source,
-            warp_drive_data_source,
             launch_config_data_source,
             new_session_data_source,
             repo_data_source,
@@ -86,17 +79,6 @@ impl DataSourceStore {
                 self.sessions_data_source.clone(),
                 HashSet::from([QueryFilter::Sessions]),
             );
-
-            if WarpDriveSettings::is_warp_drive_enabled(ctx) {
-                let mut warp_drive_filters = HashSet::from([
-                    QueryFilter::Notebooks,
-                    QueryFilter::Drive,
-                    QueryFilter::Workflows,
-                ]);
-
-                warp_drive_filters.insert(QueryFilter::EnvironmentVariables);
-                mixer.add_sync_source(self.warp_drive_data_source.clone(), warp_drive_filters);
-            }
 
             mixer.add_sync_source(
                 self.actions_data_source.clone(),
@@ -191,18 +173,6 @@ impl DataSourceStore {
                 .actions_data_source
                 .as_ref(app)
                 .query_result(*binding_id),
-            ItemSummary::Workflow { id } => self
-                .warp_drive_data_source
-                .as_ref(app)
-                .query_result(id, app),
-            ItemSummary::EnvVarCollection { id } => self
-                .warp_drive_data_source
-                .as_ref(app)
-                .query_result(id, app),
-            ItemSummary::Notebook { id } => self
-                .warp_drive_data_source
-                .as_ref(app)
-                .query_result(id, app),
             ItemSummary::Session { pane_view_locator } => self
                 .sessions_data_source
                 .as_ref(app)
@@ -210,12 +180,6 @@ impl DataSourceStore {
             ItemSummary::LaunchConfiguration => {
                 // TODO(CLD-205): Launch configurations are not supported in the recent section of the
                 // zero state yet.
-                None
-            }
-            ItemSummary::CloudObject => {
-                // We don't yet support all cloud objects in the command palette but
-                // we have a `ViewInWarpDrive` action that supports all of them, so
-                // this is necessary to make the compiler happy.
                 None
             }
             ItemSummary::NewSession { id } => self

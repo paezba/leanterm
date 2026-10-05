@@ -259,7 +259,6 @@ fn generated_bash_completions_include_mutating_command_groups() {
         generate_completion_string(Shell::Bash).expect("bash completions render to UTF-8");
     assert!(completions.contains("surface"));
     assert!(completions.contains("command-palette"));
-    assert!(completions.contains("warp-drive"));
     assert!(completions.contains("activate"));
     assert!(completions.contains("split"));
     assert!(!completions.contains("history"));
@@ -521,14 +520,6 @@ fn retained_action_examples() -> Vec<(ActionKind, Vec<&'static str>)> {
             vec!["warpctrl", "surface", "keybindings", "open"],
         ),
         (
-            ActionKind::SurfaceWarpDriveOpen,
-            vec!["warpctrl", "surface", "warp-drive", "open"],
-        ),
-        (
-            ActionKind::SurfaceWarpDriveToggle,
-            vec!["warpctrl", "surface", "warp-drive", "toggle"],
-        ),
-        (
             ActionKind::SurfaceAiAssistantToggle,
             vec!["warpctrl", "surface", "ai-assistant", "toggle"],
         ),
@@ -691,10 +682,6 @@ fn parsed_action_kind(command: &ControlCommand) -> Option<ActionKind> {
             },
             SurfaceCommand::Keybindings(command) => match command {
                 SurfaceOpenCommand::Open(_) => Some(ActionKind::SurfaceKeybindingsOpen),
-            },
-            SurfaceCommand::WarpDrive(command) => match command {
-                SurfaceOpenToggleCommand::Open(_) => Some(ActionKind::SurfaceWarpDriveOpen),
-                SurfaceOpenToggleCommand::Toggle(_) => Some(ActionKind::SurfaceWarpDriveToggle),
             },
             SurfaceCommand::AiAssistant(command) => match command {
                 SurfaceToggleCommand::Toggle(_) => Some(ActionKind::SurfaceAiAssistantToggle),

@@ -270,11 +270,6 @@ impl TypedActionView for CommandSearchZeroStateView {
 fn valid_query_filters(app: &AppContext) -> Vec<QueryFilter> {
     let mut filters = vec![QueryFilter::History];
 
-    if WarpDriveSettings::is_warp_drive_enabled(app) {
-        filters.push(QueryFilter::Workflows);
-        filters.push(QueryFilter::EnvironmentVariables);
-    }
-
     filters
 }
 

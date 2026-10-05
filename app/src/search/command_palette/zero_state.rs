@@ -79,23 +79,12 @@ impl ZeroState {
         app: &AppContext,
         _window_id: WindowId,
     ) -> impl Iterator<Item = QueryFilter> + use<> {
-        let show_warp_drive = WarpDriveSettings::is_warp_drive_enabled(app);
-
         let mut valid_filters = vec![];
-        if show_warp_drive {
-            valid_filters.push(QueryFilter::Workflows);
-            valid_filters.push(QueryFilter::Notebooks);
-
-            valid_filters.push(QueryFilter::EnvironmentVariables);
-        }
 
         if FeatureFlag::CommandPaletteFileSearch.is_enabled() {
             valid_filters.push(QueryFilter::Files);
         }
 
-        if show_warp_drive {
-            valid_filters.push(QueryFilter::Drive);
-        }
         valid_filters.extend([QueryFilter::Actions, QueryFilter::Sessions]);
 
         if ContextFlag::LaunchConfigurations.is_enabled() {

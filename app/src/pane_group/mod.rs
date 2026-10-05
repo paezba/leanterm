@@ -50,7 +50,6 @@ use crate::code::active_file::ActiveFileModel;
 #[cfg(feature = "local_fs")]
 use crate::code::editor_management::CodeSource;
 use crate::code::view::{CodeView, CodeViewAction};
-use crate::drive::items::WarpDriveItemId;
 use crate::drive::{CloudObjectTypeAndId, OpenWarpDriveObjectArgs};
 use crate::env_vars::EnvVarCollectionType;
 use crate::event_sources::{PaletteSource, SharingDialogSource};
@@ -112,13 +111,10 @@ use focus_state::PaneGroupFocusState;
 mod tests;
 
 pub use pane::code_pane::CodePane;
-pub use pane::env_var_collection_pane::EnvVarCollectionPane;
 pub use pane::file_pane::FilePane;
 pub use pane::network_log_pane::NetworkLogPane;
-pub use pane::notebook_pane::NotebookPane;
 pub use pane::settings_pane::SettingsPane;
 pub use pane::terminal_pane::TerminalPane;
-pub use pane::workflow_pane::WorkflowPane;
 pub use pane::{
     AnyPaneContent, BackingView, PaneConfiguration, PaneConfigurationEvent, PaneContent, PaneEvent,
     PaneHeaderAction, PaneHeaderCustomAction, PaneId, PaneView, TerminalPaneId,
@@ -232,8 +228,6 @@ enum PaneRemovalReason {
 pub fn init(app: &mut AppContext) {
     use warpui::keymap::macros::*;
     app.register_binding_validator::<PaneGroup>(is_binding_pty_compliant);
-
-    self::pane::init(app);
 
     app.register_fixed_bindings([
         // Also create the navigation shortcuts with `meta` in place of `alt`, to accommodate
@@ -427,18 +421,10 @@ pub enum Event {
     /// inside this pane group.
     TerminalViewStateChanged,
     // Tell the workspace to open the workflow modal.
-    OpenWorkflowModalWithCommand(String),
     // Tell the workspace to open the workflow for edit.
-    OpenCloudWorkflowForEdit(SyncId),
     // Tell the workspace to open the share dialog for the given drive object. The share dialog will
     // open in the index. If the invitee email is provided, it will be added to the share dialog.
-    OpenDriveObjectShareDialog {
-        cloud_object_type_and_id: CloudObjectTypeAndId,
-        invitee_email: Option<String>,
-        source: SharingDialogSource,
-    },
     // Tell the workspace to open the workflow modal with an unsaved workflow.
-    OpenWorkflowModalWithTemporary(Box<Workflow>),
     OpenPromptEditor,
     /// tell the workspace to open a file within Warp.
     OpenFileInWarp {
@@ -446,9 +432,6 @@ pub enum Event {
         path: PathBuf,
         /// The session that the path was opened from.
         session: Arc<Session>,
-    },
-    OpenWarpDriveLink {
-        open_warp_drive_args: OpenWarpDriveObjectArgs,
     },
     #[cfg(feature = "local_fs")]
     OpenCodeInWarp {
@@ -469,11 +452,6 @@ pub enum Event {
         workflow_selection_source: WorkflowSelectionSource,
         argument_override: Option<HashMap<String, String>>,
     },
-    /// Invoke env var from pane
-    InvokeEnvVarCollection {
-        env_var_collection: Arc<EnvVarCollectionType>,
-        in_subshell: bool,
-    },
     /// Dirty the workspace so the tab indicator shows.
     MaximizePaneToggled,
     /// Refresh the workspace-level active session state.
@@ -484,11 +462,6 @@ pub enum Event {
     },
     FocusPaneInWorkspace {
         locator: PaneViewLocator,
-    },
-    ViewInWarpDrive(WarpDriveItemId),
-    MoveToSpace {
-        cloud_object_type_and_id: CloudObjectTypeAndId,
-        space: Space,
     },
     PaneFocused,
     DroppedOnTabBar {
@@ -515,7 +488,6 @@ pub enum Event {
     },
     /// Clears the hovered tab index so it no longer appears as highlighted drop target
     ClearHoveredTabIndex,
-    OpenWarpDriveObjectInPane(ObjectUid),
     /// Request that the workspace open the command palette.
     OpenPalette {
         mode: PaletteMode,
@@ -1337,10 +1309,9 @@ impl PaneGroup {
             }
             LeafContents::Notebook(snapshot) => {
                 let pane: Box<dyn AnyPaneContent + 'static> = match snapshot {
-                    NotebookPaneSnapshot::CloudNotebook {
-                        notebook_id,
-                        settings,
-                    } => Box::new(NotebookPane::restore(notebook_id, &settings, ctx)?),
+                    NotebookPaneSnapshot::CloudNotebook { .. } => {
+                        return Err(anyhow::anyhow!("Cloud notebook panes are not supported"));
+                    }
                     NotebookPaneSnapshot::LocalFileNotebook { path } => Box::new(FilePane::new(
                         path,
                         None,
@@ -1387,37 +1358,18 @@ impl PaneGroup {
                 "Code pane restoration not supported on this platform"
             )),
             LeafContents::EnvVarCollection(snapshot) => {
-                let pane: Box<dyn AnyPaneContent + 'static> = match snapshot {
-                    EnvVarCollectionPaneSnapshot::CloudEnvVarCollection {
-                        env_var_collection_id,
-                    } => Box::new(EnvVarCollectionPane::restore(env_var_collection_id, ctx)?),
-                };
-
-                let pane_id = pane.as_pane().id();
-                pane_contents.insert(pane_id, pane);
-                let focus = InitialFocus {
-                    focused_pane: leaf.is_focused.then_some(pane_id),
-                    active_session: None,
-                };
-
-                Ok((PaneData::new(pane_id), focus))
+                match snapshot {
+                    EnvVarCollectionPaneSnapshot::CloudEnvVarCollection { .. } => Err(
+                        anyhow::anyhow!("Environment variable collection panes are not supported"),
+                    ),
+                }
             }
             LeafContents::Workflow(snapshot) => {
-                let pane: Box<dyn AnyPaneContent + 'static> = match snapshot {
-                    WorkflowPaneSnapshot::CloudWorkflow {
-                        workflow_id,
-                        settings,
-                    } => Box::new(WorkflowPane::restore(workflow_id, settings, ctx)?),
-                };
-
-                let pane_id = pane.as_pane().id();
-                pane_contents.insert(pane_id, pane);
-                let focus = InitialFocus {
-                    focused_pane: leaf.is_focused.then_some(pane_id),
-                    active_session: None,
-                };
-
-                Ok((PaneData::new(pane_id), focus))
+                match snapshot {
+                    WorkflowPaneSnapshot::CloudWorkflow { .. } => {
+                        Err(anyhow::anyhow!("Workflow panes are not supported"))
+                    }
+                }
             }
             LeafContents::Settings(snapshot) => {
                 let pane: Box<dyn AnyPaneContent + 'static> = match snapshot {
@@ -1690,23 +1642,17 @@ impl PaneGroup {
             }
         }
 
-        // Finds the active pane type out of (NotebookPane, TerminalPane) and extracts selected
-        // text from it.
-        let text = if let Some(pane) = self.downcast_pane_by_id::<NotebookPane>(focused_pane_id) {
-            pane.notebook_view(ctx).as_ref(ctx).selected_text(ctx)
-        } else {
-            match self.terminal_view_from_pane_id(focused_pane_id, ctx) {
-                Some(terminal_view) => {
-                    // NOTE: We currently don't have a way to track recency of selection events.
-                    // In lieu of this, we prefer selections to the input editor over the terminal view.
-                    // TODO(vkodithala): Once we have a way to track recency of selection events, we should use that instead.
-                    terminal_view
-                        .as_ref(ctx)
-                        .selected_text_from_input(ctx)
-                        .or_else(|| terminal_view.as_ref(ctx).selected_text(ctx))
-                }
-                _ => None,
+        let text = match self.terminal_view_from_pane_id(focused_pane_id, ctx) {
+            Some(terminal_view) => {
+                // NOTE: We currently don't have a way to track recency of selection events.
+                // In lieu of this, we prefer selections to the input editor over the terminal view.
+                // TODO(vkodithala): Once we have a way to track recency of selection events, we should use that instead.
+                terminal_view
+                    .as_ref(ctx)
+                    .selected_text_from_input(ctx)
+                    .or_else(|| terminal_view.as_ref(ctx).selected_text(ctx))
             }
+            _ => None,
         };
 
         text.filter(|text: &String| !text.is_empty())
@@ -2237,30 +2183,6 @@ impl PaneGroup {
         self.pane_contents.contains_key(&pane_id)
     }
 
-    /// Get the notebook view within the pane at `pane_index`.
-    #[cfg(any(test, feature = "integration_tests"))]
-    pub fn notebook_view_at_pane_index(
-        &self,
-        pane_index: usize,
-        ctx: &AppContext,
-    ) -> Option<ViewHandle<crate::notebooks::notebook::NotebookView>> {
-        self.content_by_pane_index(pane_index)
-            .and_then(|pane| pane.as_any().downcast_ref::<NotebookPane>())
-            .map(|pane| pane.notebook_view(ctx))
-    }
-
-    /// Get the notebook view within the pane at `pane_index`.
-    #[cfg(any(test, feature = "integration_tests"))]
-    pub fn workflow_view_at_pane_index(
-        &self,
-        pane_index: usize,
-        ctx: &AppContext,
-    ) -> Option<ViewHandle<crate::workflows::workflow_view::WorkflowView>> {
-        self.content_by_pane_index(pane_index)
-            .and_then(|pane| pane.as_any().downcast_ref::<WorkflowPane>())
-            .map(|pane| pane.get_view(ctx))
-    }
-
     /// Find the ID of the pane at an index (going left to right, top to bottom).
     /// Only considers visible panes (excludes panes hidden for close, move, job, etc.).
     pub fn pane_id_by_index(&self, pane_index: usize) -> Option<PaneId> {
@@ -2381,21 +2303,6 @@ impl PaneGroup {
         ctx.emit(Event::TerminalViewStateChanged);
         ctx.emit(Event::AppStateChanged);
         pane_content
-    }
-
-    pub fn notebook_pane_by_pane_id(&self, pane_id: Option<PaneId>) -> Option<&NotebookPane> {
-        self.downcast_pane_by_id(pane_id?)
-    }
-
-    pub fn env_var_collection_pane_by_pane_id(
-        &self,
-        pane_id: Option<PaneId>,
-    ) -> Option<&EnvVarCollectionPane> {
-        self.downcast_pane_by_id(pane_id?)
-    }
-
-    pub fn workflow_pane_by_pane_id(&self, pane_id: Option<PaneId>) -> Option<&WorkflowPane> {
-        self.downcast_pane_by_id(pane_id?)
     }
 
     pub fn code_pane_by_id(&self, pane_id: PaneId) -> Option<&CodePane> {

@@ -108,7 +108,6 @@ pub enum CustomAction {
     NewTeamEnvVars,
     SearchDrive,
     OpenTeamSettings,
-    SharePaneContents,
     #[cfg(windows)]
     WindowsPaste,
     #[cfg(windows)]
@@ -454,7 +453,6 @@ pub fn custom_tag_to_keystroke(custom: CustomTag) -> Option<Keystroke> {
         | CustomAction::NewTeamEnvVars
         | CustomAction::SearchDrive
         | CustomAction::OpenTeamSettings
-        | CustomAction::SharePaneContents
         | CustomAction::OpenAIFactCollection
         | CustomAction::OpenMCPServerCollection
         | CustomAction::NewPersonalAIPrompt

@@ -160,10 +160,7 @@ use crate::context_chips::prompt_type::PromptType;
 use crate::drive::CloudObjectTypeAndId;
 use crate::drive::settings::WarpDriveSettings;
 use crate::editor::{AutosuggestionType, EditorAction};
-use crate::env_vars::env_var_collection_block::{
-    EnvVarCollectionBlock, EnvVarCollectionBlockEvent,
-};
-use crate::env_vars::{CloudEnvVarCollection, EnvVar, EnvVarExt};
+use crate::env_vars::EnvVar;
 use crate::event_sources::{PaletteSource, SaveAsWorkflowModalSource, ToggleBlockFilterSource};
 use crate::features::FeatureFlag;
 use crate::menu::{Event as MenuEvent, Menu, MenuItem, MenuItemFields};
@@ -951,7 +948,6 @@ pub enum ContextMenuAction {
     },
     CopyRprompt,
     EditPrompt,
-    OpenWorkflowModal,
 }
 
 #[derive(Clone)]
@@ -961,7 +957,6 @@ pub enum InputContextMenuAction {
     SelectAll,
     Paste,
     ShowCommandSearch,
-    SaveAsWorkflow,
     ToggleInputHintText,
 }
 
@@ -990,7 +985,6 @@ impl fmt::Debug for ContextMenuAction {
             // CopyUrl's debug output is limited, since the URLs come from command output
             CopyUrl { .. } => f.write_str("CopyUrl"),
             EditPrompt => f.write_str("EditPrompt"),
-            OpenWorkflowModal => f.write_str("OpenWorkflowModal"),
             CopyBlockFilteredOutputs => f.write_str("CopyBlockFilteredOutput"),
         }
     }
@@ -1007,7 +1001,6 @@ impl fmt::Debug for InputContextMenuAction {
             SelectAll => f.write_str("SelectAll"),
             Paste => f.write_str("Paste"),
             ShowCommandSearch => f.write_str("CommandSearch"),
-            SaveAsWorkflow => f.write_str("SaveAsWorkflow"),
             ToggleInputHintText => f.write_str("ToggleInputHintText"),
         }
     }
@@ -1138,12 +1131,8 @@ pub enum Event {
     TerminalViewStateChanged,
     ShowCommandSearch(CommandSearchOptions),
     // Tell the pane group to open the workflow modal.
-    OpenWorkflowModalWithCommand(String),
     // Tell the pane group to open the workflow modal with an existing cloud workflow.
-    OpenWorkflowModalWithCloudWorkflow(SyncId),
     // Tell the pane group to open the workflow modal with an unsaved workflow.
-    OpenWorkflowModalWithTemporary(Box<Workflow>),
-    OpenWarpDriveObjectInPane(ObjectUid),
     OpenPromptEditor,
     CtrlD,
     ShutdownPty,
@@ -1257,7 +1246,6 @@ pub enum Event {
 #[derive(Clone, Copy, Debug)]
 pub enum LeftPanelTargetView {
     FileTree,
-    WarpDrive,
 }
 
 #[derive(Clone)]
@@ -1721,8 +1709,6 @@ pub struct TerminalView {
 
     show_snackbar: bool,
     hover_near_snackbar_area: bool,
-
-    pending_env_var_collection: Option<CloudEnvVarCollection>,
 
     /// The ID of the containing window.
     window_id: WindowId,
@@ -2506,7 +2492,6 @@ impl TerminalView {
             active_filter_editor_block_index: None,
             rich_content_views: Vec::new(),
             pending_auto_bootstrap_shell_type: None,
-            pending_env_var_collection: None,
             env_vars: Vec::new(),
             show_snackbar: true,
             hover_near_snackbar_area: false,
@@ -3095,10 +3080,6 @@ impl TerminalView {
             return false;
         }
 
-        if self.active_env_var_collection_block(app).is_some() {
-            return false;
-        }
-
         let is_running_in_band_command =
             model.block_list().is_writing_or_executing_in_band_command();
         let is_active_and_long_running = model
@@ -3112,10 +3093,6 @@ impl TerminalView {
 
     // Take control back from the agent for the active long running command
     // (which was started outside of a conversation).
-
-    pub fn has_active_env_var_block(&self, app: &AppContext) -> bool {
-        self.active_env_var_collection_block(app).is_some()
-    }
 
     /// Shuts down the pty and event loop, terminating the shell process.
     /// Also marks this view as manually shut down for telemetry attribution.
@@ -3189,10 +3166,6 @@ impl TerminalView {
     fn ctrl_c_to_active_block(&mut self, is_long_running: bool, ctx: &mut ViewContext<Self>) {
         if is_long_running {
             self.user_write_ctrl_c_to_pty(ctx);
-        } else if let Some(active_env_var_block) = self.active_env_var_collection_block(ctx) {
-            active_env_var_block.update(ctx, |env_var_block, ctx| {
-                env_var_block.handle_ctrl_c(ctx);
-            });
         }
     }
 
@@ -4818,38 +4791,6 @@ impl TerminalView {
                     find_model.notify_block_completed(completed_block_index, ctx);
                 });
 
-                if !matches!(block_completed_event.block_type, BlockType::BootstrapHidden)
-                    && let Some(env_var_block) = self.active_env_var_collection_block(ctx)
-                {
-                    let output_truncated =
-                        if let BlockType::User(completed) = &block_completed_event.block_type {
-                            Some(
-                                completed
-                                    .output_truncated
-                                    .get_with(|compute| {
-                                        let model = self.model.lock();
-                                        compute(model.block_list())
-                                    })
-                                    .to_owned(),
-                            )
-                        } else {
-                            None
-                        };
-                    env_var_block.update(ctx, move |block, ctx| {
-                        if block.is_running() {
-                            match output_truncated {
-                                // If we have a non-empty response we assume it's an error. We are
-                                // relying on this because we don't get a non-zero exit code for the
-                                // `export` function
-                                Some(output) if !output.is_empty() => {
-                                    block.on_failed(Some(output), ctx)
-                                }
-                                _ => block.on_succeeded(ctx),
-                            }
-                        }
-                    });
-                }
-
                 // If this block ran a possible subshell command, and it exited before the 1s timer
                 // completed, abort showing the banner.
                 if let Some(abort_handle) = self.warpify_state.take_subshell_banner_abort_handle() {
@@ -5621,10 +5562,6 @@ impl TerminalView {
 
         if self.should_display_vim_banner(&session, ctx) {
             self.insert_vim_mode_banner(ctx);
-        }
-
-        if let Some(env_var_collection) = self.pending_env_var_collection.take() {
-            self.invoke_environment_variables(env_var_collection, false, ctx);
         }
 
         // Make sure we decorate any text that is already in the input.  We
@@ -6918,21 +6855,6 @@ impl TerminalView {
                         .into_item(),
                 );
 
-                if WarpDriveSettings::is_warp_drive_enabled(ctx) {
-                    items.push(MenuItem::Separator);
-                    items.push(
-                        MenuItemFields::new("Save as workflow")
-                            .with_on_select_action(TerminalAction::ContextMenu(
-                                ContextMenuAction::OpenWorkflowModal,
-                            ))
-                            .with_key_shortcut_label(keybinding_name_to_display_string(
-                                "terminal:toggle_teams_modal",
-                                ctx,
-                            ))
-                            .into_item(),
-                    );
-                }
-
                 items.append(&mut vec![
                     MenuItem::Separator,
                     MenuItemFields::new(find_str)
@@ -7354,18 +7276,6 @@ impl TerminalView {
                 .into_item(),
         ]);
 
-        // Section 3: Teams related
-        if !all_current_input_text.is_empty() && WarpDriveSettings::is_warp_drive_enabled(ctx) {
-            items.extend([
-                MenuItem::Separator,
-                MenuItemFields::new("Save as workflow")
-                    .with_on_select_action(TerminalAction::InputContextMenuItem(
-                        InputContextMenuAction::SaveAsWorkflow,
-                    ))
-                    .into_item(),
-            ]);
-        }
-
         // Section 4: input hint text toggle
         let input_settings = InputSettings::as_ref(ctx);
         let inverse_action = if *input_settings.show_hint_text {
@@ -7400,17 +7310,6 @@ impl TerminalView {
                 menu_type: ContextMenuType::Input { position },
             },
             items,
-            ctx,
-        );
-    }
-
-    fn open_workflow_modal(&mut self, ctx: &mut ViewContext<Self>) {
-        let selected_block_contents =
-            self.selected_block_contents_as_string(BlockEntity::Command, " &&\n", ctx);
-
-        self.open_workflow_modal_with_command(
-            selected_block_contents,
-            SaveAsWorkflowModalSource::Block,
             ctx,
         );
     }
@@ -7451,32 +7350,6 @@ impl TerminalView {
         self.block_filter_editor.update(ctx, |block_filter, ctx| {
             block_filter.reset(ctx);
         });
-        ctx.notify();
-    }
-
-    fn open_workflow_modal_from_block(
-        &mut self,
-        block_index: BlockIndex,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        // Make the block for which we're showing the modal the only selected block.
-        self.reset_selection_to_single_block(block_index, ctx);
-        self.scroll_to_if_not_visible(block_index, ctx);
-
-        // Set the command in the modal to the command of the block.
-        if let Some(block) = self.model.lock().block_list().block_at(block_index) {
-            ctx.emit(Event::OpenWorkflowModalWithCommand(
-                block.command_to_string(),
-            ))
-        }
-    }
-
-    pub fn open_workflow_modal_with_existing(
-        &mut self,
-        workflow_id: SyncId,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        ctx.emit(Event::OpenWorkflowModalWithCloudWorkflow(workflow_id));
         ctx.notify();
     }
 
@@ -8406,34 +8279,9 @@ impl TerminalView {
         ctx.emit(Event::ShowCommandSearch(Default::default()))
     }
 
-    fn save_as_workflow_from_input(&mut self, ctx: &mut ViewContext<Self>) {
-        let (all_current_input_text, selected_input_text) = self.input.read(ctx, |input, ctx| {
-            input.editor().read(ctx, |editor, ctx| {
-                (editor.buffer_text(ctx), editor.selected_text(ctx))
-            })
-        });
-
-        let command = if selected_input_text.is_empty() {
-            all_current_input_text
-        } else {
-            selected_input_text
-        };
-
-        self.open_workflow_modal_with_command(command, SaveAsWorkflowModalSource::Input, ctx);
-    }
-
     fn toggle_input_hint_text(&mut self, _ctx: &mut ViewContext<Self>) {
 
         // Send the same telemetry event that we do from the features page to make data analysis easier.
-    }
-
-    fn open_workflow_modal_with_command(
-        &mut self,
-        command: String,
-        _source: SaveAsWorkflowModalSource,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        ctx.emit(Event::OpenWorkflowModalWithCommand(command));
     }
 
     fn copy_prompt(
@@ -8885,19 +8733,6 @@ impl TerminalView {
         // except for the rich content block with a matching view ID.
         for rich_content in self.rich_content_views.iter() {
             match rich_content.metadata() {
-                Some(RichContentMetadata::EnvVarCollectionBlock {
-                    env_var_collection_block_handle,
-                    ..
-                }) => {
-                    if exempt_rich_content_view_id
-                        .is_some_and(|view_id| env_var_collection_block_handle.id() == view_id)
-                    {
-                        continue;
-                    }
-                    env_var_collection_block_handle.update(ctx, |env_var_collection_block, ctx| {
-                        env_var_collection_block.clear_selection(ctx);
-                    });
-                }
                 Some(RichContentMetadata::WarpifySuccessBlock { .. }) => {
                     // TODO(Simon): We should be checking for WarpifySuccessBlocks here as well.
                     // The `WarpifySuccessBlock` implements a `SelectableArea`.
@@ -8959,26 +8794,6 @@ impl TerminalView {
     fn focus_block_filter_editor(&mut self, ctx: &mut ViewContext<Self>) {
         ctx.focus(&self.block_filter_editor);
         ctx.notify();
-    }
-
-    /// Returns the last block's `EnvVarCollectionBlock` if it is uncompleted, scoped to the
-    /// currently visible conversation.
-    fn active_env_var_collection_block(
-        &self,
-        ctx: &AppContext,
-    ) -> Option<&ViewHandle<EnvVarCollectionBlock>> {
-        self.rich_content_views.iter().find_map(|rich_content| {
-            if let Some(RichContentMetadata::EnvVarCollectionBlock {
-                env_var_collection_block_handle,
-            }) = rich_content.metadata()
-            {
-                return (!env_var_collection_block_handle
-                    .as_ref(ctx)
-                    .is_block_completed())
-                .then_some(env_var_collection_block_handle);
-            }
-            None
-        })
     }
 
     /// Examines the local state of the [`TerminalView`] and chooses where best to assign focus.
@@ -9056,12 +8871,7 @@ impl TerminalView {
         if should_focus_terminal {
             self.focus_terminal(ctx);
         } else {
-            if let Some(env_var_collection_block_handle) = self.active_env_var_collection_block(ctx)
-            {
-                ctx.focus(env_var_collection_block_handle);
-            } else {
-                self.focus_input_box(ctx);
-            }
+            self.focus_input_box(ctx);
         }
     }
 
@@ -11477,7 +11287,6 @@ impl TerminalView {
             CopyPrompt { position, part } => self.copy_prompt(position, part, ctx),
             CopyRprompt => self.copy_rprompt(ctx),
             EditPrompt => self.edit_prompt(ctx),
-            OpenWorkflowModal => self.open_workflow_modal(ctx),
             CopyBlockFilteredOutputs => self.context_menu_copy_filtered_block_outputs(ctx),
         }
     }
@@ -11495,7 +11304,6 @@ impl TerminalView {
             SelectAll => self.select_all_text_from_input(ctx),
             Paste => self.paste_in_input(ctx),
             ShowCommandSearch => self.command_search_from_input(ctx),
-            SaveAsWorkflow => self.save_as_workflow_from_input(ctx),
             ToggleInputHintText => self.toggle_input_hint_text(ctx),
         }
         self.close_context_menu(ctx, false);
@@ -11738,108 +11546,6 @@ impl TerminalView {
         });
     }
 
-    pub fn cancel_env_var_block(&mut self, ctx: &mut ViewContext<Self>) {
-        if let Some(block) = self.active_env_var_collection_block(ctx) {
-            block.update(ctx, |view, ctx| {
-                view.cancel(ctx);
-            });
-        }
-    }
-
-    fn add_env_var_block_to_blocklist(
-        &mut self,
-        collection_title: String,
-        command: String,
-        session_id: SessionId,
-        cloud_object_type_and_id: CloudObjectTypeAndId,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        let block_id = Uuid::new_v4().to_string();
-        let env_var_collection_block = ctx.add_typed_action_view(|ctx| {
-            EnvVarCollectionBlock::new(block_id.clone(), collection_title, command, ctx)
-        });
-        env_var_collection_block.update(ctx, |block, ctx| block.focus(ctx));
-
-        ctx.subscribe_to_view(&env_var_collection_block, move |me, block, event, ctx| {
-            let event = event.clone();
-            match event {
-                EnvVarCollectionBlockEvent::RanCommand(command) => {
-                    ctx.emit(Event::ExecuteCommand(ExecuteCommandEvent {
-                        command,
-                        session_id,
-                        workflow_id: None,
-                        workflow_command: None,
-                        should_add_command_to_history: false,
-                        source: CommandExecutionSource::EnvVarCollection {
-                            metadata: BlocklistEnvVarMetadata {
-                                block_id: block_id.clone(),
-                                should_hide_block: true,
-                            },
-                        },
-                    }));
-
-                    UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
-                        update_manager.record_object_action(
-                            cloud_object_type_and_id,
-                            ObjectActionType::Execute,
-                            None,
-                            ctx,
-                        )
-                    });
-                    me.reset_focus_after_rich_block(ctx);
-                }
-                EnvVarCollectionBlockEvent::Cancelled => {
-                    // Send the escape code corresponding to ctrl-c, indicating the running command
-                    // should be terminated. Note that this will not revert already-run `export`s.
-                    me.keydown_on_terminal("\u{0003}", ctx);
-                    me.reset_focus_after_rich_block(ctx);
-                }
-                EnvVarCollectionBlockEvent::ToggledExpanded(block_id) => {
-                    me.model
-                        .lock()
-                        .block_list_mut()
-                        .toggle_visibility_of_block_for_env_var(&block_id);
-                    me.redetermine_global_focus(ctx);
-                    ctx.notify();
-                }
-                EnvVarCollectionBlockEvent::TextSelected => {
-                    me.clear_selected_text_except(Some(block.id()), ctx);
-                }
-            }
-
-            ctx.notify();
-        });
-
-        self.insert_rich_content(
-            None,
-            env_var_collection_block.clone(),
-            Some(RichContentMetadata::EnvVarCollectionBlock {
-                env_var_collection_block_handle: env_var_collection_block,
-            }),
-            RichContentInsertionPosition::Append {
-                insert_below_long_running_block: false,
-            },
-            ctx,
-        );
-    }
-
-    fn display_non_local_environment_variable_error(
-        &self,
-        window_id: WindowId,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        ToastStack::handle(ctx).update(ctx, |toast_stack, ctx| {
-            toast_stack.add_ephemeral_toast(
-                DismissibleToast::error(
-                    "Can not invoke environment variable subshell in a non-local session"
-                        .to_owned(),
-                ),
-                window_id,
-                ctx,
-            );
-        });
-    }
-
     #[allow(unused_variables)]
     fn get_shell_starter_local(&self, ctx: &mut ViewContext<Self>) -> Option<(String, ShellType)> {
         #[cfg(feature = "local_tty")]
@@ -11868,79 +11574,6 @@ impl TerminalView {
         None
     }
 
-    pub fn invoke_environment_variables(
-        &mut self,
-        cloud_env_var_collection: CloudEnvVarCollection,
-        in_subshell: bool,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        let session_id = self.active_block_session_id();
-
-        if !in_subshell {
-            let Some(shell_type) = self.active_session_shell_type(ctx) else {
-                return;
-            };
-            self.invoke_env_vars_in_current_session(
-                cloud_env_var_collection.clone(),
-                shell_type,
-                session_id,
-                ctx,
-            );
-        } else {
-            let window_id = ctx.window_id();
-            let shell_session_info =
-                if self.active_session_is_local(ctx).unwrap_or(false) || !in_subshell {
-                    if let Some(shell_info) = self.get_shell_starter_local(ctx) {
-                        shell_info
-                    } else {
-                        // TODO(PR): This can fail for reasons besides being "non-local". We can also
-                        // not find a fallback shell.
-                        self.display_non_local_environment_variable_error(window_id, ctx);
-                        return;
-                    }
-                } else {
-                    self.display_non_local_environment_variable_error(window_id, ctx);
-                    return;
-                };
-
-            self.invoke_env_vars_in_subshell(
-                cloud_env_var_collection,
-                shell_session_info,
-                window_id,
-                ctx,
-            );
-        }
-    }
-
-    fn invoke_env_vars_in_current_session(
-        &mut self,
-        cloud_env_var_collection: CloudEnvVarCollection,
-        shell_type: ShellType,
-        session_id: Option<SessionId>,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        let env_var_collection = cloud_env_var_collection.model().string_model.clone();
-        if let Some(session_id) = session_id {
-            self.add_env_var_block_to_blocklist(
-                env_var_collection
-                    .title
-                    .clone()
-                    .unwrap_or("Untitled".to_owned()),
-                env_var_collection
-                    .vars
-                    .iter()
-                    .map(|var| var.get_initialization_string(shell_type))
-                    .collect_vec()
-                    .join(" "),
-                session_id,
-                cloud_env_var_collection.cloud_object_type_and_id(),
-                ctx,
-            );
-        } else {
-            self.pending_env_var_collection = Some(cloud_env_var_collection)
-        }
-    }
-
     fn set_and_execute_subshell_command(
         &mut self,
         shell_command: &str,
@@ -11953,44 +11586,6 @@ impl TerminalView {
         self.input.update(ctx, |input, ctx| {
             input.set_pending_command(shell_command, ctx);
             input.execute_pending_command(ctx);
-        });
-    }
-
-    fn invoke_env_vars_in_subshell(
-        &mut self,
-        cloud_env_var_collection: CloudEnvVarCollection,
-        shell_session_info: (String, ShellType),
-        window_id: WindowId,
-        ctx: &mut ViewContext<Self>,
-    ) {
-        let env_var_collection = cloud_env_var_collection.model().string_model.clone();
-
-        let (shell_path_string, shell_type) = shell_session_info;
-        if shell_type == ShellType::PowerShell {
-            ToastStack::handle(ctx).update(ctx, |toast_stack, ctx| {
-                let toast =
-                    DismissibleToast::error("PowerShell subshells not supported".to_owned());
-                toast_stack.add_ephemeral_toast(toast, window_id, ctx);
-            });
-            return;
-        }
-
-        // Set the env vars before executing a subshell command so that it will be loaded on
-        // subshell start
-        self.env_vars = env_var_collection.vars;
-        self.model.lock().set_env_var_collection_name(Some(
-            env_var_collection.title.unwrap_or("Untitled".to_owned()),
-        ));
-        self.set_and_execute_subshell_command(&shell_path_string, shell_type, ctx);
-
-        // Ok to update the execution record here because we auto-execute when in subshell
-        UpdateManager::handle(ctx).update(ctx, move |update_manager, ctx| {
-            update_manager.record_object_action(
-                cloud_env_var_collection.cloud_object_type_and_id(),
-                ObjectActionType::Execute,
-                None,
-                ctx,
-            )
         });
     }
 
@@ -12597,9 +12192,6 @@ impl TypedActionView for TerminalView {
             | InputContextMenuItem(_)
             | NotificationsDiscoveryBanner(_)
             | NotificationsErrorBanner(_)
-            | OpenWorkflowModal
-            | OpenWorkflowModalForBlock(_)
-            | OpenWorkflowModalWithCloudWorkflow(_)
             | ToggleSnackbarInActivePane
             | HyperlinkClick { .. }
             | AttemptLoginGatedFeature
@@ -12828,13 +12420,6 @@ impl TypedActionView for TerminalView {
                     *layout,
                     ctx,
                 );
-            }
-            OpenWorkflowModal => self.open_workflow_modal(ctx),
-            OpenWorkflowModalForBlock(block_index) => {
-                self.open_workflow_modal_from_block(*block_index, ctx)
-            }
-            OpenWorkflowModalWithCloudWorkflow(workflow_id) => {
-                self.open_workflow_modal_with_existing(*workflow_id, ctx)
             }
             OpenBlockListContextMenu => self.open_block_list_context_menu_via_keybinding(ctx),
             TriggerSubshellBootstrap => self.trigger_subshell_bootstrap(None, false, ctx),

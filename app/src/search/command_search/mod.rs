@@ -1,4 +1,3 @@
-mod env_var_collections;
 mod history;
 pub mod searcher;
 pub mod settings;

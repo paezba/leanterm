@@ -14,10 +14,8 @@ pub mod command_parser;
 pub mod export_workflow;
 pub mod info_box;
 pub mod local_workflows;
-pub mod manager;
 pub mod workflow;
 pub mod workflow_enum;
-pub mod workflow_view;
 
 use async_trait::async_trait;
 pub use categories::{CategoriesView, CategoriesViewEvent, WorkflowsViewAction};
@@ -29,8 +27,6 @@ use crate::cloud_object::{
     CreateObjectRequest, GenericServerObject, ObjectType, Revision, UpdateCloudObjectResult,
 };
 use crate::drive::CloudObjectTypeAndId;
-use crate::drive::items::WarpDriveItem;
-use crate::drive::items::workflow::WarpDriveWorkflow;
 use crate::notebooks::{NotebookId, NotebookLocation};
 use crate::persistence::ModelEvent;
 use crate::server::cloud_objects::update_manager::InitiatedBy;
@@ -40,7 +36,6 @@ use crate::server::sync_queue::{QueueItem, SerializedModel};
 
 pub fn init(app: &mut AppContext) {
     categories::init(app);
-    self::workflow_view::init(app);
 }
 
 #[derive(Copy, Clone, Debug, Deserialize, Serialize, Eq, PartialEq, Hash)]
@@ -292,18 +287,6 @@ impl CloudModelType for CloudWorkflowModel {
 
     fn renders_in_warp_drive(&self) -> bool {
         true
-    }
-
-    fn to_warp_drive_item(
-        &self,
-        id: SyncId,
-        _appearance: &Appearance,
-        workflow: &CloudWorkflow,
-    ) -> Option<Box<dyn WarpDriveItem>> {
-        Some(Box::new(WarpDriveWorkflow::new(
-            self.cloud_object_type_and_id(id),
-            workflow.clone(),
-        )))
     }
 
     fn can_export(&self) -> bool {

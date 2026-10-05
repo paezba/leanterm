@@ -23,10 +23,6 @@ use crate::appearance::Appearance;
 use crate::code::file_tree::FileTreeEvent;
 use crate::code::file_tree::FileTreeView;
 use crate::coding_panel_enablement_state::CodingPanelEnablementState;
-use crate::drive::panel::{
-    DrivePanel, DrivePanelEvent, MAX_SIDEBAR_WIDTH_RATIO, MIN_SIDEBAR_WIDTH,
-};
-use crate::drive::settings::WarpDriveSettings;
 use crate::pane_group::pane::view::header::PANE_HEADER_HEIGHT;
 use crate::pane_group::pane::view::header::components::HEADER_EDGE_PADDING;
 use crate::pane_group::working_directories::WorkingDirectory;
@@ -49,16 +45,17 @@ use crate::workspace::view::global_search::view::{
 };
 use crate::workspace::view::{
     LEFT_PANEL_GLOBAL_SEARCH_BINDING_NAME, LEFT_PANEL_PROJECT_EXPLORER_BINDING_NAME,
-    LEFT_PANEL_WARP_DRIVE_BINDING_NAME, OPEN_GLOBAL_SEARCH_BINDING_NAME,
-    TOGGLE_PROJECT_EXPLORER_BINDING_NAME, TOGGLE_WARP_DRIVE_BINDING_NAME,
+    OPEN_GLOBAL_SEARCH_BINDING_NAME, TOGGLE_PROJECT_EXPLORER_BINDING_NAME,
 };
+
+pub(super) const MIN_SIDEBAR_WIDTH: f32 = 250.;
+pub(super) const MAX_SIDEBAR_WIDTH_RATIO: f32 = 0.75;
 
 #[derive(Default)]
 struct MouseStateHandles {
     project_explorer_button: MouseStateHandle,
     conversation_list_view_button: MouseStateHandle,
     global_search_button: MouseStateHandle,
-    warp_drive_button: MouseStateHandle,
     sign_in_button: MouseStateHandle,
 }
 
@@ -66,7 +63,6 @@ struct MouseStateHandles {
 pub enum LeftPanelAction {
     ProjectExplorer,
     GlobalSearch { entry_focus: GlobalSearchEntryFocus },
-    WarpDrive,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -82,13 +78,6 @@ impl ToolPanelView {
             ToolPanelView::ProjectExplorer | ToolPanelView::GlobalSearch { .. } => {
                 ToolPanelAvailability::Available
             }
-            ToolPanelView::WarpDrive => {
-                if WarpDriveSettings::is_warp_drive_available(app) {
-                    ToolPanelAvailability::Available
-                } else {
-                    ToolPanelAvailability::RequiresAccount
-                }
-            }
         }
     }
 }
@@ -97,7 +86,6 @@ impl ToolPanelView {
 pub enum LeftPanelEvent {
     #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
     FileTree(pane_group::Event),
-    WarpDrive(DrivePanelEvent),
     #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
     OpenFileWithTarget {
         location: PathBuf,
@@ -110,7 +98,6 @@ pub enum LeftPanelEvent {
 pub enum ToolPanelView {
     ProjectExplorer,
     GlobalSearch { entry_focus: GlobalSearchEntryFocus },
-    WarpDrive,
 }
 
 /// Encapsulates the active view state to enforce that all mutations go through
@@ -167,7 +154,6 @@ pub struct LeftPanelView {
     resizable_state_handle: ResizableStateHandle,
     mouse_state_handles: MouseStateHandles,
     close_button_mouse_state: MouseStateHandle,
-    warp_drive_view: ViewHandle<DrivePanel>,
     active_view: active_view_state::ActiveViewState,
     toolbelt_buttons: Vec<ToolbeltButtonConfig>,
     active_pane_group: Option<WeakViewHandle<PaneGroup>>,
@@ -205,14 +191,8 @@ impl LeftPanelView {
         availability: ToolPanelAvailability,
     ) -> Box<dyn Element> {
         let (title, description) = match (view, availability) {
-            (ToolPanelView::WarpDrive, ToolPanelAvailability::RequiresAccount) => (
-                "Sign in to access Warp Drive",
-                "Create an account to save and share workflows, notebooks, prompts, and more.",
-            ),
             (
-                ToolPanelView::ProjectExplorer
-                | ToolPanelView::GlobalSearch { .. }
-                | ToolPanelView::WarpDrive,
+                ToolPanelView::ProjectExplorer | ToolPanelView::GlobalSearch { .. },
                 ToolPanelAvailability::RequiresAi,
             )
             | (
@@ -278,13 +258,10 @@ impl LeftPanelView {
                 resizable_state_handle(600.0)
             }
         };
-        let warp_drive_view = ctx.add_typed_action_view(DrivePanel::new);
-
-        ctx.subscribe_to_view(&warp_drive_view, |_me, _, event, ctx| {
-            ctx.emit(LeftPanelEvent::WarpDrive(event.clone()));
-        });
-
-        let active_view = views.first().copied().unwrap_or(ToolPanelView::WarpDrive);
+        let active_view = views
+            .first()
+            .copied()
+            .unwrap_or(ToolPanelView::ProjectExplorer);
         let toolbelt_buttons = views
             .iter()
             .map(|view| Self::create_toolbelt_button_config(view, ctx))
@@ -357,7 +334,6 @@ impl LeftPanelView {
             resizable_state_handle,
             mouse_state_handles: Default::default(),
             close_button_mouse_state: Default::default(),
-            warp_drive_view,
             active_view: active_view_state::new(active_view),
             toolbelt_buttons,
             active_pane_group: None,
@@ -452,22 +428,6 @@ impl LeftPanelView {
                     tooltip_keybinding_names,
                 }
             }
-            ToolPanelView::WarpDrive => {
-                let tooltip_keybinding_names = vec![
-                    LEFT_PANEL_WARP_DRIVE_BINDING_NAME,
-                    TOGGLE_WARP_DRIVE_BINDING_NAME,
-                ];
-
-                ToolbeltButtonConfig {
-                    icon: Icon::WarpDrive,
-                    active_icon: None,
-                    tooltip_text: "Warp Drive".to_string(),
-                    action: LeftPanelAction::WarpDrive,
-                    render_with_active_state: false,
-                    tooltip_keybinding: toolbelt_tooltip_keybinding(&tooltip_keybinding_names, ctx),
-                    tooltip_keybinding_names,
-                }
-            }
         }
     }
 
@@ -553,16 +513,8 @@ impl LeftPanelView {
         self.active_view.get()
     }
 
-    pub fn is_warp_drive_active(&self) -> bool {
-        self.active_view.get() == ToolPanelView::WarpDrive
-    }
-
     pub fn is_file_tree_active(&self) -> bool {
         self.active_view.get() == ToolPanelView::ProjectExplorer
-    }
-
-    pub fn warp_drive_view(&self) -> &ViewHandle<DrivePanel> {
-        &self.warp_drive_view
     }
 
     pub(crate) fn auto_expand_active_file_tree_to_most_recent_directory(
@@ -702,12 +654,6 @@ impl LeftPanelView {
                     ctx,
                 );
             }
-            ToolPanelView::WarpDrive => {
-                ctx.focus(&self.warp_drive_view);
-                self.warp_drive_view.update(ctx, |view, ctx| {
-                    view.reset_focused_index_in_warp_drive(true, ctx);
-                });
-            }
         }
     }
 
@@ -843,7 +789,6 @@ impl LeftPanelView {
                 LeftPanelAction::GlobalSearch { .. } => {
                     matches!(self.active_view.get(), ToolPanelView::GlobalSearch { .. })
                 }
-                LeftPanelAction::WarpDrive => self.active_view.get() == ToolPanelView::WarpDrive,
             };
         }
     }
@@ -943,14 +888,6 @@ impl LeftPanelView {
                 );
                 if !was_active {}
             }
-            LeftPanelAction::WarpDrive => {
-                active_view_state::set(self, ToolPanelView::WarpDrive, ctx);
-                if self.active_view_availability(ctx) == ToolPanelAvailability::Available {
-                    if force_open {
-                    } else {
-                    }
-                }
-            }
         }
     }
 
@@ -1031,7 +968,6 @@ impl View for LeftPanelView {
                         ctx.focus(&view);
                     }
                 }
-                ToolPanelView::WarpDrive => ctx.focus(&self.warp_drive_view),
             }
         }
     }
@@ -1045,7 +981,6 @@ impl View for LeftPanelView {
                 .conversation_list_view_button
                 .clone(),
             self.mouse_state_handles.global_search_button.clone(),
-            self.mouse_state_handles.warp_drive_button.clone(),
         ];
 
         // If there is only one button in the toolbelt row,
@@ -1098,14 +1033,6 @@ impl View for LeftPanelView {
                     _ => Shrinkable::new(1.0, Container::new(Empty::new().finish()).finish())
                         .finish(),
                 },
-                ToolPanelView::WarpDrive => Shrinkable::new(
-                    1.0,
-                    Container::new(ChildView::new(&self.warp_drive_view).finish())
-                        .with_padding_left(2.)
-                        .with_padding_right(2.)
-                        .finish(),
-                )
-                .finish(),
             }
         };
 

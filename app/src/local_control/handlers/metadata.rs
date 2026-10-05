@@ -15,7 +15,6 @@ use settings::Setting as _;
 use warp_core::channel::ChannelState;
 use warpui::{AppContext, ModelContext, SingletonEntity, ViewHandle, WindowId};
 
-use crate::drive::settings::WarpDriveSettings;
 use crate::features::FeatureFlag;
 use crate::local_control::LocalControlBridge;
 use crate::local_control::resolver::{reject_target_families, require_active_window_id_for_action};
@@ -135,7 +134,6 @@ pub(crate) enum SurfaceDestination {
     CommandSearch,
     ThemePicker,
     Keybindings,
-    WarpDrive,
     AiAssistant,
     CodeReview,
     ProjectExplorer,
@@ -154,7 +152,6 @@ impl SurfaceDestination {
         Self::CommandSearch,
         Self::ThemePicker,
         Self::Keybindings,
-        Self::WarpDrive,
         Self::AiAssistant,
         Self::CodeReview,
         Self::ProjectExplorer,
@@ -173,7 +170,6 @@ impl SurfaceDestination {
             Self::CommandSearch => "command_search",
             Self::ThemePicker => "theme_picker",
             Self::Keybindings => "keybindings",
-            Self::WarpDrive => "warp_drive",
             Self::AiAssistant => "ai_assistant",
             Self::CodeReview => "code_review",
             Self::ProjectExplorer => "project_explorer",
@@ -308,10 +304,6 @@ pub(crate) fn surface_unavailable_reason(
         | SurfaceDestination::CommandSearch
         | SurfaceDestination::ThemePicker
         | SurfaceDestination::Keybindings => None,
-        SurfaceDestination::WarpDrive if !WarpDriveSettings::is_warp_drive_enabled(ctx) => {
-            Some("Warp Drive is disabled")
-        }
-        SurfaceDestination::WarpDrive => None,
         SurfaceDestination::AiAssistant => Some("AI features are not available"),
         SurfaceDestination::CodeReview | SurfaceDestination::RightPanel
             if !cfg!(feature = "local_fs") =>
@@ -337,8 +329,7 @@ pub(crate) fn surface_unavailable_reason(
         SurfaceDestination::ConversationList => Some("agent conversation history is unavailable"),
         SurfaceDestination::LeftPanel
             if surface_unavailable_reason(SurfaceDestination::ProjectExplorer, ctx).is_some()
-                && surface_unavailable_reason(SurfaceDestination::GlobalSearch, ctx).is_some()
-                && surface_unavailable_reason(SurfaceDestination::WarpDrive, ctx).is_some() =>
+                && surface_unavailable_reason(SurfaceDestination::GlobalSearch, ctx).is_some() =>
         {
             Some("the left panel has no available views")
         }

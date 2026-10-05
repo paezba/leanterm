@@ -405,10 +405,6 @@ pub enum SurfaceCommand {
     #[command(subcommand)]
     Keybindings(SurfaceOpenCommand),
 
-    /// Open or toggle Warp Drive.
-    #[command(subcommand)]
-    WarpDrive(SurfaceOpenToggleCommand),
-
     /// Toggle the AI assistant.
     #[command(subcommand)]
     AiAssistant(SurfaceToggleCommand),

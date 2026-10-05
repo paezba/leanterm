@@ -5,6 +5,5 @@ pub enum PaletteMode {
     Command,
     Navigation,
     LaunchConfig,
-    WarpDrive,
     Files,
 }

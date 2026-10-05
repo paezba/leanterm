@@ -25,7 +25,6 @@ use warpui::{
     ViewContext, ViewHandle, WeakViewHandle,
 };
 
-use super::env_var_collections::EnvVarCollectionDataSource;
 use super::history::history_data_source_for_session;
 use super::workflows::{WorkflowsDataSource, cloud_workflows_data_source};
 use super::zero_state::{CommandSearchZeroStateEvent, CommandSearchZeroStateView};
@@ -90,7 +89,6 @@ pub enum CommandSearchAction {
     Close,
     Resize,
     OpenUpgradeLink(String),
-    AttemptLoginGatedUpgrade,
 }
 
 struct CommandSearchViewState {
@@ -213,35 +211,6 @@ impl CommandSearchView {
             // Add data sources in lowest->highest priority order.  If results from two
             // data sources produce the same ranking score, the data source added first
             // will show up higher in the list (i.e.: further away from the input).
-            if WarpDriveSettings::is_warp_drive_enabled(ctx) {
-                mixer.add_sync_source(
-                    WorkflowsDataSource::new(session_context.as_ref(), ctx),
-                    HashSet::from([QueryFilter::Workflows]),
-                );
-
-                let workflows_filters = HashSet::from([QueryFilter::Workflows]);
-
-                mixer.add_async_source(
-                    cloud_workflows_data_source(window_id),
-                    workflows_filters,
-                    AddAsyncSourceOptions {
-                        debounce_interval: Some(Duration::from_millis(50)),
-                        run_in_zero_state: true,
-                        run_when_unfiltered: true,
-                    },
-                    ctx,
-                );
-
-                // EnvVarCollectionDataSource stays synchronous because each match target is
-                // structurally short (title, variable name, description). The per-item fuzzy
-                // match cost is negligible, so offloading to an async task would add complexity
-                // without meaningful performance benefit.
-                mixer.add_sync_source(
-                    EnvVarCollectionDataSource::new(),
-                    HashSet::from([QueryFilter::EnvironmentVariables]),
-                );
-            }
-
             if History::as_ref(ctx).is_queryable(&session_id) {
                 let source = history_data_source_for_session(session_id);
                 mixer.add_async_source(
@@ -402,7 +371,7 @@ impl CommandSearchView {
             let was_immediately_executed = match &result_action {
                 ExecuteHistory(_) => true,
 
-                AcceptHistory(_) | AcceptWorkflow(_) | AcceptEnvVarCollection(_) => false,
+                AcceptHistory(_) | AcceptWorkflow(_) => false,
             };
 
             let (a11y_content, a11y_help_content) = if was_immediately_executed {
@@ -726,7 +695,6 @@ impl TypedActionView for CommandSearchView {
             OpenUpgradeLink(upgrade_link) => {
                 ctx.open_url(upgrade_link);
             }
-            AttemptLoginGatedUpgrade => {}
         }
     }
 }
