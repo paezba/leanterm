@@ -10,6 +10,7 @@ cfg_if::cfg_if! {
         use warpui::{ViewContext};
 
         use crate::pane_group::TerminalViewResources;
+        use crate::terminal::model::block::SerializedBlockListItem;
         use crate::terminal::model::session::Sessions;
         use crate::terminal::model_events::ModelEventDispatcher;
         use crate::terminal::view::WARP_PROMPT_HEIGHT_LINES;

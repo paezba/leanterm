@@ -342,26 +342,12 @@ impl LeftPanelView {
                 }
                 let has_terminal_session = directories.iter().any(|dir| dir.terminal_id.is_some());
 
-                // Split directories into local and remote.
                 let local_paths: Vec<PathBuf> = directories
                     .iter()
                     .filter_map(|d| d.path.to_local_path().map(|p| p.to_path_buf()))
                     .collect();
-                #[allow(unused_variables)]
-                let remote_repos: Vec<repo_metadata::RemoteRepositoryIdentifier> = directories
-                    .iter()
-                    .filter_map(|d| match &d.path {
-                        LocalOrRemotePath::Remote(remote_path) => {
-                            Some(repo_metadata::RemoteRepositoryIdentifier::new(
-                                remote_path.host_id.clone(),
-                                remote_path.path.clone(),
-                            ))
-                        }
-                        _ => None,
-                    })
-                    .collect();
 
-                // Update GlobalSearchView root directories (local + remote).
+                // Update GlobalSearchView root directories .
                 let all_directories: Vec<LocalOrRemotePath> =
                     directories.iter().map(|d| d.path.clone()).collect();
                 let global_search_view =
@@ -379,8 +365,6 @@ impl LeftPanelView {
                     active_pane_group.as_ref(ctx).left_panel_open && me.is_file_tree_active();
                 file_tree_view.update(ctx, |view, ctx| {
                     view.set_root_directories(local_directories, ctx);
-                    #[cfg(feature = "local_fs")]
-                    view.set_remote_root_directories(&remote_repos, ctx);
                     view.set_has_terminal_session(has_terminal_session, ctx);
                     view.set_is_active(is_visible, ctx);
 
@@ -658,26 +642,12 @@ impl LeftPanelView {
             .iter()
             .any(|dir| dir.terminal_id.is_some());
 
-        // Split directories into local and remote.
         let local_paths: Vec<PathBuf> = active_directories
             .iter()
             .filter_map(|d| d.path.to_local_path().map(|p| p.to_path_buf()))
             .collect();
-        #[allow(unused_variables)]
-        let remote_repos: Vec<repo_metadata::RemoteRepositoryIdentifier> = active_directories
-            .iter()
-            .filter_map(|d| match &d.path {
-                LocalOrRemotePath::Remote(remote_path) => {
-                    Some(repo_metadata::RemoteRepositoryIdentifier::new(
-                        remote_path.host_id.clone(),
-                        remote_path.path.clone(),
-                    ))
-                }
-                _ => None,
-            })
-            .collect();
 
-        // Update GlobalSearchView root directories (local + remote).
+        // Update GlobalSearchView root directories .
         let all_directories: Vec<LocalOrRemotePath> =
             active_directories.iter().map(|d| d.path.clone()).collect();
         let global_search_view =
@@ -694,8 +664,6 @@ impl LeftPanelView {
         let is_visible = left_panel_open && self.is_file_tree_active();
         file_tree_view.update(ctx, |view, ctx| {
             view.set_root_directories(local_directories, ctx);
-            #[cfg(feature = "local_fs")]
-            view.set_remote_root_directories(&remote_repos, ctx);
             view.set_has_terminal_session(has_terminal_session, ctx);
             view.set_active_file_model(active_file_model, ctx);
             view.set_is_active(is_visible, ctx);

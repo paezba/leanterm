@@ -58,8 +58,7 @@ impl FileSearchModel {
                 }
                 RepoMetadataEvent::FileTreeEntryUpdated { .. }
                 | RepoMetadataEvent::StandingQueryResultsUpdated { .. }
-                | RepoMetadataEvent::UpdatingRepositoryFailed { .. }
-                | RepoMetadataEvent::IncrementalUpdateReady { .. } => {}
+                | RepoMetadataEvent::UpdatingRepositoryFailed { .. } => {}
             },
         );
 
@@ -144,45 +143,7 @@ impl FileSearchModel {
                     }
                 }
             }
-            // Remote session: query repo metadata (populated by the remote
-            // server's NavigatedToDirectory lazy-load).
-            Some(LocalOrRemotePath::Remote(remote_path)) => {
-                let id = RepositoryIdentifier::Remote(remote_path.clone());
-                let repo_metadata = RepoMetadataModel::as_ref(app);
-                // Truncated results (capped at the repo metadata budget) are
-                // intentionally used as-is to return partial matches rather
-                // than nothing.
-                let contents =
-                    match repo_metadata.get_repo_contents(&id, GetContentsArgs::default(), app) {
-                        Ok(repo_contents) => repo_contents.contents,
-                        Err(_) => return Vec::new(),
-                    };
-                let root_std_path = &remote_path.path;
-                contents
-                    .iter()
-                    .filter_map(|content| {
-                        let (path_std, is_directory) = match content {
-                            repo_metadata::RepoContent::File(file) => (&*file.path, false),
-                            repo_metadata::RepoContent::Directory(dir) => (&*dir.path, true),
-                        };
-                        let relative = path_std.strip_prefix(root_std_path)?;
-                        // Only include direct children (no nested paths).
-                        let trimmed = relative.trim_end_matches('/');
-                        if trimmed.is_empty() || trimmed.contains('/') {
-                            return None;
-                        }
-                        let mut path = relative.to_owned();
-                        if is_directory && !path.ends_with('/') {
-                            path.push('/');
-                        }
-                        Some(FileSearchResult {
-                            path,
-                            project_directory: root_std_path.to_string(),
-                            is_directory,
-                        })
-                    })
-                    .collect()
-            }
+            Some(LocalOrRemotePath::Remote(_)) => Vec::new(),
             None => Vec::new(),
         }
     }
@@ -398,46 +359,7 @@ impl FileSearchModel {
                     })
                     .collect()
             }
-            LocalOrRemotePath::Remote(remote_path) => {
-                let id = RepositoryIdentifier::Remote(remote_path.clone());
-                let args = Self::contents_args(query, include_folders, {
-                    let root = remote_path.path.clone();
-                    move |content| {
-                        let path_std = match content {
-                            repo_metadata::RepoContent::File(file) => &*file.path,
-                            repo_metadata::RepoContent::Directory(dir) => &*dir.path,
-                        };
-                        path_std.strip_prefix(&root).map(str::to_owned)
-                    }
-                });
-                // Truncated results (capped at the repo metadata budget) are
-                // intentionally used as-is to return partial matches rather
-                // than nothing.
-                let contents = match repo_metadata.get_repo_contents(&id, args, app) {
-                    Ok(repo_contents) => repo_contents.contents,
-                    Err(_) => return Vec::new(),
-                };
-                let root_std_path = &remote_path.path;
-                contents
-                    .iter()
-                    .filter_map(|content| {
-                        let (path_std, is_directory) = match content {
-                            repo_metadata::RepoContent::File(file) => (&*file.path, false),
-                            repo_metadata::RepoContent::Directory(dir) => (&*dir.path, true),
-                        };
-                        let relative = path_std.strip_prefix(root_std_path)?;
-                        let mut path = relative.to_owned();
-                        if is_directory && !path.ends_with('/') {
-                            path.push('/');
-                        }
-                        Some(FileSearchResult {
-                            path,
-                            project_directory: root_std_path.to_string(),
-                            is_directory,
-                        })
-                    })
-                    .collect()
-            }
+            LocalOrRemotePath::Remote(_) => Vec::new(),
         }
     }
 
