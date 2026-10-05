@@ -405,10 +405,6 @@ pub enum SurfaceCommand {
     #[command(subcommand)]
     Keybindings(SurfaceOpenCommand),
 
-    /// Toggle the AI assistant.
-    #[command(subcommand)]
-    AiAssistant(SurfaceToggleCommand),
-
     /// Open or toggle code review.
     #[command(subcommand)]
     CodeReview(SurfaceOpenToggleCommand),
@@ -421,10 +417,6 @@ pub enum SurfaceCommand {
     #[command(subcommand)]
     GlobalSearch(SurfaceOpenCommand),
 
-    /// Open the conversation list.
-    #[command(subcommand)]
-    ConversationList(SurfaceOpenCommand),
-
     /// Toggle the left panel.
     #[command(subcommand)]
     LeftPanel(SurfaceToggleCommand),
@@ -436,10 +428,6 @@ pub enum SurfaceCommand {
     /// Open or toggle vertical tabs.
     #[command(subcommand)]
     VerticalTabs(SurfaceOpenToggleCommand),
-
-    /// Open agent management.
-    #[command(subcommand)]
-    AgentManagement(SurfaceOpenCommand),
 }
 
 #[derive(Debug, Clone, Subcommand)]
@@ -803,8 +791,6 @@ pub struct KeybindingGetArgs {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 pub enum CliTabType {
     Terminal,
-    Agent,
-    CloudAgent,
     Default,
 }
 
@@ -812,8 +798,6 @@ impl From<CliTabType> for local_control::protocol::TabType {
     fn from(value: CliTabType) -> Self {
         match value {
             CliTabType::Terminal => Self::Terminal,
-            CliTabType::Agent => Self::Agent,
-            CliTabType::CloudAgent => Self::CloudAgent,
             CliTabType::Default => Self::Default,
         }
     }

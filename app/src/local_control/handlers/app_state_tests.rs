@@ -2,8 +2,7 @@ use ::local_control::{ActionKind, ErrorCode};
 
 #[cfg(feature = "local_fs")]
 use super::resolve_against_working_directory;
-use super::{ensure_surface_available, validate_staged_input_text};
-use crate::local_control::handlers::metadata::SurfaceDestination;
+use super::validate_staged_input_text;
 
 #[test]
 fn staged_input_rejects_line_breaks_and_control_sequences() {
@@ -60,21 +59,4 @@ fn file_open_resolves_relative_paths_against_the_session_working_directory() {
         resolve_against_working_directory(&absolute, &working_directory),
         absolute
     );
-}
-
-#[test]
-fn unavailable_surface_open_returns_structured_error() {
-    warpui::App::test((), |mut app| async move {
-        let error = app
-            .update(|ctx| {
-                ensure_surface_available(
-                    ActionKind::SurfaceAgentManagementOpen,
-                    SurfaceDestination::AgentManagement,
-                    ctx,
-                )
-            })
-            .expect_err("disabled surface is rejected");
-        assert_eq!(error.code, ErrorCode::UnsupportedAction);
-        assert!(error.message.contains("surface.agent_management.open"));
-    });
 }

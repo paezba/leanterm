@@ -96,9 +96,5 @@ fn tab_create_action(params: &serde_json::Value) -> Result<WorkspaceAction, Cont
             hide_homepage: false,
         }),
         Some(TabType::Default) => Ok(WorkspaceAction::AddDefaultTab),
-        Some(TabType::Agent | TabType::CloudAgent) => Err(ControlError::new(
-            ErrorCode::UnsupportedAction,
-            "tab.create does not support agent tabs",
-        )),
     }
 }

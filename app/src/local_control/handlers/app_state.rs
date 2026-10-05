@@ -194,12 +194,6 @@ fn window_create(
     let params = decode_params::<TabCreateParams>(params)?;
     match params.tab_type {
         None | Some(TabType::Terminal | TabType::Default) => {}
-        Some(TabType::Agent | TabType::CloudAgent) => {
-            return Err(ControlError::new(
-                ErrorCode::UnsupportedAction,
-                "window.create only supports terminal or default window types",
-            ));
-        }
     }
     ctx.dispatch_global_action("root_view:open_new", ());
     Ok(ack(instance_id, ActionKind::WindowCreate))

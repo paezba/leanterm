@@ -13,7 +13,7 @@ fn parses_typed_create_and_setting_list_params() {
         "tab",
         "create",
         "--type",
-        "agent",
+        "terminal",
         "--session",
         "session_1",
     ])
@@ -21,7 +21,7 @@ fn parses_typed_create_and_setting_list_params() {
     let ControlCommand::Tab(TabCommand::Create(args)) = args.command else {
         panic!("expected tab create command");
     };
-    assert_eq!(args.tab_type, Some(CliTabType::Agent));
+    assert_eq!(args.tab_type, Some(CliTabType::Terminal));
     assert_eq!(args.target.session.as_deref(), Some("session_1"));
 
     let err = ControlArgs::try_parse_from(["warpctrl", "tab", "create", "--shell", "zsh"])
@@ -520,10 +520,6 @@ fn retained_action_examples() -> Vec<(ActionKind, Vec<&'static str>)> {
             vec!["warpctrl", "surface", "keybindings", "open"],
         ),
         (
-            ActionKind::SurfaceAiAssistantToggle,
-            vec!["warpctrl", "surface", "ai-assistant", "toggle"],
-        ),
-        (
             ActionKind::SurfaceCodeReviewOpen,
             vec!["warpctrl", "surface", "code-review", "open"],
         ),
@@ -540,10 +536,6 @@ fn retained_action_examples() -> Vec<(ActionKind, Vec<&'static str>)> {
             vec!["warpctrl", "surface", "global-search", "open"],
         ),
         (
-            ActionKind::SurfaceConversationListOpen,
-            vec!["warpctrl", "surface", "conversation-list", "open"],
-        ),
-        (
             ActionKind::SurfaceLeftPanelToggle,
             vec!["warpctrl", "surface", "left-panel", "toggle"],
         ),
@@ -558,10 +550,6 @@ fn retained_action_examples() -> Vec<(ActionKind, Vec<&'static str>)> {
         (
             ActionKind::SurfaceVerticalTabsToggle,
             vec!["warpctrl", "surface", "vertical-tabs", "toggle"],
-        ),
-        (
-            ActionKind::SurfaceAgentManagementOpen,
-            vec!["warpctrl", "surface", "agent-management", "open"],
         ),
         (
             ActionKind::FileOpen,
@@ -683,9 +671,6 @@ fn parsed_action_kind(command: &ControlCommand) -> Option<ActionKind> {
             SurfaceCommand::Keybindings(command) => match command {
                 SurfaceOpenCommand::Open(_) => Some(ActionKind::SurfaceKeybindingsOpen),
             },
-            SurfaceCommand::AiAssistant(command) => match command {
-                SurfaceToggleCommand::Toggle(_) => Some(ActionKind::SurfaceAiAssistantToggle),
-            },
             SurfaceCommand::CodeReview(command) => match command {
                 SurfaceOpenToggleCommand::Open(_) => Some(ActionKind::SurfaceCodeReviewOpen),
                 SurfaceOpenToggleCommand::Toggle(_) => Some(ActionKind::SurfaceCodeReviewToggle),
@@ -696,9 +681,6 @@ fn parsed_action_kind(command: &ControlCommand) -> Option<ActionKind> {
             SurfaceCommand::GlobalSearch(command) => match command {
                 SurfaceOpenCommand::Open(_) => Some(ActionKind::SurfaceGlobalSearchOpen),
             },
-            SurfaceCommand::ConversationList(command) => match command {
-                SurfaceOpenCommand::Open(_) => Some(ActionKind::SurfaceConversationListOpen),
-            },
             SurfaceCommand::LeftPanel(command) => match command {
                 SurfaceToggleCommand::Toggle(_) => Some(ActionKind::SurfaceLeftPanelToggle),
             },
@@ -708,9 +690,6 @@ fn parsed_action_kind(command: &ControlCommand) -> Option<ActionKind> {
             SurfaceCommand::VerticalTabs(command) => match command {
                 SurfaceOpenToggleCommand::Open(_) => Some(ActionKind::SurfaceVerticalTabsOpen),
                 SurfaceOpenToggleCommand::Toggle(_) => Some(ActionKind::SurfaceVerticalTabsToggle),
-            },
-            SurfaceCommand::AgentManagement(command) => match command {
-                SurfaceOpenCommand::Open(_) => Some(ActionKind::SurfaceAgentManagementOpen),
             },
         },
         ControlCommand::Completions { .. } => None,

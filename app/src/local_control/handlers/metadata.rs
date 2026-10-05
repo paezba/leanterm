@@ -133,15 +133,12 @@ pub(crate) enum SurfaceDestination {
     CommandSearch,
     ThemePicker,
     Keybindings,
-    AiAssistant,
     CodeReview,
     ProjectExplorer,
     GlobalSearch,
-    ConversationList,
     LeftPanel,
     RightPanel,
     VerticalTabs,
-    AgentManagement,
 }
 
 impl SurfaceDestination {
@@ -151,15 +148,12 @@ impl SurfaceDestination {
         Self::CommandSearch,
         Self::ThemePicker,
         Self::Keybindings,
-        Self::AiAssistant,
         Self::CodeReview,
         Self::ProjectExplorer,
         Self::GlobalSearch,
-        Self::ConversationList,
         Self::LeftPanel,
         Self::RightPanel,
         Self::VerticalTabs,
-        Self::AgentManagement,
     ];
 
     fn name(self) -> &'static str {
@@ -169,15 +163,12 @@ impl SurfaceDestination {
             Self::CommandSearch => "command_search",
             Self::ThemePicker => "theme_picker",
             Self::Keybindings => "keybindings",
-            Self::AiAssistant => "ai_assistant",
             Self::CodeReview => "code_review",
             Self::ProjectExplorer => "project_explorer",
             Self::GlobalSearch => "global_search",
-            Self::ConversationList => "conversation_list",
             Self::LeftPanel => "left_panel",
             Self::RightPanel => "right_panel",
             Self::VerticalTabs => "vertical_tabs",
-            Self::AgentManagement => "agent_management",
         }
     }
 }
@@ -303,7 +294,6 @@ pub(crate) fn surface_unavailable_reason(
         | SurfaceDestination::CommandSearch
         | SurfaceDestination::ThemePicker
         | SurfaceDestination::Keybindings => None,
-        SurfaceDestination::AiAssistant => Some("AI features are not available"),
         SurfaceDestination::CodeReview | SurfaceDestination::RightPanel
             if !cfg!(feature = "local_fs") =>
         {
@@ -324,7 +314,6 @@ pub(crate) fn surface_unavailable_reason(
             Some("global search is unavailable or disabled")
         }
         SurfaceDestination::GlobalSearch => None,
-        SurfaceDestination::ConversationList => Some("agent conversation history is unavailable"),
         SurfaceDestination::LeftPanel
             if surface_unavailable_reason(SurfaceDestination::ProjectExplorer, ctx).is_some()
                 && surface_unavailable_reason(SurfaceDestination::GlobalSearch, ctx).is_some() =>
@@ -338,7 +327,6 @@ pub(crate) fn surface_unavailable_reason(
             Some("vertical tabs are unavailable or disabled")
         }
         SurfaceDestination::VerticalTabs => None,
-        SurfaceDestination::AgentManagement => Some("agent management is unavailable"),
     }
 }
 

@@ -55,9 +55,6 @@ pub(super) fn run_surface_command(
         SurfaceCommand::Keybindings(command) => {
             run_surface_open_command(command, ActionKind::SurfaceKeybindingsOpen, output_format)
         }
-        SurfaceCommand::AiAssistant(command) => {
-            run_surface_toggle_command(command, ActionKind::SurfaceAiAssistantToggle, output_format)
-        }
         SurfaceCommand::CodeReview(command) => match command {
             SurfaceOpenToggleCommand::Open(args) => run_action_with_params(
                 args,
@@ -80,11 +77,6 @@ pub(super) fn run_surface_command(
         SurfaceCommand::GlobalSearch(command) => {
             run_surface_open_command(command, ActionKind::SurfaceGlobalSearchOpen, output_format)
         }
-        SurfaceCommand::ConversationList(command) => run_surface_open_command(
-            command,
-            ActionKind::SurfaceConversationListOpen,
-            output_format,
-        ),
         SurfaceCommand::LeftPanel(command) => {
             run_surface_toggle_command(command, ActionKind::SurfaceLeftPanelToggle, output_format)
         }
@@ -105,11 +97,6 @@ pub(super) fn run_surface_command(
                 output_format,
             ),
         },
-        SurfaceCommand::AgentManagement(command) => run_surface_open_command(
-            command,
-            ActionKind::SurfaceAgentManagementOpen,
-            output_format,
-        ),
     }
 }
 
