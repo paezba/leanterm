@@ -182,7 +182,6 @@ impl ExternalEditorView {
         EditorSettings::handle(ctx).update(ctx, |settings, ctx| {
             report_if_error!(settings.open_file_editor.set_value(*editor, ctx));
         });
-
     }
 
     fn set_code_panels_editor(&mut self, editor: &EditorChoice, ctx: &mut ViewContext<Self>) {
@@ -193,7 +192,6 @@ impl ExternalEditorView {
                     .set_value(*editor, ctx)
             );
         });
-
     }
 
     // Handles [`ExternalEditorAction::SetLayout`] by updating the external editor layout settings.
@@ -201,19 +199,14 @@ impl ExternalEditorView {
         EditorSettings::handle(ctx).update(ctx, |settings, ctx| {
             report_if_error!(settings.open_file_layout.set_value(*layout, ctx));
         });
-
     }
 
     /// Handles [`ExternalEditorAction::TogglePreferMarkdownViewer`]
     /// preference.
-    fn toggle_prefer_markdown_viewer(&mut self, _ctx: &mut ViewContext<Self>) {
-
-    }
+    fn toggle_prefer_markdown_viewer(&mut self, _ctx: &mut ViewContext<Self>) {}
 
     /// Handles [`ExternalEditorAction::TogglePreferTabbedEditorView`] by updating the tabbed file viewer preference.
-    fn toggle_prefer_tabbed_editor_view(&mut self, _ctx: &mut ViewContext<Self>) {
-
-    }
+    fn toggle_prefer_tabbed_editor_view(&mut self, _ctx: &mut ViewContext<Self>) {}
 }
 
 impl Entity for ExternalEditorView {

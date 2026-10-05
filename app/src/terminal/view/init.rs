@@ -5,8 +5,8 @@ use warpui::units::IntoLines;
 
 use super::TerminalAction;
 use crate::channel::{Channel, ChannelState};
-use crate::features::FeatureFlag;
 use crate::event_sources::ToggleBlockFilterSource;
+use crate::features::FeatureFlag;
 use crate::settings_view::flags;
 use crate::terminal::TerminalView;
 use crate::terminal::model::escape_sequences::{self, EscCodes};

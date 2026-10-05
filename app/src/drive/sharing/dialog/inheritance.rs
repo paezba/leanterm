@@ -9,8 +9,8 @@ use super::style;
 use crate::cloud_object::ServerObjectContainer;
 use crate::cloud_object::model::persistence::CloudModel;
 use crate::drive::CloudObjectTypeAndId;
-use crate::server::ids::SyncId;
 use crate::event_sources::SharingDialogSource;
+use crate::server::ids::SyncId;
 use crate::workspace::WorkspaceAction;
 
 /// UI state for inherited permissions.

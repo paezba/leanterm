@@ -37,6 +37,7 @@ use warpui::{
 use super::aliases::WorkflowAliases;
 use super::command_parser::WorkflowCommandDisplayData;
 use super::{CloudWorkflowModel, WorkflowSource, WorkflowType, WorkflowViewMode};
+use crate::FeatureFlag;
 use crate::appearance::Appearance;
 use crate::auth::AuthStateProvider;
 use crate::auth::auth_state::AuthState;
@@ -64,6 +65,9 @@ use crate::editor::{
     PlainTextEditorViewAction as EditorAction, PropagateAndNoOpNavigationKeys,
     SingleLineEditorOptions, TextOptions, TextStyleOperation,
 };
+use crate::event_sources::{
+    CloudObjectTelemetryMetadata, SharingDialogSource, TelemetryCloudObjectType,
+};
 use crate::menu::{MenuItem, MenuItemFields};
 use crate::network::NetworkStatus;
 use crate::pane_group::focus_state::PaneFocusHandle;
@@ -74,9 +78,6 @@ use crate::server::cloud_objects::update_manager::{
     UpdateManagerEvent,
 };
 use crate::server::ids::{ClientId, ServerId, SyncId};
-use crate::event_sources::{
-    CloudObjectTelemetryMetadata, SharingDialogSource, TelemetryCloudObjectType,
-};
 use crate::settings::app_installation_detection::{
     UserAppInstallDetectionSettings, UserAppInstallStatus,
 };
@@ -92,7 +93,6 @@ use crate::view_components::{DismissibleToast, ToastType};
 use crate::workflows::CloudWorkflow;
 use crate::workflows::workflow::{Argument, Workflow};
 use crate::workspace::ToastStack;
-use crate::FeatureFlag;
 
 mod alias_argument_selector;
 mod alias_bar;

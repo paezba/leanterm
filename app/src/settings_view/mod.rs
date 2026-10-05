@@ -1699,7 +1699,6 @@ impl SettingsView {
             }
         }
 
-
         if let Some(settings_page) = self.current_settings_page() {
             update_page!(
                 &settings_page.view_handle,

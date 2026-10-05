@@ -240,8 +240,7 @@ pub trait ErrorExt: RegisteredError + std::error::Error {
     /// Returns whether or not an error is something that is actionable by our engineering team.
     fn is_actionable(&self) -> bool;
 
-    fn report_error(&self) {
-    }
+    fn report_error(&self) {}
 }
 
 #[cfg(test)]

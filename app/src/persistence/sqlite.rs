@@ -77,6 +77,7 @@ use crate::persistence::block_list::get_all_restored_blocks;
 use crate::persistence::model::{
     CODE_REVIEW_PANE_KIND, NewPersistedObjectAction, NewTeamSettings, UserProfile,
 };
+use crate::safe_info;
 use crate::server::experiments::ServerExperiment;
 use crate::server::ids::{ClientId, HashableId, ServerId, SyncId};
 use crate::settings_view::SettingsSection;
@@ -90,7 +91,6 @@ use crate::workspace::tab_group::TabGroupId;
 use crate::workspaces::team::Team as TeamMetadata;
 use crate::workspaces::user_profiles::{UserProfileWithUID, user_profile_from_persistence};
 use crate::workspaces::workspace::{Workspace as WorkspaceMetadata, WorkspaceUid};
-use crate::safe_info;
 
 diesel::define_sql_function! {
     fn json_extract(target: diesel::sql_types::Text, path: diesel::sql_types::Text) -> diesel::sql_types::Text;
@@ -226,7 +226,6 @@ unsafe fn init_logging() {
                 // sentry_log configuration, warnings are added as breadcrumbs to other events and
                 // debug messages are ignored.
                 // In local builds without crash reporting, all SQLite messages get logged locally.
-
 
                 log::log!(
                     level,

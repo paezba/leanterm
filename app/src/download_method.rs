@@ -7,11 +7,7 @@ use crate::auth::auth_state::AuthState;
 /// Determine the Warp download method (if possible) and send a telemetry event reporting that
 /// method
 pub fn determine_and_report(_auth_state: Arc<AuthState>, executor: Arc<Background>) {
-    executor
-        .spawn(async move {
-
-        })
-        .detach();
+    executor.spawn(async move {}).detach();
 }
 
 #[cfg(not(target_os = "macos"))]

@@ -410,8 +410,6 @@ impl Sessions {
             session.set_remote_host_id(Some(host_id.clone()));
         }
 
-
-
         History::handle(ctx).update(ctx, |history, ctx| {
             let session_id = session.id();
             let shell_host = ShellHost::from_session(session.as_ref());

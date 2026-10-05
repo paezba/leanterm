@@ -1004,8 +1004,8 @@ impl ServerModel {
         &mut self,
         msg: Initialize,
         request_id: &RequestId,
-        conn_id: ConnectionId,
-        ctx: &mut ModelContext<Self>,
+        _conn_id: ConnectionId,
+        _ctx: &mut ModelContext<Self>,
     ) -> HandlerOutcome {
         log::info!("Handling Initialize (request_id={request_id})");
         self.apply_initialize_auth(&msg);

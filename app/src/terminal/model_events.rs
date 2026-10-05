@@ -10,9 +10,9 @@ use super::model::block::BlockId;
 use super::model::completions::ShellCompletion;
 use super::model::session::{IsSSHWrapperSession, SessionId, SessionInfo};
 use super::model::terminal_model::{CommandType, ExitReason, HandlerEvent};
+use crate::event_sources::ImageProtocol;
 use crate::features::FeatureFlag;
 use crate::remote_server::manager::RemoteServerManager;
-use crate::event_sources::ImageProtocol;
 use crate::terminal::ClipboardType;
 use crate::terminal::event::{
     AfterBlockCompletedEvent, BlockCompletedEvent, BlockMetadataReceivedEvent,

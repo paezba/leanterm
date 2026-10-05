@@ -175,7 +175,6 @@ impl AliasBar {
             }
 
             self.mark_dirty(true, ctx);
-
         }
     }
 
@@ -188,7 +187,6 @@ impl AliasBar {
         {
             alias.env_vars = sync_id;
             self.mark_dirty(true, ctx);
-
         }
     }
 
@@ -267,7 +265,6 @@ impl AliasBar {
         self.is_dirty = true;
         ctx.emit(AliasBarEvent::AliasesUpdated);
         ctx.notify();
-
     }
 
     fn remove_alias(&mut self, index: usize, ctx: &mut ViewContext<Self>) {
@@ -291,7 +288,6 @@ impl AliasBar {
         self.is_dirty = true;
         ctx.emit(AliasBarEvent::AliasesUpdated);
         ctx.notify();
-
     }
 
     fn rename_alias(&mut self, index: usize, ctx: &mut ViewContext<Self>) {

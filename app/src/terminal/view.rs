@@ -10,8 +10,8 @@ use warp_util::remote_path::RemotePath;
 use warp_util::standardized_path::StandardizedPath;
 
 use super::{GridType, should_right_click_paste};
-use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::event_sources::AnonymousUserSignupEntrypoint;
+use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::settings::DebugSettingsChangedEvent;
 #[cfg(feature = "local_fs")]
 use crate::settings::import::model::ImportedConfigModel;
@@ -177,6 +177,7 @@ use crate::env_vars::env_var_collection_block::{
     EnvVarCollectionBlock, EnvVarCollectionBlockEvent,
 };
 use crate::env_vars::{CloudEnvVarCollection, EnvVar, EnvVarExt};
+use crate::event_sources::{PaletteSource, SaveAsWorkflowModalSource, ToggleBlockFilterSource};
 use crate::features::FeatureFlag;
 use crate::menu::{Event as MenuEvent, Menu, MenuItem, MenuItemFields};
 use crate::pane_group::focus_state::PaneFocusHandle;
@@ -187,14 +188,9 @@ use crate::pane_group::{
 #[cfg(feature = "local_fs")]
 use crate::persisted_workspace::PersistedWorkspace;
 use crate::persistence::{self, FinishedCommandMetadata};
-use crate::remote_server::manager::{
-    RemoteServerManager, RemoteServerManagerEvent,
-};
+use crate::remote_server::manager::{RemoteServerManager, RemoteServerManagerEvent};
 use crate::server::ids::{ObjectUid, SyncId};
 use crate::server::server_api::ServerApi;
-use crate::event_sources::{
-    PaletteSource, SaveAsWorkflowModalSource, ToggleBlockFilterSource,
-};
 use crate::session_management::{CommandContext, SessionNavigationPromptElements};
 use crate::settings::import::view::{SettingsImportEvent, SettingsImportView};
 use crate::settings::{
@@ -332,9 +328,7 @@ use crate::workflows::workflow::Workflow;
 use crate::workspace::sync_inputs::SyncedInputState;
 use crate::workspace::{CommandSearchOptions, ToastStack, WorkspaceAction, WorkspaceRegistry};
 use crate::workspaces::user_workspaces::{UserWorkspaces, UserWorkspacesEvent};
-use crate::{
-    ActiveSession as WindowActiveSession, safe_warn,
-};
+use crate::{ActiveSession as WindowActiveSession, safe_warn};
 
 lazy_static! {
     // A set of commands that perform minimal work that we use as a baseline to measure the latency of blocks.
@@ -2861,7 +2855,6 @@ impl TerminalView {
         terminal_view.any_session_contains_restored_remote_blocks =
             terminal_view.contains_restored_remote_blocks();
 
-
         terminal_view
     }
 
@@ -4231,7 +4224,6 @@ impl TerminalView {
             };
 
             ctx.notify();
-
         }
     }
 
@@ -4295,7 +4287,6 @@ impl TerminalView {
         } else {
             self.start_bootstrap_timer(BOOTSTRAP_FAILED_DURATION, ctx);
         }
-
     }
 
     /// Util method to update the ssh block, with a lock
@@ -4461,7 +4452,6 @@ impl TerminalView {
         );
         ctx.emit_a11y_content(a11y_content);
 
-
         ctx.notify();
     }
 
@@ -4604,7 +4594,6 @@ impl TerminalView {
         );
         ctx.emit_a11y_content(a11y_content);
 
-
         ctx.notify();
     }
 
@@ -4636,7 +4625,6 @@ impl TerminalView {
             },
         };
 
-
         self.model
             .lock()
             .block_list_mut()
@@ -4661,7 +4649,6 @@ impl TerminalView {
             .block_list_mut()
             .append_inline_banner(InlineBannerItem::new(banner_id, InlineBannerType::VimMode));
 
-
         ctx.notify();
     }
 
@@ -4677,8 +4664,7 @@ impl TerminalView {
 
     fn enable_vim_keybindings(&mut self, ctx: &mut ViewContext<Self>) {
         AppEditorSettings::handle(ctx).update(ctx, |editor_settings, ctx| {
-            if editor_settings.vim_mode.set_value(true, ctx).is_ok() {
-            }
+            if editor_settings.vim_mode.set_value(true, ctx).is_ok() {}
         });
     }
 
@@ -5464,11 +5450,9 @@ impl TerminalView {
 
                 if let Some(_delay) = command_finished_to_precmd_delay {
                     if let BlockType::User(_user_block_completed) = block_type {
-
                         // On dogfood only, we're interested in the block commands, durations,
                         // and exit codes to trial Warp Analytics.
-                        if ChannelState::channel().is_dogfood() {
-                        }
+                        if ChannelState::channel().is_dogfood() {}
                     }
                 }
                 let active_session_id = self.active_block_session_id();
@@ -7041,7 +7025,6 @@ impl TerminalView {
         // the event if the user quits the app before the event queue is flushed and then
         // never reopens the app.
 
-
         if !self.is_login_shell_bootstrapped {
             log::warn!("Showing bootstrap slow toast");
             self.is_slow_bootstrap_banner_open = true;
@@ -8165,7 +8148,6 @@ impl TerminalView {
             items,
             ctx,
         );
-
     }
 
     fn open_workflow_modal(&mut self, ctx: &mut ViewContext<Self>) {
@@ -8207,8 +8189,7 @@ impl TerminalView {
                 });
         }
         self.focus_block_filter_editor(ctx);
-        if matches!(opened_from_click, OpenedFromClick::Yes) {
-        }
+        if matches!(opened_from_click, OpenedFromClick::Yes) {}
     }
 
     fn close_block_filter_editor(&mut self, ctx: &mut ViewContext<Self>) {
@@ -8234,7 +8215,6 @@ impl TerminalView {
                 block.command_to_string(),
             ))
         }
-
     }
 
     pub fn open_workflow_modal_with_existing(
@@ -8508,7 +8488,6 @@ impl TerminalView {
             BlockSelectAction::MouseDown(maybe_block_index) => {
                 if let Some(block_index) = maybe_block_index {
                     self.mouse_down_block_index = Some(*block_index);
-
                 } else {
                     // Clear the current block selection upon clicking on a rich content block
                     self.clear_selected_blocks(ctx);
@@ -8582,7 +8561,6 @@ impl TerminalView {
                         } else {
                             self.reset_selection_to_single_block(*block_index, ctx);
                         }
-
                     }
                 }
             }
@@ -8889,7 +8867,6 @@ impl TerminalView {
 
     pub fn toggle_snackbar_in_active_pane(&mut self, ctx: &mut ViewContext<Self>) {
         self.show_snackbar = !self.show_snackbar;
-
 
         ctx.notify()
     }
@@ -9203,7 +9180,6 @@ impl TerminalView {
         ctx: &mut ViewContext<Self>,
     ) {
         ctx.emit(Event::OpenWorkflowModalWithCommand(command));
-
     }
 
     fn copy_prompt(
@@ -9445,7 +9421,6 @@ impl TerminalView {
             ctx,
         );
 
-
         // Selecting a block should focus the terminal so blocklist navigation keeps working,
         // unless the user has opted to preserve input focus on block selection.
         let preserve_input_focus =
@@ -9490,7 +9465,6 @@ impl TerminalView {
 
             self.scroll_to_if_not_visible(new_block_index, ctx);
             ctx.notify();
-
         } else {
             self.select_most_recent_blocks(1, ctx);
         }
@@ -9997,7 +9971,6 @@ impl TerminalView {
     }
 
     fn copy_blocks(&mut self, entity: BlockEntity, ctx: &mut ViewContext<Self>) {
-
         let selected_block_contents = self.selected_block_contents_as_string(entity, "\n", ctx);
         ctx.clipboard()
             .write(ClipboardContent::plain_text(selected_block_contents));
@@ -10058,8 +10031,6 @@ impl TerminalView {
     }
 
     fn bookmark_block(&mut self, _index: &BlockIndex, ctx: &mut ViewContext<Self>) {
-
-
         ctx.notify();
     }
 
@@ -10295,8 +10266,7 @@ impl TerminalView {
             || previous_filter
                 .is_some_and(|previous_filter| !previous_filter.is_active_and_nonempty()))
             && block_filter_query.is_active_and_nonempty()
-        {
-        }
+        {}
         drop(model);
 
         self.update_block_filter_for_block(
@@ -10880,7 +10850,6 @@ impl TerminalView {
     fn jump_to_bookmark(&mut self, index: BlockIndex, ctx: &mut ViewContext<Self>) {
         self.reset_selection_to_single_block(index, ctx);
         self.jump_to_previous_command(index, ctx);
-
 
         ctx.notify();
     }
@@ -12355,7 +12324,6 @@ impl TerminalView {
                 });
             }
         }
-
     }
 
     fn close_notification_error_banner(&mut self, ctx: &mut ViewContext<Self>) {
@@ -12461,7 +12429,6 @@ impl TerminalView {
                 ctx.notify();
             }
         }
-
     }
 
     /// Toggles the block filter on the last selected block, or the last non-hidden
@@ -12500,7 +12467,6 @@ impl TerminalView {
                 is_active: !block_filter_query.is_active,
                 ..block_filter_query
             };
-
 
             self.update_block_filter_for_block(
                 selected_or_last_block_index,
@@ -13627,7 +13593,6 @@ impl TypedActionView for TerminalView {
                 self.open_rich_content_link(link, ctx);
             }
             ShowInFileExplorer(path) => {
-
                 ctx.open_file_path_in_explorer(path);
             }
             OpenFileInWarp(path) => {
@@ -13674,8 +13639,7 @@ impl TypedActionView for TerminalView {
             }
             DismissWarpifyBanner(remember) => {
                 self.dismiss_warpify_banner(remember, ctx);
-                if !remember.is_ssh() {
-                }
+                if !remember.is_ssh() {}
             }
             InsertMostRecentCommandCorrection => self.insert_most_recent_command_correction(ctx),
             AliasExpansionBanner(action) => self.alias_expansion_banner_action(*action, ctx),
@@ -14379,7 +14343,6 @@ impl Drop for TerminalView {
                 log_level,
                 "Session abandoned before bootstrap for shell {pending_shell:?} on ssh {has_pending_ssh_session}"
             );
-
         };
     }
 }

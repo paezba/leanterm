@@ -426,7 +426,6 @@ impl CommandSearchView {
 
             // Recompute the result index - the incoming index is the index in the
             // uniform list, but what we want is the "distance from first result".
-
         }
 
         let query = self.search_bar.as_ref(ctx).query(ctx);

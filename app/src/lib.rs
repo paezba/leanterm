@@ -197,6 +197,7 @@ use crate::default_terminal::DefaultTerminal;
 use crate::drive::CloudObjectTypeAndId;
 use crate::drive::export::ExportManager;
 use crate::env_vars::manager::EnvVarCollectionManager;
+use crate::event_sources::PaletteSource;
 use crate::experiments::ImprovedPaletteSearch;
 pub use crate::global_resource_handles::{GlobalResourceHandles, GlobalResourceHandlesProvider};
 use crate::gpu_state::GPUState;
@@ -215,7 +216,6 @@ use crate::server::cloud_objects::update_manager::UpdateManager;
 use crate::server::experiments::ServerExperiments;
 #[cfg(not(target_family = "wasm"))]
 use crate::server::sync_queue::{QueueItem, SyncQueue};
-use crate::event_sources::PaletteSource;
 use crate::session_management::{RunningSessionSummary, SessionNavigationData};
 use crate::settings::cloud_preferences_syncer::{
     CloudPreferencesSyncerEvent, initialize_cloud_preferences_syncer,
@@ -701,7 +701,6 @@ fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
     // for other entrypoints.
     features::init_feature_flags();
 
-
     let mut tracing_initialization = launch_mode
         .needs_profiling()
         .then(tracing::init)
@@ -1162,7 +1161,6 @@ pub(crate) fn initialize_app(
     // runner-context IAP WIF mint below.
     ctx.add_singleton_model(|_ctx| AuthStateProvider::new(auth_state.clone()));
 
-
     ctx.add_singleton_model(|ctx| {
         AuthManager::new(
             server_api.clone(),
@@ -1281,7 +1279,6 @@ pub(crate) fn initialize_app(
 
     ctx.add_singleton_model(AntivirusInfo::new);
 
-
     ctx.set_fallback_font_source_provider(|url| ::asset_cache::url_source(url));
 
     ctx.set_default_binding_validator(is_binding_cross_platform);
@@ -1359,7 +1356,6 @@ pub(crate) fn initialize_app(
         // Set the first frame callback to record the app's startup time.
         // This is only sent for logged-in users so that new users don't skew performance metrics.
         ctx.on_first_frame_drawn(move |ctx| {
-
             GPUState::handle(ctx).update(ctx, |gpu_state, ctx| {
                 gpu_state
                     .set_has_lower_power_gpu(warpui::rendering::is_low_power_gpu_available(), ctx);
@@ -1372,7 +1368,6 @@ pub(crate) fn initialize_app(
                         settings.refresh_preferred_graphics_backend_dropdown(ctx);
                     })
             }
-
         });
 
         #[cfg(enable_crash_recovery)]
@@ -1697,7 +1692,6 @@ pub(crate) fn initialize_app(
     ctx.add_singleton_model(EnvVarCollectionManager::new);
     ctx.add_singleton_model(WorkflowManager::new);
 
-
     ctx.add_singleton_model(LocalWorkflows::new);
 
     timer.mark_interval_end("SINGLETON_MODELS_REGISTERED");
@@ -1850,7 +1844,6 @@ pub(crate) fn app_callbacks(
 
             let summary = UnsavedStateSummary::for_window(window_id, ctx);
 
-
             // Don't show dialog on integration test. Machine can't press buttons.
             if !is_integration_test && summary.save_unsaved_code_and_should_warn(ctx) {
                 let shown = summary
@@ -1888,7 +1881,6 @@ pub(crate) fn app_callbacks(
             if source == TerminationRequestSource::System {
                 return ApproveTerminateResult::Terminate;
             }
-
 
             let summary = UnsavedStateSummary::for_app(ctx);
             // Don't show dialog on integration test. Machine can't press buttons.
@@ -2032,7 +2024,6 @@ fn focus_running_window_and_show_native_modal(
 }
 
 fn on_close_app_cancelled(open_navigation_palette: bool, ctx: &mut AppContext) {
-
     let sessions = SessionNavigationData::all_sessions(ctx).collect_vec();
     let sessions_summary = RunningSessionSummary::new(&sessions);
 
@@ -2079,7 +2070,6 @@ fn on_close_window_cancelled(
     open_navigation_palette: bool,
     ctx: &mut AppContext,
 ) {
-
     let sessions = SessionNavigationData::all_sessions(ctx).collect_vec();
     let sessions_summary = RunningSessionSummary::new(&sessions);
     let num_processes_in_window = sessions_summary.processes_in_window(&window_id).len();

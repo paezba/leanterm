@@ -75,8 +75,7 @@ pub(in crate::terminal) enum LifecycleInput {
     Exit,
 }
 
-impl LifecycleInput {
-}
+impl LifecycleInput {}
 
 /// Captures live block and terminal evidence at the point an input is planned.
 ///
@@ -127,8 +126,7 @@ pub(in crate::terminal) enum LifecycleAction {
     Ignore(IgnoreReason),
 }
 
-impl LifecycleAction {
-}
+impl LifecycleAction {}
 
 /// Contains the complete plan for handling one lifecycle input.
 ///

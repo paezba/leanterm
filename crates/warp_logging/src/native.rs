@@ -522,7 +522,6 @@ fn temp_log_file_path(log_directory: impl AsRef<Path>, channel_logfile_name: &st
         .join(format!("{channel_logfile_name}.{TEMP_LOG_FILE_SUFFIX}"))
 }
 
-
 fn init_internal(
     is_from_crash_recovery_process: bool,
     frontend: LogFrontend,
@@ -634,7 +633,6 @@ fn init_internal(
         }
         base_logger.format(format_for_terminal_output);
     }
-
 
     base_logger.init();
 

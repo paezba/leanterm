@@ -335,7 +335,6 @@ impl ResourceUsageReporter {
         _samples: impl Iterator<Item = &'a Sample>,
         _ctx: &mut AppContext,
     ) {
-
         // We send two different events at the moment, as one contains general
         // resource usage information, and one contains more detailed info
         // about memory consumption caused by the blocklist.
@@ -352,7 +351,6 @@ impl ResourceUsageReporter {
             }
         }
     }
-
 }
 
 impl Default for ResourceUsageReporter {

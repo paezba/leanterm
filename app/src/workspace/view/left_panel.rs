@@ -817,7 +817,6 @@ impl LeftPanelView {
                     }
                 };
 
-
                 ctx.emit(LeftPanelEvent::OpenFileWithTarget {
                     location: location.clone(),
                     target,
@@ -1015,8 +1014,7 @@ impl LeftPanelView {
                     },
                     ctx,
                 );
-                if !was_active {
-                }
+                if !was_active {}
             }
             LeftPanelAction::WarpDrive => {
                 active_view_state::set(self, ToolPanelView::WarpDrive, ctx);

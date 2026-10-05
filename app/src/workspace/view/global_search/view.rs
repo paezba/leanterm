@@ -934,7 +934,6 @@ impl GlobalSearchView {
                 search_id,
                 remote_host_count,
             } => {
-
                 self.current_search_id = Some(*search_id);
                 self.search_started_at = Some(Instant::now());
                 self.active_search_remote_host_count = *remote_host_count;
@@ -980,8 +979,7 @@ impl GlobalSearchView {
                 self.total_match_count = *total_match_count;
                 self.capped_matches |= capped;
 
-                if let Some(_started_at) = self.search_started_at.take() {
-                }
+                if let Some(_started_at) = self.search_started_at.take() {}
                 ctx.notify();
             }
             GlobalSearchEvent::Failed { search_id, error } => {

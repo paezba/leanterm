@@ -339,7 +339,6 @@ pub trait Experiment<T: Experiment<T>>: FromStr {
         // the work above and do any one-time accounting.
         if let Some(group) = assigned_group.as_ref() {
             GROUP_ASSIGNMENTS.insert(Self::name(), group.variant());
-
         }
 
         assigned_group

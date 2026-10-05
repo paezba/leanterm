@@ -618,7 +618,6 @@ agent_mode_evals = [
     "cross_repo_context",
     "cloud_object_models/agent_mode_evals",
     "rust-embed/debug-embed",
-    "warpui/log_named_telemetry_events",
     "warp_logging/agent_mode_evals",
     "warp_server_client/agent_mode_evals",
 ]
@@ -762,7 +761,6 @@ search_codebase_ui = []
 linked_code_blocks = []
 tabbed_editor_view = []
 selection_as_context = []
-send_telemetry_to_file = []
 multi_profile = []
 pr_comments_v2 = []
 pr_comments_skill = []

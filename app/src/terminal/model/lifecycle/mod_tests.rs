@@ -4,8 +4,8 @@ use instant::Instant;
 use warp_core::features::FeatureFlag;
 
 use super::transition::{
-    IgnoreReason, LifecycleAction, LifecycleInput, LifecyclePhase,
-    LifecycleSnapshot, NextBlockIdDisposition, plan, reconcile_phase,
+    IgnoreReason, LifecycleAction, LifecycleInput, LifecyclePhase, LifecycleSnapshot,
+    NextBlockIdDisposition, plan, reconcile_phase,
 };
 use crate::terminal::model::block::BlockState;
 
@@ -449,7 +449,7 @@ fn lifecycle_coordinator_gates_novel_completion_recovery() {
             LifecycleAction::Ignore(IgnoreReason::RecoveryDisabled)
         );
         assert_eq!(transition.next_phase, LifecyclePhase::AtPrompt);
-        }
+    }
 }
 
 #[test]

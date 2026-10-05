@@ -29,10 +29,10 @@ use super::settings_page::{
 use crate::appearance::Appearance;
 use crate::auth::AuthStateProvider;
 use crate::editor::{EditorView, Event as EditorEvent, SingleLineEditorOptions, TextOptions};
+use crate::safe_info;
 use crate::server::server_api::referral::{ReferralInfo, ReferralsClient};
 use crate::ui_components::blended_colors;
 use crate::view_components::ToastFlavor;
-use crate::safe_info;
 
 const HEADER_FONT_SIZE: f32 = 18.;
 const HEADER_MARGIN_BOTTOM: f32 = 32.;

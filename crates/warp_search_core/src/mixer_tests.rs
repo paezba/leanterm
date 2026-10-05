@@ -138,8 +138,7 @@ impl AsyncDataSource for QueryDrivenDelayedAsyncSource {
     }
 }
 
-fn initialize_app(app: &mut App) {
-}
+fn initialize_app(app: &mut App) {}
 
 #[test]
 fn test_results_are_sorted_by_tier_then_score() {

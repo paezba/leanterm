@@ -23,7 +23,6 @@ use referral::ReferralsClient;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use team::TeamClient;
-use url::Url;
 use warp_core::context_flag::ContextFlag;
 use warp_errors::{AnyhowErrorExt, ErrorExt, register_error, report_error};
 use warp_server_client::auth::{AuthClientImpl, AuthEvent, EXPERIMENT_ID_HEADER};
@@ -567,7 +566,6 @@ impl ServerApi {
             }
         }
     }
-
 }
 
 /// A singleton entity that provides access to the global [`ServerApi`] instance,

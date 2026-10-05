@@ -28,16 +28,16 @@ use super::{
     ContentEditability, LinkSharingSubjectType, ShareableObject, SharingAccessLevel, Subject,
     SubjectExt, style,
 };
+use crate::cloud_object::CloudObject;
 use crate::cloud_object::model::persistence::{CloudModel, CloudModelEvent};
 use crate::cloud_object::model::view::CloudViewModel;
-use crate::cloud_object::CloudObject;
 use crate::editor::PropagateAndNoOpNavigationKeys;
+use crate::event_sources::SharingDialogSource;
 use crate::menu::{self, Menu, MenuItem, MenuItemFields};
 use crate::server::cloud_objects::update_manager::{
     ObjectOperation, UpdateManager, UpdateManagerEvent,
 };
 use crate::server::ids::ServerId;
-use crate::event_sources::SharingDialogSource;
 use crate::ui_components::icons::Icon;
 use crate::view_components::DismissibleToast;
 use crate::word_block_editor::{
@@ -372,9 +372,7 @@ impl SharingDialog {
     ///
     /// This should be called by views that contain a sharing dialog whenever they open it (i.e.
     /// panes and the Warp Drive index).
-    pub fn report_open(&self, _source: SharingDialogSource, _ctx: &mut ViewContext<Self>) {
-
-    }
+    pub fn report_open(&self, _source: SharingDialogSource, _ctx: &mut ViewContext<Self>) {}
 
     fn reset_editable_state(&mut self, ctx: &mut ViewContext<Self>) {
         self.reset_invite_form(ctx);

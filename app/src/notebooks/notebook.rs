@@ -56,6 +56,9 @@ use crate::editor::{
     EditOrigin, EditorView, Event as EditorEvent, InteractionState, PropagateAndNoOpNavigationKeys,
     SingleLineEditorOptions, TextColors, TextOptions,
 };
+use crate::event_sources::{
+    CloudObjectTelemetryMetadata, SharingDialogSource, TelemetryCloudObjectType,
+};
 use crate::menu::{MenuItem, MenuItemFields};
 use crate::network::{NetworkStatus, NetworkStatusEvent};
 use crate::notebooks::CloudNotebook;
@@ -66,10 +69,6 @@ use crate::pane_group::pane::view;
 use crate::pane_group::{BackingView, PaneConfiguration, PaneEvent};
 use crate::server::cloud_objects::update_manager::{FetchSingleObjectOption, UpdateManager};
 use crate::server::ids::{ClientId, ServerId, SyncId};
-use crate::event_sources::{
-    CloudObjectTelemetryMetadata,
-    SharingDialogSource, TelemetryCloudObjectType,
-};
 use crate::settings::app_installation_detection::{
     UserAppInstallDetectionSettings, UserAppInstallStatus,
 };
@@ -209,7 +208,6 @@ pub struct NotebookView {
     focus_handle: Option<PaneFocusHandle>,
     links: ModelHandle<NotebookLinks>,
     context_menu: ContextMenuState<Self>,
-
 
     /// Whether or not there are un-saved content edits.
     content_is_dirty: bool,
@@ -899,19 +897,16 @@ impl NotebookView {
             EditorViewEvent::EditWorkflow(workflow_id) => {
                 ctx.emit(NotebookEvent::EditWorkflow(*workflow_id))
             }
-            EditorViewEvent::OpenedBlockInsertionMenu(_source) => {},
-            EditorViewEvent::OpenedEmbeddedObjectSearch => {
-                {}
-            }
-            EditorViewEvent::OpenedFindBar => {
-                {}
-            }
-            EditorViewEvent::InsertedEmbeddedObject(_info) => {},
-            EditorViewEvent::CopiedBlock { block: _, entrypoint: _ } => {},
-            EditorViewEvent::NavigatedCommands => {
-                {}
-            }
-            EditorViewEvent::ChangedSelectionMode(_mode) => {},
+            EditorViewEvent::OpenedBlockInsertionMenu(_source) => {}
+            EditorViewEvent::OpenedEmbeddedObjectSearch => {}
+            EditorViewEvent::OpenedFindBar => {}
+            EditorViewEvent::InsertedEmbeddedObject(_info) => {}
+            EditorViewEvent::CopiedBlock {
+                block: _,
+                entrypoint: _,
+            } => {}
+            EditorViewEvent::NavigatedCommands => {}
+            EditorViewEvent::ChangedSelectionMode(_mode) => {}
             EditorViewEvent::OpenFile { .. } => {
                 // We don't support opening files from the notebook view.
                 // File paths rely on a Session to be present, and this is only set from the AI document view today.
@@ -1455,7 +1450,6 @@ impl NotebookView {
             // owner-based.
             editor.set_space(notebook.space(ctx), ctx);
         });
-
 
         // Once we've received metadata from the server, check if we can eagerly edit the notebook.
         let has_metadata = UpdateManager::as_ref(ctx).initial_load_complete();
@@ -2119,8 +2113,7 @@ impl TypedActionView for NotebookView {
                 ctx.emit(NotebookEvent::Pane(PaneEvent::FocusActiveSession))
             }
             NotebookAction::ContextMenu(action) => {
-                if matches!(action, ContextMenuAction::Open(_)) {
-                }
+                if matches!(action, ContextMenuAction::Open(_)) {}
                 self.context_menu.handle_action(action, ctx);
             }
             NotebookAction::Duplicate => self.duplicate_object(ctx),

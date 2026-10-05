@@ -20,10 +20,10 @@ use warpui::{AppContext, SingletonEntity};
 
 use crate::channel;
 use crate::default_terminal::DefaultTerminal;
+use crate::event_sources::LaunchConfigUiLocation;
 use crate::features::{FeatureFlag, runtime_flags_menu_items};
 use crate::persisted_workspace::PersistedWorkspace;
 use crate::root_view::OpenLaunchConfigArg;
-use crate::event_sources::LaunchConfigUiLocation;
 use crate::settings::{BlockVisibilitySettings, DebugSettings, SelectionSettings};
 use crate::terminal::alt_screen_reporting::AltScreenReporting;
 use crate::terminal::session_settings::SessionSettings;

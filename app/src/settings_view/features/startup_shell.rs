@@ -38,8 +38,7 @@ pub enum NewSessionShellAction {
     ShowCustomPathInput,
 }
 
-impl NewSessionShellAction {
-}
+impl NewSessionShellAction {}
 
 impl StartupShellView {
     /// Creates a new `StartupShellView`. The UI is initialized with the user's

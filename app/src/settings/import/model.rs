@@ -92,8 +92,7 @@ impl ImportedConfigModel {
                     Err(HotkeyError::MultipleHotkeys)
                 )
             })
-        {
-        }
+        {}
     }
 
     pub fn write_parse_results(

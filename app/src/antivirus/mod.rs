@@ -17,7 +17,6 @@ impl AntivirusInfo {
 
         Self(None)
     }
-
 }
 
 pub enum AntivirusInfoEvent {

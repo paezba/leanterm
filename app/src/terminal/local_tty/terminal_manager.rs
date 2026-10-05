@@ -296,8 +296,7 @@ impl<S> TerminalManager<S> {
                     !model.is_receiving_in_band_command_output()
                         && model.is_active_block_bootstrapped()
                 },
-                move |_max_bytes_per_second| {
-                },
+                move |_max_bytes_per_second| {},
                 ctx.background_executor().to_owned(),
             );
         }
@@ -680,7 +679,7 @@ impl<S> TerminalManager<S> {
             .is_shell_debug_mode_enabled
             .value();
         let is_honor_ps1_enabled = *SessionSettings::as_ref(ctx).honor_ps1;
-        let is_crash_reporting_enabled = PrivacySettings::as_ref(ctx).is_crash_reporting_enabled;
+        let _is_crash_reporting_enabled = PrivacySettings::as_ref(ctx).is_crash_reporting_enabled;
 
         // When the Node.js Version chip is not in the prompt, the shell bootstrap skips the
         // expensive per-prompt `node --version` detection.
@@ -890,8 +889,7 @@ fn get_shell_starter_internal(
             unsupported_shell,
             starter,
         } => {
-            if let Some(_unsupported_shell) = unsupported_shell {
-            }
+            if let Some(_unsupported_shell) = unsupported_shell {}
 
             ShellStarter::Direct(starter)
         }

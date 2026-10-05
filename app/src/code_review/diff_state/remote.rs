@@ -18,9 +18,8 @@ use warp_util::standardized_path::StandardizedPath;
 use warpui::{ModelContext, SingletonEntity};
 
 use super::{
-    CommitChainMode, DiffMetadata, DiffMode, DiffState,
-    DiffStateError, DiffStateModelEvent, DiffStats, FileDiffAndContent, GitDiffData,
-    GitDiffWithBaseContent,
+    CommitChainMode, DiffMetadata, DiffMode, DiffState, DiffStateError, DiffStateModelEvent,
+    DiffStats, FileDiffAndContent, GitDiffData, GitDiffWithBaseContent,
 };
 use crate::remote_server::diff_state_proto::{try_decode_file_delta, try_decode_snapshot};
 use crate::remote_server::proto;

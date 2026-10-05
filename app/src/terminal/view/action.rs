@@ -16,8 +16,8 @@ use super::{
     TerminalEditor,
 };
 use crate::code_review::telemetry_event::CodeReviewPaneEntrypoint;
-use crate::server::ids::SyncId;
 use crate::event_sources::{PaletteSource, ToggleBlockFilterSource};
+use crate::server::ids::SyncId;
 use crate::terminal::available_shells::AvailableShell;
 use crate::terminal::block_list_element::{
     BlockHoverAction, BlockListMenuSource, BlockSelectAction, BlockTextSelectAction,

@@ -787,8 +787,7 @@ fn block_maximum_rows_description() -> String {
     )
 }
 
-impl FeaturesPageAction {
-}
+impl FeaturesPageAction {}
 
 #[derive(Default)]
 struct MouseStateHandles {
@@ -1565,7 +1564,6 @@ impl TypedActionView for FeaturesPageView {
                 });
             }
         }
-
     }
 }
 

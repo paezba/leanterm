@@ -117,6 +117,7 @@ use super::util::{
     WorkspaceState, team_switcher_menu_items,
 };
 use super::{ActiveSession, TabBarDropTargetData, TabBarLocation, WorkspaceRegistry, util};
+use crate::GlobalResourceHandles;
 use crate::app_state::{
     LeafContents, LeafSnapshot, LeftPanelDisplayedTab, LeftPanelSnapshot, NotebookPaneSnapshot,
     PaneNodeSnapshot, PaneUuid, RightPanelSnapshot, SettingsPaneSnapshot, TabGroupSnapshot,
@@ -162,6 +163,10 @@ use crate::editor::{
 };
 use crate::env_vars::CloudEnvVarCollection;
 use crate::env_vars::manager::{EnvVarCollectionManager, EnvVarCollectionSource};
+use crate::event_sources::{
+    AddTabWithShellSource, AnonymousUserSignupEntrypoint, LaunchConfigUiLocation, PaletteSource,
+    SharingDialogSource,
+};
 use crate::experiments::Experiment;
 use crate::launch_configs::launch_config::WindowTemplate;
 use crate::launch_configs::save_modal::{LaunchConfigModalEvent, LaunchConfigSaveModal};
@@ -190,7 +195,7 @@ use crate::prompt::editor_modal::{
 };
 use crate::quit_warning::UnsavedStateSummary;
 use crate::remote_server::manager::RemoteServerManager;
-use crate::root_view::{NewWorkspaceSource, OpenLaunchConfigArg, quake_mode_window_id};
+use crate::root_view::{NewWorkspaceSource, OpenLaunchConfigArg};
 use crate::search::command_palette::view::{
     Event as CommandPaletteEvent, NavigationMode, View as CommandPalette,
 };
@@ -208,18 +213,13 @@ use crate::server::cloud_objects::update_manager::{
 use crate::server::ids::{ObjectUid, ServerId, SyncId};
 use crate::server::network_log_pane_manager::NetworkLogPaneManager;
 use crate::server::server_api::{ServerApi, ServerApiProvider, ServerTime};
-use crate::event_sources::{
-    AddTabWithShellSource, AnonymousUserSignupEntrypoint, LaunchConfigUiLocation, PaletteSource,
-    SharingDialogSource,
-};
 use crate::session_management::{SessionNavigationData, SessionSource, TabNavigationData};
 use crate::settings::cloud_preferences::CloudPreferencesSettings;
 use crate::settings::{
     AccessibilitySettings, AliasExpansionSettings, AppEditorSettings, BlockVisibilitySettings,
-    ChangelogSettings, CodeSettings, CodeSettingsChangedEvent, CtrlTabBehavior, CursorBlink,
-    DebugSettings, FontSettings, GPUSettings, InputSettings, MonospaceFontSize, PaneSettings,
-    PrivacySettings, SelectionSettings, Settings, SshSettings, ThemeSettings, active_theme_kind,
-    respect_system_theme,
+    CodeSettings, CodeSettingsChangedEvent, CtrlTabBehavior, CursorBlink, DebugSettings,
+    FontSettings, GPUSettings, InputSettings, MonospaceFontSize, PaneSettings, PrivacySettings,
+    SelectionSettings, SshSettings, ThemeSettings, active_theme_kind, respect_system_theme,
 };
 use crate::settings_view::keybindings::{KeybindingChangedEvent, KeybindingChangedNotifier};
 use crate::settings_view::pane_manager::SettingsPaneManager;
@@ -230,8 +230,8 @@ use crate::tab::{
     COMPACT_TAB_WIDTH_THRESHOLD, ColorPickerTarget, MOVE_TO_GROUP_LABEL, NewSessionMenuItem,
     PaneNameMenuTarget, SelectedTabColor, TAB_BAR_BORDER_HEIGHT, TAB_INDICATOR_HEIGHT,
     TAB_PIN_INDICATOR_ICON_SIZE, TAB_PIN_VANISH_THRESHOLD, TabBarState, TabComponent, TabData,
-    TabShortcutModifierState, color_picker_menu_items, next_tab_color,
-    tab_position_id, uses_vertical_tabs,
+    TabShortcutModifierState, color_picker_menu_items, next_tab_color, tab_position_id,
+    uses_vertical_tabs,
 };
 use crate::tab_configs::action_sidecar::SidecarItemKind;
 use crate::tab_configs::remove_confirmation_dialog::{
@@ -335,7 +335,6 @@ use crate::workspace::view::right_panel::{RightPanelEvent, RightPanelView};
 use crate::workspaces::update_manager::TeamUpdateManager;
 use crate::workspaces::user_workspaces::UserWorkspaces;
 use crate::workspaces::workspace::AdminEnablementSetting;
-use crate::GlobalResourceHandles;
 
 /// The padding that should be applied to the workspace as a whole.
 ///
@@ -6300,7 +6299,6 @@ impl Workspace {
         additional_paths: &[PathBuf],
         ctx: &mut ViewContext<Self>,
     ) {
-
         let grouping_on = FeatureFlag::TabbedEditorView.is_enabled()
             && *EditorSettings::as_ref(ctx)
                 .prefer_tabbed_editor_view
@@ -6662,8 +6660,7 @@ impl Workspace {
         if explicit_user_action
             && !was_warp_drive_open
             && self.current_workspace_state.is_warp_drive_open
-        {
-        }
+        {}
     }
 
     fn open_left_panel(&mut self, ctx: &mut ViewContext<Self>) {
@@ -7025,7 +7022,7 @@ impl Workspace {
             items.push(MenuItemFields::new(name).with_disabled(true).into_item())
         }
 
-        let appearance = Appearance::as_ref(app);
+        let _appearance = Appearance::as_ref(app);
 
         items.extend([
             MenuItemFields::new("Settings")
@@ -7905,8 +7902,7 @@ impl Workspace {
                     worktree_name.as_deref(),
                     ctx,
                 );
-                if should_track_existing_config_open {
-                }
+                if should_track_existing_config_open {}
                 self.close_tab_config_params_modal(ctx);
                 self.complete_pending_session_config_replacement(ctx);
 
@@ -8993,7 +8989,6 @@ impl Workspace {
                     })
                     .build();
 
-
                 if cfg!(all(not(target_family = "wasm"), target_os = "macos")) {
                     AppContext::show_native_platform_modal(ctx, dialog);
                     return false;
@@ -9059,8 +9054,7 @@ impl Workspace {
         let tabs_closed = self.close_tabs(indices_to_remove, skip_confirmation, true, ctx);
 
         // Telemetry whenever tabs actually closed, not when confirmation dialog comes up.
-        if tabs_closed {
-        }
+        if tabs_closed {}
     }
 
     /// Opens a confirmation dialog if necessary, or closes immediately if not.
@@ -9081,8 +9075,7 @@ impl Workspace {
         // Telemetry whenever tabs actually closed, not when confirmation dialog comes up.
         if tabs_closed {
             match direction {
-                TabMovement::Right if self.active_tab_index > index => {
-                }
+                TabMovement::Right if self.active_tab_index > index => {}
                 _ => (),
             }
         }
@@ -9786,7 +9779,8 @@ impl Workspace {
         let is_vertical_tabs_active = FeatureFlag::VerticalTabs.is_enabled()
             && *TabSettings::as_ref(app).use_vertical_tabs
             && self.vertical_tabs_panel_open;
-        let is_tab_menu_open = (self.show_tab_right_click_menu.is_some() && !is_vertical_tabs_active)
+        let is_tab_menu_open = (self.show_tab_right_click_menu.is_some()
+            && !is_vertical_tabs_active)
             || (self.show_new_session_dropdown_menu.is_some() && !is_vertical_tabs_active)
             || self.is_user_menu_open
             || self.tab_bar_pinned_by_popup;
@@ -9885,7 +9879,6 @@ impl Workspace {
                     }
                 }
             });
-
         }
     }
 
@@ -10183,7 +10176,6 @@ impl Workspace {
         }
 
         ctx.focus(&self.palette);
-
 
         ctx.notify();
     }
@@ -11549,8 +11541,7 @@ impl Workspace {
                     input_handle.read(ctx, |input, ctx| input.menu_positioning(ctx))
                 });
 
-            if !self.current_workspace_state.is_command_search_open {
-            }
+            if !self.current_workspace_state.is_command_search_open {}
 
             // Make sure we close any already-open input suggestions panel.
             if let Some(input_handle) = &active_input_handle {
@@ -12587,7 +12578,6 @@ impl Workspace {
     ) {
         let current_theme = active_theme_kind(ThemeSettings::as_ref(ctx), ctx);
 
-
         self.current_workspace_state.close_all_left_panels();
 
         // When showing the theme chooser, let's close the command palette
@@ -12873,7 +12863,6 @@ impl Workspace {
         self.close_all_overlays(ctx);
         self.current_workspace_state.is_prompt_editor_open = true;
         ctx.focus(&self.prompt_editor_modal);
-
     }
 
     fn open_theme_creator_modal(&mut self, ctx: &mut ViewContext<Self>) {
@@ -12898,8 +12887,7 @@ impl Workspace {
         team_uid: ServerId,
         ctx: &mut ViewContext<Self>,
     ) {
-        if let Some(_team) = UserWorkspaces::as_ref(ctx).team_from_uid(team_uid) {
-        }
+        if let Some(_team) = UserWorkspaces::as_ref(ctx).team_from_uid(team_uid) {}
         self.toast_stack.update(ctx, |toast_stack, ctx| {
             toast_stack.add_ephemeral_toast(
                 DismissibleToast::error(
@@ -14336,7 +14324,6 @@ impl Workspace {
         appearance: &Appearance,
         ctx: &AppContext,
     ) {
-
         let is_online = NetworkStatus::as_ref(ctx).is_online();
 
         if !is_online {
@@ -16460,7 +16447,6 @@ impl TypedActionView for Workspace {
                 source,
             } => self.toggle_palette(*palette_mode, *source, ctx),
             ShowUpgrade => {
-
                 let auth_state = AuthStateProvider::as_ref(ctx).get();
                 let upgrade_url = if let Some(team_uid) = self.team_uid(ctx) {
                     UserWorkspaces::upgrade_link_for_team(team_uid)
@@ -16913,8 +16899,7 @@ impl TypedActionView for Workspace {
                 }
             }
             DismissWorkspaceBanner(banner_type) => self.dismiss_workspace_banner(ctx, banner_type),
-            Crash => {
-            }
+            Crash => {}
             Panic => {
                 panic!("WorkspaceAction::Panic triggered from command palette");
             }
@@ -16949,7 +16934,6 @@ impl TypedActionView for Workspace {
                     view.add_ephemeral_toast(new_toast, ctx);
                 });
 
-
                 self.process_updated_sync_state(ctx);
             }
             ToggleSyncTerminalInputsInTab => {
@@ -16977,7 +16961,6 @@ impl TypedActionView for Workspace {
                     let new_toast = DismissibleToast::default(message);
                     view.add_ephemeral_toast(new_toast, ctx);
                 });
-
 
                 self.process_updated_sync_state(ctx);
             }
@@ -17207,7 +17190,6 @@ impl TypedActionView for Workspace {
                             Ok(Ok(output)) if output.status.success() => {
                                 ctx.open_file_path_in_explorer(Path::new(&output_path));
 
-
                                 format!("Process sample saved to {output_path}")
                             }
                             Ok(Ok(output)) => {
@@ -17221,7 +17203,8 @@ impl TypedActionView for Workspace {
                             }
                             Ok(Err(io_err)) => {
                                 report_error!(
-                                    anyhow::Error::new(io_err).context("Failed to run sample command")
+                                    anyhow::Error::new(io_err)
+                                        .context("Failed to run sample command")
                                 );
                                 "Failed to sample process (check logs)".to_string()
                             }

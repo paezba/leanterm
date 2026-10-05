@@ -90,8 +90,8 @@ use super::{History, HistoryEntry, SizeInfo, TerminalModel, prompt, should_right
 use crate::ASSETS;
 use crate::appearance::{Appearance, AppearanceEvent};
 use crate::channel::{Channel, ChannelState};
-use crate::cloud_object::model::persistence::CloudModel;
 use crate::cloud_object::CloudObject;
+use crate::cloud_object::model::persistence::CloudModel;
 #[cfg(feature = "local_fs")]
 use crate::code::editor_management::CodeSource;
 use crate::completer::SessionContext;
@@ -108,6 +108,7 @@ use crate::editor::{
     position_id_for_cursor, position_id_for_first_cursor,
 };
 use crate::env_vars::EnvVarCollectionExt;
+use crate::event_sources::{AnonymousUserSignupEntrypoint, CommandXRayTrigger, PaletteSource};
 use crate::features::FeatureFlag;
 use crate::input_suggestions::{
     Event as InputSuggestionsEvent, HistoryInputSuggestion, InputSuggestions,
@@ -119,9 +120,6 @@ use crate::prefix::longest_common_prefix;
 use crate::search::QueryFilter;
 use crate::server::ids::SyncId;
 use crate::server::server_api::ServerApi;
-use crate::event_sources::{
-    AnonymousUserSignupEntrypoint, CommandXRayTrigger, PaletteSource,
-};
 use crate::session_management::SessionNavigationPromptElements;
 use crate::settings::{
     AliasExpansionSettings, AppEditorSettings, AppEditorSettingsChangedEvent, InputModeSettings,
@@ -394,7 +392,6 @@ impl InputSuggestionsMode {
     pub fn is_visible(&self) -> bool {
         *self != InputSuggestionsMode::Closed
     }
-
 }
 
 /// Where a command execution request originates from.
@@ -2675,8 +2672,7 @@ impl Input {
                 self.reset_workflow_state(*env_vars, ctx);
 
                 // The ID may be `None` if the user is *clearing* environment variables.
-                if let Some(_env_vars_id) = env_vars {
-                }
+                if let Some(_env_vars_id) = env_vars {}
             }
         }
     }
@@ -2912,7 +2908,6 @@ impl Input {
                 if !self.confirm_and_execute_suggestion(suggestion, ctx) {
                     return;
                 }
-
 
                 self.close_input_suggestions(/*should_focus_input=*/ true, ctx);
 
@@ -5842,7 +5837,6 @@ impl Input {
         let (workflow_id, workflow_command) = {
             match self.workflows_state.selected_workflow_state.as_ref() {
                 Some(selected_workflow_state) => {
-
                     let workflow_type = &selected_workflow_state.workflow_type;
                     let workflow_id = match workflow_type {
                         WorkflowType::Cloud(workflow) => Some(workflow.id),

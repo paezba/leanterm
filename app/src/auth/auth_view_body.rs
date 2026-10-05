@@ -32,10 +32,10 @@ use crate::auth::auth_view_shared_helpers::render_offline_contents;
 use crate::editor::{
     EditorView, InteractionState, SingleLineEditorOptions, TextColors, TextOptions,
 };
+use crate::event_sources::AnonymousUserSignupEntrypoint;
 use crate::experiments::{AuthFlowInstructions, Experiment};
 use crate::modal::MODAL_CORNER_RADIUS;
 use crate::network::NetworkStatus;
-use crate::event_sources::AnonymousUserSignupEntrypoint;
 use crate::settings::PrivacySettings;
 use crate::themes::theme::Fill as ThemeFill;
 use crate::util::color::{darken, lighten};
@@ -915,8 +915,7 @@ impl TypedActionView for AuthViewBody {
                 ctx.emit(AuthViewBodyEvent::SignUpButtonClicked);
             }
             AuthViewBodyAction::ShowOverlay(overlay) => {
-                if let AuthViewOverlay::PrivacySettings = overlay {
-                }
+                if let AuthViewOverlay::PrivacySettings = overlay {}
                 self.active_overlay = Some(*overlay);
                 ctx.notify();
             }

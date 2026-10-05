@@ -22,11 +22,11 @@ use warpui::{AppContext, SingletonEntity as _, TypedActionView, WindowId};
 use self::docker::open_docker_container;
 use crate::cloud_object::ObjectType;
 use crate::drive::{OpenWarpDriveObjectArgs, OpenWarpDriveObjectSettings};
+use crate::event_sources::LaunchConfigUiLocation;
 use crate::features::FeatureFlag;
 use crate::launch_configs::launch_config::LaunchConfig;
 use crate::root_view::{OpenLaunchConfigArg, open_new_window_get_handles};
 use crate::server::ids::ServerId;
-use crate::event_sources::LaunchConfigUiLocation;
 use crate::settings_view::{
     OpenTeamsSettingsModalArgs, SettingsSection, settings_widget_deeplink_target,
 };
@@ -41,9 +41,7 @@ use crate::workspace::util::PaneViewLocator;
 use crate::workspace::{
     ToastStack, Workspace, WorkspaceAction, WorkspaceRegistry, active_terminal_in_window,
 };
-use crate::{
-    ChannelState, OpenPath, quake_mode_window_id, quake_mode_window_is_open, safe_info,
-};
+use crate::{ChannelState, OpenPath, quake_mode_window_id, quake_mode_window_is_open, safe_info};
 
 const DESKTOP_REDIRECT_URI_PATH: &str = "/desktop_redirect";
 
@@ -1053,7 +1051,6 @@ fn open_file(window_id: Option<WindowId>, path: PathBuf, ctx: &mut AppContext) {
                 }
             }
         }
-
     }
 }
 
@@ -1119,7 +1116,6 @@ fn execute_file(window_id: WindowId, path_str: &str, ctx: &mut AppContext) {
             input.set_pending_command(&path_str, i_ctx);
         })
     });
-
 }
 
 fn open_window_with_action(active_window_id: Option<WindowId>, action: &str, ctx: &mut AppContext) {

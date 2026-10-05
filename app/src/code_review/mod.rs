@@ -12,8 +12,6 @@ mod git_repo_models;
 pub mod github_repo_model;
 mod hidden_lines;
 #[cfg_attr(not(feature = "local_fs"), allow(unused_imports))]
-
-
 use crate::terminal::view::TerminalView;
 
 pub(crate) mod code_review_header;

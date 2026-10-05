@@ -763,19 +763,16 @@ impl FileNotebookView {
                     source,
                 });
             }
-            EditorViewEvent::OpenedBlockInsertionMenu(_source) => {},
-            EditorViewEvent::OpenedEmbeddedObjectSearch => {
-                {}
-            }
-            EditorViewEvent::OpenedFindBar => {
-                {}
-            }
-            EditorViewEvent::InsertedEmbeddedObject(_info) => {},
-            EditorViewEvent::CopiedBlock { block: _, entrypoint: _ } => {},
-            EditorViewEvent::NavigatedCommands => {
-                {}
-            }
-            EditorViewEvent::ChangedSelectionMode(_mode) => {},
+            EditorViewEvent::OpenedBlockInsertionMenu(_source) => {}
+            EditorViewEvent::OpenedEmbeddedObjectSearch => {}
+            EditorViewEvent::OpenedFindBar => {}
+            EditorViewEvent::InsertedEmbeddedObject(_info) => {}
+            EditorViewEvent::CopiedBlock {
+                block: _,
+                entrypoint: _,
+            } => {}
+            EditorViewEvent::NavigatedCommands => {}
+            EditorViewEvent::ChangedSelectionMode(_mode) => {}
             EditorViewEvent::Navigate(_)
             | EditorViewEvent::Edited
             | EditorViewEvent::EditWorkflow(_)

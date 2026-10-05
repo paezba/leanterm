@@ -1491,7 +1491,6 @@ impl CodeReviewView {
             return;
         }
 
-
         let preferred_session = self.preferred_review_session(ctx);
         self.diff_state_model.update(ctx, |model, ctx| {
             model.set_diff_mode(mode, false, true, preferred_session, ctx);
@@ -2166,7 +2165,6 @@ impl CodeReviewView {
             model.clear_results();
         });
 
-
         // Clear finder match decorations
         #[cfg(not(target_family = "wasm"))]
         if let CodeReviewViewState::Loaded(state) = self.state() {
@@ -2432,7 +2430,6 @@ impl CodeReviewView {
             });
         }
 
-
         if self.all_editors_loaded() {
             let diff_mode = self.diff_state_model.as_ref(ctx).diff_mode(ctx);
             self.reposition_comments_in_file(&diff_mode, ctx);
@@ -2643,11 +2640,9 @@ impl CodeReviewView {
 
     fn delete_comment_by_id(&mut self, id: CommentId, ctx: &mut ViewContext<Self>) {
         if let Some(model) = self.active_comment_model.clone() {
-
             model.update(ctx, |batch, ctx| {
                 batch.delete_comment(id, ctx);
             });
-
         }
     }
 
@@ -3422,8 +3417,7 @@ impl CodeReviewView {
             fallback_count,
         } = Self::relocate_comments(comments, state, &repo_path, ctx);
 
-        if fallback_count > 0 {
-        }
+        if fallback_count > 0 {}
 
         model.update(ctx, |batch, ctx| {
             batch.upsert_comments(relocated_comments, ctx);
@@ -5216,8 +5210,7 @@ impl CodeReviewView {
             CodeEditorEvent::Focused => {
                 ctx.emit(CodeReviewViewEvent::Pane(PaneEvent::FocusSelf));
             }
-            CodeEditorEvent::CommentEditorOpened => {
-            }
+            CodeEditorEvent::CommentEditorOpened => {}
             CodeEditorEvent::ContentChanged { origin, .. } => {
                 if origin.from_user() {
                     if let Some((view_handle, content_version)) = self.last_revert.take() {
@@ -5924,7 +5917,6 @@ impl CodeReviewView {
             None,
         );
 
-
         ctx.emit(CodeReviewViewEvent::OpenFileWithTarget {
             path: full_path,
             target,
@@ -6259,8 +6251,6 @@ impl TypedActionView for CodeReviewView {
             }
             CodeReviewAction::ToggleMaximize => {
                 // Determine if we're minimizing or maximizing
-
-
 
                 ctx.emit(CodeReviewViewEvent::Pane(PaneEvent::ToggleMaximized));
             }

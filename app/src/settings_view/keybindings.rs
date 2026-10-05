@@ -31,11 +31,11 @@ use crate::editor::{
 use crate::keyboard::{UserDefinedKeybinding, write_custom_keybinding};
 use crate::search_bar::SearchBar;
 use crate::settings::CloudPreferencesSettings;
+use crate::themes;
 use crate::util::bindings::{
     CommandBinding, filter_bindings_including_keystroke, reset_keybinding_to_default,
     set_custom_keybinding,
 };
-use crate::themes;
 
 const FONT_DELTA: f32 = 2.;
 const CANCEL_SAVE_BUTTONS_SPACING: f32 = 4.0;
@@ -620,7 +620,6 @@ impl KeybindingsView {
                 &mut self.bindings,
             );
             row.binding.trigger = default_trigger;
-
 
             self.modifying_row = None;
             row.editor_open = false;

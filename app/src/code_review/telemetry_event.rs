@@ -3,7 +3,6 @@ use std::fmt::Display;
 use serde::{Serialize, Serializer};
 use serde_with::SerializeDisplay;
 
-
 /// Terminal status of a `GitDialog`. Captures both async-op outcomes and
 /// pre-confirmation user cancels in a single enum.
 #[derive(Clone, Copy, Debug, Serialize)]

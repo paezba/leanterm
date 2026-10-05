@@ -23,6 +23,7 @@ use super::super::palette_styles as styles;
 use super::CommandPaletteMixer;
 use crate::appearance::Appearance;
 use crate::drive::CloudObjectTypeAndId;
+use crate::event_sources::LaunchConfigUiLocation;
 use crate::palette::PaletteMode;
 use crate::root_view::OpenLaunchConfigArg;
 use crate::search::QueryFilter;
@@ -38,7 +39,6 @@ use crate::search::search_bar::{
     SearchBar, SearchBarEvent, SearchBarState, SearchResultOrdering, SelectionUpdate,
 };
 use crate::server::ids::SyncId;
-use crate::event_sources::LaunchConfigUiLocation;
 use crate::session_management::SessionSource;
 use crate::settings::CtrlTabBehavior;
 use crate::terminal::keys_settings::KeysSettings;
@@ -586,8 +586,6 @@ impl View {
     }
 
     fn close(&mut self, ctx: &mut ViewContext<Self>, accepted_action_type: Option<&'static str>) {
-
-
         self.state.clipped_scroll_state = Default::default();
         self.reset(ctx);
 
@@ -764,7 +762,6 @@ impl View {
                         &pane_view_locator,
                     );
                 }
-
             }
             CommandPaletteItemAction::NavigateToTab {
                 pane_group_id,
@@ -866,7 +863,6 @@ impl View {
         action: &dyn warpui::Action,
         ctx: &mut ViewContext<Self>,
     ) {
-
         let (window_id, view_id) = match self.binding_source.as_ref(ctx) {
             BindingSource::View {
                 window_id, view_id, ..

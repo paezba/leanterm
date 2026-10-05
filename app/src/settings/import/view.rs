@@ -16,6 +16,7 @@ use warpui::{
 };
 
 use super::config::{QuakeModeWindow, ThemeType};
+use crate::GlobalResourceHandlesProvider;
 use crate::settings::import::config::{Config, SettingType};
 use crate::settings::import::model::{ImportedConfigModel, TerminalTypeAndProfile};
 use crate::settings::{
@@ -29,7 +30,6 @@ use crate::themes::theme::{CustomTheme, SelectedSystemThemes, ThemeKind};
 use crate::ui_components::blended_colors;
 use crate::user_config::{self, WarpConfig};
 use crate::window_settings::WindowSettings;
-use crate::GlobalResourceHandlesProvider;
 
 // UI does not scale, so we set a fixed size for all text.
 const FONT_SIZE: f32 = 14.;
@@ -881,7 +881,6 @@ impl SettingsImportView {
         _terminal_type_and_profile: &TerminalTypeAndProfile,
         _ctx: &mut ViewContext<Self>,
     ) {
-
     }
 }
 
@@ -1090,8 +1089,7 @@ impl TypedActionView for SettingsImportView {
                 // Set the current config to expand.
                 self.configs[*idx].expanded = true;
                 // Only send the telemetry event if the new selected item is different.
-                if old_selected_idx.is_none_or(|old_idx| old_idx != *idx) {
-                }
+                if old_selected_idx.is_none_or(|old_idx| old_idx != *idx) {}
                 // The radio button state already updates, since each element is a child of a RadioButtonItem.
                 ctx.notify();
             }

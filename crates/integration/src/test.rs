@@ -1669,7 +1669,7 @@ pub fn test_open_and_close_context_menu_with_keybinding() -> Builder {
         )
         .with_step(
             new_step_with_default_assertions("Press keybinding again to close context menu")
-                .with_keystrokes(&["ctrl-m"])
+                .with_keystrokes(&["ctrl-m"]),
         )
 }
 
