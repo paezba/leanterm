@@ -1,5 +1,4 @@
 use crate::terminal::model::block::SerializedBlockListItem;
-use std::any::Any;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ffi::OsString;

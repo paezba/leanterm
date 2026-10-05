@@ -1,4 +1,3 @@
-use std::ffi::OsStr;
 use std::path::PathBuf;
 
 use super::{app_database_file_path, database_file_path_for_scope};
