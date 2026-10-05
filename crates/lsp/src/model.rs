@@ -15,7 +15,6 @@ use lsp_types::{
 #[cfg(not(target_arch = "wasm32"))]
 use simple_logger::manager::LogManager;
 #[cfg(not(target_arch = "wasm32"))]
-use warp_core::features::FeatureFlag;
 #[cfg(not(target_arch = "wasm32"))]
 use warp_errors::report_error;
 #[cfg(not(target_arch = "wasm32"))]
@@ -302,9 +301,7 @@ impl LspServerModel {
                                 background_executor: ctx.background_executor(),
                             };
 
-                            if FeatureFlag::LSPAsATool.is_enabled() {
-                                me.repo_watcher.ensure(&me.config, ctx);
-                            }
+                            me.repo_watcher.ensure(&me.config, ctx);
 
                             ctx.emit(LspEvent::Started);
                         }
@@ -332,9 +329,7 @@ impl LspServerModel {
     pub fn stop(&mut self, manually_stopped: bool, ctx: &mut ModelContext<Self>) -> Result<()> {
         match &self.server_state {
             LspState::Available { service, .. } => {
-                if FeatureFlag::LSPAsATool.is_enabled() {
-                    self.repo_watcher.teardown(ctx);
-                }
+                self.repo_watcher.teardown(ctx);
 
                 let service = service.clone();
                 self.server_state = LspState::Stopping { manually_stopped };
@@ -406,9 +401,7 @@ impl LspServerModel {
 
         match &self.server_state {
             LspState::Available { service, .. } => {
-                if FeatureFlag::LSPAsATool.is_enabled() {
-                    self.repo_watcher.teardown(ctx);
-                }
+                self.repo_watcher.teardown(ctx);
 
                 let service = service.clone();
                 self.server_state = LspState::Stopping {

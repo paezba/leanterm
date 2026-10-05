@@ -547,17 +547,14 @@ pub fn init_actions_from_parent_view<T: Action + Clone>(
         flags::SMART_SELECT_FLAG,
     ));
 
-    toggle_binding_pairs.push(
-        ToggleSettingActionPair::new(
-            "terminal input message line",
-            builder(SettingsAction::FeaturesPageToggle(
-                FeaturesPageAction::ToggleShowTerminalInputMessageLine,
-            )),
-            context,
-            flags::SHOW_TERMINAL_INPUT_MESSAGE_LINE_FLAG,
-        )
-        .with_enabled(|| FeatureFlag::AgentView.is_enabled()),
-    );
+    toggle_binding_pairs.push(ToggleSettingActionPair::new(
+        "terminal input message line",
+        builder(SettingsAction::FeaturesPageToggle(
+            FeaturesPageAction::ToggleShowTerminalInputMessageLine,
+        )),
+        context,
+        flags::SHOW_TERMINAL_INPUT_MESSAGE_LINE_FLAG,
+    ));
 
     toggle_binding_pairs.push(ToggleSettingActionPair::new(
         "preserve input focus on block selection",
@@ -2262,9 +2259,7 @@ impl FeaturesPageView {
             editor_widgets.push(Box::new(AutosuggestionIgnoreButtonWidget::default()));
         }
 
-        if FeatureFlag::AgentView.is_enabled() {
-            editor_widgets.push(Box::new(ShowTerminalInputMessageLineWidget::default()));
-        }
+        editor_widgets.push(Box::new(ShowTerminalInputMessageLineWidget::default()));
 
         editor_widgets.push(Box::new(TabKeyBehaviorWidget::default()));
 

@@ -334,10 +334,7 @@ pub fn init(ctx: &mut AppContext) {
         FixedBinding::new(
             "ctrl-enter",
             EditorAction::CtrlEnter,
-            id!("EditorView")
-                & !id!("IMEOpen")
-                & !id!(flags::CTRL_ENTER_ACCEPTS_PROMPT_SUGGESTION)
-                & !(id!(flags::AGENT_VIEW_ENABLED) & id!(flags::CTRL_ENTER_ENTERS_AGENT_VIEW)),
+            id!("EditorView") & !id!("IMEOpen") & !id!(flags::CTRL_ENTER_ACCEPTS_PROMPT_SUGGESTION),
         ),
         FixedBinding::new(
             "alt-enter",

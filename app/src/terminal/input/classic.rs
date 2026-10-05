@@ -21,9 +21,7 @@ use crate::terminal::view::TerminalAction;
 use crate::terminal::warpify::render::{render_subshell_flag, render_subshell_flag_pole};
 
 impl Input {
-    /// Renders the classic input. This is used when the user has 'Honor PS1' enabled in settings,
-    /// OR if `FeatureFlag::AgentView` is disabled and the user has 'Classic' input type selected
-    /// in settings.
+    /// Renders the classic input. This is used when the user has 'Honor PS1' enabled in settings.
     pub(super) fn render_classic_input(&self, app: &AppContext) -> Box<dyn Element> {
         let appearance = Appearance::as_ref(app);
         let theme = appearance.theme();

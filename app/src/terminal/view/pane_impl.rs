@@ -13,7 +13,6 @@ use warpui::{
 
 use super::{Event, PaneConfiguration, TerminalAction, TerminalViewState};
 use crate::appearance::Appearance;
-use crate::features::FeatureFlag;
 use crate::menu::{MenuItem, MenuItemFields};
 use crate::pane_group::focus_state::{PaneFocusHandle, PaneGroupFocusEvent, PaneGroupFocusState};
 use crate::pane_group::pane::view::header::components::{
@@ -265,8 +264,7 @@ impl BackingView for TerminalView {
     }
 
     fn should_render_header(&self, app: &AppContext) -> bool {
-        FeatureFlag::ContextWindowUsageV2.is_enabled()
-            && self.split_pane_state(app).is_in_split_pane()
+        self.split_pane_state(app).is_in_split_pane()
     }
 
     fn render_header_content(

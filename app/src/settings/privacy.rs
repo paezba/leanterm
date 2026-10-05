@@ -4,7 +4,6 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use settings::macros::{define_settings_group, maybe_define_setting, register_settings_events};
 use settings::{RespectUserSyncSetting, Setting, SupportedPlatforms, SyncToCloud};
-use warp_core::features::FeatureFlag;
 use warp_errors::report_error;
 pub use warp_terminal::model::secrets::RegexDisplayInfo;
 use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
@@ -167,10 +166,7 @@ impl PrivacySettingsSnapshot {
     }
 
     pub fn should_disable_telemetry(&self) -> bool {
-        // If a user has opted in to the agent mode analytics experiment, telemetry must be enabled.
-        !self.is_telemetry_enabled
-            && !self.is_telemetry_force_enabled
-            && !FeatureFlag::AgentModeAnalytics.is_enabled()
+        !self.is_telemetry_enabled && !self.is_telemetry_force_enabled
     }
 
     #[cfg(test)]
