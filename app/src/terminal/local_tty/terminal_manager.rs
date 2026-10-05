@@ -150,7 +150,7 @@ pub struct TerminalSurfaceInit {
     pub inactive_pty_reads_rx: InactiveReceiver<Arc<Vec<u8>>>,
 }
 
-#[cfg(any(test, all(feature = "tui", feature = "test-util")))]
+#[cfg(any(test, feature = "test-util"))]
 impl TerminalSurfaceInit {
     /// Creates mock terminal surface inputs without spawning a PTY.
     pub fn new_for_test(ctx: &mut AppContext) -> Self {
@@ -195,21 +195,6 @@ struct ShellStartupResources {
 pub struct TerminalManagerInit<S> {
     pub manager: ModelHandle<Box<dyn TerminalManagerTrait>>,
     pub surface: ViewHandle<S>,
-}
-/// Adapts a TUI-owned surface manager to Warp's type-erased manager contract.
-struct TuiTerminalManager<S>(TerminalManager<S>);
-
-impl<S: 'static> TerminalManagerTrait for TuiTerminalManager<S> {
-    fn model(&self) -> Arc<FairMutex<TerminalModel>> {
-        self.0.model()
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        &self.0
-    }
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        &mut self.0
-    }
 }
 
 impl<S> Drop for TerminalManager<S> {
@@ -256,47 +241,6 @@ impl<S> TerminalManager<S> {
             ctx,
             create_surface,
             |manager| Box::new(manager),
-        )
-    }
-
-    /// Creates a local terminal manager for a TUI-owned terminal surface.
-    /// `block_spacing` is the TUI frontend's spacing baked into block heights.
-    #[allow(clippy::too_many_arguments)]
-    pub fn create_tui_model<PostWire>(
-        startup_directory: Option<PathBuf>,
-        env_vars: HashMap<OsString, OsString>,
-        is_shared_session_creator: IsSharedSessionCreator,
-        all_restored_blocks: Option<&Vec<SerializedBlockListItem>>,
-        user_default_shell_unsupported_banner_model_handle: ModelHandle<BannerState>,
-        initial_size: Vector2F,
-        model_event_sender: Option<SyncSender<ModelEvent>>,
-        chosen_shell: Option<AvailableShell>,
-        block_spacing: BlockSpacing,
-        ctx: &mut AppContext,
-        create_surface: impl FnOnce(
-            TerminalSurfaceInit,
-            &mut AppContext,
-        ) -> TerminalSurfaceResult<S, PostWire>,
-    ) -> TerminalManagerInit<S>
-    where
-        S: TerminalSurface,
-        <S as Entity>::Event: PtyIntentEvent,
-        PostWire: FnOnce(&mut Self, &ViewHandle<S>, &mut AppContext),
-    {
-        Self::create_model_with_manager(
-            startup_directory,
-            env_vars,
-            is_shared_session_creator,
-            all_restored_blocks,
-            user_default_shell_unsupported_banner_model_handle,
-            initial_size,
-            model_event_sender,
-            chosen_shell,
-            block_spacing,
-            SshRemoteServerSupport::Disabled,
-            ctx,
-            create_surface,
-            |manager| Box::new(TuiTerminalManager(manager)),
         )
     }
 

@@ -86,8 +86,6 @@ mod transfer_ownership_confirmation_modal;
 mod warp_drive_page;
 mod warpify_page;
 
-#[cfg(feature = "tui")]
-pub(crate) use billing_and_usage::billing_cycle_usage_common::{format_cost_cents, format_credits};
 pub use features_page::FeaturesPageAction;
 pub use main_page::handle_experiment_change;
 pub use privacy_page::PrivacyPageAction;

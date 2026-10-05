@@ -156,7 +156,7 @@ pub enum SoleTeamError {
 }
 
 impl UserWorkspaces {
-    #[cfg(any(test, all(feature = "tui", feature = "test-util")))]
+    #[cfg(any(test, feature = "test-util"))]
     pub fn mock(
         team_client: Arc<dyn TeamClient>,
         workspace_client: Arc<dyn WorkspaceClient>,

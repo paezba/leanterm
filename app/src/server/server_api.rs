@@ -11,9 +11,6 @@ use std::ops::Deref;
 use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
-#[cfg(feature = "tui")]
-use tui_onboarding::TuiOnboardingClient;
-
 use ::http::header::CONTENT_LENGTH;
 use anyhow::{Context, Result, anyhow};
 use auth::AuthClient;
@@ -386,7 +383,7 @@ impl ServerApi {
         }
     }
 
-    #[cfg(any(test, all(feature = "tui", feature = "test-util")))]
+    #[cfg(any(test, feature = "test-util"))]
     fn new_for_test() -> Self {
         let (tx, _) = async_channel::unbounded();
         let auth_state = Arc::new(AuthState::new_for_test());
@@ -863,7 +860,7 @@ impl ServerApiProvider {
     }
 
     /// Constructs a new SeverApiProvider for tests.
-    #[cfg(any(test, all(feature = "tui", feature = "test-util")))]
+    #[cfg(any(test, feature = "test-util"))]
     pub fn new_for_test() -> Self {
         let server_api = Arc::new(ServerApi::new_for_test());
         let auth_client = Arc::new(AuthClientImpl::new(server_api.base_client.clone()));
