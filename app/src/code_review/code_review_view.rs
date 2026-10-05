@@ -704,7 +704,7 @@ impl CodeReviewView {
         // (and will make an RPC once that path is wired). We pass
         // should_fetch_base: false because re-opening the panel doesn't
         // need to fetch the base branch from origin.
-        let preferred_session = self.preferred_review_session(ctx);
+        let _preferred_session = self.preferred_review_session(ctx);
         self.diff_state_model.update(ctx, |model, ctx| {
             model.set_code_review_metadata_refresh_enabled(true, ctx);
             model.load_diffs_for_current_repo(false, true, ctx);
@@ -1491,7 +1491,7 @@ impl CodeReviewView {
             return;
         }
 
-        let preferred_session = self.preferred_review_session(ctx);
+        let _preferred_session = self.preferred_review_session(ctx);
         self.diff_state_model.update(ctx, |model, ctx| {
             model.set_diff_mode(mode, false, true, ctx);
         });
@@ -6258,7 +6258,7 @@ impl TypedActionView for CodeReviewView {
                 self.save_files(unsaved_files.as_slice(), ctx);
             }
             CodeReviewAction::RefreshGitState => {
-                let preferred_session = self.preferred_review_session(ctx);
+                let _preferred_session = self.preferred_review_session(ctx);
                 self.diff_state_model.update(ctx, |model, ctx| {
                     model.load_diffs_for_current_repo(false, true, ctx);
                     model.refresh_metadata_after_git_operation(ctx);

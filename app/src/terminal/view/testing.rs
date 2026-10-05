@@ -2,7 +2,6 @@
 use warpui::ModelHandle;
 
 use crate::terminal::find::TerminalFindModel;
-use crate::terminal::model::block::SerializedBlockListItem;
 cfg_if::cfg_if! {
     if #[cfg(test)] {
         use std::sync::Arc;

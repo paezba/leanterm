@@ -6776,7 +6776,7 @@ impl Workspace {
                     })
                 });
                 // Resolve DiffStateModel outside the read closure (needs mutable context).
-                read_result.and_then(|(repo_path, preferred_session)| {
+                read_result.and_then(|(repo_path, _preferred_session)| {
                     let diff_state_model = repo_path.as_ref().and_then(|rp| {
                         self.working_directories_model.update(ctx, |model, ctx| {
                             model.get_or_create_diff_state_model(rp.clone(), ctx)
@@ -6816,7 +6816,7 @@ impl Workspace {
         }
 
         let repo_location = panel_context.repo_path.clone();
-        let preferred_session = panel_context
+        let _preferred_session = panel_context
             .terminal_view
             .upgrade(ctx)
             .and_then(|tv| tv.as_ref(ctx).active_block_session_id());
@@ -6910,7 +6910,7 @@ impl Workspace {
         });
         // Resolve DiffStateModel outside the read closure (needs mutable context).
         let context = read_result.and_then(
-            |(repo_path, preferred_session): (Option<LocalOrRemotePath>, Option<SessionId>)| {
+            |(repo_path, _preferred_session): (Option<LocalOrRemotePath>, Option<SessionId>)| {
                 let diff_state_model = repo_path.as_ref().and_then(|rp| {
                     self.working_directories_model.update(ctx, |model, ctx| {
                         model.get_or_create_diff_state_model(rp.clone(), ctx)
@@ -11627,28 +11627,23 @@ impl Workspace {
         match pane_group_handle.as_ref(ctx).active_session_view(ctx) {
             Some(terminal_handle) => {
                 #[cfg_attr(not(feature = "local_fs"), allow(unused_variables))]
-                let (
-                    session,
-                    pwd_location,
-                    _path_if_local,
-                    is_local,
-                    is_wsl_session,
-                ) = terminal_handle.read(ctx, |terminal, ctx| {
-                    let active_session_id = terminal.active_block_session_id();
-                    let session = active_session_id
-                        .and_then(|id| terminal.sessions_model().as_ref(ctx).get(id));
-                    let pwd_location = terminal.pwd_as_local_or_remote(ctx);
-                    let path_if_local = terminal.active_session_path_if_local(ctx);
-                    let is_local = terminal.active_session_is_local(ctx);
-                    let is_wsl_session = session.as_ref().map(|s| s.is_wsl()).unwrap_or(false);
-                    (
-                        session,
-                        pwd_location,
-                        path_if_local,
-                        is_local,
-                        is_wsl_session,
-                    )
-                });
+                let (session, pwd_location, _path_if_local, is_local, is_wsl_session) =
+                    terminal_handle.read(ctx, |terminal, ctx| {
+                        let active_session_id = terminal.active_block_session_id();
+                        let session = active_session_id
+                            .and_then(|id| terminal.sessions_model().as_ref(ctx).get(id));
+                        let pwd_location = terminal.pwd_as_local_or_remote(ctx);
+                        let path_if_local = terminal.active_session_path_if_local(ctx);
+                        let is_local = terminal.active_session_is_local(ctx);
+                        let is_wsl_session = session.as_ref().map(|s| s.is_wsl()).unwrap_or(false);
+                        (
+                            session,
+                            pwd_location,
+                            path_if_local,
+                            is_local,
+                            is_wsl_session,
+                        )
+                    });
 
                 let window_id = ctx.window_id();
                 ActiveSession::handle(ctx).update(ctx, |active_session, ctx| {
@@ -16621,13 +16616,10 @@ impl TypedActionView for Workspace {
                                 (repo_path, preferred_session)
                             })
                     });
-                    if let Some((repo_path, preferred_session)) = read_result {
+                    if let Some((repo_path, _preferred_session)) = read_result {
                         let diff_state_model = repo_path.as_ref().and_then(|rp| {
                             self.working_directories_model.update(ctx, |model, ctx| {
-                                model.get_or_create_diff_state_model(
-                                    rp.clone(),
-                                    ctx,
-                                )
+                                model.get_or_create_diff_state_model(rp.clone(), ctx)
                             })
                         });
                         if let Some(diff_state_model) = diff_state_model {

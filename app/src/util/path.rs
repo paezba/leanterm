@@ -22,10 +22,7 @@ pub fn display_name_with_host(path: &LocalOrRemotePath) -> String {
 /// When `abbreviate_home` is true, local paths under the user's home directory
 /// are abbreviated with a `~/` prefix. The flag is ignored for remote paths,
 /// whose home directory lives on a different machine.
-pub fn display_path_with_host(
-    path: &LocalOrRemotePath,
-    abbreviate_home: bool,
-) -> String {
+pub fn display_path_with_host(path: &LocalOrRemotePath, abbreviate_home: bool) -> String {
     match path {
         LocalOrRemotePath::Local(local_path) => {
             if abbreviate_home {

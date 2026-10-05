@@ -5,7 +5,6 @@ mod local;
 #[cfg(feature = "local_fs")]
 pub use local::LocalGitRepoStatusModel;
 
-
 use super::diff_state::DiffStats;
 pub use super::git_repo_models::GitRepoModels;
 use crate::context_chips::display_chip::GitBranchTrackingStatus;

@@ -13,8 +13,6 @@ use warpui_core::{AppContext, Entity, SingletonEntity};
 use super::UserUid;
 use super::anonymous_id::get_or_create_anonymous_id;
 use super::credentials::Credentials;
-#[cfg(any(not(target_family = "wasm"), test, feature = "test-util"))]
-use super::user::UserMetadata;
 use super::user::persistence::PersistedUser;
 use super::user::{
     AnonymousUserType, FirebaseAuthTokens, PersonalObjectLimits, PrincipalType, User,

@@ -17,7 +17,6 @@ use warp_core::ui::theme::{AnsiColorIdentifier, Fill as ThemeFill};
 use warp_editor::editor::NavigationKey;
 use warp_ripgrep::search::Submatch;
 use warp_util::local_or_remote_path::LocalOrRemotePath;
-use warp_util::standardized_path::StandardizedPath;
 use warpui::elements::{
     Border, ChildAnchor, ChildView, Clipped, ConstrainedBox, Container, CornerRadius,
     CrossAxisAlignment, DispatchEventResult, Empty, EventHandler, Fill, Flex, FormattedTextElement,
@@ -1864,7 +1863,7 @@ impl GlobalSearchView {
         dir_entry: &DirectoryEntry,
         appearance: &Appearance,
         theme: &warp_core::ui::theme::WarpTheme,
-        app: &AppContext,
+        _app: &AppContext,
     ) -> Box<dyn Element> {
         let is_selected = self.is_row_at_index_selected(index);
         let mouse_state = dir_entry.mouse_state.clone();

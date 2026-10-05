@@ -51,8 +51,8 @@ use super::model::{
     WorkspaceMetadata as WorkspaceMetadataModel,
 };
 use super::{
-    BlockCompleted, FinishedCommandMetadata, ModelEvent, PersistedData,
-    PersistenceScope, StartedCommandMetadata, WriterHandles, schema,
+    BlockCompleted, FinishedCommandMetadata, ModelEvent, PersistedData, PersistenceScope,
+    StartedCommandMetadata, WriterHandles, schema,
 };
 use crate::app_state::{
     AppState, BranchSnapshot, CodePaneSnapShot, CodePaneTabSnapshot, CodeReviewPaneSnapshot,

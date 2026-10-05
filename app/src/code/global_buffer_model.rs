@@ -3,25 +3,19 @@ use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 use std::sync::Arc;
-use std::time::Duration;
 
 use bimap::BiMap;
 use futures_util::stream::AbortHandle;
 use lsp::types::TextDocumentContentChangeEvent;
 use lsp::{LspManagerModel, LspServerLogLevel, LspServerModel};
-use string_offset::{ByteOffset, CharOffset};
 use vec1::vec1;
 use warp_core::features::FeatureFlag;
-use warp_core::safe_error;
-use warp_editor::content::buffer::{Buffer, ToBufferCharOffset};
+use warp_editor::content::buffer::Buffer;
 use warp_editor::content::diff::{TextDiff, text_diff};
 use warp_editor::content::edit::PreciseDelta;
 use warp_editor::content::version::BufferVersion;
 use warp_util::content_version::ContentVersion;
 use warp_util::file::{FileId, FileLoadError, FileSaveError};
-use warp_util::host_id::HostId;
-use warp_util::standardized_path::StandardizedPath;
-use warpui::r#async::Timer;
 use warpui::{Entity, ModelContext, ModelHandle, SingletonEntity, WeakModelHandle};
 
 use super::buffer_location::LocalOrRemotePath;
@@ -580,12 +574,6 @@ impl GlobalBufferModel {
             .map(drop)
     }
 
-    /// Remove a tracked buffer, cleaning up FileModel and LSP state.
-    /// Used when a new file is deleted before ever being saved to a permanent location.
-    pub fn remove(&mut self, file_id: FileId, ctx: &mut ModelContext<Self>) {
-        self.cleanup_file_id(file_id, ctx);
-    }
-
     /// Look up the file path for a tracked buffer.
     pub fn file_path(&self, file_id: FileId) -> Option<&Path> {
         match self.location_to_id.get_by_right(&file_id) {
@@ -840,11 +828,7 @@ impl GlobalBufferModel {
     /// If no buffer exists, creates a new Buffer and BufferState using FileModel.
     /// File system updates are automatically subscribed to for all buffers.
     #[cfg(feature = "local_fs")]
-    fn open_local(
-        &mut self,
-        path: PathBuf,
-        ctx: &mut ModelContext<Self>,
-    ) -> BufferState {
+    fn open_local(&mut self, path: PathBuf, ctx: &mut ModelContext<Self>) -> BufferState {
         if let Some(id) = self
             .location_to_id
             .get_by_left(&LocalOrRemotePath::Local(path.clone()))
@@ -869,11 +853,7 @@ impl GlobalBufferModel {
     }
 
     #[cfg(feature = "local_fs")]
-    fn create_new_buffer(
-        &mut self,
-        path: &Path,
-        ctx: &mut ModelContext<Self>,
-    ) -> BufferState {
+    fn create_new_buffer(&mut self, path: &Path, ctx: &mut ModelContext<Self>) -> BufferState {
         // Open file through FileModel to get FileId
         // Always subscribe to updates for GlobalBufferModel created buffers
         let file_id =
@@ -1308,22 +1288,12 @@ impl GlobalBufferModel {
     // ── Server-local buffer operations (daemon side) ────────────────
 
     // ── Public accessors ──────────────────────────────────────────────
-
-    /// Returns the buffer text content for a given `FileId`.
-    pub fn content_for_file(&self, file_id: FileId, ctx: &warpui::AppContext) -> Option<String> {
-        let state = self.buffers.get(&file_id)?;
-        let buffer = state.buffer.upgrade(ctx)?;
-        Some(buffer.as_ref(ctx).text().into_string())
-    }
-
 }
 
-impl GlobalBufferModel {
-}
+impl GlobalBufferModel {}
 
 impl Entity for GlobalBufferModel {
     type Event = GlobalBufferModelEvent;
 }
 
 impl SingletonEntity for GlobalBufferModel {}
-

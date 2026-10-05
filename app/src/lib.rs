@@ -257,7 +257,6 @@ pub(crate) enum LaunchMode {
         driver: Box<Option<TestDriver>>,
         is_integration_test: bool,
     },
-
 }
 
 enum AuthInitialization {
@@ -303,8 +302,7 @@ impl LaunchMode {
     /// mode uses the standard GUI settings surface.
     fn settings_mode(&self) -> ::settings::SettingsMode {
         match self {
-            LaunchMode::App { .. }
-            | LaunchMode::Test { .. } => ::settings::SettingsMode::Gui,
+            LaunchMode::App { .. } | LaunchMode::Test { .. } => ::settings::SettingsMode::Gui,
         }
     }
     /// The platform secure-storage service name for this launch mode.
@@ -336,8 +334,7 @@ impl LaunchMode {
 
     fn is_sandboxed(&self) -> bool {
         match self {
-            LaunchMode::App { .. }
-            | LaunchMode::Test { .. } => false,
+            LaunchMode::App { .. } | LaunchMode::Test { .. } => false,
         }
     }
 
@@ -377,8 +374,7 @@ impl LaunchMode {
     /// Whether profiling and tracing should be initialized.
     pub(crate) fn needs_profiling(&self) -> bool {
         match self {
-            LaunchMode::App { .. }
-            | LaunchMode::Test { .. } => true,
+            LaunchMode::App { .. } | LaunchMode::Test { .. } => true,
         }
     }
 
@@ -1050,8 +1046,7 @@ pub(crate) fn initialize_app(
     // If any part of sqlite initialization fails, we just don't do session restoration (i.e.
     // feature degradation).
     let persistence_scope = persistence::PersistenceScope::App;
-    let (sqlite_data, writer_handles) =
-        persistence::initialize(ctx, persistence_scope);
+    let (sqlite_data, writer_handles) = persistence::initialize(ctx, persistence_scope);
     timer.mark_interval_end("SQLITE_INITIALIZED");
 
     let persistence_writer = PersistenceWriter::new(writer_handles);

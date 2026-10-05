@@ -240,7 +240,7 @@ impl CodeReviewState {
     fn get_repo_display_name(
         &self,
         repo_path: &LocalOrRemotePath,
-        ctx: &AppContext,
+        _ctx: &AppContext,
     ) -> Option<String> {
         let name = display_name_with_host(repo_path);
         (!name.is_empty()).then_some(name)
@@ -1196,7 +1196,7 @@ impl RightPanelView {
             // Prefer the pane group's active session so the diff request rides
             // the connection actually showing the review; the manager falls
             // back to any connected session for the host when unavailable.
-            let preferred_session = pane_group
+            let _preferred_session = pane_group
                 .read(ctx, |pg, ctx| pg.active_session_view(ctx))
                 .and_then(|tv| tv.as_ref(ctx).active_block_session_id());
             let diff_state_model = self.working_directories_model.update(ctx, |model, ctx| {

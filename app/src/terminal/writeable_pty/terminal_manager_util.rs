@@ -15,8 +15,6 @@ use crate::terminal::writeable_pty::{
     PtyController, PtyControllerEvent, PtyIntent, PtyIntentEvent, TerminalSurface,
 };
 use crate::terminal::{ModelEventDispatcher, TerminalModel};
-#[cfg(not(target_family = "wasm"))]
-use crate::terminal::{TerminalView, view};
 
 /// Wires up bi-directional communication between the PtyController and a terminal surface.
 /// Note that this interaction can't live in the surface itself because the surface must be
@@ -159,4 +157,3 @@ pub fn init_pty_controller_model<Sender: EventLoopSender>(
         )
     })
 }
-

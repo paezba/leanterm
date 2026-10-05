@@ -24,7 +24,6 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 use url::Url;
-use warp_util::remote_path::RemotePath;
 use warpui::elements::{DispatchEventResult, EventHandler, MouseInBehavior};
 use warpui::presenter::ChildView;
 use warpui::{

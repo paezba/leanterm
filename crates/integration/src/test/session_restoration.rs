@@ -12,7 +12,7 @@ use warp::integration_testing::view_getters::single_terminal_view_for_tab;
 use warp::integration_testing::workflow::assert_workflow_metadata_revision;
 use warp::integration_testing::{self};
 use warp::settings::Preference;
-use warp::settings_view::{SettingsSection, SettingsView};
+use warp::settings_view::SettingsView;
 use warp::sqlite_testing::set_user_and_hostname_for_blocks;
 use warp::terminal::model::session::get_local_hostname;
 use warp::terminal::model::terminal_model::BlockIndex;

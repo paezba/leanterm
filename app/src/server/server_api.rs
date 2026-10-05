@@ -368,7 +368,9 @@ impl ServerApi {
     ) -> Self {
         let auth_state = Arc::new(AuthState::new_logged_out_for_test());
         if let Some(bearer_token) = bearer_token {
-            auth_state.set_remote_server_bearer_token(bearer_token);
+            auth_state.set_credentials(Some(warp_server_auth::credentials::Credentials::Bearer(
+                bearer_token,
+            )));
         }
         Self::new_with_parts(
             Arc::new(http_client::Client::new_for_test()),

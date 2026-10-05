@@ -71,8 +71,6 @@ use crate::terminal::model::index::VisibleRow;
 use crate::terminal::model::iterm_image::{ITermImage, ITermImageMetadata};
 use crate::terminal::model::secrets::ObfuscateSecrets;
 use crate::terminal::model::session::SessionInfo;
-#[cfg(any(test, feature = "integration_tests"))]
-use crate::terminal::shell::ShellName;
 use crate::terminal::shell::ShellType;
 use crate::terminal::ssh::util::{InteractiveSshCommand, SshLoginState};
 use crate::terminal::{

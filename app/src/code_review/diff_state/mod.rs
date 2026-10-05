@@ -11,8 +11,6 @@ use std::time::Duration;
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use warp_core::SessionId;
-
 use warp_util::standardized_path::StandardizedPath;
 use warpui::{AppContext, ModelContext, ModelHandle};
 
@@ -23,7 +21,6 @@ mod local;
 pub use local::LocalDiffStateModel;
 #[cfg(feature = "local_fs")]
 pub(crate) use local::diff_metadata_against_head;
-
 
 #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
 mod error;

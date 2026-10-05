@@ -130,11 +130,6 @@ impl HeaderConfig {
         self
     }
 
-    pub fn with_corner_radius_override(mut self, corner_radius: CornerRadius) -> Self {
-        self.corner_radius_override = Some(corner_radius);
-        self
-    }
-
     pub fn render_header(
         self,
         app: &AppContext,

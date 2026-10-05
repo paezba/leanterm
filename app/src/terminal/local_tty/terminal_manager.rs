@@ -85,7 +85,6 @@ pub struct TerminalManager<S> {
     /// of the PTY controller.
     pty_controller: ModelHandle<PtyController>,
 
-
     /// The process ID of the PTY. Purely used for integration tests. None if the PTY has not yet
     /// been started.
     #[cfg(feature = "integration_tests")]

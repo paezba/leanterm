@@ -22,10 +22,7 @@ use nix::sys::termios::{self, InputFlags, SetArg};
 use serde::{Deserialize, Serialize};
 use signal_hook_mio::v1_0::Signals;
 use warp_core::channel::ChannelState;
-use warp_core::cli_agent_protocol::{
-    CLI_AGENT_PROTOCOL_VERSION, WARP_CLI_AGENT_PROTOCOL_VERSION_ENV, WARP_CLIENT_VERSION_ENV,
-};
-use warp_core::features::FeatureFlag;
+use warp_core::cli_agent_protocol::WARP_CLIENT_VERSION_ENV;
 use warp_core::safe_error;
 use warp_errors::report_if_error;
 use warpui_core::{AppContext, SingletonEntity};

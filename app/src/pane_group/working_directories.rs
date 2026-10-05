@@ -10,7 +10,6 @@ use std::path::PathBuf;
 use indexmap::IndexSet;
 #[cfg(feature = "local_fs")]
 use repo_metadata::repositories::DetectedRepositories;
-use warp_core::SessionId;
 #[cfg(feature = "local_fs")]
 use warpui::{AppContext, SingletonEntity as _};
 use warpui::{Entity, EntityId, ModelContext, ModelHandle, ViewHandle};
@@ -83,28 +82,6 @@ impl PaneGroupRepositoryRoots {
     /// existing `HashMap::get(&pane_group_id)` semantics.
     fn get(&self, pane_group_id: EntityId) -> Option<&IndexSet<LocalOrRemotePath>> {
         self.pane_group_to_paths.get(&pane_group_id)
-    }
-
-    /// Insert a single repo for a pane group. Returns `true` if it was newly
-    /// added to the pane group (matching `IndexSet::insert` semantics).
-    ///
-    /// Always keeps the reverse map in sync: if the path was newly added to
-    /// the pane group, the pane group is added to the path's reverse entry.
-    fn insert(&mut self, pane_group_id: EntityId, path: LocalOrRemotePath) -> bool {
-        let added = self
-            .pane_group_to_paths
-            .entry(pane_group_id)
-            .or_default()
-            .insert(path.clone());
-
-        if added {
-            self.path_to_pane_groups
-                .entry(path)
-                .or_default()
-                .insert(pane_group_id);
-        }
-
-        added
     }
 
     /// Set the full list of repository roots for a pane group,
@@ -605,7 +582,10 @@ impl WorkingDirectoriesModel {
         let local_terminal_cwds: Vec<(EntityId, String)> = terminal_cwds
             .iter()
             .filter_map(|(terminal_id, cwd)| {
-                Some((*terminal_id, cwd.to_local_path()?.to_string_lossy().into_owned()))
+                Some((
+                    *terminal_id,
+                    cwd.to_local_path()?.to_string_lossy().into_owned(),
+                ))
             })
             .collect();
 
@@ -618,7 +598,10 @@ impl WorkingDirectoriesModel {
         let local_editor_paths: Vec<(EntityId, String)> = editor_paths
             .iter()
             .filter_map(|(view_id, path)| {
-                Some((*view_id, path.to_local_path()?.to_string_lossy().into_owned()))
+                Some((
+                    *view_id,
+                    path.to_local_path()?.to_string_lossy().into_owned(),
+                ))
             })
             .collect();
 

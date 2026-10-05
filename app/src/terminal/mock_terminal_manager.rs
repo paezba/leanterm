@@ -52,8 +52,7 @@ impl MockTerminalManager {
         let colors = model.colors();
         let model = Arc::new(FairMutex::new(model));
 
-        let sessions: ModelHandle<Sessions> =
-            ctx.add_model(|_| Sessions::new(executor_command_tx));
+        let sessions: ModelHandle<Sessions> = ctx.add_model(|_| Sessions::new(executor_command_tx));
         let model_events_dispatcher =
             ctx.add_model(|ctx| ModelEventDispatcher::new(events_rx, sessions.clone(), ctx));
 

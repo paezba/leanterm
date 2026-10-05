@@ -5,7 +5,6 @@ mod local;
 #[cfg(feature = "local_fs")]
 pub use local::LocalGitHubRepoModel;
 
-
 use crate::util::git::{PrInfo, RepositoryInfo};
 
 #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]

@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::future::Future;
 use std::path::PathBuf;
 
@@ -11,7 +10,6 @@ use string_offset::ByteOffset;
 use warp_errors::report_error;
 use warp_ripgrep::search::{Match as RipgrepMatch, Submatch};
 use warp_util::local_or_remote_path::LocalOrRemotePath;
-use warp_util::standardized_path::StandardizedPath;
 use warpui::r#async::SpawnedFutureHandle;
 use warpui::{Entity, ModelContext, ModelSpawner, SingletonEntity};
 
@@ -433,4 +431,3 @@ impl Default for GlobalSearch {
         Self::new()
     }
 }
-

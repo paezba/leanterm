@@ -139,14 +139,6 @@ impl DiffStateError {
         }
     }
 
-    /// Build the [`DiffStateErrorKind::EmptyDiffData`] error, reported when the
-    /// remote daemon claims `DiffState::Loaded` but sends no diff data.
-    pub(crate) fn empty_diff_data() -> Self {
-        let kind = DiffStateErrorKind::EmptyDiffData;
-        let cause = anyhow::anyhow!("{kind}");
-        Self { kind, cause }
-    }
-
     /// Logs the raw underlying error locally, then reports the sanitized
     /// [`DiffStateError`] through the normal reporting path.
     pub(crate) fn report_and_log(&self) {

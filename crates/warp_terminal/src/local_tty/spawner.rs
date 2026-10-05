@@ -146,7 +146,7 @@ impl PtySpawner {
         &self,
         options: PtyOptions,
         #[cfg(windows)] event_loop_tx: super::mio_channel::Sender<crate::writeable_pty::Message>,
-        ctx: &mut AppContext,
+        _ctx: &mut AppContext,
     ) -> Result<(PtySpawnResult, Box<dyn PtyHandle>)> {
         #[cfg(unix)]
         if let Some(server) = &self.server {
