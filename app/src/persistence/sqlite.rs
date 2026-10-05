@@ -967,7 +967,7 @@ fn decode_path(bytes: Vec<u8>) -> PathBuf {
 
 fn save_workspace_metadata(
     conn: &mut SqliteConnection,
-    index_metadata: ai::workspace::WorkspaceMetadata,
+    index_metadata: code_diff::workspace::WorkspaceMetadata,
 ) -> Result<()> {
     use schema::workspace_metadata::dsl::*;
 
@@ -985,12 +985,12 @@ fn save_workspace_metadata(
 
 fn get_all_workspace_metadata(
     conn: &mut SqliteConnection,
-) -> Result<Vec<ai::workspace::WorkspaceMetadata>, diesel::result::Error> {
+) -> Result<Vec<code_diff::workspace::WorkspaceMetadata>, diesel::result::Error> {
     use schema::workspace_metadata::dsl::*;
 
     Ok(workspace_metadata
         .load_iter::<WorkspaceMetadataModel, DefaultLoadingMode>(conn)?
-        .filter_map(|item| item.ok().map(ai::workspace::WorkspaceMetadata::from))
+        .filter_map(|item| item.ok().map(code_diff::workspace::WorkspaceMetadata::from))
         .collect_vec())
 }
 

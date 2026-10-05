@@ -21,8 +21,8 @@ use std::sync::mpsc::SyncSender;
 use std::sync::{Arc, OnceLock};
 use std::thread::JoinHandle;
 
-use ai::workspace::WorkspaceMetadata as CodeWorkspaceMetadata;
 use chrono::{DateTime, Local};
+use code_diff::workspace::WorkspaceMetadata as CodeWorkspaceMetadata;
 use instant::Instant;
 use lsp::supported_servers::LSPServerType;
 // Only re-exported for integration tests (via `integration_testing::persistence`);

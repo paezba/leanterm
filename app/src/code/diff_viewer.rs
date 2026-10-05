@@ -1,4 +1,4 @@
-use ai::diff_validation::DiffType;
+use code_diff::diff_validation::DiffType;
 use warp_editor::render::element::VerticalExpansionBehavior;
 use warpui::elements::ScrollbarWidth;
 use warpui::elements::new_scrollable::ScrollableAppearance;

@@ -30,8 +30,8 @@
 /app/src/editor/ @kevinyang372 @harryalbert
 /app/src/notebooks/ @kevinyang372 @bnavetta
 /app/src/ai/get_relevant_files/ @kevinyang372
-/crates/ai/src/index/ @kevinyang372
-/crates/ai/src/project_context/ @kevinyang372
+/crates/code_diff/src/index/ @kevinyang372
+/crates/code_diff/src/project_context/ @kevinyang372
 /crates/editor/ @kevinyang372 @bnavetta @harryalbert
 /crates/languages/ @kevinyang372 @bnavetta
 /crates/lsp/ @kevinyang372 @moirahuang
@@ -210,7 +210,7 @@
 /app/src/ai/blocklist/inline_action/orchestration_controls.rs @Advait-M @cephalonaut
 /app/src/workspace/view/orchestration_launch_modal/ @Advait-M @cephalonaut
 /app/src/ai/document/orchestration_config_block.rs @Advait-M @cephalonaut
-/crates/ai/src/agent/orchestration_config.rs @Advait-M @cephalonaut
+/crates/code_diff/src/agent/orchestration_config.rs @Advait-M @cephalonaut
 
 # Scheduled agents / Warp CLI / cloud and ambient agents
 /app/src/ai/ambient_agents/ @bnavetta

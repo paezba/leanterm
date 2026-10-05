@@ -5,7 +5,7 @@ use std::fmt::Debug;
 use std::ops::Range;
 use std::path::Path;
 
-use ai::diff_validation::DiffDelta;
+use code_diff::diff_validation::DiffDelta;
 use lazy_static::lazy_static;
 use num_traits::SaturatingSub;
 use pathfinder_geometry::vector::vec2f;

@@ -25,7 +25,7 @@ test = false
 
 [dependencies]
 addr = "0.15.6"
-ai.workspace = true
+code_diff.workspace = true
 alphanumeric-sort = "1.5.7"
 anyhow.workspace = true
 arrayvec.workspace = true
@@ -352,7 +352,7 @@ windows-result = { workspace = true }
 winreg.workspace = true
 
 [dev-dependencies]
-ai = { workspace = true, features = ["test-util"] }
+code_diff = { workspace = true, features = ["test-util"] }
 async-process.workspace = true
 jsonschema = { workspace = true, default-features = false }
 async-executor = "1.5.1"
@@ -430,7 +430,7 @@ agent_mode_evals = [
 # Enabled on WarpDev by default.
 heap_usage_tracking = ["jemalloc_pprof"]
 in_band_generators_ssh = []
-jemalloc = ["dep:tikv-jemallocator", "ai/jemalloc"]
+jemalloc = ["dep:tikv-jemallocator", "code_diff/jemalloc"]
 jemalloc_with_profiling = ["jemalloc", "tikv-jemallocator/profiling"]
 jemalloc_auto_heap_profiling = ["jemalloc_with_profiling"]
 jemalloc_pprof = ["jemalloc_with_profiling", "dep:jemalloc_pprof"]
@@ -445,7 +445,7 @@ local_tty = ["warp_terminal/local_tty"]
 # conditionally include dependencies that should only exist in such
 # environments.
 local_fs = [
-    "ai/local_fs",
+    "code_diff/local_fs",
     "lsp/local_fs",
     "persistence/local_fs",
     "repo_metadata/local_fs",
@@ -480,7 +480,7 @@ test-util = [
     "http_client/test-util",
     "warp_core/test-util",
     "warp_terminal/test-util",
-    "ai/test-util",
+    "code_diff/test-util",
 ]
 # Feature enabled only when app is compiled for integration tests.
 integration_tests = [

@@ -8,7 +8,7 @@ use std::rc::Rc;
 use std::sync::Arc;
 use std::{cmp, mem};
 
-use ai::diff_validation::DiffDelta;
+use code_diff::diff_validation::DiffDelta;
 use itertools::Itertools;
 use languages::{Language, language_by_filename, language_by_local_filename, language_by_name};
 use line_ending::LineEnding;

@@ -1,8 +1,6 @@
 mod docker;
 pub mod web_intent_parser;
 
-pub(crate) mod browser_url_resolution;
-
 #[cfg(target_family = "wasm")]
 pub mod browser_url_handler;
 
@@ -11,7 +9,6 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use anyhow::{Result, anyhow, ensure};
-use itertools::Itertools;
 use url::Url;
 use warp_util::path::LineAndColumnArg;
 use warpui::notification::UserNotification;

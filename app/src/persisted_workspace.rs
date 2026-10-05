@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::SyncSender;
 
-use ai::workspace::WorkspaceMetadata;
 use anyhow::Context;
 use chrono::Utc;
+use code_diff::workspace::WorkspaceMetadata;
 use itertools::Itertools;
 use lsp::LanguageId;
 #[cfg(feature = "local_fs")]

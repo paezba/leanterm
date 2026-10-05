@@ -4,7 +4,7 @@ use std::rc::Rc;
 use std::sync::Arc;
 use std::time::Duration;
 
-use ai::diff_validation::DiffType;
+use code_diff::diff_validation::DiffType;
 use futures::stream::AbortHandle;
 use lsp::types::FileLocation;
 use lsp::{

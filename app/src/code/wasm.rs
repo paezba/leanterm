@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use ai::diff_validation::DiffDelta;
+use code_diff::diff_validation::DiffDelta;
 use warp_util::path::LineAndColumnArg;
 use warpui::elements::{DraggableState, Empty, MouseStateHandle};
 use warpui::{

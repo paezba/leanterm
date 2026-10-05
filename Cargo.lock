@@ -105,25 +105,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ai"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "cfg-if",
- "chrono",
- "derivative",
- "ignore",
- "itertools 0.14.0",
- "lazy_static",
- "log",
- "persistence",
- "regex",
- "serde",
- "serde_json",
- "strsim 0.11.1",
-]
-
-[[package]]
 name = "aliasable"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2120,6 +2101,25 @@ dependencies = [
  "core-foundation 0.10.1",
  "core-graphics-types 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "objc",
+]
+
+[[package]]
+name = "code_diff"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cfg-if",
+ "chrono",
+ "derivative",
+ "ignore",
+ "itertools 0.14.0",
+ "lazy_static",
+ "log",
+ "persistence",
+ "regex",
+ "serde",
+ "serde_json",
+ "strsim 0.11.1",
 ]
 
 [[package]]
@@ -11495,7 +11495,6 @@ dependencies = [
  "addr",
  "aha-reqwest-eventsource",
  "aho-corasick",
- "ai",
  "alphanumeric-sort",
  "anyhow",
  "app-installation-detection",
@@ -11531,6 +11530,7 @@ dependencies = [
  "chrono",
  "clap",
  "cocoa 0.26.0",
+ "code_diff",
  "comfy-table",
  "command",
  "command-corrections",
@@ -12025,15 +12025,8 @@ dependencies = [
 name = "warp_isolation_platform"
 version = "0.1.0"
 dependencies = [
- "anyhow",
- "base64 0.22.1",
- "chrono",
- "command",
  "log",
  "serde",
- "serde_json",
- "serial_test",
- "thiserror 2.0.17",
  "warp_core",
 ]
 

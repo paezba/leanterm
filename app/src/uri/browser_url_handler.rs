@@ -1,16 +1,20 @@
 use url::Url;
 use warp_errors::report_error;
 
-use super::browser_url_resolution::resolve_browser_url;
-
 const DEFAULT_TITLE: &str = "Warp";
+const BASE_APP_PATH: &str = "/app";
 
 pub fn update_browser_url(url: Option<Url>, force_redirect: bool) {
     let current_url = parse_current_url();
     if url.is_none() && current_url.is_none() {
         report_error!("Failed to get the base url");
     }
-    let new_url = resolve_browser_url(current_url, url, force_redirect);
+    let new_url = url.or_else(|| {
+        let mut base_url = current_url?;
+        base_url.set_path(BASE_APP_PATH);
+        base_url.set_query(None);
+        Some(base_url)
+    });
 
     if let Some(unwrapped_url) = new_url.and_then(safe_browser_navigation_url) {
         let window = gloo::utils::window();

@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use ai::workspace::WorkspaceMetadata;
+use code_diff::workspace::WorkspaceMetadata;
 use fuzzy_match::FuzzyMatchResult;
 use ordered_float::OrderedFloat;
 use warp_core::ui::theme::Fill;
