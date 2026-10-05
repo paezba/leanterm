@@ -7,7 +7,6 @@ use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
 use url::Url;
 use warp_core::channel::ChannelState;
 
-
 #[cfg(windows)]
 mod process_handle;
 
@@ -84,15 +83,11 @@ pub struct GlobalOptions {
     pub api_key: Option<String>,
 }
 
-/// Normal argument parser for the shared Warp executable across all channels.
+/// Argument parser for the shared Warp executable across all channels.
 ///
-/// Warp Control uses its separate [`local_control::ControlArgs`]
-/// parser, selected before this parser sees the arguments.
+// Warp Control uses its separate [`local_control::ControlArgs`] parser, selected before this one.
 #[derive(Debug, Default, Parser, Clone)]
-#[command(
-    name = "warp",
-    about = "Warp terminal"
-)]
+#[command(name = "warp", about = "Warp terminal")]
 #[clap(subcommand_precedence_over_arg = true)]
 pub struct Args {
     #[clap(flatten)]
@@ -424,4 +419,3 @@ pub fn binary_name() -> Option<String> {
 pub fn version_string() -> &'static str {
     ChannelState::app_version().unwrap_or("<unknown>")
 }
-
