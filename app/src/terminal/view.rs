@@ -167,7 +167,6 @@ use crate::pane_group::{
 use crate::persisted_workspace::PersistedWorkspace;
 use crate::persistence::{self, FinishedCommandMetadata};
 use crate::server::ids::SyncId;
-use crate::server::server_api::ServerApi;
 use crate::session_management::{CommandContext, SessionNavigationPromptElements};
 use crate::settings::import::view::{SettingsImportEvent, SettingsImportView};
 use crate::settings::{
@@ -1540,7 +1539,6 @@ pub struct TerminalView {
 
     mouse_states: TerminalViewMouseStates,
 
-    server_api: Arc<ServerApi>,
     auth_state: Arc<AuthState>,
 
     /// A sender used to handle messages for whenever the entire terminal view
@@ -2061,7 +2059,6 @@ impl TerminalView {
         let input: ViewHandle<Input> = ctx.add_typed_action_view(|ctx| {
             Input::new(
                 model.clone(),
-                resources.server_api.clone(),
                 sessions.clone(),
                 size_info,
                 menu_positioning_provider,
@@ -2418,7 +2415,6 @@ impl TerminalView {
             mouse_states: Default::default(),
             open_grid_link_tool_tip: None,
             open_rich_content_link_tool_tip: None,
-            server_api: resources.server_api.clone(),
             auth_state: AuthStateProvider::as_ref(ctx).get().clone(),
             find_bar,
             resize_tx,

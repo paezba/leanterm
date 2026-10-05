@@ -30,7 +30,6 @@ use crate::launch_configs::launch_config;
 use crate::pane_group::{NewTerminalOptions, PanesLayout};
 use crate::persistence::ModelEvent;
 use crate::server::ids::ServerId;
-use crate::server::server_api::{ServerApi, ServerApiProvider};
 use crate::settings::QuakeModeSettings;
 use crate::settings_view::{SettingsSection, flags};
 use crate::terminal::available_shells::AvailableShell;
@@ -1109,7 +1108,6 @@ impl NewWorkspaceSource {
 
 pub struct RootView {
     workspace: ViewHandle<Workspace>,
-    pub server_api: Arc<ServerApi>,
     pub model_event_sender: Option<SyncSender<ModelEvent>>,
 }
 
@@ -1120,17 +1118,13 @@ impl RootView {
         ctx: &mut ViewContext<Self>,
     ) -> Self {
         let window_id = ctx.window_id();
-        let server_api_provider = ServerApiProvider::as_ref(ctx);
-        let server_api = server_api_provider.get();
-
         let model_event_sender = global_resource_handles.model_event_sender.clone();
         let workspace = ctx.add_typed_action_view(|ctx| {
-            Workspace::new(global_resource_handles, None, workspace_setting, ctx)
+            Workspace::new(global_resource_handles, workspace_setting, ctx)
         });
 
         Self {
             workspace,
-            server_api,
             model_event_sender,
         }
     }

@@ -28,7 +28,7 @@ use warpui::{Entity, ModelContext, SingletonEntity};
 use crate::code::language_server_shutdown_manager::LanguageServerShutdownManager;
 use crate::persistence::ModelEvent;
 #[cfg(feature = "local_fs")]
-use crate::server::server_api::ServerApiProvider;
+use crate::server::http_client_provider::HttpClientProvider;
 #[cfg(feature = "local_fs")]
 use crate::terminal::local_shell::LocalShellState;
 #[cfg(feature = "local_fs")]
@@ -418,7 +418,7 @@ impl PersistedWorkspace {
         let path_future = LocalShellState::handle(ctx).update(ctx, |shell_state, ctx| {
             shell_state.get_interactive_path_env_var(ctx)
         });
-        let http_client = ServerApiProvider::as_ref(ctx).get_http_client();
+        let http_client = HttpClientProvider::as_ref(ctx).client();
 
         ctx.spawn(
             async move {
@@ -599,7 +599,7 @@ impl PersistedWorkspace {
         let repo_root_clone = repo_root.clone();
         let file_path_clone = file_path.clone();
         let executor = lsp::CommandBuilder::new(path_env_var);
-        let http_client = ServerApiProvider::as_ref(ctx).get_http_client();
+        let http_client = HttpClientProvider::as_ref(ctx).client();
         ctx.spawn(
             async move {
                 let candidate = server_type.candidate(http_client);
@@ -724,7 +724,7 @@ impl PersistedWorkspace {
             );
             let log_relative_path =
                 crate::code::lsp_logs::relative_log_path(server, &workspace_root);
-            let http_client = ServerApiProvider::as_ref(ctx).get_http_client();
+            let http_client = HttpClientProvider::as_ref(ctx).client();
             let config = LspServerConfig::new(
                 server,
                 workspace_root.clone(),
@@ -868,7 +868,7 @@ impl PersistedWorkspace {
                     shell_state.get_interactive_path_env_var(ctx)
                 });
 
-                let http_client = ServerApiProvider::as_ref(ctx).get_http_client();
+                let http_client = HttpClientProvider::as_ref(ctx).client();
                 ctx.spawn(
                     async move {
                         // Wait for interactive PATH, then check installation

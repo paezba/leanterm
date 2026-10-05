@@ -116,7 +116,6 @@ use crate::pane_group::focus_state::PaneFocusHandle;
 use crate::prefix::longest_common_prefix;
 use crate::search::QueryFilter;
 use crate::server::ids::SyncId;
-use crate::server::server_api::ServerApi;
 use crate::session_management::SessionNavigationPromptElements;
 use crate::settings::{
     AliasExpansionSettings, AppEditorSettings, AppEditorSettingsChangedEvent, InputModeSettings,
@@ -947,7 +946,6 @@ pub struct Input {
     model: Arc<FairMutex<TerminalModel>>,
     menu_positioning_provider: Arc<dyn MenuPositioningProvider>,
     editor: ViewHandle<EditorView>,
-    server_api: Arc<ServerApi>,
     input_suggestions: ViewHandle<InputSuggestions>,
     suggestions_mode_model: ModelHandle<InputSuggestionsModeModel>,
     completions_menu_resizable_width: ResizableStateHandle,
@@ -1304,8 +1302,7 @@ impl Input {
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn new(
         model: Arc<FairMutex<TerminalModel>>,
-        server_api: Arc<ServerApi>,
-        sessions: ModelHandle<Sessions>,
+            sessions: ModelHandle<Sessions>,
         size_info: SizeInfo,
         menu_positioning_provider: Arc<dyn MenuPositioningProvider>,
         current_prompt: ModelHandle<PromptType>,
@@ -1559,7 +1556,6 @@ impl Input {
             completions_menu_resizable_height: resizable_state_handle(completions_menu_height),
             editor,
             model,
-            server_api,
             sessions,
             focus_handle: None,
             active_block_metadata: None,

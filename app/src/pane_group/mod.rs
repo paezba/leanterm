@@ -57,7 +57,6 @@ use crate::pane_group::focus_state::PaneGroupFocusEvent;
 use crate::pane_group::pane::ActionOrigin;
 use crate::persistence::ModelEvent;
 use crate::quit_warning::UnsavedStateSummary;
-use crate::server::server_api::{ServerApi, ServerApiProvider};
 use crate::session_management::SessionNavigationData;
 use crate::settings::PaneSettings;
 use crate::settings_view::SettingsSection;
@@ -665,7 +664,6 @@ pub struct PaneGroup {
     /// Mapping from pane IDs to their contents.
     pane_contents: HashMap<PaneId, Box<dyn AnyPaneContent>>,
 
-    server_api: Arc<ServerApi>,
 
     /// The terminal session with an open share block modal. Only terminal panes use the share block modal.
 
@@ -708,7 +706,6 @@ pub enum SplitPaneState {
 // Helper to group together certain structs necessary to instantiate a new terminal view.
 #[derive(Clone)]
 pub struct TerminalViewResources {
-    pub server_api: Arc<ServerApi>,
     pub model_event_sender: Option<SyncSender<ModelEvent>>,
 }
 
@@ -1739,8 +1736,7 @@ impl PaneGroup {
 
     fn new_internal(
         user_default_shell_unsupported_banner_model_handle: ModelHandle<BannerState>,
-        server_api: Arc<ServerApi>,
-        model_event_sender: Option<SyncSender<ModelEvent>>,
+            model_event_sender: Option<SyncSender<ModelEvent>>,
         initial_layout_callback: InitialLayoutCallback,
         ctx: &mut ViewContext<Self>,
     ) -> Self {
@@ -1750,7 +1746,6 @@ impl PaneGroup {
         let mut pane_contents = HashMap::new();
 
         let resources = TerminalViewResources {
-            server_api: server_api.clone(),
             model_event_sender: model_event_sender.clone(),
         };
 
@@ -1839,7 +1834,6 @@ impl PaneGroup {
             focus_state,
             pane_history,
             pane_contents,
-            server_api,
             dragged_border: None,
             user_default_shell_changed_banner,
             active_file_model,
@@ -1908,8 +1902,7 @@ impl PaneGroup {
     #[allow(clippy::too_many_arguments)]
     pub fn new_with_panes_layout(
         user_default_shell_unsupported_banner_model_handle: ModelHandle<BannerState>,
-        server_api: Arc<ServerApi>,
-        panes_layout: PanesLayout,
+            panes_layout: PanesLayout,
         block_lists: Arc<HashMap<PaneUuid, Vec<SerializedBlockListItem>>>,
         model_event_sender: Option<SyncSender<ModelEvent>>,
         ctx: &mut ViewContext<Self>,
@@ -1978,7 +1971,6 @@ impl PaneGroup {
 
         Self::new_internal(
             user_default_shell_unsupported_banner_model_handle,
-            server_api,
             model_event_sender.clone(),
             Box::new(initial_layout),
             ctx,
@@ -1988,8 +1980,7 @@ impl PaneGroup {
     pub fn new_from_existing_pane(
         pane: Box<dyn AnyPaneContent>,
         user_default_shell_unsupported_banner_model_handle: ModelHandle<BannerState>,
-        server_api: Arc<ServerApi>,
-        model_event_sender: Option<SyncSender<ModelEvent>>,
+            model_event_sender: Option<SyncSender<ModelEvent>>,
         ctx: &mut ViewContext<Self>,
     ) -> Self {
         let pane_id = pane.as_pane().id();
@@ -2009,7 +2000,6 @@ impl PaneGroup {
         };
         Self::new_internal(
             user_default_shell_unsupported_banner_model_handle,
-            server_api,
             model_event_sender,
             Box::new(initial_layout),
             ctx,
@@ -3540,7 +3530,6 @@ impl PaneGroup {
     ) -> (TerminalPane, ViewHandle<TerminalView>) {
         let uuid = Uuid::new_v4();
         let resources = TerminalViewResources {
-            server_api: self.server_api.clone(),
             model_event_sender: self.model_event_sender.clone(),
         };
 
