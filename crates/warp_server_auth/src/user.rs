@@ -7,8 +7,6 @@ use warp_graphql::scalars::time::ServerTimestamp;
 use super::UserUid;
 pub use super::user_uid::{TEST_USER_EMAIL, TEST_USER_UID};
 
-pub mod persistence;
-
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum AnonymousUserType {
     /// An anonymous user created from the native client.

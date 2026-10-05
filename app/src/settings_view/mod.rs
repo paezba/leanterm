@@ -1498,7 +1498,7 @@ impl SettingsView {
     fn handle_main_page_event(
         &mut self,
         event: &MainSettingsPageEvent,
-        ctx: &mut ViewContext<Self>,
+        _ctx: &mut ViewContext<Self>,
     ) {
         match event {
             _ => (),
@@ -1585,7 +1585,7 @@ impl SettingsView {
     fn handle_warp_drive_page_event(
         &mut self,
         event: &warp_drive_page::WarpDriveSettingsPageEvent,
-        ctx: &mut ViewContext<Self>,
+        _ctx: &mut ViewContext<Self>,
     ) {
         match event {
             warp_drive_page::WarpDriveSettingsPageEvent::SignUp => {}

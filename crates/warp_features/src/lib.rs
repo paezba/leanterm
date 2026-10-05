@@ -176,9 +176,6 @@ pub enum FeatureFlag {
     /// Enables suggested workflows for Agent Mode.
     SuggestedAgentModeWorkflows,
 
-    /// Forces users to login.
-    ForceLogin,
-
     /// Enables prediction of Agent Mode queries.
     PredictAMQueries,
 

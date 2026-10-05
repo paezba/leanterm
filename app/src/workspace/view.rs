@@ -122,7 +122,7 @@ use crate::app_state::{
 };
 use crate::appearance::{Appearance, AppearanceManager};
 use crate::auth::AuthStateProvider;
-use crate::auth::auth_manager::{AuthManager};
+use crate::auth::auth_manager::AuthManager;
 use crate::auth::auth_state::AuthState;
 use crate::banner::BannerState;
 use crate::channel::ChannelState;
@@ -156,8 +156,7 @@ use crate::editor::{
 use crate::env_vars::CloudEnvVarCollection;
 use crate::env_vars::manager::{EnvVarCollectionManager, EnvVarCollectionSource};
 use crate::event_sources::{
-    AddTabWithShellSource, LaunchConfigUiLocation, PaletteSource,
-    SharingDialogSource,
+    AddTabWithShellSource, LaunchConfigUiLocation, PaletteSource, SharingDialogSource,
 };
 use crate::launch_configs::launch_config::WindowTemplate;
 use crate::launch_configs::save_modal::{LaunchConfigModalEvent, LaunchConfigSaveModal};
@@ -2014,7 +2013,7 @@ impl Workspace {
             me.handle_palette_event(event, ctx);
         });
 
-        let auth_manager = AuthManager::handle(ctx);
+        let _auth_manager = AuthManager::handle(ctx);
 
         // Handle theme updates when there is a cloud update to themes while the picker is open.
         ctx.subscribe_to_model(&ThemeSettings::handle(ctx), |me, _, _, ctx| {
@@ -2040,8 +2039,6 @@ impl Workspace {
 
         let (settings_pane, theme_chooser_view) =
             Self::build_settings_views(global_resource_handles, ctx);
-
-
 
         let workflow_modal = Self::build_workflow_modal(ctx);
 

@@ -119,16 +119,6 @@ pub enum LaunchConfigUiLocation {
 }
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
-pub enum AnonymousUserSignupEntrypoint {
-    HitDriveObjectLimit,
-    LoginGatedFeature,
-    SignUpButton,
-    RenotificationBlock,
-    NextCommandSuggestionsUpgradeBanner,
-    Unknown,
-}
-
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum ToggleBlockFilterSource {
     /// This includes the keybinding and the command palette items.
     Binding,

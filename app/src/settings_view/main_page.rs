@@ -227,7 +227,6 @@ impl MainSettingsPageView {
             widgets.push(Box::new(VersionInfoWidget::default()));
         }
 
-
         let page = PageType::new_uncategorized(widgets, Some(PageTitle::new("Account")));
 
         MainSettingsPageView {

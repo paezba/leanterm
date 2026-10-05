@@ -63,7 +63,7 @@ use crate::cloud_object::{
 use crate::drive::panel::DrivePanelAction;
 use crate::editor::{EditorView, Event as EditorEvent, SingleLineEditorOptions};
 use crate::env_vars::CloudEnvVarCollection;
-use crate::event_sources::{SharingDialogSource};
+use crate::event_sources::SharingDialogSource;
 use crate::features::FeatureFlag;
 use crate::menu::{Event, Menu, MenuItem, MenuItemFields};
 use crate::network::NetworkStatus;

@@ -2,7 +2,6 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::convert::TryInto;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
-use std::sync::mpsc::SyncSender;
 use std::sync::{Arc, Once};
 use std::{fs, thread};
 
@@ -37,18 +36,17 @@ use lsp::supported_servers::LSPServerType;
 use num_traits::FromPrimitive;
 use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::Vector2F;
-use warp_errors::{report_error, report_if_error};
+use warp_errors::report_error;
 use warpui::platform::FullscreenState;
 use warpui::windowing::{MIN_WINDOW_HEIGHT, MIN_WINDOW_WIDTH};
 use warpui::{AppContext, SingletonEntity};
 
 use super::block_list::{delete_blocks, save_block};
 use super::model::{
-    self, CODE_PANE_KIND, ENV_VAR_COLLECTION_PANE_KIND,
-    MCP_SERVER_PANE_KIND, NOTEBOOK_PANE_KIND, NewApp, NewCommand, NewServerExperiment, NewTab,
-    NewTabGroup, NewTeam, NewWindow, NewWorkspace, NewWorkspaceMetadata, NewWorkspaceTeam,
-    SETTINGS_PANE_KIND, TERMINAL_PANE_KIND, Tab, TabGroup, WORKFLOW_PANE_KIND, Window,
-    WorkspaceMetadata as WorkspaceMetadataModel,
+    self, CODE_PANE_KIND, ENV_VAR_COLLECTION_PANE_KIND, MCP_SERVER_PANE_KIND, NOTEBOOK_PANE_KIND,
+    NewApp, NewCommand, NewServerExperiment, NewTab, NewTabGroup, NewTeam, NewWindow, NewWorkspace,
+    NewWorkspaceMetadata, NewWorkspaceTeam, SETTINGS_PANE_KIND, TERMINAL_PANE_KIND, Tab, TabGroup,
+    WORKFLOW_PANE_KIND, Window, WorkspaceMetadata as WorkspaceMetadataModel,
 };
 use super::{
     BlockCompleted, FinishedCommandMetadata, ModelEvent, PersistedData, PersistenceScope,
@@ -359,27 +357,6 @@ fn app_database_file_path() -> PathBuf {
     warp_core::paths::secure_state_dir()
         .unwrap_or_else(warp_core::paths::state_dir)
         .join(WARP_SQLITE_FILE_NAME)
-}
-
-pub(super) fn remove(sender: SyncSender<ModelEvent>) {
-    // Instruct the writer thread to remove the database and pause processing
-    // events.
-    // Ideally, we'd drop any other events in the channel, but it's not worth the complexity right
-    // now. Having the writer thread remove the database file prevents race conditions if the
-    // thread is in the middle of another update.
-    report_if_error!(
-        sender
-            .send(ModelEvent::PauseAndRemoveDatabase)
-            .context("Error requesting database deletion")
-    );
-}
-
-pub(super) fn reconstruct(sender: SyncSender<ModelEvent>) {
-    report_if_error!(
-        sender
-            .send(ModelEvent::ReconstructAndResume)
-            .context("Error resuming SQLite thread")
-    );
 }
 
 fn reconstruct_database(path: &Path) -> Result<SqliteConnection> {

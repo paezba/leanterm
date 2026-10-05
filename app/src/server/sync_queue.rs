@@ -362,14 +362,6 @@ impl SyncQueue {
     }
 
     // Clear the SyncQueue. This is used during Logout.
-    pub fn clear(&mut self) {
-        self.queue.clear();
-        self.waiting_response.clear();
-        self.in_flight_bulk_create_objects.clear();
-        self.queue_dependencies.clear();
-        self.client_id_to_server.clear();
-        self.server_id_to_client_hash.clear();
-    }
 
     // Remove the (id, item) pair that matches `remove_id` from the SyncQueue
     fn remove_id_from_queue(&mut self, remove_id: &QueueItemId) {
