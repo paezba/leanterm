@@ -1,5 +1,4 @@
 use std::fmt::Display;
-use std::sync::Arc;
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};

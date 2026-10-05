@@ -70,7 +70,7 @@ const WARP_SQLITE_FILE_NAME: &str = "warp.sqlite";
 /// Reads from the sqlite database to get the app state for session restoration.
 /// Starts a writer thread that listens for ModelEvents and processes them.
 pub fn initialize(
-    ctx: &mut AppContext,
+    _ctx: &mut AppContext,
     scope: PersistenceScope,
 ) -> (Option<Box<PersistedData>>, Option<WriterHandles>) {
     unsafe {

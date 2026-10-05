@@ -1,6 +1,5 @@
 use std::collections::HashSet;
 use std::ops::Range;
-use std::sync::Arc;
 use std::time::Duration;
 
 use async_channel::Sender;

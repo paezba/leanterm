@@ -130,7 +130,6 @@ pub mod workspace;
 
 use std::borrow::Cow;
 use std::ops::Deref;
-use std::sync::Arc;
 
 use ::settings::{Setting, ToggleableSetting};
 #[cfg(feature = "local_tty")]

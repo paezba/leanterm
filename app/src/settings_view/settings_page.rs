@@ -7,7 +7,6 @@ use pathfinder_color::ColorU;
 use pathfinder_geometry::vector::vec2f;
 use settings::Setting;
 use warp_core::settings::SyncToCloud;
-use warp_core::ui::color::blend::Blend;
 use warp_core::ui::theme::color::internal_colors;
 use warpui::elements::new_scrollable::{
     ClippedAxisConfiguration, DualAxisConfig, SingleAxisConfig,

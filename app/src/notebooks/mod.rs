@@ -4,7 +4,6 @@ pub mod file;
 pub mod link;
 mod styles;
 
-use serde::{Deserialize, Serialize};
 use warpui::AppContext;
 
 /// Initialize notebooks-related keybindings.
