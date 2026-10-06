@@ -6,7 +6,7 @@ This file provides guidance when working with code in this repository.
 
 ### Build and Run
 - `cargo run` / `./script/run` - Build and run the GUI desktop app locally
-- `cargo bundle --bin warp-oss` - Bundle the app
+- `cargo bundle --bin leanterm` - Bundle the app
 
 ### Testing
 - `cargo nextest run --no-fail-fast --workspace` - Run tests with nextest

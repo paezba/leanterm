@@ -507,6 +507,14 @@ fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
     );
     let _enter = span.enter();
 
+    // Runs before logging is initialized because log files can live in the migrated directories.
+    #[cfg(not(target_family = "wasm"))]
+    let legacy_data_migration = if launch_mode.is_gui() {
+        warp_core::paths::migrate_legacy_oss_data()
+    } else {
+        Vec::new()
+    };
+
     let log_destination = launch_mode.log_destination();
 
     cfg_if::cfg_if! {
@@ -533,6 +541,14 @@ fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
         initialization.log_initialization_warning();
     }
     timer.mark_interval_end("LOG_FILE_SETUP_COMPLETE");
+
+    #[cfg(not(target_family = "wasm"))]
+    for result in legacy_data_migration {
+        match result {
+            Ok(message) => log::info!("{message}"),
+            Err(err) => log::warn!("{err:#}"),
+        }
+    }
 
     // Claim a background-only process type before anything else can reach
     // AppKit, so a windowless launch never acquires a Dock tile. See APP-2946.

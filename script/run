@@ -19,7 +19,7 @@ OS_TYPE="$(uname -s)"
 
 FEATURES="gui"
 
-WARP_BIN_NAME="warp-oss"
+WARP_BIN_NAME="leanterm"
 WARP_CHANNEL="oss"
 
 # Shared argument parsing. macOS-specific flags (--dont-open,

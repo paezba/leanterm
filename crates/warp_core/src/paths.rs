@@ -32,12 +32,21 @@ pub const WARP_CONFIG_DIR: &str = ".warp";
 /// This is currently only used on Windows to maintain backwards compatibility.
 pub const WARP_LOGS_DIR: &str = "logs";
 
+/// The home-relative config directory name for Leanterm, the app built by the OSS channel.
+const LEANTERM_CONFIG_DIR: &str = ".leanterm";
+
+/// The app ID Leanterm used before it was renamed from WarpOss.
+const LEGACY_OSS_APP_ID: (&str, &str, &str) = ("dev", "warp", "WarpOss");
+
+/// The home-relative config directory name Leanterm used before it was renamed from WarpOss.
+const LEGACY_OSS_CONFIG_DIR: &str = ".warp-oss";
+
 fn base_warp_config_dir_name() -> String {
     match ChannelState::channel() {
         // Preview shares the same directory as Stable for backward
         // compatibility — existing users already have config in `.warp`.
         Channel::Stable | Channel::Preview => WARP_CONFIG_DIR.to_owned(),
-        Channel::Oss => format!("{WARP_CONFIG_DIR}-oss"),
+        Channel::Oss => LEANTERM_CONFIG_DIR.to_owned(),
         Channel::Dev => format!("{WARP_CONFIG_DIR}-dev"),
         Channel::Integration => format!("{WARP_CONFIG_DIR}-integration"),
         Channel::Local => format!("{WARP_CONFIG_DIR}-local"),
@@ -101,7 +110,7 @@ fn macos_config_dir_name_for(channel: Channel, data_profile: Option<&str>) -> St
     let base_dir_name = match channel {
         Channel::Stable => WARP_CONFIG_DIR.to_owned(),
         Channel::Preview => format!("{WARP_CONFIG_DIR}-preview"),
-        Channel::Oss => format!("{WARP_CONFIG_DIR}-oss"),
+        Channel::Oss => LEANTERM_CONFIG_DIR.to_owned(),
         Channel::Dev => format!("{WARP_CONFIG_DIR}-dev"),
         Channel::Integration => format!("{WARP_CONFIG_DIR}-integration"),
         Channel::Local => format!("{WARP_CONFIG_DIR}-local"),
@@ -132,11 +141,11 @@ pub fn data_dir() -> PathBuf {
 ///
 /// Most TUI channel binaries use the same application ID as the GUI. The OSS
 /// TUI is the exception: it uses `WarpTui`, while the corresponding GUI uses
-/// `WarpOss`.
+/// `Leanterm`.
 #[cfg(any(not(target_os = "macos"), test))]
 fn gui_app_id_for_channel(channel: Channel, current_app_id: AppId) -> AppId {
     match channel {
-        Channel::Oss => AppId::new("dev", "warp", "WarpOss"),
+        Channel::Oss => AppId::new("dev", "leanterm", "Leanterm"),
         Channel::Stable
         | Channel::Preview
         | Channel::Dev
@@ -319,7 +328,6 @@ fn project_dirs_for_app_id(
             // match our Linux package name.
             let base_app_name = match app_id.application_name() {
                 "Warp" => "Warp-Terminal".to_owned(),
-                "WarpOss" => "Warp-Oss".to_owned(),
                 other if other.starts_with("Warp") => other.replace("Warp", "Warp-Terminal-"),
                 _ => app_id.application_name().to_owned(),
             };
@@ -421,6 +429,123 @@ pub fn bundled_resources_dir() -> Option<PathBuf> {
             None
         }
     }
+}
+
+/// Moves data that the OSS channel wrote under its former WarpOss name to Leanterm's locations.
+///
+/// A location is moved only if nothing exists yet at its new path, so this is a no-op after the
+/// first launch. Development data profiles are skipped. Returns one entry per attempted move, to be
+/// logged by the caller once logging is initialized.
+#[cfg(not(target_family = "wasm"))]
+pub fn migrate_legacy_oss_data() -> Vec<anyhow::Result<String>> {
+    if ChannelState::channel() != Channel::Oss || ChannelState::data_profile().is_some() {
+        return Vec::new();
+    }
+
+    let mut moves = Vec::new();
+    if let Some(home_dir) = dirs::home_dir() {
+        moves.push((
+            home_dir.join(LEGACY_OSS_CONFIG_DIR),
+            home_dir.join(LEANTERM_CONFIG_DIR),
+        ));
+    }
+    let (qualifier, organization, application) = LEGACY_OSS_APP_ID;
+    // Linux directory names used to be derived from `Warp-Oss` rather than the app name.
+    let application = if cfg!(any(target_os = "linux", target_os = "freebsd")) {
+        "Warp-Oss"
+    } else {
+        application
+    };
+    if let (Some(legacy), Some(current)) = (
+        directories::ProjectDirs::from(qualifier, organization, application),
+        project_dirs(),
+    ) {
+        moves.extend(
+            [
+                (legacy.config_dir(), current.config_dir()),
+                (legacy.config_local_dir(), current.config_local_dir()),
+                (legacy.data_dir(), current.data_dir()),
+                (legacy.data_local_dir(), current.data_local_dir()),
+                (legacy.cache_dir(), current.cache_dir()),
+                (legacy.preference_dir(), current.preference_dir()),
+            ]
+            .map(|(legacy, current)| (legacy.to_owned(), current.to_owned())),
+        );
+        if let (Some(legacy), Some(current)) = (legacy.state_dir(), current.state_dir()) {
+            moves.push((legacy.to_owned(), current.to_owned()));
+        }
+    }
+
+    let mut results: Vec<_> = moves
+        .into_iter()
+        .filter(|(legacy, current)| legacy.exists() && !current.exists())
+        .map(|(legacy, current)| {
+            if let Some(parent) = current.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            std::fs::rename(&legacy, &current).map_err(|err| {
+                anyhow::anyhow!(
+                    "Failed to move {} to {}: {err}",
+                    legacy.display(),
+                    current.display()
+                )
+            })?;
+            Ok(format!(
+                "Moved {} to {}",
+                legacy.display(),
+                current.display()
+            ))
+        })
+        .collect();
+
+    #[cfg(target_os = "macos")]
+    if let Some(result) = migrate_legacy_oss_user_defaults() {
+        results.push(result);
+    }
+
+    results
+}
+
+/// Copies the WarpOss UserDefaults domain, which holds settings that are not stored in
+/// `settings.toml`, into Leanterm's domain.
+#[cfg(target_os = "macos")]
+// The Windows console flashing that `command::blocking::Command` avoids does not apply on macOS.
+#[allow(clippy::disallowed_types)]
+fn migrate_legacy_oss_user_defaults() -> Option<anyhow::Result<String>> {
+    use std::process::Command;
+
+    let preferences_dir = dirs::home_dir()?.join("Library/Preferences");
+    let (qualifier, organization, application) = LEGACY_OSS_APP_ID;
+    let legacy_domain = format!("{qualifier}.{organization}.{application}");
+    let current_domain = ChannelState::app_id().to_string();
+    if !preferences_dir
+        .join(format!("{legacy_domain}.plist"))
+        .exists()
+        || preferences_dir
+            .join(format!("{current_domain}.plist"))
+            .exists()
+    {
+        return None;
+    }
+
+    let run = || -> anyhow::Result<String> {
+        let exported = tempfile::NamedTempFile::new()?;
+        for (verb, domain) in [("export", &legacy_domain), ("import", &current_domain)] {
+            let status = Command::new("/usr/bin/defaults")
+                .arg(verb)
+                .arg(domain)
+                .arg(exported.path())
+                .status()?;
+            anyhow::ensure!(
+                status.success(),
+                "`defaults {verb} {domain}` failed: {status}"
+            );
+        }
+        Ok(format!(
+            "Copied UserDefaults from {legacy_domain} to {current_domain}"
+        ))
+    };
+    Some(run())
 }
 
 #[cfg(all(test, feature = "local_fs"))]

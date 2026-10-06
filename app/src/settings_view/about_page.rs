@@ -119,8 +119,8 @@ impl SettingsWidget for AboutPageWidget {
                 .with_child(
                     ui_builder
                         .span(
-                            "WarpOss: a lean build of the Warp open-source terminal, without AI, \
-                             cloud, or account features.",
+                            "Leanterm: a lean fork of the Warp open-source terminal, without AI, cloud, \
+                             or account features. Not affiliated with Warp.",
                         )
                         .with_soft_wrap()
                         .build()
