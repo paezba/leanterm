@@ -13,8 +13,8 @@ mod workflows;
 pub use data_source::QueryFilter;
 use filter_chip_renderer::FilterChipRenderer;
 pub use item::SearchItem;
-pub use mixer::SyncDataSource;
-pub use result_renderer::ItemHighlightState;
 // Re-export core search types.
 pub use leanterm_search_core::*;
+pub use mixer::SyncDataSource;
+pub use result_renderer::ItemHighlightState;
 pub use workflows::fuzzy_match::FuzzyMatchWorkflowResult;

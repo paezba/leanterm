@@ -6,17 +6,16 @@ use leanterm_core::ui::theme::LeantermTheme;
 use leanterm_terminal::shell::TargetOS;
 use leanterm_ui::elements::{
     Border, Container, CrossAxisAlignment, Flex, Icon, MainAxisAlignment, MainAxisSize,
-    MouseStateHandle, ParentElement, SelectableArea, SelectionHandle, Text,
+    ParentElement, SelectableArea, SelectionHandle, Text,
 };
-use leanterm_ui::ui_components::components::{UiComponent, UiComponentStyles};
 use leanterm_ui::{
     AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext,
 };
 use parking_lot::RwLock;
 
-use super::render::{HORIZONTAL_TEXT_MARGIN, SSH_DOCS_URL, SUBSHELL_DOCS_URL};
+use super::render::HORIZONTAL_TEXT_MARGIN;
 use super::settings::LeantermifySettings;
-use super::{LeantermificationSource, render, subshell_bootstrap_success_block_bytes};
+use super::{render, subshell_bootstrap_success_block_bytes};
 use crate::appearance::Appearance;
 use crate::terminal::model::terminal_model::SubshellInitializationInfo;
 use crate::terminal::shell::{Shell, ShellType};
@@ -54,16 +53,13 @@ struct AutoLeantermifySnippet {
 }
 
 pub struct LeantermifySuccessBlock {
-    source: LeantermificationSource,
     spawning_command: String,
-    learn_more_link_mouse_states: MouseStateHandle,
     auto_leantermify_snippet: Option<AutoLeantermifySnippet>,
 }
 
 impl LeantermifySuccessBlock {
     #[allow(clippy::new_without_default)]
     pub fn new(
-        source: LeantermificationSource,
         spawning_command: String,
         subshell_info: Option<SubshellInitializationInfo>,
         shell: Shell,
@@ -126,8 +122,6 @@ impl LeantermifySuccessBlock {
         });
 
         Self {
-            source,
-            learn_more_link_mouse_states: Default::default(),
             spawning_command,
             auto_leantermify_snippet,
         }
@@ -163,12 +157,8 @@ impl LeantermifySuccessBlock {
         )
         .with_margin_right(8.)
         .finish();
-        let header_contents = Container::new(
-            Flex::row()
-                .with_children([header_contents, self.render_learn_more_link(appearance)])
-                .finish(),
-        )
-        .finish();
+        let header_contents =
+            Container::new(Flex::row().with_child(header_contents).finish()).finish();
 
         Container::new(
             Flex::row()
@@ -181,38 +171,6 @@ impl LeantermifySuccessBlock {
         .with_horizontal_margin(HORIZONTAL_TEXT_MARGIN)
         .with_margin_top(VERTICAL_TEXT_MARGIN)
         .finish()
-    }
-
-    fn render_learn_more_link(&self, appearance: &Appearance) -> Box<dyn Element> {
-        let url = match self.source {
-            LeantermificationSource::Ssh => SSH_DOCS_URL,
-            LeantermificationSource::Subshell => SUBSHELL_DOCS_URL,
-        };
-
-        let font_family_id = appearance.monospace_font_family();
-        let font_size = appearance.monospace_font_size();
-        appearance
-            .ui_builder()
-            .link(
-                "Learn more".into(),
-                None,
-                Some(Box::new({
-                    move |ctx| {
-                        ctx.dispatch_typed_action(LeantermifySuccessBlockAction::OpenUrl(
-                            url.to_owned(),
-                        ));
-                    }
-                })),
-                self.learn_more_link_mouse_states.clone(),
-            )
-            .soft_wrap(false)
-            .with_style(UiComponentStyles {
-                font_size: Some(font_size),
-                font_family_id: Some(font_family_id),
-                ..Default::default()
-            })
-            .build()
-            .finish()
     }
 
     /// Fired when a block ends and we are not in a Leantermified session.

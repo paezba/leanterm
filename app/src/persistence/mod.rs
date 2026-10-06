@@ -24,12 +24,12 @@ use std::thread::JoinHandle;
 use chrono::{DateTime, Local};
 use code_diff::workspace::WorkspaceMetadata as CodeWorkspaceMetadata;
 use instant::Instant;
-use lsp::supported_servers::LSPServerType;
 // Only re-exported for integration tests (via `integration_testing::persistence`);
 // in-crate code should resolve paths through `database_file_path_for_current_scope`.
 use leanterm_core::command::ExitCode;
 use leanterm_errors::report_error;
 use leanterm_ui::{AppContext, Entity, SingletonEntity};
+use lsp::supported_servers::LSPServerType;
 #[cfg(any(feature = "local_fs", feature = "integration_tests"))]
 #[cfg_attr(not(feature = "integration_tests"), expect(unused_imports))]
 pub use sqlite::database_file_path_for_scope;

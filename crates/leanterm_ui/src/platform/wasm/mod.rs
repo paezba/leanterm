@@ -4,10 +4,10 @@ pub(crate) mod soft_keyboard;
 
 use gloo::events::{EventListener, EventListenerOptions};
 pub use hidden_input::{HiddenInput, HiddenInputEvent, InputCallback};
-pub use mobile_detection::{is_mobile_device, is_mobile_user_agent};
-pub use soft_keyboard::{SoftKeyboardInput, SoftKeyboardManager, SoftKeyboardState};
 // Re-export the functions from the core crate.
 pub use leanterm_ui_core::platform::wasm::*;
+pub use mobile_detection::{is_mobile_device, is_mobile_user_agent};
+pub use soft_keyboard::{SoftKeyboardInput, SoftKeyboardManager, SoftKeyboardState};
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
 
 use super::KEYS_TO_IGNORE;

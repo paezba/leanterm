@@ -32,10 +32,6 @@ use crate::util::openable_file_type::{
 #[path = "open_in_leanterm_tests.rs"]
 mod tests;
 
-const LEARN_MORE_MARKDOWN_URL: &str =
-    "https://docs.warp.dev/terminal/more-features/markdown-viewer";
-const LEARN_MORE_CODE_URL: &str = "https://docs.warp.dev/code/overview#built-in-code-editor";
-
 /// A path to a file that can be opened in Leanterm, along with its type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OpenablePath {
@@ -186,16 +182,6 @@ impl TerminalView {
                     ctx.notify();
                 }
             }
-            OpenInLeantermBannerAction::LearnMore => {
-                if let Some(banner_state) = &self.inline_banners_state.open_in_leanterm_banner {
-                    let url = if renders_in_leanterm_notebook_viewer(&banner_state.target.path) {
-                        LEARN_MORE_MARKDOWN_URL
-                    } else {
-                        LEARN_MORE_CODE_URL
-                    };
-                    ctx.open_url(url);
-                }
-            }
             OpenInLeantermBannerAction::Close => {
                 if let Some(banner_state) = self.inline_banners_state.open_in_leanterm_banner.take()
                 {
@@ -242,13 +228,6 @@ impl TerminalView {
             OpenInLeantermBannerAction::Close => {
                 ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
                     "Close View in Leanterm banner",
-                    LeantermA11yRole::UserAction,
-                ))
-            }
-            OpenInLeantermBannerAction::LearnMore => {
-                ActionAccessibilityContent::Custom(AccessibilityContent::new(
-                    "Learn more",
-                    "Learn more about opening Markdown files in Leanterm",
                     LeantermA11yRole::UserAction,
                 ))
             }

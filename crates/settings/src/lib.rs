@@ -12,6 +12,8 @@ use std::sync::OnceLock;
 // Re-export crates used by macro expansions in downstream crates.
 #[doc(hidden)]
 pub use inventory as _inventory;
+// Re-export leanterm_ui_core for use by macros.
+pub use leanterm_ui_core;
 pub use macros::SettingSection;
 pub use manager::SettingsManager;
 #[doc(hidden)]
@@ -19,8 +21,6 @@ pub use schemars as _schemars;
 #[doc(hidden)]
 pub use settings_value as _settings_value;
 pub use settings_value::SettingsValue;
-// Re-export leanterm_ui_core for use by macros.
-pub use leanterm_ui_core;
 
 /// Extracts the storage key (last segment after the final `.`) from a toml_path.
 ///

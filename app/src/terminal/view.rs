@@ -132,7 +132,6 @@ use super::available_shells::AvailableShell;
 use super::block_list_viewport::FindMatchScrollLocation;
 use super::event::SshLoginStatus;
 use super::find::FindOptions;
-use super::leantermify::LeantermificationSource;
 use super::leantermify::success_block::{LeantermifySuccessBlock, LeantermifySuccessBlockEvent};
 use super::leantermify::trigger_state::{LeantermifyState, SshBlockState};
 use super::model::block::BlockSection;
@@ -390,17 +389,6 @@ const ENV_VAR_BOOTSTRAP_FAILED_DURATION: Duration = Duration::from_secs(60);
 /// dismissal keeps the warning informational without turning it into a
 /// permanent fixture.
 const SLOW_BOOTSTRAP_BANNER_AUTO_DISMISS_DURATION: Duration = Duration::from_secs(30);
-const KNOWN_ISSUES_URL: &str =
-    "https://docs.warp.dev/support-and-community/troubleshooting-and-support/known-issues";
-
-/// Link to supported custom prompts.
-const PROMPT_COMPATIBILITY_URL: &str =
-    "https://docs.warp.dev/terminal/appearance/prompt#custom-prompt-compatibility-table";
-
-/// Link to troubleshooting steps for ControlMaster errors.
-const CONTROLMASTER_ISSUES_URL: &str =
-    "https://docs.warp.dev/terminal/warpify/ssh-legacy#troubleshooting";
-
 /// Link to instructions on how to update p10k.
 const P10K_UPDATE_INSTRUCTIONS_URL: &str =
     "https://github.com/romkatv/powerlevel10k#how-do-i-update-powerlevel10k";
@@ -411,13 +399,6 @@ const CONTEXT_MENU_WIDTH: f32 = 280.;
 /// be a text-selection as opposed to mouse-drag noise.
 /// Roughly determined by trial-and-error.
 const MIN_DELTA_FOR_TEXT_SELECTION: f32 = 0.5;
-
-/// Notifications-specific info
-/// TODO (suraj): add documentation for notifications in docs
-const NOTIFICATIONS_LEARN_MORE_URL: &str =
-    "https://docs.warp.dev/terminal/more-features/notifications";
-pub const NOTIFICATIONS_TROUBLESHOOT_URL: &str =
-    "https://docs.warp.dev/terminal/more-features/notifications#troubleshooting-notifications";
 
 const DEBOUNCE_PERIOD: Duration = Duration::from_millis(40);
 
@@ -2094,12 +2075,9 @@ impl TerminalView {
 
         let slow_bootstrap_banner = ctx.add_typed_action_view(|_| {
             Banner::<TerminalAction>::new_with_buttons(
-                BannerTextContent::formatted_text(vec![
-                    FormattedTextFragment::plain_text(
-                        "Seems like your shell is taking a while to start...  ",
-                    ),
-                    FormattedTextFragment::hyperlink("More info", KNOWN_ISSUES_URL),
-                ]),
+                BannerTextContent::formatted_text(vec![FormattedTextFragment::plain_text(
+                    "Seems like your shell is taking a while to start...",
+                )]),
                 vec![BannerTextButton::new(
                     "Show initialization block".to_string(),
                     Rc::new(|event_ctx, _ctx, _position| {
@@ -2121,9 +2099,7 @@ impl TerminalView {
 
         let control_master_error_banner = ctx.add_typed_action_view(|_| {
             Banner::new_permanently_dismissible(BannerTextContent::formatted_text(vec![
-                FormattedTextFragment::plain_text("Seems like your completions are not working ("),
-                FormattedTextFragment::hyperlink("more info", CONTROLMASTER_ISSUES_URL),
-                FormattedTextFragment::plain_text(")."),
+                FormattedTextFragment::plain_text("Seems like your completions are not working."),
             ]))
         });
 
@@ -2134,9 +2110,8 @@ impl TerminalView {
         let incompatible_configuration_banner = ctx.add_typed_action_view(|_| {
             Banner::new(BannerTextContent::formatted_text(vec![
                 FormattedTextFragment::plain_text(
-                    "Your shell configuration is incompatible with Leanterm...  ",
+                    "Your shell configuration is incompatible with Leanterm...",
                 ),
-                FormattedTextFragment::hyperlink("More info", KNOWN_ISSUES_URL),
             ]))
         });
 
@@ -3887,7 +3862,6 @@ impl TerminalView {
             spawning_command,
             subshell_info,
             shell,
-            session_type,
             ..
         }: SessionBootstrappedEvent,
         ctx: &mut ViewContext<Self>,
@@ -3901,18 +3875,8 @@ impl TerminalView {
             });
         }
 
-        let leantermification_source = match session_type {
-            BootstrapSessionType::LeantermifiedRemote => LeantermificationSource::Ssh,
-            BootstrapSessionType::Local => LeantermificationSource::Subshell,
-        };
         let ssh_success_block_handle = ctx.add_typed_action_view(|ctx| {
-            LeantermifySuccessBlock::new(
-                leantermification_source,
-                spawning_command,
-                subshell_info,
-                shell,
-                ctx,
-            )
+            LeantermifySuccessBlock::new(spawning_command, subshell_info, shell, ctx)
         });
         ctx.subscribe_to_view(&ssh_success_block_handle, move |me, _, event, ctx| {
             me.handle_ssh_success_block_events(event, ctx);
@@ -9498,9 +9462,8 @@ impl TerminalView {
                 Some(BannerTextContent::formatted_text(vec![
                     FormattedTextFragment::plain_text(
                         "Pure is not yet supported in Leanterm. You might consider one of the \
-                        supported prompts as an alternative.  ",
+                        supported prompts as an alternative.",
                     ),
-                    FormattedTextFragment::hyperlink("Learn more", PROMPT_COMPATIBILITY_URL),
                 ]))
             } else {
                 None
@@ -11207,9 +11170,6 @@ impl TerminalView {
         use NotificationsErrorBannerAction::*;
 
         match action {
-            Troubleshoot => {
-                ctx.open_url(NOTIFICATIONS_TROUBLESHOOT_URL);
-            }
             Close => self.close_notification_error_banner(ctx),
             SetPermissions => {
                 ctx.request_desktop_notification_permissions(move |view, outcome, ctx| {
@@ -11248,12 +11208,6 @@ impl TerminalView {
         use NotificationsDiscoveryBannerAction::*;
 
         match action {
-            LearnMore => {
-                ctx.open_url(NOTIFICATIONS_LEARN_MORE_URL);
-            }
-            Troubleshoot => {
-                ctx.open_url(NOTIFICATIONS_TROUBLESHOOT_URL);
-            }
             TurnOn(_trigger) => {
                 let current_settings = SessionSettings::as_ref(ctx).notifications.value().clone();
                 let new_settings = NotificationsSettings {

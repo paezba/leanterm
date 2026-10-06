@@ -361,16 +361,10 @@ struct TitleWidget {
 
 impl TitleWidget {
     fn render_top_of_page(&self, appearance: &Appearance, _app: &AppContext) -> Box<dyn Element> {
-        let leantermify_description = vec![
-            FormattedTextFragment::plain_text(
-                "Configure whether Leanterm attempts to “Leantermify” (add support for blocks, \
-                    input modes, etc) certain shells. ",
-            ),
-            FormattedTextFragment::hyperlink(
-                "Learn more",
-                "https://docs.warp.dev/terminal/warpify/subshells",
-            ),
-        ];
+        let leantermify_description = vec![FormattedTextFragment::plain_text(
+            "Configure whether Leanterm attempts to “Leantermify” (add support for blocks, \
+                    input modes, etc) certain shells.",
+        )];
 
         let leantermify_description = FormattedTextElement::new(
             FormattedText::new([FormattedTextLine::Line(leantermify_description)]),

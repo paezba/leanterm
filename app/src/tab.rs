@@ -311,7 +311,6 @@ pub(crate) fn next_tab_color(current: Option<AnsiColorIdentifier>) -> SelectedTa
 #[derive(Debug, Clone)]
 pub enum NewSessionMenuItem {
     OpenLaunchConfig(LaunchConfig),
-    OpenLaunchConfigDocs,
     CreateNewTabConfig,
     /// Creates a new tab group.
     CreateNewTabGroup,

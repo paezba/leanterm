@@ -138,12 +138,6 @@ use appearance::{Appearance, AppearanceManager};
 use channel::ChannelState;
 use interval_timer::IntervalTimer;
 use itertools::Itertools;
-#[cfg(feature = "integration_tests")]
-pub use persistence::testing as sqlite_testing;
-use settings::{ExtraMetaKeys, PrivacySettings};
-use terminal::input;
-use terminal::session_settings::SessionSettings;
-use url::Url;
 // Re-export the debounce function to simplify imports.
 pub use leanterm_core::r#async::debounce;
 use leanterm_core::execution_mode::{AppExecutionMode, ExecutionMode};
@@ -158,6 +152,12 @@ use leanterm_ui::platform::TerminationMode;
 use leanterm_ui::platform::app::{ApproveTerminateResult, TerminationRequestSource};
 use leanterm_ui::windowing::state::ApplicationStage;
 use leanterm_ui::{App, AppContext, Event, SingletonEntity, WindowId};
+#[cfg(feature = "integration_tests")]
+pub use persistence::testing as sqlite_testing;
+use settings::{ExtraMetaKeys, PrivacySettings};
+use terminal::input;
+use terminal::session_settings::SessionSettings;
+use url::Url;
 use window_settings::WindowSettings;
 use workspace::sync_inputs::SyncedInputState;
 
