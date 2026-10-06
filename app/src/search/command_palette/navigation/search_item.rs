@@ -1,6 +1,6 @@
 use ordered_float::OrderedFloat;
-use warpui::elements::Container;
-use warpui::{AppContext, Element, SingletonEntity};
+use leanterm_ui::elements::Container;
+use leanterm_ui::{AppContext, Element, SingletonEntity};
 
 use crate::appearance::Appearance;
 use crate::pane_group::PaneId;

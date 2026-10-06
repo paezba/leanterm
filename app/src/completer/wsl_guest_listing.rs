@@ -3,8 +3,8 @@ use std::time::Duration;
 
 use instant::Instant;
 use typed_path::TypedPath;
-use warp_completer::completer::{CommandExitStatus, EngineDirEntry};
-use warpui::r#async::FutureExt as AsyncFutureExt;
+use leanterm_completer::completer::{CommandExitStatus, EngineDirEntry};
+use leanterm_ui::r#async::FutureExt as AsyncFutureExt;
 
 use crate::completer::SessionContext;
 use crate::terminal::model::session::ExecuteCommandOptions;

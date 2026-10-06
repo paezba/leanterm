@@ -3,11 +3,11 @@ pub mod themes;
 
 pub use params::*;
 pub use themes::Theme;
-use warp_core::ui::appearance::Appearance;
-use warp_core::ui::color::ContrastingColor as _;
-use warp_core::ui::color::contrast::MinimumAllowedContrast;
-use warpui_core::elements::{MouseState, MouseStateHandle};
-use warpui_core::prelude::*;
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_core::ui::color::ContrastingColor as _;
+use leanterm_core::ui::color::contrast::MinimumAllowedContrast;
+use leanterm_ui_core::elements::{MouseState, MouseStateHandle};
+use leanterm_ui_core::prelude::*;
 
 use crate::{keyboard_shortcut, tooltip};
 

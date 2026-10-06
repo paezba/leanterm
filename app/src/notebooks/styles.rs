@@ -1,12 +1,12 @@
 //! Shared styles for notebooks.
 
-use warpui::elements::{
+use leanterm_ui::elements::{
     Container, CrossAxisAlignment, Flex, Hoverable, MainAxisAlignment, MouseStateHandle,
     ParentElement,
 };
-use warpui::platform::Cursor;
-use warpui::ui_components::components::UiComponent as _;
-use warpui::{Element, fonts};
+use leanterm_ui::platform::Cursor;
+use leanterm_ui::ui_components::components::UiComponent as _;
+use leanterm_ui::{Element, fonts};
 
 use crate::appearance::Appearance;
 use crate::settings::{FontSettings, derived_notebook_font_size};

@@ -7,8 +7,8 @@
 //! is reordering it back in the source window removed the visible drop zone and
 //! made the slot oscillate every frame.
 
-use warpui::WindowId;
-use warpui::geometry::vector::{Vector2F, vec2f};
+use leanterm_ui::WindowId;
+use leanterm_ui::geometry::vector::{Vector2F, vec2f};
 
 use super::CrossWindowTabDrag;
 

@@ -1,4 +1,4 @@
-use warpui::integration::TestStep;
+use leanterm_ui::integration::TestStep;
 
 use crate::integration_testing::view_getters::pane_group_view;
 use crate::pane_group::tree::Direction;

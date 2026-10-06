@@ -3,15 +3,15 @@ use std::fmt::Display;
 use markdown_parser::{FormattedText, FormattedTextFragment, FormattedTextLine};
 use regex::Regex;
 use settings::{Setting, ToggleableSetting};
-use warp_errors::report_if_error;
-use warpui::elements::{
+use leanterm_errors::report_if_error;
+use leanterm_ui::elements::{
     Container, Flex, FormattedTextElement, HighlightedHyperlink, MouseStateHandle, ParentElement,
 };
-use warpui::keymap::ContextPredicate;
-use warpui::presenter::ChildView;
-use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
-use warpui::ui_components::switch::SwitchStateHandle;
-use warpui::{
+use leanterm_ui::keymap::ContextPredicate;
+use leanterm_ui::presenter::ChildView;
+use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
+use leanterm_ui::ui_components::switch::SwitchStateHandle;
+use leanterm_ui::{
     Action, AppContext, Element, Entity, ModelHandle, SingletonEntity, TypedActionView, View,
     ViewContext, ViewHandle,
 };

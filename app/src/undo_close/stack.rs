@@ -1,7 +1,7 @@
 use uuid::Uuid;
-use warp_errors::report_error;
-use warpui::r#async::SpawnedFutureHandle;
-use warpui::{
+use leanterm_errors::report_error;
+use leanterm_ui::r#async::SpawnedFutureHandle;
+use leanterm_ui::{
     AppContext, ClosedWindowData, Entity, ModelContext, SingletonEntity, ViewHandle,
     WeakViewHandle, WindowId,
 };
@@ -274,7 +274,7 @@ impl UndoCloseStack {
         let id = ItemId::new();
         let grace_period = *settings.grace_period;
         let task_handle = ctx.spawn_abortable(
-            warpui::r#async::Timer::after(grace_period),
+            leanterm_ui::r#async::Timer::after(grace_period),
             move |me, _, ctx| {
                 let initial_len = me.stack.len();
                 if let Some(pos) = me.stack.iter().position(|item| item.expiry_data.id == id) {

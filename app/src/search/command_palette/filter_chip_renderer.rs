@@ -1,10 +1,10 @@
 use pathfinder_color::ColorU;
-use warpui::elements::{
+use leanterm_ui::elements::{
     ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Flex, Hoverable, Icon,
     MouseStateHandle, ParentElement, Radius, Text,
 };
-use warpui::platform::Cursor;
-use warpui::{Element, EventContext};
+use leanterm_ui::platform::Cursor;
+use leanterm_ui::{Element, EventContext};
 
 use crate::appearance::Appearance;
 use crate::search::{FilterChipRenderer as CommonFilterChipRenderer, QueryFilter};
@@ -116,7 +116,7 @@ impl FilterChipRenderer for QueryFilter {
 }
 
 mod styles {
-    use warpui::elements::{Border, MouseState};
+    use leanterm_ui::elements::{Border, MouseState};
 
     use crate::themes::theme::{Blend, Fill, WarpTheme};
 

@@ -3,8 +3,8 @@ use std::collections::hash_map::Entry;
 use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
-use warp_util::path::LineAndColumnArg;
-use warpui::{AppContext, Entity, EntityId, SingletonEntity, ViewHandle, WindowId};
+use leanterm_util::path::LineAndColumnArg;
+use leanterm_ui::{AppContext, Entity, EntityId, SingletonEntity, ViewHandle, WindowId};
 
 use super::view::CodeView;
 use crate::code_review::code_review_view::CodeReviewView;

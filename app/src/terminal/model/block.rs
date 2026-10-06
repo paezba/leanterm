@@ -17,15 +17,15 @@ use pathfinder_color::ColorU;
 use pathfinder_geometry::vector::Vector2F;
 use secret_redaction::redact_secrets;
 pub use serialized_block::*;
-use warp_core::command::ExitCode;
-use warp_errors::report_error;
-use warp_terminal::model::grid::Dimensions as _;
-use warp_terminal::model::{KeyboardModes, KeyboardModesApplyBehavior};
-use warp_util::lazy::Lazy;
-use warp_util::path::user_friendly_path;
-use warpui::r#async::executor::Background;
-use warpui::record_trace_event;
-use warpui::units::{IntoLines, Lines};
+use leanterm_core::command::ExitCode;
+use leanterm_errors::report_error;
+use leanterm_terminal::model::grid::Dimensions as _;
+use leanterm_terminal::model::{KeyboardModes, KeyboardModesApplyBehavior};
+use leanterm_util::lazy::Lazy;
+use leanterm_util::path::user_friendly_path;
+use leanterm_ui::r#async::executor::Background;
+use leanterm_ui::record_trace_event;
+use leanterm_ui::units::{IntoLines, Lines};
 
 pub use super::BlockId;
 use super::bootstrap::BootstrapStage;
@@ -1852,7 +1852,7 @@ impl Block {
         let escape_char = session.shell_family().escape_char();
 
         // Parse the raw command string to get the top-level command.
-        let command = warp_completer::parsers::simple::top_level_command(
+        let command = leanterm_completer::parsers::simple::top_level_command(
             self.command_to_string(),
             escape_char,
         )?;
@@ -1862,7 +1862,7 @@ impl Block {
             .alias_value(command.as_str())
             .map(|s| s.to_owned())
             // An alias can technically expand into an entire command (e.g. "gl" => "PAGER=0 git log").
-            .and_then(|s| warp_completer::parsers::simple::top_level_command(s, escape_char))
+            .and_then(|s| leanterm_completer::parsers::simple::top_level_command(s, escape_char))
             // If alias expansion didn't work, then just return the original top-level command.
             .or(Some(command))
     }
@@ -2200,7 +2200,7 @@ impl Block {
 
         self.background_executor
             .spawn(async move {
-                warpui::r#async::Timer::after(std::time::Duration::from_millis(delay_ms)).await;
+                leanterm_ui::r#async::Timer::after(std::time::Duration::from_millis(delay_ms)).await;
                 ready_to_render.store(true, Ordering::Relaxed);
                 event_proxy.send_wakeup_event();
             })
@@ -2522,7 +2522,7 @@ impl Block {
     }
 
     pub fn grid_storage_lines(&self) -> usize {
-        use warp_terminal::model::grid::Dimensions as _;
+        use leanterm_terminal::model::grid::Dimensions as _;
 
         self.all_grids_iter()
             .map(|grid| grid.grid_storage().total_rows())
@@ -2736,7 +2736,7 @@ impl ansi::Handler for Block {
         delegate!(self.input(c));
     }
 
-    fn set_hyperlink(&mut self, hyperlink: Option<warp_terminal::model::ansi::Hyperlink>) {
+    fn set_hyperlink(&mut self, hyperlink: Option<leanterm_terminal::model::ansi::Hyperlink>) {
         delegate!(self.set_hyperlink(hyperlink));
     }
 

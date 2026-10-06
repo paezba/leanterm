@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use warp_ripgrep::search::Submatch;
+use leanterm_ripgrep::search::Submatch;
 
 pub struct SearchConfig {
     pub use_regex: bool,

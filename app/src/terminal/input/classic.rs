@@ -1,10 +1,10 @@
 use pathfinder_geometry::vector::vec2f;
 use settings::Setting;
-use warpui::elements::{
+use leanterm_ui::elements::{
     Border, ChildAnchor, Container, DropTarget, Element, Empty, Flex, Hoverable, OffsetPositioning,
     ParentAnchor, ParentElement, ParentOffsetBounds, SavePosition, Stack,
 };
-use warpui::{AppContext, SingletonEntity};
+use leanterm_ui::{AppContext, SingletonEntity};
 
 use super::{Input, SubshellRenderState, should_render_prompt_using_editor_decorator_elements};
 use crate::appearance::Appearance;

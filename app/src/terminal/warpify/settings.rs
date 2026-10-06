@@ -3,9 +3,9 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use settings::macros::{maybe_define_setting, register_settings_events};
 use settings::{ChangeEventReason, Setting, SupportedPlatforms};
-use warp_errors::report_error;
-use warp_util::path::ShellFamily;
-use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
+use leanterm_errors::report_error;
+use leanterm_util::path::ShellFamily;
+use leanterm_ui::{AppContext, Entity, ModelContext, SingletonEntity};
 
 use crate::terminal::ssh::util::{SshWarpifyCommand, parse_interactive_ssh_command};
 

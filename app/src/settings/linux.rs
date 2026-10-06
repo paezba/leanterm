@@ -1,6 +1,6 @@
 use settings::SupportedPlatforms;
 use settings::macros::define_settings_group;
-use warpui::platform::linux;
+use leanterm_ui::platform::linux;
 
 define_settings_group!(LinuxAppConfiguration,
     settings: [

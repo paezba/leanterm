@@ -6,9 +6,9 @@ use std::path::PathBuf;
 #[cfg(not(target_family = "wasm"))]
 use repo_metadata::repositories::DetectedRepositories;
 use repo_metadata::repositories::RepoDetectionSource;
-use warpui::AppContext;
+use leanterm_ui::AppContext;
 #[cfg(not(target_family = "wasm"))]
-use warpui::SingletonEntity;
+use leanterm_ui::SingletonEntity;
 
 /// Detects the git repository root for the given working directory.
 ///

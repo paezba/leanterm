@@ -15,21 +15,21 @@ use serde::{Deserialize, Serialize};
 use settings::Setting as _;
 use typed_path::TypedPath;
 use uuid::Uuid;
-use warp_core::command::ExitCode;
-use warp_core::context_flag::ContextFlag;
-use warp_errors::report_if_error;
-use warp_terminal::focus_env::add_session_focus_env_vars;
+use leanterm_core::command::ExitCode;
+use leanterm_core::context_flag::ContextFlag;
+use leanterm_errors::report_if_error;
+use leanterm_terminal::focus_env::add_session_focus_env_vars;
 #[cfg(feature = "local_fs")]
-use warp_util::path::LineAndColumnArg;
-use warp_util::path::convert_wsl_to_windows_host_path;
-use warpui::elements::{
+use leanterm_util::path::LineAndColumnArg;
+use leanterm_util::path::convert_wsl_to_windows_host_path;
+use leanterm_ui::elements::{
     ChildView, CrossAxisAlignment, DispatchEventResult, Element, EventHandler, Flex, MainAxisSize,
     ParentElement, Shrinkable, Stack,
 };
-use warpui::keymap::{Context, EditableBinding, FixedBinding};
-use warpui::notification::NotificationSendError;
-use warpui::windowing::WindowManager;
-use warpui::{
+use leanterm_ui::keymap::{Context, EditableBinding, FixedBinding};
+use leanterm_ui::notification::NotificationSendError;
+use leanterm_ui::windowing::WindowManager;
+use leanterm_ui::{
     AppContext, Entity, EntityId, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle, WindowId,
 };
@@ -108,7 +108,7 @@ pub use pane::{
     PaneHeaderAction, PaneHeaderCustomAction, PaneId, PaneView, TerminalPaneId,
 };
 pub use tree::{Direction, PaneData, PaneFlex, PaneNode, SplitDirection};
-use warp_errors::report_error;
+use leanterm_errors::report_error;
 pub use working_directories::{WorkingDirectoriesEvent, WorkingDirectoriesModel};
 
 use self::pane::{DetachType, PaneViewEvent};
@@ -214,7 +214,7 @@ enum PaneRemovalReason {
 }
 
 pub fn init(app: &mut AppContext) {
-    use warpui::keymap::macros::*;
+    use leanterm_ui::keymap::macros::*;
     app.register_binding_validator::<PaneGroup>(is_binding_pty_compliant);
 
     app.register_fixed_bindings([

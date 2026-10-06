@@ -6,11 +6,11 @@ pub use terminal_manager::TerminalManager;
 pub use terminal_view_adaptor::shutdown_all_pty_event_loops;
 #[cfg(all(feature = "local_tty", not(feature = "remote_tty")))]
 pub(crate) use terminal_view_adaptor::{TerminalViewSurfaceConfig, create_terminal_view_surface};
-pub use warp_terminal::local_tty::*;
+pub use leanterm_terminal::local_tty::*;
 
 #[cfg(unix)]
-pub fn run_terminal_server(args: &warp_cli::TerminalServerArgs) {
-    warp_terminal::local_tty::server::run_terminal_server(
+pub fn run_terminal_server(args: &leanterm_cli::TerminalServerArgs) {
+    leanterm_terminal::local_tty::server::run_terminal_server(
         args,
         crate::features::init_feature_flags,
         crate::terminal::platform::init,

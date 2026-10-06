@@ -2,18 +2,18 @@ use std::fmt::Debug;
 use std::marker::PhantomData;
 
 use pathfinder_color::ColorU;
-use warpui::elements::{
+use leanterm_ui::elements::{
     Border, ChildAnchor, ChildView, ConstrainedBox, Container, CornerRadius, Element, Fill, Icon,
     MainAxisAlignment, MainAxisSize, MouseStateHandle, OffsetPositioning, ParentElement,
     PositionedElementAnchor, PositionedElementOffsetBounds, SavePosition, Stack,
 };
-use warpui::fonts::FamilyId;
-use warpui::geometry::vector::vec2f;
-use warpui::scene::DropShadow;
-use warpui::text_layout::ClipConfig;
-use warpui::ui_components::button::{ButtonVariant, TextAndIcon, TextAndIconAlignment};
-use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
-use warpui::{
+use leanterm_ui::fonts::FamilyId;
+use leanterm_ui::geometry::vector::vec2f;
+use leanterm_ui::scene::DropShadow;
+use leanterm_ui::text_layout::ClipConfig;
+use leanterm_ui::ui_components::button::{ButtonVariant, TextAndIcon, TextAndIconAlignment};
+use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
+use leanterm_ui::{
     Action, AppContext, BlurContext, Entity, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle, WeakViewHandle,
 };

@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
 use chrono::Local;
-use warp_editor::render::model::LineCount;
-use warpui::App;
+use leanterm_editor::render::model::LineCount;
+use leanterm_ui::App;
 
 use crate::code::editor::line::EditorLineLocation;
 use crate::code_review::comments::{

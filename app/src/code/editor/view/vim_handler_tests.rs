@@ -4,18 +4,18 @@ use std::rc::Rc;
 use pathfinder_geometry::vector::{Vector2F, vec2f};
 use unindent::Unindent;
 use vim::vim::{MotionType, VimMode};
-use warp_core::settings::Setting;
-use warp_core::ui::appearance::Appearance;
-use warp_editor::content::buffer::{InitialBufferState, ToBufferCharOffset, ToBufferPoint};
-use warp_editor::model::CoreEditorModel;
-use warp_editor::render::element::VerticalExpansionBehavior;
-use warp_editor::render::model::viewport::SizeInfo;
-use warp_util::user_input::UserInput;
-use warpui::keymap::Keystroke;
-use warpui::platform::WindowStyle;
-use warpui::text::point::Point;
-use warpui::units::IntoPixels;
-use warpui::{
+use leanterm_core::settings::Setting;
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_editor::content::buffer::{InitialBufferState, ToBufferCharOffset, ToBufferPoint};
+use leanterm_editor::model::CoreEditorModel;
+use leanterm_editor::render::element::VerticalExpansionBehavior;
+use leanterm_editor::render::model::viewport::SizeInfo;
+use leanterm_util::user_input::UserInput;
+use leanterm_ui::keymap::Keystroke;
+use leanterm_ui::platform::WindowStyle;
+use leanterm_ui::text::point::Point;
+use leanterm_ui::units::IntoPixels;
+use leanterm_ui::{
     App, EntityId, EntityIdSet, Event, Presenter, SingletonEntity, TypedActionView, UpdateModel,
     ViewHandle, WindowId, WindowInvalidation,
 };

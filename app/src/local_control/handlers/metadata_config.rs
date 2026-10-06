@@ -8,8 +8,8 @@ use ::local_control::protocol::{
 use ::local_control::{ActionKind, ControlError, ErrorCode, InstanceId};
 use serde_json::json;
 use settings::Setting as _;
-use warp_core::ui::theme::AnsiColorIdentifier;
-use warpui::{ModelContext, SingletonEntity as _, WindowId};
+use leanterm_core::ui::theme::AnsiColorIdentifier;
+use leanterm_ui::{ModelContext, SingletonEntity as _, WindowId};
 
 use super::metadata::{
     PaneEntry, TabEntry, WindowEntry, pane_entries_for_tabs, tab_entries_for_windows,
@@ -740,13 +740,13 @@ fn u32_setting_value(key: &str, value: &serde_json::Value) -> Result<u32, Contro
 fn accessibility_verbosity_value(
     key: &str,
     value: &serde_json::Value,
-) -> Result<warpui::accessibility::AccessibilityVerbosity, ControlError> {
+) -> Result<leanterm_ui::accessibility::AccessibilityVerbosity, ControlError> {
     match string_setting_value(key, value)?.as_str() {
         "Verbose" | "verbose" | "VERBOSE" => {
-            Ok(warpui::accessibility::AccessibilityVerbosity::Verbose)
+            Ok(leanterm_ui::accessibility::AccessibilityVerbosity::Verbose)
         }
         "Concise" | "concise" | "CONCISE" => {
-            Ok(warpui::accessibility::AccessibilityVerbosity::Concise)
+            Ok(leanterm_ui::accessibility::AccessibilityVerbosity::Concise)
         }
         _ => Err(ControlError::new(
             ErrorCode::InvalidParams,

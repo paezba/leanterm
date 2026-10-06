@@ -1,19 +1,19 @@
-use warp::integration_testing::step::{
+use leanterm::integration_testing::step::{
     new_step_with_default_assertions, new_step_with_default_assertions_for_pane,
 };
-use warp::integration_testing::tab::assert_pane_title;
-use warp::integration_testing::terminal::wait_until_bootstrapped_single_pane_for_tab;
-use warp::integration_testing::view_getters::single_terminal_view_for_tab;
-use warp::integration_testing::{self};
-use warp::settings_view::SettingsView;
-use warp::sqlite_testing::set_user_and_hostname_for_blocks;
-use warp::terminal::model::session::get_local_hostname;
-use warp::terminal::model::terminal_model::BlockIndex;
-use warp::terminal::shell::ShellType;
-use warp::terminal::{History, ShellHost, TerminalView};
-use warp::workspace::Workspace;
-use warpui_core::integration::{AssertionOutcome, TestStep};
-use warpui_core::{SingletonEntity, ViewHandle, async_assert_eq};
+use leanterm::integration_testing::tab::assert_pane_title;
+use leanterm::integration_testing::terminal::wait_until_bootstrapped_single_pane_for_tab;
+use leanterm::integration_testing::view_getters::single_terminal_view_for_tab;
+use leanterm::integration_testing::{self};
+use leanterm::settings_view::SettingsView;
+use leanterm::sqlite_testing::set_user_and_hostname_for_blocks;
+use leanterm::terminal::model::session::get_local_hostname;
+use leanterm::terminal::model::terminal_model::BlockIndex;
+use leanterm::terminal::shell::ShellType;
+use leanterm::terminal::{History, ShellHost, TerminalView};
+use leanterm::workspace::Workspace;
+use leanterm_ui_core::integration::{AssertionOutcome, TestStep};
+use leanterm_ui_core::{SingletonEntity, ViewHandle, async_assert_eq};
 
 use super::{Builder, TEST_ONLY_ASSETS, new_builder};
 use crate::util::{get_local_user, tab_title_in_home_dir};

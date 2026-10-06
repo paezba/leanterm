@@ -4,8 +4,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use settings::macros::define_settings_group;
 use settings::{Setting, SupportedPlatforms};
-use warpui::AppContext;
-use warpui::clipboard::ClipboardContent;
+use leanterm_ui::AppContext;
+use leanterm_ui::clipboard::ClipboardContent;
 
 #[derive(
     Debug,

@@ -11,8 +11,8 @@ use indexmap::IndexSet;
 #[cfg(feature = "local_fs")]
 use repo_metadata::repositories::DetectedRepositories;
 #[cfg(feature = "local_fs")]
-use warpui::{AppContext, SingletonEntity as _};
-use warpui::{Entity, EntityId, ModelContext, ModelHandle, ViewHandle};
+use leanterm_ui::{AppContext, SingletonEntity as _};
+use leanterm_ui::{Entity, EntityId, ModelContext, ModelHandle, ViewHandle};
 
 #[cfg(feature = "local_fs")]
 use crate::code::file_tree::FileTreeView;

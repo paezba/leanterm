@@ -5,9 +5,9 @@ use std::sync::MutexGuard;
 use pathfinder_geometry::vector::Vector2F;
 use serde::{Deserialize, Serialize};
 use sum_tree::{Cursor, SeekBias};
-use warpui::AppContext;
-use warpui::elements::ClippedScrollStateHandle;
-use warpui::units::{IntoLines, IntoPixels, Lines, Pixels};
+use leanterm_ui::AppContext;
+use leanterm_ui::elements::ClippedScrollStateHandle;
+use leanterm_ui::units::{IntoLines, IntoPixels, Lines, Pixels};
 
 use super::block_list_element::{
     GridType, SnackbarHeader, SnackbarHeaderState, SnackbarPoint, VisibleItem,

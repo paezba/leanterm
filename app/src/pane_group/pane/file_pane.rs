@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use warpui::{AppContext, ModelHandle, View, ViewContext, ViewHandle};
+use leanterm_ui::{AppContext, ModelHandle, View, ViewContext, ViewHandle};
 
 use super::super::Direction;
 use super::view::PaneView;

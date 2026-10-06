@@ -296,7 +296,7 @@ if [[ "$CHECK_ONLY" == "true" ]]; then
   if [[ "$ARTIFACT" == "tui" ]]; then
     cargo check -p warp_tui --profile "$CARGO_PROFILE" --bin "$WARP_BIN" --features "$WARP_TUI_FEATURES"
   else
-    cargo check -p warp --profile "$CARGO_PROFILE" --bin "$WARP_BIN" --features "$FEATURES" ${TARGET_TRIPLE:+--target $TARGET_TRIPLE}
+    cargo check -p leanterm --profile "$CARGO_PROFILE" --bin "$WARP_BIN" --features "$FEATURES" ${TARGET_TRIPLE:+--target $TARGET_TRIPLE}
   fi
   exit 0
 fi
@@ -307,7 +307,7 @@ if [[ "$BUILD" == "true" ]]; then
   if [[ "$ARTIFACT" == "tui" ]]; then
     cargo build -p warp_tui --profile "$CARGO_PROFILE" --bin "$WARP_BIN" --features "$WARP_TUI_FEATURES"
   else
-    cargo build -p warp --profile "$CARGO_PROFILE" --bin "$WARP_BIN" --features "$FEATURES" ${TARGET_TRIPLE:+--target $TARGET_TRIPLE}
+    cargo build -p leanterm --profile "$CARGO_PROFILE" --bin "$WARP_BIN" --features "$FEATURES" ${TARGET_TRIPLE:+--target $TARGET_TRIPLE}
   fi
 
   echo "Making debug copy of '$EXECUTABLE_PATH' at '$DEBUG_EXECUTABLE_PATH'"

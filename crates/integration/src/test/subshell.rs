@@ -1,23 +1,23 @@
 use std::collections::HashMap;
 
 use settings::Setting as _;
-use warp::integration_testing::step::new_step_with_default_assertions;
-use warp::integration_testing::subshell::util::ssh_command;
-use warp::integration_testing::subshell::{
+use leanterm::integration_testing::step::new_step_with_default_assertions;
+use leanterm::integration_testing::subshell::util::ssh_command;
+use leanterm::integration_testing::subshell::{
     assert_subshell_banner_is_showing, assert_subshell_is_bootstrapped,
     enter_local_subshell_command, enter_remote_subshell_command, enter_ssh_password,
     setup_gcloud_sdk, trigger_subshell_bootstrap, wait_for_password_prompt,
 };
-use warp::integration_testing::terminal::util::current_shell_starter_and_version;
-use warp::integration_testing::terminal::wait_until_bootstrapped_single_pane_for_tab;
-use warp::integration_testing::view_getters::single_input_view_for_tab;
-use warp::root_view::SubshellCommandArg;
-use warp::terminal::shell::ShellType;
-use warp::terminal::warpify::settings::AddedSubshellCommands;
-use warpui_core::integration::{AssertionOutcome, TestStep};
-use warpui_core::windowing::WindowManager;
-use warpui_core::windowing::state::ApplicationStage;
-use warpui_core::{UpdateModel, async_assert};
+use leanterm::integration_testing::terminal::util::current_shell_starter_and_version;
+use leanterm::integration_testing::terminal::wait_until_bootstrapped_single_pane_for_tab;
+use leanterm::integration_testing::view_getters::single_input_view_for_tab;
+use leanterm::root_view::SubshellCommandArg;
+use leanterm::terminal::shell::ShellType;
+use leanterm::terminal::warpify::settings::AddedSubshellCommands;
+use leanterm_ui_core::integration::{AssertionOutcome, TestStep};
+use leanterm_ui_core::windowing::WindowManager;
+use leanterm_ui_core::windowing::state::ApplicationStage;
+use leanterm_ui_core::{UpdateModel, async_assert};
 
 use super::{Builder, new_builder};
 use crate::util::skip_if_powershell_core_2303;

@@ -2,15 +2,15 @@ use std::borrow::Cow;
 use std::sync::Arc;
 
 use parking_lot::RwLock;
-use warp_core::semantic_selection::SemanticSelection;
-use warp_core::ui::theme::WarpTheme;
-use warp_terminal::shell::TargetOS;
-use warpui::elements::{
+use leanterm_core::semantic_selection::SemanticSelection;
+use leanterm_core::ui::theme::WarpTheme;
+use leanterm_terminal::shell::TargetOS;
+use leanterm_ui::elements::{
     Border, Container, CrossAxisAlignment, Flex, Icon, MainAxisAlignment, MainAxisSize,
     MouseStateHandle, ParentElement, SelectableArea, SelectionHandle, Text,
 };
-use warpui::ui_components::components::{UiComponent, UiComponentStyles};
-use warpui::{AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext};
+use leanterm_ui::ui_components::components::{UiComponent, UiComponentStyles};
+use leanterm_ui::{AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext};
 
 use super::render::{HORIZONTAL_TEXT_MARGIN, SSH_DOCS_URL, SUBSHELL_DOCS_URL};
 use super::settings::WarpifySettings;

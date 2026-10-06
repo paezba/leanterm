@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use fuzzy_match::{FuzzyMatchResult, match_indices_case_insensitive};
-use warp_core::features::FeatureFlag;
-use warpui::{AppContext, Entity, ModelContext, ModelHandle, SingletonEntity};
+use leanterm_core::features::FeatureFlag;
+use leanterm_ui::{AppContext, Entity, ModelContext, ModelHandle, SingletonEntity};
 
 use super::new_session_option::{
     Direction, NewSessionConfig, NewSessionOption, NewSessionOptionId,
@@ -299,8 +299,8 @@ mod full_text_searcher {
     use std::sync::Arc;
 
     use fuzzy_match::FuzzyMatchResult;
-    use warp_search_core::define_search_schema;
-    use warpui::r#async::executor::Background;
+    use leanterm_search_core::define_search_schema;
+    use leanterm_ui::r#async::executor::Background;
 
     use crate::search::command_palette::new_session::data_source::{
         NewSessionSearcher, SEARCHER_BASE_STRINGS, SearcherAction,
@@ -369,7 +369,7 @@ mod full_text_searcher {
 
         fn build_index(&mut self) {
             if self.rebuild_search_index().is_err() {
-                warp_errors::report_error!(
+                leanterm_errors::report_error!(
                     "Failed to create search index writer for new session options"
                 );
                 self.clear_search_index();
@@ -407,7 +407,7 @@ mod full_text_searcher {
                 .build_index_async(max_match_documents)
                 .is_err()
             {
-                warp_errors::report_error!(
+                leanterm_errors::report_error!(
                     "Failed to build search index for base text of new session search"
                 );
                 if max_match_searcher.clear_search_index_async().is_err() {

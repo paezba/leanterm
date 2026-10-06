@@ -1,5 +1,5 @@
-use warp_core::settings::Setting;
-use warpui::{Entity, SingletonEntity};
+use leanterm_core::settings::Setting;
+use leanterm_ui::{Entity, SingletonEntity};
 
 pub struct SettingsInitializer;
 

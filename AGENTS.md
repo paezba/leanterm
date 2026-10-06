@@ -17,8 +17,8 @@ This file provides guidance when working with code in this repository.
 - `./script/presubmit` - Run the full local presubmit only when explicitly requested
 - `./script/format` - Format code
 - `cargo clippy -p <package> --all-targets --tests -- -D warnings` - Run targeted Clippy
-- `./script/run-clang-format.py -r --extensions 'c,h,cpp,m' ./crates/warpui/src/ ./app/src/` - Check C/C++/Obj-C formatting
-- `./script/run-clang-format.py -i -r --extensions 'c,h,cpp,m' ./crates/warpui/src/ ./app/src/` - Format C/C++/Obj-C code in place
+- `./script/run-clang-format.py -r --extensions 'c,h,cpp,m' ./crates/leanterm_ui/src/ ./app/src/` - Check C/C++/Obj-C formatting
+- `./script/run-clang-format.py -i -r --extensions 'c,h,cpp,m' ./crates/leanterm_ui/src/ ./app/src/` - Format C/C++/Obj-C code in place
 - `find . -name "*.wgsl" -exec wgslfmt --check {} +` - Check WGSL shader formatting
 - `find . -name "*.wgsl" -exec wgslfmt {} +` - Format WGSL shaders in place
 
@@ -44,11 +44,11 @@ This is a Rust-based terminal emulator with a custom UI framework called **WarpU
 
 ### Front-end
 
-The `app/` crate is a GUI desktop app on the WarpUI pixel/GPU framework (`warpui`, `crates/warpui_core`): `Element`/`View` layout, GPU/WGSL rendering, mouse input, `.app` bundles. Run with `cargo run` / `./script/run`; verify visually or with the real-display integration framework (`crates/integration`).
+The `app/` crate is a GUI desktop app on the WarpUI pixel/GPU framework (`leanterm_ui`, `crates/leanterm_ui_core`): `Element`/`View` layout, GPU/WGSL rendering, mouse input, `.app` bundles. Run with `cargo run` / `./script/run`; verify visually or with the real-display integration framework (`crates/integration`).
 
 ### Key Components
 
-**UI core** (`crates/warpui`, `crates/warpui_core`):
+**UI core** (`crates/leanterm_ui`, `crates/leanterm_ui_core`):
 - Entity-Component-Handle pattern: a global `App` object owns all views/models (entities); views hold `ViewHandle<T>` references to other views; `AppContext` provides temporary access to handles during render/events.
 - Actions system for event handling.
 
@@ -65,9 +65,9 @@ The `app/` crate is a GUI desktop app on the WarpUI pixel/GPU framework (`warpui
 - Workspace and session management (`workspace/`)
 
 **Core Libraries**:
-- `crates/warp_core/` - Core utilities and platform abstractions (shared)
+- `crates/leanterm_core/` - Core utilities and platform abstractions (shared)
 - `crates/editor/` - Text editing functionality
-- `crates/warpui/` and `crates/warpui_core/` - Custom UI framework
+- `crates/leanterm_ui/` and `crates/leanterm_ui_core/` - Custom UI framework
 - `crates/ipc/` - Inter-process communication
 - `crates/code_diff/` - Diff validation and workspace metadata used by the code editor
 
@@ -81,7 +81,7 @@ The `app/` crate is a GUI desktop app on the WarpUI pixel/GPU framework (`warpui
 
 **Workspace Structure**:
 - This is a Cargo workspace with 60+ member crates
-- Main binary is in `app/`, UI framework in `crates/warpui/`
+- Main binary is in `app/`, UI framework in `crates/leanterm_ui/`
 - Platform-specific code is conditionally compiled
 - Integration tests are in `crates/integration/`
 
@@ -175,7 +175,7 @@ for itself.
 Warp uses compile-time feature flags with a small runtime plumbing layer.
 
 How to add a feature flag:
-- Add a new variant to `warp_core/src/features.rs` in the `FeatureFlag` enum
+- Add a new variant to `leanterm_core/src/features.rs` in the `FeatureFlag` enum
 - (Optional) Enable it by default for dogfood builds by listing it in `DOGFOOD_FLAGS`
 - Gate code paths with `FeatureFlag::YourFlag.is_enabled()`
 - For preview or release rollout, add to `PREVIEW_FLAGS` or `RELEASE_FLAGS` respectively (as appropriate)

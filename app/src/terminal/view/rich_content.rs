@@ -1,5 +1,5 @@
-use warpui::prelude::ChildView;
-use warpui::{Element, EntityId, View, ViewContext, ViewHandle};
+use leanterm_ui::prelude::ChildView;
+use leanterm_ui::{Element, EntityId, View, ViewContext, ViewHandle};
 
 use crate::terminal::TerminalView;
 use crate::terminal::block_list_viewport::ScrollPositionUpdate;

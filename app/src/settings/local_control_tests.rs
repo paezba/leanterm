@@ -2,10 +2,10 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 
 use settings::{PrivatePreferences, PublicPreferences, Setting as _, SettingsManager};
-use warp_core::channel::{Channel, ChannelState};
-use warpui::SingletonEntity as _;
-use warpui_extras::secure_storage::{self, AppContextExt as _};
-use warpui_extras::user_preferences;
+use leanterm_core::channel::{Channel, ChannelState};
+use leanterm_ui::SingletonEntity as _;
+use leanterm_ui_extras::secure_storage::{self, AppContextExt as _};
+use leanterm_ui_extras::user_preferences;
 
 use super::{
     LocalControlMode, LocalControlModeSetting, LocalControlSettings, default_mode_for_channel,
@@ -97,7 +97,7 @@ fn unset_mode_follows_channel_default() {
 
 #[test]
 fn mode_is_persisted_to_secure_storage() {
-    warpui::App::test((), |mut app| async move {
+    leanterm_ui::App::test((), |mut app| async move {
         app.update(|ctx| {
             ctx.add_singleton_model(|_| {
                 PublicPreferences::new(
@@ -144,7 +144,7 @@ fn mode_is_persisted_to_secure_storage() {
 
 #[test]
 fn mode_does_not_migrate_from_private_preferences() {
-    warpui::App::test((), |mut app| async move {
+    leanterm_ui::App::test((), |mut app| async move {
         app.update(|ctx| {
             ctx.add_singleton_model(|_| {
                 PublicPreferences::new(
@@ -188,7 +188,7 @@ fn mode_is_private() {
 
 #[test]
 fn cloud_sync_cannot_disable_local_control() {
-    warpui::App::test((), |mut app| async move {
+    leanterm_ui::App::test((), |mut app| async move {
         app.update(|ctx| {
             ctx.add_singleton_model(|_| {
                 PublicPreferences::new(

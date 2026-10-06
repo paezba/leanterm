@@ -1,14 +1,14 @@
 use std::collections::HashSet;
 
 use itertools::{Either, Itertools};
-use warp_editor::editor::NavigationKey;
-use warpui::accessibility::{AccessibilityContent, WarpA11yRole};
-use warpui::elements::{
+use leanterm_editor::editor::NavigationKey;
+use leanterm_ui::accessibility::{AccessibilityContent, WarpA11yRole};
+use leanterm_ui::elements::{
     Clipped, ConstrainedBox, Container, CrossAxisAlignment, Flex, ParentElement, Shrinkable, Text,
 };
-use warpui::fonts::{FamilyId, Properties, Style, Weight};
-use warpui::presenter::ChildView;
-use warpui::{
+use leanterm_ui::fonts::{FamilyId, Properties, Style, Weight};
+use leanterm_ui::presenter::ChildView;
+use leanterm_ui::{
     Action, AppContext, Element, Entity, FocusContext, ModelContext, ModelHandle, SingletonEntity,
     TypedActionView, View, ViewContext, ViewHandle,
 };

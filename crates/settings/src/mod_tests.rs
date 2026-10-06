@@ -1,5 +1,5 @@
 mod reload_all_public_settings_tests {
-    use warpui_core::SingletonEntity;
+    use leanterm_ui_core::SingletonEntity;
 
     use crate::manager::SettingsManager;
     use crate::{Setting, SupportedPlatforms, *};
@@ -25,12 +25,12 @@ mod reload_all_public_settings_tests {
     fn init_prefs(ctx: &mut AppContext) {
         ctx.add_singleton_model(move |_| -> crate::PublicPreferences {
             crate::PublicPreferences::new(Box::<
-                warpui_extras::user_preferences::in_memory::InMemoryPreferences,
+                leanterm_ui_extras::user_preferences::in_memory::InMemoryPreferences,
             >::default())
         });
         ctx.add_singleton_model(move |_| -> crate::PrivatePreferences {
             crate::PrivatePreferences(Box::<
-                warpui_extras::user_preferences::in_memory::InMemoryPreferences,
+                leanterm_ui_extras::user_preferences::in_memory::InMemoryPreferences,
             >::default())
         });
     }
@@ -39,7 +39,7 @@ mod reload_all_public_settings_tests {
     /// in the preferences backend.
     #[test]
     fn test_loads_present_keys() {
-        warpui_core::App::test((), |mut app| async move {
+        leanterm_ui_core::App::test((), |mut app| async move {
             app.update(init_prefs);
             app.add_singleton_model(|_| SettingsManager::default());
             ReloadTestSettings::register(&mut app);
@@ -73,7 +73,7 @@ mod reload_all_public_settings_tests {
     /// reload (the key-deletion scenario).
     #[test]
     fn test_resets_absent_keys_to_defaults() {
-        warpui_core::App::test((), |mut app| async move {
+        leanterm_ui_core::App::test((), |mut app| async move {
             app.update(init_prefs);
             app.add_singleton_model(|_| SettingsManager::default());
             ReloadTestSettings::register(&mut app);
@@ -114,7 +114,7 @@ mod reload_all_public_settings_tests {
     /// This is the property that prevents the infinite watcher loop.
     #[test]
     fn test_absent_keys_are_not_written_back() {
-        warpui_core::App::test((), |mut app| async move {
+        leanterm_ui_core::App::test((), |mut app| async move {
             app.update(init_prefs);
             app.add_singleton_model(|_| SettingsManager::default());
             ReloadTestSettings::register(&mut app);
@@ -155,7 +155,7 @@ mod reload_all_public_settings_tests {
     /// of settings that fail to deserialize (invalid value in file).
     #[test]
     fn test_reload_returns_failed_keys_for_invalid_values() {
-        warpui_core::App::test((), |mut app| async move {
+        leanterm_ui_core::App::test((), |mut app| async move {
             app.update(init_prefs);
             app.add_singleton_model(|_| SettingsManager::default());
             ReloadTestSettings::register(&mut app);
@@ -196,7 +196,7 @@ mod reload_all_public_settings_tests {
     /// when all values are valid.
     #[test]
     fn test_reload_returns_empty_vec_on_success() {
-        warpui_core::App::test((), |mut app| async move {
+        leanterm_ui_core::App::test((), |mut app| async move {
             app.update(init_prefs);
             app.add_singleton_model(|_| SettingsManager::default());
             ReloadTestSettings::register(&mut app);
@@ -226,7 +226,7 @@ mod reload_all_public_settings_tests {
     /// values without modifying in-memory state.
     #[test]
     fn test_validate_detects_invalid_values() {
-        warpui_core::App::test((), |mut app| async move {
+        leanterm_ui_core::App::test((), |mut app| async move {
             app.update(init_prefs);
             app.add_singleton_model(|_| SettingsManager::default());
             ReloadTestSettings::register(&mut app);
@@ -264,7 +264,7 @@ mod reload_all_public_settings_tests {
     /// stored values are valid.
     #[test]
     fn test_validate_returns_empty_when_all_valid() {
-        warpui_core::App::test((), |mut app| async move {
+        leanterm_ui_core::App::test((), |mut app| async move {
             app.update(init_prefs);
             app.add_singleton_model(|_| SettingsManager::default());
             ReloadTestSettings::register(&mut app);
@@ -347,7 +347,7 @@ mod write_to_preferences_tests {
     #[test]
     fn test_no_spurious_write_with_format_differences() {
         let prefs =
-            Box::<warpui_extras::user_preferences::in_memory::InMemoryPreferences>::default();
+            Box::<leanterm_ui_extras::user_preferences::in_memory::InMemoryPreferences>::default();
 
         // Simulate what a TOML backend produces after a round-trip:
         // - null fields (optional_field) are stripped
@@ -382,7 +382,7 @@ mod write_to_preferences_tests {
     fn test_no_spurious_write_with_hashmap_and_missing_options() {
         use std::collections::HashMap;
 
-        use warpui_extras::user_preferences::toml_backed::TomlBackedUserPreferences;
+        use leanterm_ui_extras::user_preferences::toml_backed::TomlBackedUserPreferences;
 
         #[derive(
             Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, schemars::JsonSchema,
@@ -445,7 +445,7 @@ mod write_to_preferences_tests {
     /// null-stripping and key-reordering happens.
     #[test]
     fn test_no_spurious_write_with_toml_backend() {
-        use warpui_extras::user_preferences::toml_backed::TomlBackedUserPreferences;
+        use leanterm_ui_extras::user_preferences::toml_backed::TomlBackedUserPreferences;
 
         let dir = tempfile::tempdir().unwrap();
         let file_path = dir.path().join("settings.toml");

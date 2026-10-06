@@ -13,12 +13,12 @@ use rustc_hash::FxHashMap;
 use selection::BlockListSelection;
 pub use selection::SelectionRange;
 use sum_tree::{Dimension, Item, SeekBias, SumTree};
-use warp_core::command::ExitCode;
-use warp_terminal::model::{KeyboardModes, KeyboardModesApplyBehavior};
-use warpui::r#async::executor::Background;
-use warpui::color::ColorU;
-use warpui::units::{IntoLines, IntoPixels, Lines};
-use warpui::{EntityId, record_trace_event};
+use leanterm_core::command::ExitCode;
+use leanterm_terminal::model::{KeyboardModes, KeyboardModesApplyBehavior};
+use leanterm_ui::r#async::executor::Background;
+use leanterm_ui::color::ColorU;
+use leanterm_ui::units::{IntoLines, IntoPixels, Lines};
+use leanterm_ui::{EntityId, record_trace_event};
 
 use super::ansi::{Handler, InputBufferValue};
 use super::block::{BlockId, BlockSize, BlockState};
@@ -2969,7 +2969,7 @@ impl ansi::Handler for BlockList {
         delegate!(self.input(c));
     }
 
-    fn set_hyperlink(&mut self, hyperlink: Option<warp_terminal::model::ansi::Hyperlink>) {
+    fn set_hyperlink(&mut self, hyperlink: Option<leanterm_terminal::model::ansi::Hyperlink>) {
         delegate!(self.set_hyperlink(hyperlink));
     }
 
@@ -3468,7 +3468,7 @@ impl ToTotalIndex for BlockIndex {
 #[cfg(test)]
 #[path = "blocks_tests.rs"]
 mod tests;
-use warp_errors::report_error;
+use leanterm_errors::report_error;
 
 #[cfg(test)]
 pub use self::tests::insert_block;

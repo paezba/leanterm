@@ -8,27 +8,27 @@ use parking_lot::Mutex;
 use pathfinder_color::ColorU;
 use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::{Vector2F, vec2f};
-use warp_core::features::FeatureFlag;
-use warp_core::ui::appearance::Appearance;
-use warp_core::ui::theme::Fill;
-use warp_core::ui::theme::color::internal_colors;
-use warp_editor::editor::EditorView;
-use warp_editor::render::element::lens_element::RichTextElementLens;
-use warp_editor::render::element::{RenderableBlock, RichTextElement, VerticalExpansionBehavior};
-use warp_editor::render::model::{
+use leanterm_core::features::FeatureFlag;
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_core::ui::theme::Fill;
+use leanterm_core::ui::theme::color::internal_colors;
+use leanterm_editor::editor::EditorView;
+use leanterm_editor::render::element::lens_element::RichTextElementLens;
+use leanterm_editor::render::element::{RenderableBlock, RichTextElement, VerticalExpansionBehavior};
+use leanterm_editor::render::model::{
     BlockLocation, ExpansionType, LineCount, RenderState, gutter_expansion_button_types,
 };
-use warpui::elements::new_scrollable::{NewScrollableElement, ScrollableAxis};
-use warpui::elements::{
+use leanterm_ui::elements::new_scrollable::{NewScrollableElement, ScrollableAxis};
+use leanterm_ui::elements::{
     Align, Axis, Border, ChildAnchor, ConstrainedBox, Container, CornerRadius, Empty, F32Ext, Flex,
     Hoverable, MainAxisSize, MouseStateHandle, OffsetPositioning, ParentAnchor, ParentElement,
     ParentOffsetBounds, Point, Radius, ScrollData, Stack, Text, ZIndex,
 };
-use warpui::event::DispatchedEvent;
-use warpui::fonts::FamilyId;
-use warpui::ui_components::components::UiComponent;
-use warpui::units::{IntoPixels, Pixels};
-use warpui::{
+use leanterm_ui::event::DispatchedEvent;
+use leanterm_ui::fonts::FamilyId;
+use leanterm_ui::ui_components::components::UiComponent;
+use leanterm_ui::units::{IntoPixels, Pixels};
+use leanterm_ui::{
     AfterLayoutContext, AppContext, ClipBounds, Element, Event, EventContext, LayoutContext,
     ModelHandle, PaintContext, SingletonEntity, SizeConstraint,
 };
@@ -943,7 +943,7 @@ impl<V: EditorView> EditorWrapper<V> {
             line_number_config.text_color
         };
         let icon = ConstrainedBox::new(
-            warpui::elements::Icon::new(expansion_type.icon().into(), icon_color).finish(),
+            leanterm_ui::elements::Icon::new(expansion_type.icon().into(), icon_color).finish(),
         )
         .with_width(16.)
         .with_height(16.)
@@ -991,7 +991,7 @@ impl<V: EditorView> EditorWrapper<V> {
 
             let container = Container::new(
                 ConstrainedBox::new(
-                    warpui::elements::Icon::new(gutter_button.icon().into(), icon_color).finish(),
+                    leanterm_ui::elements::Icon::new(gutter_button.icon().into(), icon_color).finish(),
                 )
                 .with_width(icon_size)
                 .with_height(icon_size)
@@ -1031,7 +1031,7 @@ impl<V: EditorView> EditorWrapper<V> {
         });
 
         if enabled {
-            button = button.with_cursor(warpui::platform::Cursor::PointingHand);
+            button = button.with_cursor(leanterm_ui::platform::Cursor::PointingHand);
 
             if let Some(on_click_action) = on_click_action {
                 let action = on_click_action.clone();

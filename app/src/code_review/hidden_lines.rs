@@ -2,8 +2,8 @@ use std::ops::Range;
 
 use code_diff::diff_validation::DiffDelta;
 use rangemap::RangeSet;
-use warp_editor::content::text::LineCount;
-use warp_editor::render::model::LineCount as RenderLineCount;
+use leanterm_editor::content::text::LineCount;
+use leanterm_editor::render::model::LineCount as RenderLineCount;
 
 /// The number of context lines to show before and after each change
 const CONTEXT_LINES: usize = 4;

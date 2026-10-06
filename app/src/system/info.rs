@@ -4,8 +4,8 @@ use std::ffi::OsStr;
 use byte_unit::Byte;
 use chrono::{DateTime, Utc};
 use sysinfo::ProcessesToUpdate;
-use warp_core::channel::ChannelState;
-use warpui::{App, AppContext, Entity, ModelContext, SingletonEntity};
+use leanterm_core::channel::ChannelState;
+use leanterm_ui::{App, AppContext, Entity, ModelContext, SingletonEntity};
 
 use crate::system::memory_footprint;
 
@@ -122,7 +122,7 @@ impl SystemInfo {
     fn schedule_refresh(ctx: &mut ModelContext<Self>) {
         ctx.spawn(
             async {
-                warpui::r#async::Timer::after(REFRESH_INTERVAL).await;
+                leanterm_ui::r#async::Timer::after(REFRESH_INTERVAL).await;
             },
             |me, _, ctx| {
                 me.refresh(ctx);

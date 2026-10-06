@@ -5,30 +5,30 @@ use std::rc::Rc;
 
 use ::settings::{Setting, SettingSection, ToggleableSetting};
 use enum_iterator::all;
-use warp_core::ui::theme::color::internal_colors;
-use warp_errors::{report_error, report_if_error};
-use warp_util::path::user_friendly_path;
-use warpui::elements::{
+use leanterm_core::ui::theme::color::internal_colors;
+use leanterm_errors::{report_error, report_if_error};
+use leanterm_util::path::user_friendly_path;
+use leanterm_ui::elements::{
     Align, Border, ChildView, Clipped, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment,
     DEFAULT_UI_LINE_HEIGHT_RATIO, Dismiss, Element, Empty, Fill, Flex, FormattedTextElement,
     Hoverable, MainAxisAlignment, MainAxisSize, MouseStateHandle, ParentElement, Radius,
     Shrinkable, Text, Wrap,
 };
-use warpui::fonts::{FamilyId, FontInfo, Weight};
-use warpui::keymap::{ContextPredicate, FixedBinding};
-use warpui::platform::{
+use leanterm_ui::fonts::{FamilyId, FontInfo, Weight};
+use leanterm_ui::keymap::{ContextPredicate, FixedBinding};
+use leanterm_ui::platform::{
     Cursor, FilePickerConfiguration, GraphicsBackend, SystemTheme, WindowBackdrop,
 };
-use warpui::rendering::ThinStrokes;
-use warpui::ui_components::button::ButtonVariant;
-use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
-use warpui::ui_components::radio_buttons::{
+use leanterm_ui::rendering::ThinStrokes;
+use leanterm_ui::ui_components::button::ButtonVariant;
+use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
+use leanterm_ui::ui_components::radio_buttons::{
     RadioButtonItem, RadioButtonLayout, RadioButtonStateHandle,
 };
-use warpui::ui_components::slider::SliderStateHandle;
-use warpui::ui_components::switch::SwitchStateHandle;
-use warpui::units::IntoPixels;
-use warpui::{
+use leanterm_ui::ui_components::slider::SliderStateHandle;
+use leanterm_ui::ui_components::switch::SwitchStateHandle;
+use leanterm_ui::units::IntoPixels;
+use leanterm_ui::{
     Action, AppContext, Entity, ModelHandle, SingletonEntity, TypedActionView, UpdateModel, View,
     ViewContext, ViewHandle, WindowId,
 };
@@ -999,7 +999,7 @@ impl AppearanceSettingsPageView {
             // `all_system_fonts` API doesn't exist.
             #[cfg(not(target_family = "wasm"))]
             {
-                let all_system_fonts = warpui::fonts::Cache::handle(ctx)
+                let all_system_fonts = leanterm_ui::fonts::Cache::handle(ctx)
                     .update(ctx, |font_cache, ctx| font_cache.all_system_fonts(ctx));
                 ctx.spawn(all_system_fonts, Self::set_system_fonts);
             }

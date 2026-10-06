@@ -115,11 +115,11 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug unit tests in library 'warpui'",
+      "name": "Debug unit tests in library 'leanterm_ui'",
       "cargo": {
-        "args": ["test", "--no-run", "--lib", "--package=warpui"],
+        "args": ["test", "--no-run", "--lib", "--package=leanterm_ui"],
         "filter": {
-          "name": "warpui",
+          "name": "leanterm_ui",
           "kind": "lib"
         }
       },

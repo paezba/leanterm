@@ -1,9 +1,9 @@
 #[cfg(test)]
-use warpui::App;
+use leanterm_ui::App;
 
 #[cfg(test)]
 pub fn initialize_settings_for_tests(app: &mut App) {
-    use warp_core::execution_mode::ExecutionMode;
+    use leanterm_core::execution_mode::ExecutionMode;
     initialize_settings_for_tests_with_mode(app, ExecutionMode::App, false);
 }
 
@@ -20,11 +20,11 @@ pub fn initialize_history_persistence_for_tests(app: &mut App) {
 #[cfg(test)]
 pub fn initialize_settings_for_tests_with_mode(
     app: &mut App,
-    mode: warp_core::execution_mode::ExecutionMode,
+    mode: leanterm_core::execution_mode::ExecutionMode,
     is_sandboxed: bool,
 ) {
-    use warp_core::execution_mode::AppExecutionMode;
-    use warp_core::semantic_selection::SemanticSelection;
+    use leanterm_core::execution_mode::AppExecutionMode;
+    use leanterm_core::semantic_selection::SemanticSelection;
 
     use crate::search::command_search::settings::CommandSearchSettings;
     use crate::settings::app_icon::AppIconSettings;
@@ -55,7 +55,7 @@ pub fn initialize_settings_for_tests_with_mode(
     app.add_singleton_model(WarpConfig::mock);
     app.update(|ctx| {
         // Register a no-op secure storage provider for testing.
-        warpui_extras::secure_storage::register_noop("test", ctx);
+        leanterm_ui_extras::secure_storage::register_noop("test", ctx);
     });
 
     AccessibilitySettings::register(app);
@@ -80,7 +80,7 @@ pub fn initialize_settings_for_tests_with_mode(
     InputSettings::register(app);
     KeysSettings::register(app);
     LigatureSettings::register(app);
-    if warp_core::features::FeatureFlag::WarpControlCli.is_enabled() {
+    if leanterm_core::features::FeatureFlag::WarpControlCli.is_enabled() {
         LocalControlSettings::register(app);
     }
 

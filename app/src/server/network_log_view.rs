@@ -8,13 +8,13 @@
 //! so the user can pick up items captured since the pane was opened. The
 //! pane header also exposes a refresh icon that reloads the snapshot in
 //! place.
-use warp_editor::content::buffer::InitialBufferState;
-use warp_editor::render::element::VerticalExpansionBehavior;
-use warp_util::path::LineAndColumnArg;
-use warpui::elements::{ChildView, MouseStateHandle};
-use warpui::text_layout::ClipConfig;
-use warpui::ui_components::components::UiComponent;
-use warpui::{
+use leanterm_editor::content::buffer::InitialBufferState;
+use leanterm_editor::render::element::VerticalExpansionBehavior;
+use leanterm_util::path::LineAndColumnArg;
+use leanterm_ui::elements::{ChildView, MouseStateHandle};
+use leanterm_ui::text_layout::ClipConfig;
+use leanterm_ui::ui_components::components::UiComponent;
+use leanterm_ui::{
     AppContext, Element, Entity, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle,
 };

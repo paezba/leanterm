@@ -9,9 +9,9 @@ use std::sync::Arc;
 
 use repo_metadata::file_tree_store::FileTreeEntryState;
 use repo_metadata::{FileMetadata, FileTreeEntry};
-use warp_util::standardized_path::StandardizedPath;
-use warpui::ViewContext;
-use warpui::elements::MouseStateHandle;
+use leanterm_util::standardized_path::StandardizedPath;
+use leanterm_ui::ViewContext;
+use leanterm_ui::elements::MouseStateHandle;
 
 use super::{FileTreeIdentifier, FileTreeItem, FileTreeView};
 use crate::code::file_tree::FileTreeEvent;
@@ -104,7 +104,7 @@ impl FileTreeView {
                 metadata: FileMetadata::from_standardized(path.join("new_file"), false).into(),
                 depth: depth + 1,
                 mouse_state_handle: MouseStateHandle::default(),
-                draggable_state: warpui::elements::DraggableState::default(),
+                draggable_state: leanterm_ui::elements::DraggableState::default(),
             },
         );
 

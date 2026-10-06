@@ -1,5 +1,5 @@
 use chrono::Local;
-use warp_core::command::ExitCode;
+use leanterm_core::command::ExitCode;
 
 use super::*;
 use crate::terminal::model::block::BlockId;

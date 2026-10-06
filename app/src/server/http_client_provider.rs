@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use warp_core::context_flag::ContextFlag;
-use warpui::{Entity, ModelContext, SingletonEntity};
+use leanterm_core::context_flag::ContextFlag;
+use leanterm_ui::{Entity, ModelContext, SingletonEntity};
 
 use crate::server::network_logging::NetworkLogModel;
 

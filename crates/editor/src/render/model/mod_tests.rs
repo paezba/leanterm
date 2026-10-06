@@ -6,14 +6,14 @@ use rangemap::RangeSet;
 use string_offset::CharOffset;
 use sum_tree::SumTree;
 use vec1::{Vec1, vec1};
-use warpui_core::assets::asset_cache::AssetSource;
-use warpui_core::color::ColorU;
-use warpui_core::elements::ListIndentLevel;
-use warpui_core::fonts::FamilyId;
-use warpui_core::geometry::rect::RectF;
-use warpui_core::geometry::vector::vec2f;
-use warpui_core::text_layout::TextFrame;
-use warpui_core::units::{IntoPixels, Pixels};
+use leanterm_ui_core::assets::asset_cache::AssetSource;
+use leanterm_ui_core::color::ColorU;
+use leanterm_ui_core::elements::ListIndentLevel;
+use leanterm_ui_core::fonts::FamilyId;
+use leanterm_ui_core::geometry::rect::RectF;
+use leanterm_ui_core::geometry::vector::vec2f;
+use leanterm_ui_core::text_layout::TextFrame;
+use leanterm_ui_core::units::{IntoPixels, Pixels};
 
 use super::debug::Describe;
 use super::test_utils::{layout_paragraph, layout_paragraphs};
@@ -927,7 +927,7 @@ fn test_multiselect_autoscroll_bounding_box() {
     );
 }
 
-// 18:09:15 [INFO] [warp_editor::render::model] Initial tree:
+// 18:09:15 [INFO] [leanterm_editor::render::model] Initial tree:
 // -------- 0.00px / 0 characters --------
 // Hidden (3067 characters, 87 lines, 20.00px tall)
 // -------- 20.00px / 3067 characters --------
@@ -1030,7 +1030,7 @@ fn test_dedupe_hidden_ranges_logged_tree_is_unchanged() {
     assert_eq!(initial, resulting);
 }
 
-// 18:09:14 [INFO] [warp_editor::render::model] Initial tree:
+// 18:09:14 [INFO] [leanterm_editor::render::model] Initial tree:
 // -------- 0.00px / 0 characters --------
 // Hidden (3066 characters, 87 lines, 20.00px tall)
 // -------- 20.00px / 3067 characters --------
@@ -1155,17 +1155,17 @@ fn make_test_cell_layout() -> CellLayout {
         line_char_ranges: vec![CharOffset::from(0)..CharOffset::from(3)],
         line_widths: vec![30.0],
         line_caret_positions: vec![vec![
-            warpui_core::text_layout::CaretPosition {
+            leanterm_ui_core::text_layout::CaretPosition {
                 position_in_line: 0.0,
                 start_offset: 0,
                 last_offset: 0,
             },
-            warpui_core::text_layout::CaretPosition {
+            leanterm_ui_core::text_layout::CaretPosition {
                 position_in_line: 10.0,
                 start_offset: 1,
                 last_offset: 1,
             },
-            warpui_core::text_layout::CaretPosition {
+            leanterm_ui_core::text_layout::CaretPosition {
                 position_in_line: 20.0,
                 start_offset: 2,
                 last_offset: 2,

@@ -3,13 +3,13 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use ui_components::lightbox;
-use warp_util::path::LineAndColumnArg;
-use warpui::accessibility::AccessibilityVerbosity;
-use warpui::geometry::rect::RectF;
-use warpui::geometry::vector::Vector2F;
-use warpui::platform::Cursor;
-use warpui::platform::keyboard::KeyCode;
-use warpui::{EntityId, WindowId};
+use leanterm_util::path::LineAndColumnArg;
+use leanterm_ui::accessibility::AccessibilityVerbosity;
+use leanterm_ui::geometry::rect::RectF;
+use leanterm_ui::geometry::vector::Vector2F;
+use leanterm_ui::platform::Cursor;
+use leanterm_ui::platform::keyboard::KeyCode;
+use leanterm_ui::{EntityId, WindowId};
 
 use super::tab_settings::{
     VerticalTabsCompactSubtitle, VerticalTabsDisplayGranularity, VerticalTabsPrimaryInfo,

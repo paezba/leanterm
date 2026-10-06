@@ -33,19 +33,19 @@ strum.workspace = true
 strum_macros.workspace = true
 sum_tree.workspace = true
 version-compare.workspace = true
-warp = { workspace = true, features = ["integration_tests"] }
-warp_cli = { workspace = true, features = ["integration_tests"] }
-warp_core.workspace = true
-warpui_core.workspace = true
-warpui_extras = { workspace = true, features = [
+leanterm = { workspace = true, features = ["integration_tests"] }
+leanterm_cli = { workspace = true, features = ["integration_tests"] }
+leanterm_core.workspace = true
+leanterm_ui_core.workspace = true
+leanterm_ui_extras = { workspace = true, features = [
     "user_preferences-file",
 ] }
 whoami = "1.5.2"
 
 [dev-dependencies]
 command = { workspace = true, features = ["test-util"] }
-warpui = { workspace = true, features = ["integration_tests"] }
-warp_core = { workspace = true, features = ["test-util"] }
+leanterm_ui = { workspace = true, features = ["integration_tests"] }
+leanterm_core = { workspace = true, features = ["test-util"] }
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 sysinfo.workspace = true
@@ -55,5 +55,5 @@ nix = { workspace = true, features = ["user", "signal"] }
 
 [features]
 run_on_linux = []
-drag_tabs_to_windows = ["warp/drag_tabs_to_windows"]
+drag_tabs_to_windows = ["leanterm/drag_tabs_to_windows"]
 default = ["run_on_linux"]

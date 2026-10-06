@@ -1,16 +1,16 @@
 use regex::Regex;
-use warp::integration_testing::goto_line::{
+use leanterm::integration_testing::goto_line::{
     assert_code_editor_line_numbers, assert_cursor_at_line, assert_cursor_at_line_and_column,
     assert_goto_line_dialog_is_open, goto_line_confirm, open_goto_line_dialog,
     set_code_editor_line_number_mode,
 };
-use warp::integration_testing::step::new_step_with_default_assertions;
-use warp::integration_testing::tab::assert_pane_title;
-use warp::integration_testing::terminal::wait_until_bootstrapped_single_pane_for_tab;
-use warp::integration_testing::view_getters::{pane_group_view, workspace_view};
-use warp::settings::CodeEditorLineNumberMode;
-use warp::workspace::WorkspaceAction;
-use warpui_core::{App, async_assert_eq};
+use leanterm::integration_testing::step::new_step_with_default_assertions;
+use leanterm::integration_testing::tab::assert_pane_title;
+use leanterm::integration_testing::terminal::wait_until_bootstrapped_single_pane_for_tab;
+use leanterm::integration_testing::view_getters::{pane_group_view, workspace_view};
+use leanterm::settings::CodeEditorLineNumberMode;
+use leanterm::workspace::WorkspaceAction;
+use leanterm_ui_core::{App, async_assert_eq};
 
 use super::{Builder, new_builder};
 use crate::util::write_all_rc_files_for_test;

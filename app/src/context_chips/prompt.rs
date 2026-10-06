@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use settings::Setting as _;
-use warpui::{
+use leanterm_ui::{
     Entity, GetSingletonModelHandle, ModelContext, ModelHandle, SingletonEntity, UpdateModel,
 };
 

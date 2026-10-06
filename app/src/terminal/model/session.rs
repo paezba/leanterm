@@ -22,16 +22,16 @@ use parking_lot::{Mutex, RwLock};
 use smol_str::SmolStr;
 use typed_path::{TypedPath, TypedPathBuf, WindowsPath};
 use version_compare::Version;
-use warp_completer::completer::{
+use leanterm_completer::completer::{
     CommandExitStatus, CommandOutput, PathSeparators, TopLevelCommandCaseSensitivity,
 };
-use warp_errors::{ErrorExt, register_error};
-use warp_util::path::{
+use leanterm_errors::{ErrorExt, register_error};
+use leanterm_util::path::{
     ShellFamily, convert_msys2_to_windows_native_path, convert_wsl_to_windows_host_path,
     msys2_exe_to_root,
 };
-use warpui::platform::OperatingSystem;
-use warpui::{Entity, ModelContext, SingletonEntity};
+use leanterm_ui::platform::OperatingSystem;
+use leanterm_ui::{Entity, ModelContext, SingletonEntity};
 
 use super::ansi::{BootstrappedValue, InitShellValue, SSHValue};
 use super::terminal_model::{HistoryEntry, SubshellInitializationInfo};
@@ -95,9 +95,9 @@ fn escape_powershell_single_quotes(path: &OsStr) -> OsString {
     OsString::from_wide(&escaped)
 }
 
-// SessionId is defined in warp_core and re-exported here for backward compatibility.
-use warp_errors::report_error;
-pub use warp_terminal::model::session::{SessionId, get_local_hostname};
+// SessionId is defined in leanterm_core and re-exported here for backward compatibility.
+use leanterm_errors::report_error;
+pub use leanterm_terminal::model::session::{SessionId, get_local_hostname};
 
 /// Information about the sessions within a given terminal pane/top-level
 /// shell.
@@ -861,7 +861,7 @@ impl Session {
                 .info
                 .home_dir
                 .as_deref()
-                .or(warp_util::path::TEST_SESSION_HOME_DIR.as_deref());
+                .or(leanterm_util::path::TEST_SESSION_HOME_DIR.as_deref());
         }
 
         self.info.home_dir.as_deref()
@@ -911,9 +911,9 @@ impl Session {
     /// representation, or `None` when no conversion is appropriate.
     pub fn windows_path_converter(&self) -> Option<fn(&str) -> String> {
         if self.is_wsl() {
-            Some(warp_util::path::convert_windows_path_to_wsl)
+            Some(leanterm_util::path::convert_windows_path_to_wsl)
         } else if self.is_msys2() {
-            Some(warp_util::path::convert_windows_path_to_msys2)
+            Some(leanterm_util::path::convert_windows_path_to_msys2)
         } else {
             None
         }
@@ -1310,7 +1310,7 @@ impl Session {
 
     #[cfg(windows)]
     async fn read_history_via_powershell(history_file_path: &OsStr) -> Result<Vec<u8>> {
-        let Some(powershell_command) = warp_util::path::windows::any_powershell_path() else {
+        let Some(powershell_command) = leanterm_util::path::windows::any_powershell_path() else {
             return Err(anyhow::anyhow!(
                 "Failed to find powershell executable to read history"
             ));

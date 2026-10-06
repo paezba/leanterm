@@ -1,8 +1,8 @@
 use pathfinder_color::ColorU;
-use warp_core::ui::appearance::Appearance;
-use warp_core::ui::color::coloru_with_opacity;
-use warp_core::ui::theme::Fill;
-use warp_core::ui::theme::color::internal_colors;
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_core::ui::color::coloru_with_opacity;
+use leanterm_core::ui::theme::Fill;
+use leanterm_core::ui::theme::color::internal_colors;
 
 /// Theming delegate for a button.
 pub trait Theme {

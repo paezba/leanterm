@@ -1,19 +1,19 @@
 use std::collections::HashSet;
 use std::path::PathBuf;
 
-use warp_core::ui::Icon;
-use warp_core::ui::theme::color::internal_colors;
-use warp_errors::report_error;
-use warp_util::path::LineAndColumnArg;
-use warpui::elements::{
+use leanterm_core::ui::Icon;
+use leanterm_core::ui::theme::color::internal_colors;
+use leanterm_errors::report_error;
+use leanterm_util::path::LineAndColumnArg;
+use leanterm_ui::elements::{
     Align, ChildView, ConstrainedBox, Container, CrossAxisAlignment, DragBarSide, Element, Empty,
     Flex, MainAxisAlignment, MainAxisSize, MouseStateHandle, ParentElement, Resizable,
     ResizableStateHandle, Shrinkable, resizable_state_handle,
 };
-use warpui::fonts::Weight;
-use warpui::platform::Cursor;
-use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
-use warpui::{
+use leanterm_ui::fonts::Weight;
+use leanterm_ui::platform::Cursor;
+use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
+use leanterm_ui::{
     AppContext, Entity, FocusContext, ModelHandle, SingletonEntity, TypedActionView, View,
     ViewContext, ViewHandle, WeakViewHandle,
 };
@@ -103,7 +103,7 @@ pub enum ToolPanelView {
 /// Encapsulates the active view state to enforce that all mutations go through
 /// `active_view_state::set`, which handles necessary side effects.
 mod active_view_state {
-    use warpui::ViewContext;
+    use leanterm_ui::ViewContext;
 
     use super::ToolPanelView;
 
@@ -133,9 +133,9 @@ mod active_view_state {
 }
 
 pub struct ToolbeltButtonConfig {
-    pub icon: warp_core::ui::Icon,
+    pub icon: leanterm_core::ui::Icon,
     /// Optional icon to use when the given toolbelt option is in an active state.
-    pub active_icon: Option<warp_core::ui::Icon>,
+    pub active_icon: Option<leanterm_core::ui::Icon>,
     pub tooltip_text: String,
     pub action: LeftPanelAction,
     /// Whether the button should be rendered with an "active" state.
@@ -433,7 +433,7 @@ impl LeftPanelView {
 
     fn get_or_create_global_search_view_for_pane_group(
         &mut self,
-        pane_group_id: warpui::EntityId,
+        pane_group_id: leanterm_ui::EntityId,
         ctx: &mut ViewContext<Self>,
     ) -> ViewHandle<GlobalSearchView> {
         if let Some(view) = self
@@ -459,7 +459,7 @@ impl LeftPanelView {
 
     fn get_or_create_file_tree_view_for_pane_group(
         &mut self,
-        pane_group_id: warpui::EntityId,
+        pane_group_id: leanterm_ui::EntityId,
         ctx: &mut ViewContext<Self>,
     ) -> ViewHandle<FileTreeView> {
         if let Some(view) = self
@@ -901,7 +901,7 @@ impl LeftPanelView {
 
     fn deactivate_file_tree_view_for_pane_group(
         &self,
-        pane_group_id: warpui::EntityId,
+        pane_group_id: leanterm_ui::EntityId,
         ctx: &mut ViewContext<Self>,
     ) {
         if let Some(view) = self
@@ -1070,7 +1070,7 @@ impl View for LeftPanelView {
         })
         .finish();
 
-        if warpui::platform::is_mobile_device() {
+        if leanterm_ui::platform::is_mobile_device() {
             return panel_content;
         }
 

@@ -41,7 +41,7 @@ Leanterm keeps Warp's terminal and local editing features and removes everything
 - **AI**: the built-in agent, agent view and agent tabs, Warp AI, MCP, bundled skills, AI settings and keybindings, and the AI-related local control surfaces.
 - **Cloud and accounts**: login and auth, Warp Drive and cloud objects, sharing, teams, shared sessions, settings sync, the `ServerApi`/GraphQL layer, and the cloud/AI database tables (dropped by a migration).
 - **Telemetry and services**: telemetry, crash reporting (Sentry), autoupdate, the changelog, onboarding, tips, referrals and experiments.
-- **Other surfaces**: the TUI, the remote SSH extension (`remote_server` crate and daemon), `warp_cli` cloud subcommands, non-OSS channel binaries and upstream release tooling.
+- **Other surfaces**: the TUI, the remote SSH extension (`remote_server` crate and daemon), `leanterm_cli` cloud subcommands, non-OSS channel binaries and upstream release tooling.
 - **Dead code**: most feature flags (deleted, or folded into always-on code), unused crates and dependencies, and unreferenced AI/promo assets.
 
 In total the fork removes about 1.2 million lines.
@@ -83,7 +83,7 @@ Warp Factories are defined in code and easy to deploy on any model or harness, w
 
 ## Licensing
 
-Warp's UI framework (the `warpui_core` and `warpui` crates) are licensed under the [MIT license](LICENSE-MIT).
+Warp's UI framework (the `leanterm_ui_core` and `leanterm_ui` crates) are licensed under the [MIT license](LICENSE-MIT).
 
 The rest of the code in this repository is licensed under the [AGPL v3](LICENSE-AGPL).
 

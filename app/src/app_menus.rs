@@ -8,15 +8,15 @@ use enclose::enclose;
 use itertools::Itertools;
 use settings::Setting as _;
 use settings::manager::SettingsManager;
-use warp_errors::{report_error, report_if_error};
-use warp_util::path::user_friendly_path;
-use warpui::actions::StandardAction;
-use warpui::keymap::{Keystroke, Trigger};
-use warpui::platform::menu::{
+use leanterm_errors::{report_error, report_if_error};
+use leanterm_util::path::user_friendly_path;
+use leanterm_ui::actions::StandardAction;
+use leanterm_ui::keymap::{Keystroke, Trigger};
+use leanterm_ui::platform::menu::{
     CustomMenuItem, Menu, MenuBar, MenuItem, MenuItemProperties, MenuItemPropertyChanges,
 };
-use warpui::windowing::WindowManager;
-use warpui::{AppContext, SingletonEntity};
+use leanterm_ui::windowing::WindowManager;
+use leanterm_ui::{AppContext, SingletonEntity};
 
 use crate::channel;
 use crate::default_terminal::DefaultTerminal;

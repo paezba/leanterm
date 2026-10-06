@@ -1,6 +1,6 @@
 use settings::SupportedPlatforms;
 use settings::macros::define_settings_group;
-use warpui::platform::GraphicsBackend;
+use leanterm_ui::platform::GraphicsBackend;
 
 define_settings_group!(GPUSettings, settings: [
    prefer_low_power_gpu: PreferLowPowerGPU {

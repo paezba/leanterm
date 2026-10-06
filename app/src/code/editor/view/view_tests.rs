@@ -1,10 +1,10 @@
-use warp_core::ui::appearance::Appearance;
-use warp_editor::render::element::VerticalExpansionBehavior;
-use warp_util::user_input::UserInput;
-use warpui::elements::ScrollbarWidth;
-use warpui::elements::new_scrollable::ScrollableAppearance;
-use warpui::platform::WindowStyle;
-use warpui::{App, TypedActionView, ViewHandle, WindowId};
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_editor::render::element::VerticalExpansionBehavior;
+use leanterm_util::user_input::UserInput;
+use leanterm_ui::elements::ScrollbarWidth;
+use leanterm_ui::elements::new_scrollable::ScrollableAppearance;
+use leanterm_ui::platform::WindowStyle;
+use leanterm_ui::{App, TypedActionView, ViewHandle, WindowId};
 
 use super::{CodeEditorRenderOptions, CodeEditorView, CodeEditorViewAction};
 use crate::editor::InteractionState;

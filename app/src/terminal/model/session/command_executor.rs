@@ -29,10 +29,10 @@ pub use noop_command_executor::NoOpCommandExecutor;
 #[cfg(feature = "local_tty")]
 pub use remote_command_executor::RemoteCommandExecutor;
 pub use shared::{ExecutorCommandEvent, shell_escape_single_quotes, shell_quote_arg};
-use warp_completer::completer::CommandOutput;
+use leanterm_completer::completer::CommandOutput;
 #[cfg(feature = "local_tty")]
-use warp_errors::report_error;
-use warpui::ModelContext;
+use leanterm_errors::report_error;
+use leanterm_ui::ModelContext;
 
 use super::SessionInfo;
 use crate::terminal::event::ExecutedExecutorCommandEvent;
@@ -149,7 +149,7 @@ fn new_command_executor_for_local_tty_session(
 ) -> Arc<dyn CommandExecutor> {
     use msys2_command_executor::MSYS2CommandExecutor;
     use settings::Setting as _;
-    use warpui::SingletonEntity as _;
+    use leanterm_ui::SingletonEntity as _;
     use wsl_command_executor::WslCommandExecutor;
 
     use super::IsSSHWrapperSession;
@@ -321,7 +321,7 @@ fn new_command_executor_for_local_tty_session(
 pub mod testing {
     use anyhow::anyhow;
     use command::r#async::Command;
-    use warp_completer::completer::CommandOutput;
+    use leanterm_completer::completer::CommandOutput;
 
     use super::*;
     use crate::terminal::shell::ShellType;

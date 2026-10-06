@@ -1,9 +1,9 @@
 use std::collections::HashSet;
 use std::path::PathBuf;
 
-use warp_core::context_flag::ContextFlag;
-use warpui::keymap::BindingId;
-use warpui::{AppContext, Entity, ModelContext, ModelHandle, SingletonEntity, WindowId};
+use leanterm_core::context_flag::ContextFlag;
+use leanterm_ui::keymap::BindingId;
+use leanterm_ui::{AppContext, Entity, ModelContext, ModelHandle, SingletonEntity, WindowId};
 
 use crate::search::QueryFilter;
 use crate::search::action::CommandBindingDataSource;

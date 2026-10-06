@@ -38,11 +38,11 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Type-check app and tests
-        run: cargo check -p warp --bin leanterm --tests
+        run: cargo check -p leanterm --bin leanterm --tests
         env:
           WARP_LOCAL_SKIP_METAL: "1"
 
       - name: Run app unit tests
-        run: cargo test -p warp --lib
+        run: cargo test -p leanterm --lib
         env:
           WARP_LOCAL_SKIP_METAL: "1"

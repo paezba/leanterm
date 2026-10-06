@@ -4,8 +4,8 @@ use std::fmt::Display;
 use anyhow::{Result, anyhow};
 use regex::Regex;
 use url::Url;
-use warp_util::path::{ShellFamily, is_posix_portable_pathname};
-use warpui::AppContext;
+use leanterm_util::path::{ShellFamily, is_posix_portable_pathname};
+use leanterm_ui::AppContext;
 
 use crate::root_view::SubshellCommandArg;
 use crate::terminal::shell::ShellType;

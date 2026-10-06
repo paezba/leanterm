@@ -9,25 +9,25 @@ use enum_iterator::Sequence;
 use parking_lot::FairMutex;
 use pathfinder_color::ColorU;
 use vec1::Vec1;
-use warp_core::semantic_selection::SemanticSelection;
-use warp_core::ui::builder::UiBuilder;
-use warp_util::user_input::UserInput;
-use warpui::elements::new_scrollable::{NewScrollableElement, ScrollableAxis};
-use warpui::elements::{
+use leanterm_core::semantic_selection::SemanticSelection;
+use leanterm_core::ui::builder::UiBuilder;
+use leanterm_util::user_input::UserInput;
+use leanterm_ui::elements::new_scrollable::{NewScrollableElement, ScrollableAxis};
+use leanterm_ui::elements::{
     Axis, Border, ChildAnchor, ClippedScrollStateHandle, ConstrainedBox, Container, CornerRadius,
     Hoverable, Icon, MouseStateHandle, OffsetPositioning, ParentAnchor, ParentElement,
     ParentOffsetBounds, Point, Radius, SavePosition, ScrollData, ScrollableElement, Stack, Text,
     ZIndex,
 };
-use warpui::event::{DispatchedEvent, KeyState, ModifiersState};
-use warpui::fonts::{FamilyId, Properties, Weight};
-use warpui::geometry::rect::RectF;
-use warpui::geometry::vector::{Vector2F, vec2f};
-use warpui::platform::Cursor;
-use warpui::text::SelectionType;
-use warpui::ui_components::components::UiComponent;
-use warpui::units::{IntoLines, IntoPixels, Lines, Pixels};
-use warpui::{
+use leanterm_ui::event::{DispatchedEvent, KeyState, ModifiersState};
+use leanterm_ui::fonts::{FamilyId, Properties, Weight};
+use leanterm_ui::geometry::rect::RectF;
+use leanterm_ui::geometry::vector::{Vector2F, vec2f};
+use leanterm_ui::platform::Cursor;
+use leanterm_ui::text::SelectionType;
+use leanterm_ui::ui_components::components::UiComponent;
+use leanterm_ui::units::{IntoLines, IntoPixels, Lines, Pixels};
+use leanterm_ui::{
     AfterLayoutContext, AppContext, ClipBounds, Element, EntityId, Event, EventContext,
     LayoutContext, ModelHandle, PaintContext, SingletonEntity as _, SizeConstraint,
 };
@@ -1044,7 +1044,7 @@ impl BlockListElement {
     }
 
     /// We only want to process control characters here and return `false` for everything else.
-    /// That way, we'll receive a `warpui::Event::TypedCharacters` event for printable characters.
+    /// That way, we'll receive a `leanterm_ui::Event::TypedCharacters` event for printable characters.
     /// So `TerminalAction::KeyDown` is for control characters only while
     /// `TerminalAction::TypedCharacters` is for characters that can go into the editor.
     fn key_down(&mut self, chars: &str, ctx: &mut EventContext) -> bool {
@@ -1376,7 +1376,7 @@ impl BlockListElement {
                                 .is_some_and(|block| block.is_active_and_long_running());
 
                             // On mobile, request soft keyboard so users can input
-                            if warpui::platform::is_mobile_device() && on_long_running_block {
+                            if leanterm_ui::platform::is_mobile_device() && on_long_running_block {
                                 ctx.request_soft_keyboard();
                             }
 
@@ -3437,7 +3437,7 @@ impl Element for BlockListElement {
                                 None => 0.,
                             },
                             // Otherwise, we need to measure the prompt grid(s). Grids
-                            // aren't warpui::Elements, and hence their width isn't
+                            // aren't leanterm_ui::Elements, and hence their width isn't
                             // straightforward to measure. We'll use the column index of the
                             // right-most non-empty cell as a proxy for width.
                             None => {

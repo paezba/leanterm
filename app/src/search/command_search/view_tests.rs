@@ -1,5 +1,5 @@
-use warpui::App;
-use warpui::platform::WindowStyle;
+use leanterm_ui::App;
+use leanterm_ui::platform::WindowStyle;
 
 use super::*;
 use crate::network::NetworkStatus;

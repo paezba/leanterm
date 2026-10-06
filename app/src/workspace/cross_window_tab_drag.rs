@@ -1,11 +1,11 @@
 use std::collections::HashSet;
 
 use pathfinder_geometry::rect::RectF;
-use warpui::elements::DraggableState;
-use warpui::geometry::vector::{Vector2F, vec2f};
-use warpui::platform::TerminationMode;
-use warpui::windowing::WindowManager;
-use warpui::{AppContext, Entity, ModelContext, SingletonEntity, WindowId};
+use leanterm_ui::elements::DraggableState;
+use leanterm_ui::geometry::vector::{Vector2F, vec2f};
+use leanterm_ui::platform::TerminationMode;
+use leanterm_ui::windowing::WindowManager;
+use leanterm_ui::{AppContext, Entity, ModelContext, SingletonEntity, WindowId};
 
 /// Singleton model that owns all cross-window tab drag state.
 ///

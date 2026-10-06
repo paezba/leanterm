@@ -1,6 +1,6 @@
 //! Utilities for terminal keybindings.
 
-use warpui::{Entity, ModelContext, ModelHandle, SingletonEntity};
+use leanterm_ui::{Entity, ModelContext, ModelHandle, SingletonEntity};
 
 use crate::settings_view::keybindings::{KeybindingChangedEvent, KeybindingChangedNotifier};
 use crate::terminal::input::{

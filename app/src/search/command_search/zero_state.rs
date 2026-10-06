@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
 use lazy_static::lazy_static;
-use warp_core::ui::theme::color::internal_colors;
-use warpui::elements::{
+use leanterm_core::ui::theme::color::internal_colors;
+use leanterm_ui::elements::{
     Container, CornerRadius, Flex, Hoverable, MouseStateHandle, ParentElement, Radius, Text, Wrap,
 };
-use warpui::platform::Cursor;
-use warpui::{AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext};
+use leanterm_ui::platform::Cursor;
+use leanterm_ui::{AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext};
 
 use crate::appearance::Appearance;
 use crate::search::{FilterChipRenderer, QueryFilter};
@@ -164,7 +164,7 @@ impl View for CommandSearchZeroStateView {
         "CommandSearchZeroStateView"
     }
 
-    fn render(&self, app: &AppContext) -> Box<dyn warpui::Element> {
+    fn render(&self, app: &AppContext) -> Box<dyn leanterm_ui::Element> {
         let appearance = Appearance::as_ref(app);
 
         let command_search_text = Container::new(

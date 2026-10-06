@@ -1,6 +1,6 @@
-use warpui_core::assets::asset_cache::{AssetCache, AssetSource, AssetState};
-use warpui_core::image_cache::ImageType;
-use warpui_core::{App, SingletonEntity};
+use leanterm_ui_core::assets::asset_cache::{AssetCache, AssetSource, AssetState};
+use leanterm_ui_core::image_cache::ImageType;
+use leanterm_ui_core::{App, SingletonEntity};
 
 use super::*;
 use crate::render::layout::TextLayout;

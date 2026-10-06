@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
-use warp_core::ui::appearance::Appearance;
-use warpui::elements::{
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_ui::elements::{
     ChildView, ConstrainedBox, Container, CrossAxisAlignment, Flex, MainAxisAlignment,
     MainAxisSize, ParentElement,
 };
-use warpui::{Action, AppContext, Element, TypedActionView, View, ViewContext, ViewHandle};
+use leanterm_ui::{Action, AppContext, Element, TypedActionView, View, ViewContext, ViewHandle};
 
 use crate::ui_components::icons::Icon;
 use crate::ui_components::inline_action_icons::icon_size;
@@ -176,7 +176,7 @@ pub fn render_expansion_icon(
     app: &AppContext,
 ) -> Box<dyn Element> {
     ConstrainedBox::new(
-        warpui::elements::Icon::new(
+        leanterm_ui::elements::Icon::new(
             if expanded {
                 if expands_upwards {
                     Icon::ChevronUp.into()

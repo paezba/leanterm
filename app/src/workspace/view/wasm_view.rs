@@ -1,8 +1,8 @@
 //! WASM-only view functions for the Workspace.
 
-use warp_core::channel::ChannelState;
-use warpui::elements::{ChildView, Element};
-use warpui::{AppContext, SingletonEntity, ViewContext, ViewHandle};
+use leanterm_core::channel::ChannelState;
+use leanterm_ui::elements::{ChildView, Element};
+use leanterm_ui::{AppContext, SingletonEntity, ViewContext, ViewHandle};
 
 use super::PanelPosition;
 use crate::BlocklistAIHistoryModel;

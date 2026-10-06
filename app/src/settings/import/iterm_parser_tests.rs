@@ -2,9 +2,9 @@ use async_io::block_on;
 use pathfinder_color::ColorU;
 use plist::{Dictionary, Value};
 use virtual_fs::{Stub, VirtualFS};
-use warp_core::ui::theme::{Fill, WarpTheme};
-use warpui::fonts::FontInfo;
-use warpui::keymap::Keystroke;
+use leanterm_core::ui::theme::{Fill, WarpTheme};
+use leanterm_ui::fonts::FontInfo;
+use leanterm_ui::keymap::Keystroke;
 
 use super::{ITermTheme, ITermThemeType, color_dictionary_to_coloru};
 use crate::settings::import::config::{

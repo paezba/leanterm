@@ -16,13 +16,13 @@ use lsp::{LspManagerModel, LspServerConfig};
 use repo_metadata::RepoMetadataModel;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "local_fs")]
-use warp_core::channel::ChannelState;
-use warp_errors::report_if_error;
+use leanterm_core::channel::ChannelState;
+use leanterm_errors::report_if_error;
 #[cfg(feature = "local_fs")]
-use warp_util::standardized_path::StandardizedPath;
+use leanterm_util::standardized_path::StandardizedPath;
 #[cfg(feature = "local_fs")]
-use warpui::windowing::WindowManager;
-use warpui::{Entity, ModelContext, SingletonEntity};
+use leanterm_ui::windowing::WindowManager;
+use leanterm_ui::{Entity, ModelContext, SingletonEntity};
 
 #[cfg(feature = "local_fs")]
 use crate::code::language_server_shutdown_manager::LanguageServerShutdownManager;

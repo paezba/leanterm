@@ -1,11 +1,11 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use warpui::elements::{
+use leanterm_ui::elements::{
     ChildView, Clipped, Container, CrossAxisAlignment, Element, Flex, MainAxisAlignment,
     MainAxisSize, ParentElement, Wrap,
 };
-use warpui::{
+use leanterm_ui::{
     AppContext, Entity, FocusContext, ModelHandle, TypedActionView, View, ViewContext, ViewHandle,
 };
 

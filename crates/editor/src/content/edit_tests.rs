@@ -7,11 +7,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use rangemap::RangeSet;
 use string_offset::CharOffset;
-use warpui_core::assets::asset_cache::{AssetCache, AssetSource, AssetState};
-use warpui_core::fonts::{Properties, Style, Weight};
-use warpui_core::image_cache::ImageType;
-use warpui_core::text_layout::{StyleAndFont, TextStyle};
-use warpui_core::{App, SingletonEntity};
+use leanterm_ui_core::assets::asset_cache::{AssetCache, AssetSource, AssetState};
+use leanterm_ui_core::fonts::{Properties, Style, Weight};
+use leanterm_ui_core::image_cache::ImageType;
+use leanterm_ui_core::text_layout::{StyleAndFont, TextStyle};
+use leanterm_ui_core::{App, SingletonEntity};
 
 use super::{
     BlockLocation, LayOutArgs, LayoutTask, MAX_LAYOUT_CONTENT_CHARS_PER_PARALLEL_CHUNK,

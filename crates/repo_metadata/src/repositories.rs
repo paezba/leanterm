@@ -5,10 +5,10 @@ use std::path::{Path, PathBuf};
 use futures::future::{Either, ready};
 #[cfg(test)]
 use virtual_fs::{Stub, VirtualFS};
-use warp_util::standardized_path::StandardizedPath;
+use leanterm_util::standardized_path::StandardizedPath;
 #[cfg(test)]
-use warpui_core::r#async::FutureId;
-use warpui_core::{AppContext, Entity, ModelContext, ModelHandle, SingletonEntity};
+use leanterm_ui_core::r#async::FutureId;
+use leanterm_ui_core::{AppContext, Entity, ModelContext, ModelHandle, SingletonEntity};
 
 use crate::{DirectoryWatcher, Repository};
 

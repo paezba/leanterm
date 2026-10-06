@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use std::ops::Deref;
 
 use anyhow::{Result, anyhow};
-use warpui_core::{AppContext, Entity, SingletonEntity};
-use warpui_extras::user_preferences::UserPreferences;
+use leanterm_ui_core::{AppContext, Entity, SingletonEntity};
+use leanterm_ui_extras::user_preferences::UserPreferences;
 
 use super::{PrivatePreferences, SupportedPlatforms};
 

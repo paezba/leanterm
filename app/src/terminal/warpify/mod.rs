@@ -3,8 +3,8 @@ pub mod settings;
 pub mod success_block;
 pub mod trigger_state;
 
-use warp_terminal::shell::TargetOS;
-use warpui::AssetProvider;
+use leanterm_terminal::shell::TargetOS;
+use leanterm_ui::AssetProvider;
 
 use crate::ASSETS;
 use crate::terminal::model::terminal_model::SubshellInitializationInfo;

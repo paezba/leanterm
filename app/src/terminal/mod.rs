@@ -6,11 +6,11 @@ use ordered_float::Float;
 mod package_installers;
 pub use history::{History, HistoryEntry, HistoryEvent, LinkedWorkflowData, ShellHost};
 pub use view::{Event, TerminalView};
-pub use warp_terminal::shell::{self, ShellLaunchData};
-pub use warp_terminal::{CellSizeAndWindowPadding, ClipboardType, SizeInfo};
-use warpui::geometry::vector::Vector2F;
-use warpui::units::Lines;
-use warpui::{AppContext, SingletonEntity, WindowId};
+pub use leanterm_terminal::shell::{self, ShellLaunchData};
+pub use leanterm_terminal::{CellSizeAndWindowPadding, ClipboardType, SizeInfo};
+use leanterm_ui::geometry::vector::Vector2F;
+use leanterm_ui::units::Lines;
+use leanterm_ui::{AppContext, SingletonEntity, WindowId};
 mod block_list_settings;
 
 mod alias;

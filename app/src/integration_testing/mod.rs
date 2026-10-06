@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use warpui::{App, AssetProvider, View, ViewHandle, WindowId};
+use leanterm_ui::{App, AssetProvider, View, ViewHandle, WindowId};
 
 pub mod assertions;
 pub mod block;

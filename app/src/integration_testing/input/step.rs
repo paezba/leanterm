@@ -1,7 +1,7 @@
 use pathfinder_geometry::vector::Vector2F;
-use warpui::SingletonEntity;
-use warpui::integration::TestStep;
-use warpui::windowing::WindowManager;
+use leanterm_ui::SingletonEntity;
+use leanterm_ui::integration::TestStep;
+use leanterm_ui::windowing::WindowManager;
 
 use crate::integration_testing::step::new_step_with_default_assertions;
 use crate::integration_testing::terminal::assert_context_menu_is_open;
@@ -9,12 +9,12 @@ use crate::integration_testing::view_getters::{single_input_view_for_tab, single
 use crate::terminal::view::TerminalAction;
 
 /// Asserts that the Rich Input buffer text for `tab_index` is empty.
-pub fn rich_input_buffer_text_is_empty(tab_index: usize) -> warpui::integration::AssertionCallback {
+pub fn rich_input_buffer_text_is_empty(tab_index: usize) -> leanterm_ui::integration::AssertionCallback {
     Box::new(move |app, window_id| {
         let input_view = single_input_view_for_tab(app, window_id, tab_index);
         input_view.read(app, |view, ctx| {
             let text = view.buffer_text(ctx);
-            warpui::async_assert!(
+            leanterm_ui::async_assert!(
                 text.is_empty(),
                 "Expected Rich Input buffer to be empty; got: {text:?}"
             )
@@ -25,12 +25,12 @@ pub fn rich_input_buffer_text_is_empty(tab_index: usize) -> warpui::integration:
 /// Asserts that the Rich Input buffer text for `tab_index` contains a newline character.
 pub fn rich_input_buffer_contains_newline(
     tab_index: usize,
-) -> warpui::integration::AssertionCallback {
+) -> leanterm_ui::integration::AssertionCallback {
     Box::new(move |app, window_id| {
         let input_view = single_input_view_for_tab(app, window_id, tab_index);
         input_view.read(app, |view, ctx| {
             let text = view.buffer_text(ctx);
-            warpui::async_assert!(
+            leanterm_ui::async_assert!(
                 text.contains('\n'),
                 "Expected Rich Input buffer to contain a newline; got: {text:?}"
             )
@@ -41,12 +41,12 @@ pub fn rich_input_buffer_contains_newline(
 /// Asserts that the Rich Input buffer for `tab_index` contains no newline (verifies menu-acceptance, not newline insertion).
 pub fn rich_input_buffer_does_not_contain_newline(
     tab_index: usize,
-) -> warpui::integration::AssertionCallback {
+) -> leanterm_ui::integration::AssertionCallback {
     Box::new(move |app, window_id| {
         let input_view = single_input_view_for_tab(app, window_id, tab_index);
         input_view.read(app, |view, ctx| {
             let text = view.buffer_text(ctx);
-            warpui::async_assert!(
+            leanterm_ui::async_assert!(
                 !text.contains('\n'),
                 "Expected Rich Input buffer to NOT contain a newline; got: {text:?}"
             )

@@ -1,5 +1,5 @@
-use warpui::integration::TestStep;
-use warpui::{SingletonEntity, async_assert, async_assert_eq};
+use leanterm_ui::integration::TestStep;
+use leanterm_ui::{SingletonEntity, async_assert, async_assert_eq};
 
 use crate::network::{NetworkStatus, NetworkStatusKind};
 use crate::util::bindings::keybinding_name_to_display_string;

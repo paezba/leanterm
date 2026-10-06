@@ -7,13 +7,13 @@ use repo_metadata::RepoMetadataModel;
 use repo_metadata::repositories::DetectedRepositories;
 use repo_metadata::watcher::DirectoryWatcher;
 use string_offset::CharOffset;
-use warp_core::features::FeatureFlag;
-use warp_core::ui::appearance::Appearance;
-use warp_editor::render::model::BlockItem;
+use leanterm_core::features::FeatureFlag;
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_editor::render::model::BlockItem;
 #[cfg(feature = "local_fs")]
-use warp_files::FileModel;
-use warpui::platform::WindowStyle;
-use warpui::{App, SingletonEntity, View};
+use leanterm_files::FileModel;
+use leanterm_ui::platform::WindowStyle;
+use leanterm_ui::{App, SingletonEntity, View};
 
 use super::{FileNotebookAction, FileNotebookView, FileState, MarkdownDisplayMode, SourceFile};
 use crate::notebooks::context_menu::MenuSource;
@@ -341,14 +341,14 @@ fn test_file_notebook_mermaid_blocks_default_to_rendered() {
 #[cfg(feature = "local_fs")]
 #[test]
 fn test_reload_and_discard_after_failed_open() {
-    use warpui::TypedActionView;
+    use leanterm_ui::TypedActionView;
 
     /// Opens the notebook's current file and waits for the read to settle.
     async fn await_open(
-        app: &mut warpui::App,
-        handle: &warpui::ViewHandle<FileNotebookView>,
-        open: impl FnOnce(&mut FileNotebookView, &mut warpui::ViewContext<FileNotebookView>),
-    ) -> warp_util::file::FileId {
+        app: &mut leanterm_ui::App,
+        handle: &leanterm_ui::ViewHandle<FileNotebookView>,
+        open: impl FnOnce(&mut FileNotebookView, &mut leanterm_ui::ViewContext<FileNotebookView>),
+    ) -> leanterm_util::file::FileId {
         let (file_id, future) = handle.update(app, |file_notebook, ctx| {
             open(file_notebook, ctx);
             let file_id = file_notebook.file_id.expect("File should have a file_id");

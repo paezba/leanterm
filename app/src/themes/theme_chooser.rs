@@ -1,22 +1,22 @@
 use pathfinder_color::ColorU;
 use settings::Setting as _;
-use warp_editor::editor::NavigationKey;
-use warp_errors::report_if_error;
-use warpui::accessibility::{AccessibilityContent, WarpA11yRole};
-use warpui::elements::{
+use leanterm_editor::editor::NavigationKey;
+use leanterm_errors::report_if_error;
+use leanterm_ui::accessibility::{AccessibilityContent, WarpA11yRole};
+use leanterm_ui::elements::{
     Align, ChildAnchor, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment,
     DispatchEventResult, Element, Empty, EventHandler, Fill, Flex, Hoverable, Icon,
     MainAxisAlignment, MainAxisSize, MouseStateHandle, OffsetPositioning, ParentAnchor,
     ParentElement, ParentOffsetBounds, Radius, Rect, SavePosition, ScrollStateHandle, Scrollable,
     ScrollableElement, ScrollbarWidth, Shrinkable, Stack, Text, UniformList, UniformListState,
 };
-use warpui::fonts::{FamilyId, Weight};
-use warpui::geometry::vector::vec2f;
-use warpui::keymap::FixedBinding;
-use warpui::platform::{Cursor, SystemTheme};
-use warpui::ui_components::components::{UiComponent, UiComponentStyles};
-use warpui::windowing::{StateEvent, WindowManager};
-use warpui::{
+use leanterm_ui::fonts::{FamilyId, Weight};
+use leanterm_ui::geometry::vector::vec2f;
+use leanterm_ui::keymap::FixedBinding;
+use leanterm_ui::platform::{Cursor, SystemTheme};
+use leanterm_ui::ui_components::components::{UiComponent, UiComponentStyles};
+use leanterm_ui::windowing::{StateEvent, WindowManager};
+use leanterm_ui::{
     AppContext, Entity, FocusContext, ModelHandle, SingletonEntity, Tracked, TypedActionView,
     UpdateModel, View, ViewContext, ViewHandle,
 };
@@ -136,7 +136,7 @@ pub struct ThemeChooser {
     filtered_themes: Tracked<Option<Vec<ThemeChooserItem>>>,
     mode: ThemeChooserMode,
     search_editor: ViewHandle<EditorView>,
-    window_id: warpui::WindowId,
+    window_id: leanterm_ui::WindowId,
 }
 
 #[derive(Debug)]
@@ -151,7 +151,7 @@ pub enum ThemeChooserAction {
 }
 
 pub fn init(app: &mut AppContext) {
-    use warpui::keymap::macros::*;
+    use leanterm_ui::keymap::macros::*;
 
     app.register_fixed_bindings(vec![
         FixedBinding::new("up", ThemeChooserAction::Up, id!("ThemeChooser")),

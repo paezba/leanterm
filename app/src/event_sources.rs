@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-pub use warp_terminal::ImageProtocol;
+pub use leanterm_terminal::ImageProtocol;
 
 /// The possible ways to trigger command x-ray
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]

@@ -4,17 +4,17 @@ use std::sync::Arc;
 
 use itertools::Itertools;
 use lazy_static::lazy_static;
-use warp_util::path::LineAndColumnArg;
-use warpui::elements::{
+use leanterm_util::path::LineAndColumnArg;
+use leanterm_ui::elements::{
     Align, Border, ChildView, Clipped, ClippedScrollStateHandle, ClippedScrollable, ConstrainedBox,
     Container, CornerRadius, Dismiss, DispatchEventResult, Empty, EventHandler, Fill, Flex,
     ParentElement, Radius, SavePosition, Shrinkable,
 };
-use warpui::event::KeyState;
-use warpui::keymap::BindingId;
-use warpui::platform::keyboard::KeyCode;
-use warpui::units::{IntoPixels, Pixels};
-use warpui::{
+use leanterm_ui::event::KeyState;
+use leanterm_ui::keymap::BindingId;
+use leanterm_ui::platform::keyboard::KeyCode;
+use leanterm_ui::units::{IntoPixels, Pixels};
+use leanterm_ui::{
     AppContext, Element, Entity, EntityId, FocusContext, ModelHandle, SingletonEntity,
     TypedActionView, ViewContext, ViewHandle, WindowId,
 };
@@ -145,7 +145,7 @@ impl TypedActionView for View {
     }
 }
 
-impl warpui::View for View {
+impl leanterm_ui::View for View {
     fn ui_name() -> &'static str {
         "CommandPaletteView"
     }
@@ -835,11 +835,11 @@ impl View {
         self.close(ctx, Some(result_action.result_type()));
     }
 
-    /// Dispatches `action` to the correct window and [`warpui::View`] by using the current state of
+    /// Dispatches `action` to the correct window and [`leanterm_ui::View`] by using the current state of
     /// the [`BindingSource`] model.
     fn dispatch_typed_action_on_view(
         &self,
-        action: &dyn warpui::Action,
+        action: &dyn leanterm_ui::Action,
         ctx: &mut ViewContext<Self>,
     ) {
         let (window_id, view_id) = match self.binding_source.as_ref(ctx) {

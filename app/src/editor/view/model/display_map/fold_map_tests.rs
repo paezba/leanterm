@@ -1,5 +1,5 @@
 use tests::buffer::RangesWhenEditing;
-use warpui::App;
+use leanterm_ui::App;
 
 use super::*;
 use crate::editor::EditOrigin;

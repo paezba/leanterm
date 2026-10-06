@@ -7,7 +7,7 @@ use fuzzy_match::{
     FuzzyMatchResult, contains_wildcards, match_indices_case_insensitive,
     match_wildcard_pattern_case_insensitive,
 };
-use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
+use leanterm_ui::{AppContext, Entity, ModelContext, SingletonEntity};
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "local_fs")] {

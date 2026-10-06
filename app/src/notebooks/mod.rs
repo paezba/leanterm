@@ -4,7 +4,7 @@ pub mod file;
 pub mod link;
 mod styles;
 
-use warpui::AppContext;
+use leanterm_ui::AppContext;
 
 /// Initialize notebooks-related keybindings.
 pub fn init(app: &mut AppContext) {

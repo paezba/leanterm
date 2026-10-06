@@ -1,5 +1,5 @@
-use warp_editor::content::version::BufferVersion;
-use warp_util::path::LineAndColumnArg;
+use leanterm_editor::content::version::BufferVersion;
+use leanterm_util::path::LineAndColumnArg;
 
 #[derive(Debug, Clone, Copy)]
 pub enum ScrollWheelBehavior {

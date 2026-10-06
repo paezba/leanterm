@@ -10,12 +10,12 @@ use pathfinder_color::ColorU;
 use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::{Vector2F, vec2f};
 use settings::Setting as _;
-use warp_core::context_flag::ContextFlag;
-use warp_core::ui::Icon as WarpIcon;
-use warp_core::ui::color::blend::Blend;
-use warp_core::ui::theme::color::internal_colors;
-use warp_core::ui::theme::{AnsiColorIdentifier, Fill as WarpThemeFill, WarpTheme};
-use warpui::elements::{
+use leanterm_core::context_flag::ContextFlag;
+use leanterm_core::ui::Icon as WarpIcon;
+use leanterm_core::ui::color::blend::Blend;
+use leanterm_core::ui::theme::color::internal_colors;
+use leanterm_core::ui::theme::{AnsiColorIdentifier, Fill as WarpThemeFill, WarpTheme};
+use leanterm_ui::elements::{
     Border, ChildAnchor, Clipped, ClippedScrollStateHandle, ClippedScrollable, ConstrainedBox,
     Container, CornerRadius, CrossAxisAlignment, DispatchEventResult, DragAxis, DragBarSide,
     Draggable, DropShadow, DropTarget, Element, Empty, EventHandler, Expanded, Fill as ElementFill,
@@ -25,13 +25,13 @@ use warpui::elements::{
     ResizableStateHandle, SavePosition, ScrollTarget, ScrollToPositionMode, ScrollbarWidth,
     Shrinkable, Stack, Text, resizable_state_handle,
 };
-use warpui::fonts::{Properties, Weight};
-use warpui::platform::Cursor;
-use warpui::prelude::Align;
-use warpui::text_layout::ClipConfig;
-use warpui::ui_components::components::{UiComponent, UiComponentStyles};
-use warpui::ui_components::text_input::TextInput;
-use warpui::{AppContext, EntityId, SingletonEntity, ViewHandle, WindowId};
+use leanterm_ui::fonts::{Properties, Weight};
+use leanterm_ui::platform::Cursor;
+use leanterm_ui::prelude::Align;
+use leanterm_ui::text_layout::ClipConfig;
+use leanterm_ui::ui_components::components::{UiComponent, UiComponentStyles};
+use leanterm_ui::ui_components::text_input::TextInput;
+use leanterm_ui::{AppContext, EntityId, SingletonEntity, ViewHandle, WindowId};
 
 use super::{render_group_member_icon_collage, select_unique_pane_kinds};
 use crate::FeatureFlag;
@@ -3500,7 +3500,7 @@ fn pane_display_title_and_subtitle(
             .unwrap_or_default();
         let home_dir = dirs::home_dir();
         let home_str = home_dir.as_ref().and_then(|path| path.to_str());
-        let parent = warp_util::path::user_friendly_path(&parent_raw, home_str).to_string();
+        let parent = leanterm_util::path::user_friendly_path(&parent_raw, home_str).to_string();
         (filename, parent)
     } else {
         (

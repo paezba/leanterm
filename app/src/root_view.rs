@@ -9,14 +9,14 @@ use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::{Vector2F, vec2f};
 use serde::{Deserialize, Serialize};
 use settings::Setting as _;
-use warp_core::context_flag::ContextFlag;
-use warp_errors::report_error;
-use warpui::keymap::{EditableBinding, FixedBinding};
-use warpui::platform::{WindowBounds, WindowStyle};
-use warpui::presenter::ChildView;
-use warpui::rendering::OnGPUDeviceSelected;
-use warpui::windowing::WindowManager;
-use warpui::{
+use leanterm_core::context_flag::ContextFlag;
+use leanterm_errors::report_error;
+use leanterm_ui::keymap::{EditableBinding, FixedBinding};
+use leanterm_ui::platform::{WindowBounds, WindowStyle};
+use leanterm_ui::presenter::ChildView;
+use leanterm_ui::rendering::OnGPUDeviceSelected;
+use leanterm_ui::windowing::WindowManager;
+use leanterm_ui::{
     AddWindowOptions, AppContext, DisplayId, Element, Entity, EntityId, FocusContext,
     NextNewWindowsHasThisWindowsBoundsUponClose, SingletonEntity, TypedActionView, View,
     ViewContext, ViewHandle, WindowId, id,
@@ -944,7 +944,7 @@ fn toggle_quake_mode_window(global_resource_handles: &GlobalResourceHandles, ctx
                     background_backdrop: *window_settings.background_backdrop,
                     // Ignore the quake window for positioning the next window
                     anchor_new_windows_from_closed_position:
-                        warpui::NextNewWindowsHasThisWindowsBoundsUponClose::No,
+                        leanterm_ui::NextNewWindowsHasThisWindowsBoundsUponClose::No,
                     on_gpu_driver_selected: on_gpu_driver_selected_callback(),
                     window_instance: Some(ChannelState::app_id().to_string() + "-hotkey"),
                     ..Default::default()
@@ -1329,7 +1329,7 @@ impl View for RootView {
         ChildView::new(&self.workspace).finish()
     }
 
-    fn keymap_context(&self, app: &AppContext) -> warpui::keymap::Context {
+    fn keymap_context(&self, app: &AppContext) -> leanterm_ui::keymap::Context {
         let mut context = Self::default_keymap_context();
         if quake_mode_window_is_open() {
             context.set.insert(flags::QUAKE_WINDOW_OPEN_FLAG);

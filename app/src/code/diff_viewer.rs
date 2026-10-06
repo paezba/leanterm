@@ -1,8 +1,8 @@
 use code_diff::diff_validation::DiffType;
-use warp_editor::render::element::VerticalExpansionBehavior;
-use warpui::elements::ScrollbarWidth;
-use warpui::elements::new_scrollable::ScrollableAppearance;
-use warpui::{View, ViewContext, ViewHandle};
+use leanterm_editor::render::element::VerticalExpansionBehavior;
+use leanterm_ui::elements::ScrollbarWidth;
+use leanterm_ui::elements::new_scrollable::ScrollableAppearance;
+use leanterm_ui::{View, ViewContext, ViewHandle};
 
 use super::editor::NavBarBehavior;
 use super::editor::scroll::ScrollWheelBehavior;

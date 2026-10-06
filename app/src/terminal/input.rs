@@ -28,38 +28,38 @@ use settings::Setting as _;
 use string_offset::{ByteOffset, CharOffset};
 use vec1::Vec1;
 use vim::vim::VimMode;
-use warp_completer::completer::{
+use leanterm_completer::completer::{
     self, CompleterOptions, CompletionContext, CompletionsFallbackStrategy, Description,
     ExplicitTabCompletion, MatchStrategy, MatchType, PathSeparators, PreparedSuggestion,
     SuggestionResults,
 };
-use warp_completer::meta::{HasSpan, Span, Spanned};
-use warp_completer::parsers::LiteCommand;
-use warp_completer::parsers::simple::command_at_cursor_position;
-use warp_completer::signatures::CommandRegistry;
-use warp_core::r#async::debounce;
-use warp_core::context_flag::ContextFlag;
-use warp_editor::editor::NavigationKey;
-use warp_errors::{report_error, report_if_error};
-use warp_util::path::ShellFamily;
-pub use warpui::WindowId;
-use warpui::accessibility::{AccessibilityContent, ActionAccessibilityContent, WarpA11yRole};
-use warpui::r#async::SpawnedFutureHandle;
-use warpui::clipboard::ClipboardContent;
-use warpui::color::ColorU;
-use warpui::elements::{
+use leanterm_completer::meta::{HasSpan, Span, Spanned};
+use leanterm_completer::parsers::LiteCommand;
+use leanterm_completer::parsers::simple::command_at_cursor_position;
+use leanterm_completer::signatures::CommandRegistry;
+use leanterm_core::r#async::debounce;
+use leanterm_core::context_flag::ContextFlag;
+use leanterm_editor::editor::NavigationKey;
+use leanterm_errors::{report_error, report_if_error};
+use leanterm_util::path::ShellFamily;
+pub use leanterm_ui::WindowId;
+use leanterm_ui::accessibility::{AccessibilityContent, ActionAccessibilityContent, WarpA11yRole};
+use leanterm_ui::r#async::SpawnedFutureHandle;
+use leanterm_ui::clipboard::ClipboardContent;
+use leanterm_ui::color::ColorU;
+use leanterm_ui::elements::{
     AnchorPair, ChildAnchor, Clipped, ConstrainedBox, Container, DispatchEventResult,
     DropTargetData, Element, EventHandler, MouseStateHandle, OffsetType, ParentAnchor,
     ResizableStateHandle, SavePosition, SelectionHandle, YAxisAnchor, resizable_state_handle,
 };
-pub use warpui::elements::{ParentElement as _, Stack};
-pub use warpui::geometry::vector::{Vector2F, vec2f};
-use warpui::keymap::{EditableBinding, FixedBinding, Keystroke};
-use warpui::platform::OperatingSystem;
-use warpui::presenter::ChildView;
-use warpui::text_layout::TextStyle;
-use warpui::units::IntoPixels;
-use warpui::{
+pub use leanterm_ui::elements::{ParentElement as _, Stack};
+pub use leanterm_ui::geometry::vector::{Vector2F, vec2f};
+use leanterm_ui::keymap::{EditableBinding, FixedBinding, Keystroke};
+use leanterm_ui::platform::OperatingSystem;
+use leanterm_ui::presenter::ChildView;
+use leanterm_ui::text_layout::TextStyle;
+use leanterm_ui::units::IntoPixels;
+use leanterm_ui::{
     AppContext, Entity, EntityId, FocusContext, ModelAsRef, ModelHandle, SingletonEntity,
     TypedActionView, View, ViewContext, ViewHandle, WeakViewHandle, end_trace, start_trace,
 };
@@ -1081,7 +1081,7 @@ impl DeferredRemoteOperations {
 }
 
 pub fn init(app: &mut AppContext) {
-    use warpui::keymap::macros::*;
+    use leanterm_ui::keymap::macros::*;
 
     if cfg!(feature = "integration_tests") {
         app.register_fixed_bindings([
@@ -3508,7 +3508,7 @@ impl Input {
                             // the completions finish quickly, since that causes a jittery UX.
                             let _ = ctx.spawn(
                                 async move {
-                                    warpui::r#async::Timer::after(Duration::from_millis(750)).await;
+                                    leanterm_ui::r#async::Timer::after(Duration::from_millis(750)).await;
                                     old_buffer_text_original
                                 },
                                 move |input, old_buffer_text_original, ctx| {
@@ -5896,7 +5896,7 @@ impl View for Input {
         }
     }
 
-    fn keymap_context(&self, app: &AppContext) -> warpui::keymap::Context {
+    fn keymap_context(&self, app: &AppContext) -> leanterm_ui::keymap::Context {
         let mut ctx = Self::default_keymap_context();
 
         if self.is_voltron_open {

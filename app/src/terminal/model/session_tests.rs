@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use warpui::elements::Empty;
-use warpui::platform::WindowStyle;
-use warpui::{App, AppContext, Element, Entity, ModelHandle, TypedActionView, View, ViewContext};
+use leanterm_ui::elements::Empty;
+use leanterm_ui::platform::WindowStyle;
+use leanterm_ui::{App, AppContext, Element, Entity, ModelHandle, TypedActionView, View, ViewContext};
 
 use super::command_executor::testing::TestCommandExecutor;
 use super::{BootstrapSessionType, Session, SessionId, SessionInfo, Sessions, SessionsEvent};

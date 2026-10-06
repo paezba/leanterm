@@ -15,29 +15,29 @@ use regex::Regex;
 use string_offset::CharOffset;
 use url::Url;
 use vec1::{Vec1, vec1};
-use warp_core::r#async::debounce;
-use warp_core::features::FeatureFlag;
-use warp_core::semantic_selection::SemanticSelection;
-use warp_editor::content::buffer::{
+use leanterm_core::r#async::debounce;
+use leanterm_core::features::FeatureFlag;
+use leanterm_core::semantic_selection::SemanticSelection;
+use leanterm_editor::content::buffer::{
     AutoScrollBehavior, Buffer, BufferEditAction, BufferEvent, BufferSelectAction, EditOrigin,
     SelectionOffsets, ShouldAutoscroll,
 };
-use warp_editor::content::selection_model::BufferSelectionModel;
-use warp_editor::content::text::{
+use leanterm_editor::content::selection_model::BufferSelectionModel;
+use leanterm_editor::content::text::{
     BlockHeaderSize, BlockType, BufferBlockItem, BufferBlockStyle, BufferTextStyle, CodeBlockType,
     IndentBehavior, IndentUnit, TextStyles, TextStylesWithMetadata,
 };
-use warp_editor::model::{BufferUpdateWrapper, CoreEditorModel, RichTextEditorModel};
-use warp_editor::render::model::{
+use leanterm_editor::model::{BufferUpdateWrapper, CoreEditorModel, RichTextEditorModel};
+use leanterm_editor::render::model::{
     AutoScrollMode, BlockItem, RenderEvent, RenderState, RichTextStyles, StyleUpdateAction,
 };
-use warp_editor::search::Searcher;
-use warp_editor::selection::{SelectionMode, SelectionModel, TextDirection, TextUnit};
-use warp_errors::report_error;
-use warpui::accessibility::{AccessibilityContent, ActionAccessibilityContent, WarpA11yRole};
-use warpui::clipboard::ClipboardContent;
-use warpui::elements::ListIndentLevel;
-use warpui::{
+use leanterm_editor::search::Searcher;
+use leanterm_editor::selection::{SelectionMode, SelectionModel, TextDirection, TextUnit};
+use leanterm_errors::report_error;
+use leanterm_ui::accessibility::{AccessibilityContent, ActionAccessibilityContent, WarpA11yRole};
+use leanterm_ui::clipboard::ClipboardContent;
+use leanterm_ui::elements::ListIndentLevel;
+use leanterm_ui::{
     AppContext, Entity, ModelAsRef, ModelContext, ModelHandle, SingletonEntity, WindowId,
 };
 

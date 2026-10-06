@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use parking_lot::FairMutex;
 use pathfinder_geometry::vector::Vector2F;
-use warpui::{AppContext, ModelHandle, ViewHandle, WindowId};
+use leanterm_ui::{AppContext, ModelHandle, ViewHandle, WindowId};
 
 use super::event_listener::ChannelEventListener;
 use super::model::session::Sessions;
@@ -116,8 +116,8 @@ impl TerminalManager for MockTerminalManager {
 
 #[cfg(test)]
 mod testing {
-    use warpui::platform::WindowStyle;
-    use warpui::{App, Element, SingletonEntity};
+    use leanterm_ui::platform::WindowStyle;
+    use leanterm_ui::{App, Element, SingletonEntity};
 
     use super::*;
     use crate::terminal::ShellLaunchState;
@@ -127,21 +127,21 @@ mod testing {
         terminal_view: ViewHandle<TerminalView>,
     }
 
-    impl warpui::Entity for TerminalRootView {
+    impl leanterm_ui::Entity for TerminalRootView {
         type Event = ();
     }
 
-    impl warpui::View for TerminalRootView {
+    impl leanterm_ui::View for TerminalRootView {
         fn ui_name() -> &'static str {
             "TerminalRootView"
         }
 
-        fn render(&self, _app: &warpui::AppContext) -> Box<dyn warpui::Element> {
-            warpui::elements::ChildView::new(&self.terminal_view).finish()
+        fn render(&self, _app: &leanterm_ui::AppContext) -> Box<dyn leanterm_ui::Element> {
+            leanterm_ui::elements::ChildView::new(&self.terminal_view).finish()
         }
     }
 
-    impl warpui::TypedActionView for TerminalRootView {
+    impl leanterm_ui::TypedActionView for TerminalRootView {
         type Action = ();
     }
 

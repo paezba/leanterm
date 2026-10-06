@@ -1,7 +1,7 @@
 use serde::Serialize;
-use warpui::Element;
-use warpui::elements::MouseStateHandle;
-use warpui::notification::RequestPermissionsOutcome;
+use leanterm_ui::Element;
+use leanterm_ui::elements::MouseStateHandle;
+use leanterm_ui::notification::RequestPermissionsOutcome;
 
 use super::{
     InlineBannerButtonState, InlineBannerCloseButton, InlineBannerContent, InlineBannerStyle,

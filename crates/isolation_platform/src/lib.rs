@@ -1,7 +1,7 @@
 use std::sync::OnceLock;
 
 use serde::Serialize;
-use warp_core::channel::{Channel, ChannelState};
+use leanterm_core::channel::{Channel, ChannelState};
 
 #[cfg(not(target_family = "wasm"))]
 mod docker;

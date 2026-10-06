@@ -4,9 +4,9 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use settings::macros::{maybe_define_setting, register_settings_events};
 use settings::{ChangeEventReason, Setting, SupportedPlatforms};
-use warp_errors::report_error;
-pub use warp_terminal::model::secrets::RegexDisplayInfo;
-use warpui::{AppContext, Entity, ModelContext, SingletonEntity};
+use leanterm_errors::report_error;
+pub use leanterm_terminal::model::secrets::RegexDisplayInfo;
+use leanterm_ui::{AppContext, Entity, ModelContext, SingletonEntity};
 
 #[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
 #[schemars(description = "A custom regex pattern for detecting and redacting secrets.")]

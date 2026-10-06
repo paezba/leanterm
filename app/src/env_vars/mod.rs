@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use warp_util::path::ShellFamily;
+use leanterm_util::path::ShellFamily;
 
 use crate::terminal::shell::ShellType;
 

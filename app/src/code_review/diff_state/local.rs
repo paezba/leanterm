@@ -12,7 +12,7 @@ use std::sync::Arc;
 use anyhow::{Result, anyhow};
 use instant::Instant;
 #[cfg(feature = "local_fs")]
-use warp_util::standardized_path::StandardizedPath;
+use leanterm_util::standardized_path::StandardizedPath;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "local_fs")] {
@@ -20,14 +20,14 @@ cfg_if::cfg_if! {
     }
 }
 #[cfg(not(target_family = "wasm"))]
-use warp_core::channel::ChannelState;
+use leanterm_core::channel::ChannelState;
 #[cfg(feature = "local_fs")]
-use warp_core::sync_queue::SyncQueue;
-use warp_util::git::run_git_command;
+use leanterm_core::sync_queue::SyncQueue;
+use leanterm_util::git::run_git_command;
 #[cfg(not(target_arch = "wasm32"))]
-use warpui::AppContext;
-use warpui::r#async::SpawnedFutureHandle;
-use warpui::{ModelContext, SingletonEntity};
+use leanterm_ui::AppContext;
+use leanterm_ui::r#async::SpawnedFutureHandle;
+use leanterm_ui::{ModelContext, SingletonEntity};
 
 use crate::code_review::diff_size_limits::{
     DiffSize, MAX_DIFF_SIZE, UnrenderableReason, compute_diff_size,
@@ -54,11 +54,11 @@ cfg_if::cfg_if! {
             RepoMetadataError, Repository, RepositoryUpdate, RepositoryWatchMode,
         };
         use async_channel::Sender;
-        use warpui::ModelHandle;
+        use leanterm_ui::ModelHandle;
     }
 }
 #[cfg(feature = "local_fs")]
-use warp_errors::report_error;
+use leanterm_errors::report_error;
 
 use super::{
     BackendOrigin, CommitChainMode, DiffHunk, DiffLine, DiffLineType, DiffMetadata,
@@ -423,7 +423,7 @@ impl LocalDiffStateModel {
     }
 
     #[cfg(not(feature = "local_fs"))]
-    pub fn is_git_operation_blocked(&self, _app: &warpui::AppContext) -> bool {
+    pub fn is_git_operation_blocked(&self, _app: &leanterm_ui::AppContext) -> bool {
         false
     }
     /// Returns `true` once the repository has at least one commit.
@@ -450,7 +450,7 @@ impl LocalDiffStateModel {
     }
 
     #[cfg(not(feature = "local_fs"))]
-    fn active_repository_path(&self, _app: &warpui::AppContext) -> Option<PathBuf> {
+    fn active_repository_path(&self, _app: &leanterm_ui::AppContext) -> Option<PathBuf> {
         None
     }
 
@@ -1634,7 +1634,7 @@ impl LocalDiffStateModel {
         let n = file.read(&mut buffer)?;
         buffer.truncate(n);
 
-        if warp_util::file_type::is_buffer_binary(&buffer) {
+        if leanterm_util::file_type::is_buffer_binary(&buffer) {
             return Ok(None);
         }
         file.rewind()?;
@@ -2850,7 +2850,7 @@ pub(crate) async fn diff_metadata_against_head(
     })
 }
 
-impl warpui::Entity for LocalDiffStateModel {
+impl leanterm_ui::Entity for LocalDiffStateModel {
     type Event = DiffStateModelEvent;
 }
 

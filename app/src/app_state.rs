@@ -4,8 +4,8 @@ use std::sync::Arc;
 
 use pathfinder_geometry::rect::RectF;
 use serde::{Deserialize, Serialize};
-use warpui::platform::FullscreenState;
-use warpui::{AppContext, SingletonEntity as _};
+use leanterm_ui::platform::FullscreenState;
+use leanterm_ui::{AppContext, SingletonEntity as _};
 
 use crate::code::editor_management::CodeSource;
 use crate::root_view::quake_mode_window_id;

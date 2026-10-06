@@ -25,11 +25,11 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 use string_offset::{ByteOffset, CharOffset, impl_offset};
 use sum_tree::{Cursor, SeekBias, SumTree};
-use warpui_core::AppContext;
-use warpui_core::elements::ListIndentLevel;
-use warpui_core::fonts::{Properties, Style, Weight};
-use warpui_core::text::BlockHeaderSize as HeaderSize;
-use warpui_core::text::point::Point;
+use leanterm_ui_core::AppContext;
+use leanterm_ui_core::elements::ListIndentLevel;
+use leanterm_ui_core::fonts::{Properties, Style, Weight};
+use leanterm_ui_core::text::BlockHeaderSize as HeaderSize;
+use leanterm_ui_core::text::point::Point;
 
 use super::buffer::Buffer;
 use super::core::CursorType;

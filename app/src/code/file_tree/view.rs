@@ -14,12 +14,12 @@ use repo_metadata::file_tree_store::{
 use repo_metadata::local_model::IndexedRepoState;
 use repo_metadata::repositories::DetectedRepositories;
 use repo_metadata::{FileTreeEntry, RepoMetadataModel};
-use warp_core::ui::theme::Fill;
-use warp_core::ui::theme::color::internal_colors;
-use warp_util::path::LineAndColumnArg;
-use warp_util::standardized_path::StandardizedPath;
-use warpui::clipboard::ClipboardContent;
-use warpui::elements::{
+use leanterm_core::ui::theme::Fill;
+use leanterm_core::ui::theme::color::internal_colors;
+use leanterm_util::path::LineAndColumnArg;
+use leanterm_util::standardized_path::StandardizedPath;
+use leanterm_ui::clipboard::ClipboardContent;
+use leanterm_ui::elements::{
     AcceptedByDropTarget, Align, ChildAnchor, ChildView, Clipped, ConstrainedBox, Container,
     CrossAxisAlignment, Dismiss, Draggable, DraggableState, Empty, Flex, FormattedTextElement,
     Hoverable, MainAxisAlignment, MainAxisSize, MouseStateHandle, OffsetPositioning, ParentAnchor,
@@ -27,11 +27,11 @@ use warpui::elements::{
     Scrollable, ScrollableElement, ScrollbarWidth, Shrinkable, Stack, Text, UniformList,
     UniformListState,
 };
-use warpui::fonts::{Properties, Style, Weight};
-use warpui::keymap::FixedBinding;
-use warpui::platform::Cursor;
-use warpui::text_layout::TextAlignment;
-use warpui::{
+use leanterm_ui::fonts::{Properties, Style, Weight};
+use leanterm_ui::keymap::FixedBinding;
+use leanterm_ui::platform::Cursor;
+use leanterm_ui::text_layout::TextAlignment;
+use leanterm_ui::{
     AppContext, BlurContext, Element, Entity, EventContext, ModelHandle, SingletonEntity as _,
     TypedActionView, View, ViewContext, ViewHandle, WeakViewHandle, id,
 };
@@ -725,8 +725,8 @@ impl FileTreeView {
             .collect();
 
         // Ancestor-dedup the inputs. Shared with `GlobalSearchView`
-        // via `warp_util::path::group_roots_by_common_ancestor`.
-        let grouping = warp_util::path::group_roots_by_common_ancestor(&std_paths);
+        // via `leanterm_util::path::group_roots_by_common_ancestor`.
+        let grouping = leanterm_util::path::group_roots_by_common_ancestor(&std_paths);
 
         let new_displayed: Vec<StandardizedPath> = grouping.roots.to_vec();
 
@@ -2231,7 +2231,7 @@ impl FileTreeView {
                         ScrollbarWidth::Auto,
                         theme.nonactive_ui_detail().into(),
                         theme.active_ui_detail().into(),
-                        warpui::elements::Fill::None,
+                        leanterm_ui::elements::Fill::None,
                     )
                     .with_overlayed_scrollbar()
                     .finish(),
@@ -2343,7 +2343,7 @@ impl FileTreeView {
 
         // Create loading icon
         let loading_icon = Icon::Loading
-            .to_warpui_icon(warp_core::ui::theme::Fill::Solid(
+            .to_warpui_icon(leanterm_core::ui::theme::Fill::Solid(
                 internal_colors::neutral_6(theme),
             ))
             .finish();
@@ -2365,7 +2365,7 @@ impl FileTreeView {
         header_row.add_child(loading_icon);
 
         let folder_icon = Icon::Folder
-            .to_warpui_icon(warp_core::ui::theme::Fill::Solid(
+            .to_warpui_icon(leanterm_core::ui::theme::Fill::Solid(
                 internal_colors::neutral_6(theme),
             ))
             .finish();

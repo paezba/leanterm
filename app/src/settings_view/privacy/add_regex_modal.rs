@@ -1,12 +1,12 @@
 use regex::Regex;
-use warp_editor::editor::NavigationKey;
-use warpui::elements::{
+use leanterm_editor::editor::NavigationKey;
+use leanterm_ui::elements::{
     ChildView, Container, CrossAxisAlignment, Empty, Expanded, Flex, MainAxisSize,
     MouseStateHandle, ParentElement, Text,
 };
-use warpui::ui_components::button::ButtonVariant;
-use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
-use warpui::{
+use leanterm_ui::ui_components::button::ButtonVariant;
+use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
+use leanterm_ui::{
     AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
 };
 

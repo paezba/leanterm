@@ -1,9 +1,9 @@
 use std::time::Duration;
 
-use warp_core::ui::appearance::Appearance;
-use warpui::keymap::Keystroke;
-use warpui::platform::WindowStyle;
-use warpui::{App, TypedActionView, ViewHandle};
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_ui::keymap::Keystroke;
+use leanterm_ui::platform::WindowStyle;
+use leanterm_ui::{App, TypedActionView, ViewHandle};
 
 use super::{
     COLLAPSED_MAX_CHARS, COLLAPSED_MAX_LINES, DismissibleToast, DismissibleToastAction,

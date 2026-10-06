@@ -4,8 +4,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use instant::Instant;
-pub use warp_terminal::event::{ExecutedExecutorCommandEvent, ParseGeneratorOutputError};
-use warp_util::lazy::Lazy;
+pub use leanterm_terminal::event::{ExecutedExecutorCommandEvent, ParseGeneratorOutputError};
+use leanterm_util::lazy::Lazy;
 
 use super::history::HistoryEntry;
 use super::model::ansi::{ExternalShellWidgetSelectionValue, FinishUpdateValue};
@@ -23,7 +23,7 @@ use crate::terminal::shell::ShellType;
 #[derive(Clone)]
 /// Events sent to the main thread by the terminal model & event loop.
 pub enum Event {
-    CompletionsFinished(Vec<ShellCompletion>, Option<warp_completer::meta::Span>),
+    CompletionsFinished(Vec<ShellCompletion>, Option<leanterm_completer::meta::Span>),
     MouseCursorDirty,
     Title(String),
     VisibleBootstrapBlock,
@@ -122,21 +122,21 @@ pub enum Event {
     },
 }
 
-impl From<warp_terminal::event::Event> for Event {
-    fn from(event: warp_terminal::event::Event) -> Self {
+impl From<leanterm_terminal::event::Event> for Event {
+    fn from(event: leanterm_terminal::event::Event) -> Self {
         match event {
-            warp_terminal::event::Event::MouseCursorDirty => Self::MouseCursorDirty,
-            warp_terminal::event::Event::ClipboardStore(clipboard, text) => {
+            leanterm_terminal::event::Event::MouseCursorDirty => Self::MouseCursorDirty,
+            leanterm_terminal::event::Event::ClipboardStore(clipboard, text) => {
                 Self::ClipboardStore(clipboard, text)
             }
-            warp_terminal::event::Event::ClipboardLoad(clipboard, load) => {
+            leanterm_terminal::event::Event::ClipboardLoad(clipboard, load) => {
                 Self::ClipboardLoad(clipboard, load)
             }
-            warp_terminal::event::Event::CursorBlinkingChange(blinking) => {
+            leanterm_terminal::event::Event::CursorBlinkingChange(blinking) => {
                 Self::CursorBlinkingChange(blinking)
             }
-            warp_terminal::event::Event::Bell => Self::Bell,
-            warp_terminal::event::Event::ImageReceived {
+            leanterm_terminal::event::Event::Bell => Self::Bell,
+            leanterm_terminal::event::Event::ImageReceived {
                 image_id,
                 image_data,
                 image_protocol,

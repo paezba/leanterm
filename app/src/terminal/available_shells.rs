@@ -9,8 +9,8 @@ use std::sync::Arc;
 #[cfg(feature = "local_tty")]
 use settings::Setting as _;
 #[cfg(feature = "local_tty")]
-use warpui::{AppContext, ModelContext};
-use warpui::{Entity, SingletonEntity};
+use leanterm_ui::{AppContext, ModelContext};
+use leanterm_ui::{Entity, SingletonEntity};
 
 use super::ShellLaunchData;
 use super::session_settings::{NewSessionShell, StartupShell};
@@ -461,7 +461,7 @@ impl AvailableShells {
         // to search.
         #[cfg(windows)]
         {
-            use warp_util::path::windows;
+            use leanterm_util::path::windows;
 
             paths_to_search.extend(windows::powershell_7_install_paths());
             paths_to_search.push(windows::powershell_5_install_path());
@@ -690,7 +690,7 @@ impl AvailableShells {
     fn locate_msys2_executables() -> Vec<PathBuf> {
         use std::env;
 
-        use warp_core::features::FeatureFlag;
+        use leanterm_core::features::FeatureFlag;
 
         let mut paths = Vec::new();
 
@@ -949,7 +949,7 @@ impl Entity for AvailableShells {
 impl SingletonEntity for AvailableShells {}
 
 #[cfg(feature = "local_tty")]
-pub fn register(app: &mut impl warpui::AddSingletonModel) {
+pub fn register(app: &mut impl leanterm_ui::AddSingletonModel) {
     #[cfg(windows)]
     app.add_singleton_model(super::wsl::WslInfo::new);
     app.add_singleton_model(AvailableShells::new);

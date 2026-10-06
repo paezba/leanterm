@@ -3,8 +3,8 @@ use std::ops::Range;
 
 use arborium::tree_sitter::{Node, Query, QueryCursor, Tree};
 use streaming_iterator::StreamingIterator;
-use warp_editor::content::buffer::Buffer;
-use warpui_core::text::point::Point;
+use leanterm_editor::content::buffer::Buffer;
+use leanterm_ui_core::text::point::Point;
 
 use super::highlight_query::TextBuffer;
 

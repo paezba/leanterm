@@ -1,4 +1,4 @@
-use warpui::{AppContext, Entity, ModelContext, ModelHandle};
+use leanterm_ui::{AppContext, Entity, ModelContext, ModelHandle};
 
 #[cfg(feature = "local_fs")]
 mod local;

@@ -1,4 +1,4 @@
-use warpui::UpdateView;
+use leanterm_ui::UpdateView;
 
 use super::{
     CONTEXT_MENU_WIDTH, ContextMenuState, MenuItem, TerminalAction, TerminalView, ViewContext,

@@ -12,8 +12,8 @@ use ::local_control::{
 use serde::Serialize;
 use serde_json::{Value, json};
 use settings::Setting as _;
-use warp_core::channel::ChannelState;
-use warpui::{AppContext, ModelContext, SingletonEntity, ViewHandle, WindowId};
+use leanterm_core::channel::ChannelState;
+use leanterm_ui::{AppContext, ModelContext, SingletonEntity, ViewHandle, WindowId};
 
 use crate::local_control::LocalControlBridge;
 use crate::local_control::resolver::{reject_target_families, require_active_window_id_for_action};

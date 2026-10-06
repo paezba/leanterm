@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
-use warp_core::settings::SupportedPlatforms;
-use warp_core::settings::macros::define_settings_group;
+use leanterm_core::settings::SupportedPlatforms;
+use leanterm_core::settings::macros::define_settings_group;
 
 use crate::banner::BannerState;
 

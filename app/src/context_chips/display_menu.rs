@@ -4,22 +4,22 @@ use std::rc::Rc;
 use std::sync::Arc;
 
 use fuzzy_match::{FuzzyMatchResult, match_indices_case_insensitive};
-use warp_core::ui::appearance::Appearance;
-use warp_core::ui::builder::MIN_FONT_SIZE;
-use warp_core::ui::theme::Fill;
-use warp_editor::editor::NavigationKey;
-use warpui::color::ColorU;
-use warpui::elements::{
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_core::ui::builder::MIN_FONT_SIZE;
+use leanterm_core::ui::theme::Fill;
+use leanterm_editor::editor::NavigationKey;
+use leanterm_ui::color::ColorU;
+use leanterm_ui::elements::{
     Border, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Dismiss,
     DispatchEventResult, DropShadow, Empty, EventHandler, Flex, Highlight, Hoverable,
     MainAxisAlignment, MainAxisSize, MouseInBehavior, MouseStateHandle, ParentElement, Radius,
     SavePosition, ScrollStateHandle, Scrollable, ScrollableElement, ScrollbarWidth, Stack, Text,
     UniformList, UniformListState,
 };
-use warpui::fonts::{Properties, Weight};
-use warpui::keymap::FixedBinding;
-use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
-use warpui::{
+use leanterm_ui::fonts::{Properties, Weight};
+use leanterm_ui::keymap::FixedBinding;
+use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
+use leanterm_ui::{
     AppContext, Element, Entity, FocusContext, SingletonEntity as _, TypedActionView, View,
     ViewContext, ViewHandle, WindowId,
 };
@@ -78,7 +78,7 @@ const MENU_VERTICAL_PADDING: f32 = 9.;
 const MENU_WIDTH: f32 = 360.;
 
 pub fn init(app: &mut AppContext) {
-    use warpui::keymap::macros::*;
+    use leanterm_ui::keymap::macros::*;
 
     app.register_fixed_bindings([
         FixedBinding::new(
@@ -838,7 +838,7 @@ impl DisplayChipMenu {
             scrollbar_width,
             theme.nonactive_ui_detail().into(),
             theme.active_ui_detail().into(),
-            warpui::elements::Fill::None,
+            leanterm_ui::elements::Fill::None,
         )
         .with_padding_end(0.)
         .with_padding_start(0.);

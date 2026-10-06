@@ -10,19 +10,19 @@ use markdown_parser::{
 use pathfinder_geometry::vector::Vector2F;
 use string_offset::CharOffset;
 use vec1::vec1;
-use warp_core::features::FeatureFlag;
-use warp_editor::content::buffer::{AutoScrollBehavior, BufferSelectAction, SelectionOffsets};
-use warp_editor::content::text::{BlockType, BufferBlockStyle, CodeBlockType, TextStyles};
-use warp_editor::model::{CoreEditorModel, RichTextEditorModel};
-use warp_editor::render::model::viewport::SizeInfo;
-use warp_editor::render::model::{BlockItem, RenderEvent};
-use warp_editor::selection::{TextDirection, TextUnit};
-use warpui::r#async::{FutureId, Timer, block_on};
-use warpui::elements::ListIndentLevel;
-use warpui::platform::WindowStyle;
-use warpui::presenter::ChildView;
-use warpui::text::word_boundaries::WordBoundariesPolicy;
-use warpui::{
+use leanterm_core::features::FeatureFlag;
+use leanterm_editor::content::buffer::{AutoScrollBehavior, BufferSelectAction, SelectionOffsets};
+use leanterm_editor::content::text::{BlockType, BufferBlockStyle, CodeBlockType, TextStyles};
+use leanterm_editor::model::{CoreEditorModel, RichTextEditorModel};
+use leanterm_editor::render::model::viewport::SizeInfo;
+use leanterm_editor::render::model::{BlockItem, RenderEvent};
+use leanterm_editor::selection::{TextDirection, TextUnit};
+use leanterm_ui::r#async::{FutureId, Timer, block_on};
+use leanterm_ui::elements::ListIndentLevel;
+use leanterm_ui::platform::WindowStyle;
+use leanterm_ui::presenter::ChildView;
+use leanterm_ui::text::word_boundaries::WordBoundariesPolicy;
+use leanterm_ui::{
     AddSingletonModel, App, AppContext, Element, Entity, ModelHandle, SingletonEntity,
     TypedActionView, View, ViewHandle,
 };
@@ -59,7 +59,7 @@ impl View for TestView {
         "TestView"
     }
 
-    fn render(&self, _app: &warpui::AppContext) -> Box<dyn warpui::Element> {
+    fn render(&self, _app: &leanterm_ui::AppContext) -> Box<dyn leanterm_ui::Element> {
         ChildView::new(&self.editor).finish()
     }
 }
@@ -87,7 +87,7 @@ fn model_from_markdown(
 
 /// Register the singletons and host window that a [`NotebooksEditorModel`] depends on, returning
 /// the window a model should bind to.
-fn setup_editor_window(app: &mut App, should_initialize_cloud_model: bool) -> warpui::WindowId {
+fn setup_editor_window(app: &mut App, should_initialize_cloud_model: bool) -> leanterm_ui::WindowId {
     let global_resources = GlobalResourceHandles::mock(app);
     app.add_singleton_model(|_| GlobalResourceHandlesProvider::new(global_resources));
     app.add_singleton_model(|_| ActiveSession::default());

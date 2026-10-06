@@ -1,9 +1,9 @@
 use std::path::Path;
 
-use warp_core::ui::appearance::Appearance;
-use warpui::Element;
-use warpui::assets::asset_cache::AssetSource;
-use warpui::elements::{CacheOption, Icon, Image};
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_ui::Element;
+use leanterm_ui::assets::asset_cache::AssetSource;
+use leanterm_ui::elements::{CacheOption, Icon, Image};
 
 /// Returns a special icon for the given file path, if any.
 pub fn icon_from_file_path(path: &str, appearance: &Appearance) -> Option<Box<dyn Element>> {

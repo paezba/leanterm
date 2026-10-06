@@ -5,26 +5,26 @@ use lsp::LspManagerModel;
 use pathfinder_color::ColorU;
 use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::vec2f;
-use warp_core::channel::{Channel, ChannelState};
-use warp_core::ui::appearance::Appearance;
-use warp_core::ui::icons::ICON_DIMENSIONS;
-use warp_editor::render::element::VerticalExpansionBehavior;
-use warp_util::path::LineAndColumnArg;
+use leanterm_core::channel::{Channel, ChannelState};
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_core::ui::icons::ICON_DIMENSIONS;
+use leanterm_editor::render::element::VerticalExpansionBehavior;
+use leanterm_util::path::LineAndColumnArg;
 #[cfg(feature = "local_fs")]
-use warpui::clipboard::ClipboardContent;
-use warpui::elements::{
+use leanterm_ui::clipboard::ClipboardContent;
+use leanterm_ui::elements::{
     AcceptedByDropTarget, Align, Border, ChildAnchor, ChildView, Clipped, ConstrainedBox,
     Container, CornerRadius, CrossAxisAlignment, Draggable, DraggableState, DropTarget, Empty,
     Expanded, Flex, Hoverable, MainAxisAlignment, MainAxisSize, MouseStateHandle,
     OffsetPositioning, Padding, ParentAnchor, ParentElement, ParentOffsetBounds, Radius, Rect,
     SavePosition, Shrinkable, Stack, Text,
 };
-use warpui::fonts::{Properties, Style, Weight};
-use warpui::keymap::EditableBinding;
-use warpui::text::point::Point;
-use warpui::text_layout::ClipConfig;
-use warpui::ui_components::components::UiComponent;
-use warpui::{
+use leanterm_ui::fonts::{Properties, Style, Weight};
+use leanterm_ui::keymap::EditableBinding;
+use leanterm_ui::text::point::Point;
+use leanterm_ui::text_layout::ClipConfig;
+use leanterm_ui::ui_components::components::UiComponent;
+use leanterm_ui::{
     AppContext, Element, Entity, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle, WindowId, id,
 };
@@ -368,8 +368,8 @@ impl CodeView {
                             ctx,
                         )
                         .with_horizontal_scrollbar_appearance(
-                            warpui::elements::new_scrollable::ScrollableAppearance::new(
-                                warpui::elements::ScrollbarWidth::Auto,
+                            leanterm_ui::elements::new_scrollable::ScrollableAppearance::new(
+                                leanterm_ui::elements::ScrollbarWidth::Auto,
                                 true,
                             ),
                         )
@@ -408,8 +408,8 @@ impl CodeView {
                 ctx,
             )
             .with_horizontal_scrollbar_appearance(
-                warpui::elements::new_scrollable::ScrollableAppearance::new(
-                    warpui::elements::ScrollbarWidth::Auto,
+                leanterm_ui::elements::new_scrollable::ScrollableAppearance::new(
+                    leanterm_ui::elements::ScrollbarWidth::Auto,
                     true,
                 ),
             )

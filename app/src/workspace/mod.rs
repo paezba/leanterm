@@ -28,11 +28,11 @@ pub use view::{
     NEW_SESSION_MENU_BUTTON_POSITION_ID, NEW_TAB_BUTTON_POSITION_ID, PANEL_HEADER_HEIGHT,
     TAB_BAR_HEIGHT, TOTAL_TAB_BAR_HEIGHT, WORKSPACE_PADDING, Workspace,
 };
-use warp_core::context_flag::ContextFlag;
-use warpui::AppContext;
-use warpui::accessibility::AccessibilityVerbosity;
-use warpui::elements::DropTargetData;
-use warpui::keymap::{BindingDescription, EditableBinding, FixedBinding};
+use leanterm_core::context_flag::ContextFlag;
+use leanterm_ui::AppContext;
+use leanterm_ui::accessibility::AccessibilityVerbosity;
+use leanterm_ui::elements::DropTargetData;
+use leanterm_ui::keymap::{BindingDescription, EditableBinding, FixedBinding};
 
 use crate::channel::{Channel, ChannelState};
 use crate::event_sources::PaletteSource;
@@ -44,8 +44,8 @@ use crate::util::bindings::{self, CustomAction, cmd_or_ctrl_shift, is_binding_pt
 use crate::{code, modal, notebooks, tab_configs};
 
 // Helper function to access panel header corner radius from other modules
-pub fn panel_header_corner_radius() -> warpui::elements::CornerRadius {
-    warpui::elements::CornerRadius::with_top(warpui::elements::Radius::Pixels(8.))
+pub fn panel_header_corner_radius() -> leanterm_ui::elements::CornerRadius {
+    leanterm_ui::elements::CornerRadius::with_top(leanterm_ui::elements::Radius::Pixels(8.))
 }
 
 pub use registry::WorkspaceRegistry;
@@ -62,7 +62,7 @@ use crate::workspace::view::{
 pub fn init(app: &mut AppContext) {
     app.add_singleton_model(|_| WorkspaceRegistry::new());
     app.add_singleton_model(|_| cross_window_tab_drag::CrossWindowTabDrag::new());
-    use warpui::keymap::macros::*;
+    use leanterm_ui::keymap::macros::*;
     app.register_binding_validator::<Workspace>(is_binding_pty_compliant);
 
     modal::init(app);
@@ -884,7 +884,7 @@ pub fn init(app: &mut AppContext) {
 }
 
 fn add_open_setting_pages_as_editable_binding(app: &mut AppContext) {
-    use warpui::keymap::macros::*;
+    use leanterm_ui::keymap::macros::*;
 
     // Add the ability to open setting modals to the command palette.
     app.register_editable_bindings([
@@ -962,7 +962,7 @@ fn add_open_setting_pages_as_editable_binding(app: &mut AppContext) {
 }
 
 fn add_overflow_menu_items_as_editable_binding(app: &mut AppContext) {
-    use warpui::keymap::macros::*;
+    use leanterm_ui::keymap::macros::*;
 
     // Add the ability to open all overflow menu items to the command palette.
     app.register_editable_bindings([

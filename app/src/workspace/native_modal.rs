@@ -1,14 +1,14 @@
 use settings::Setting as _;
-use warp_core::ui::theme::Fill;
-use warpui::elements::{Align, Container, Empty, Flex, MouseStateHandle, ParentElement};
-use warpui::fonts::Weight;
-use warpui::keymap::FixedBinding;
-use warpui::modals::{AlertDialogWithCallbacks, AppModalCallback};
-use warpui::platform::Cursor;
-use warpui::ui_components::button::ButtonVariant;
-use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
-use warpui::ui_components::text::Span;
-use warpui::{
+use leanterm_core::ui::theme::Fill;
+use leanterm_ui::elements::{Align, Container, Empty, Flex, MouseStateHandle, ParentElement};
+use leanterm_ui::fonts::Weight;
+use leanterm_ui::keymap::FixedBinding;
+use leanterm_ui::modals::{AlertDialogWithCallbacks, AppModalCallback};
+use leanterm_ui::platform::Cursor;
+use leanterm_ui::ui_components::button::ButtonVariant;
+use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
+use leanterm_ui::ui_components::text::Span;
+use leanterm_ui::{
     AppContext, Element, Entity, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
 };
 
@@ -17,7 +17,7 @@ use crate::terminal::general_settings::{GeneralSettings, GeneralSettingsChangedE
 use crate::ui_components::dialog::{Dialog, dialog_styles};
 
 pub(super) fn init(app: &mut AppContext) {
-    use warpui::keymap::macros::*;
+    use leanterm_ui::keymap::macros::*;
 
     app.register_fixed_bindings(vec![
         FixedBinding::new("escape", NativeModalAction::Close, id!("NativeModal")),
@@ -120,7 +120,7 @@ impl View for NativeModal {
         "NativeModal"
     }
 
-    fn render(&self, app: &warpui::AppContext) -> Box<dyn warpui::Element> {
+    fn render(&self, app: &leanterm_ui::AppContext) -> Box<dyn leanterm_ui::Element> {
         let Some(alert_dialog) = self.alert_dialog.as_ref() else {
             log::warn!("No alert dialog was set for the native modal");
             return Empty::new().finish();

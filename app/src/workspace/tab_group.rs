@@ -1,7 +1,7 @@
 //! Tab group data model.
 
 use uuid::Uuid;
-use warpui::elements::DraggableState;
+use leanterm_ui::elements::DraggableState;
 
 use crate::tab::SelectedTabColor;
 

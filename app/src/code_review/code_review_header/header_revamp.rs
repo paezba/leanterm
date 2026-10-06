@@ -6,12 +6,12 @@
 //! Separated into its own module so the two codepaths are easy to distinguish.
 
 use pathfinder_geometry::vector::vec2f;
-use warpui::elements::{
+use leanterm_ui::elements::{
     ChildAnchor, ChildView, Clipped, ConstrainedBox, Container, CrossAxisAlignment, Flex,
     MainAxisAlignment, MainAxisSize, OffsetPositioning, ParentAnchor, ParentElement,
     ParentOffsetBounds, Shrinkable, Stack,
 };
-use warpui::{Element, ViewHandle};
+use leanterm_ui::{Element, ViewHandle};
 
 use super::CodeReviewHeader;
 use crate::appearance::Appearance;
@@ -87,8 +87,8 @@ impl CodeReviewHeader {
 
     fn render_file_nav_button(button: &ViewHandle<ActionButton>) -> Box<dyn Element> {
         ConstrainedBox::new(ChildView::new(button).finish())
-            .with_height(warp_core::ui::icons::ICON_DIMENSIONS)
-            .with_width(warp_core::ui::icons::ICON_DIMENSIONS)
+            .with_height(leanterm_core::ui::icons::ICON_DIMENSIONS)
+            .with_width(leanterm_core::ui::icons::ICON_DIMENSIONS)
             .finish()
     }
 
@@ -138,8 +138,8 @@ impl CodeReviewHeader {
     ) -> Box<dyn Element> {
         let button_container = Container::new(
             ConstrainedBox::new(ChildView::new(header_dropdown_button).finish())
-                .with_height(warp_core::ui::icons::ICON_DIMENSIONS)
-                .with_width(warp_core::ui::icons::ICON_DIMENSIONS)
+                .with_height(leanterm_core::ui::icons::ICON_DIMENSIONS)
+                .with_width(leanterm_core::ui::icons::ICON_DIMENSIONS)
                 .finish(),
         )
         .finish();

@@ -6,13 +6,13 @@ use itertools::Itertools as _;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use version_compare::Version;
-use warp::integration_testing::terminal::util::{
+use leanterm::integration_testing::terminal::util::{
     ExpectedOutput, current_shell_starter_and_version, default_histfile_directory,
 };
-use warp::integration_testing::view_getters;
-use warp::terminal::shell;
-use warp::terminal::shell::ShellType;
-use warpui_core::{App, WindowId};
+use leanterm::integration_testing::view_getters;
+use leanterm::terminal::shell;
+use leanterm::terminal::shell::ShellType;
+use leanterm_ui_core::{App, WindowId};
 
 use crate::builder::cargo_target_tmpdir;
 

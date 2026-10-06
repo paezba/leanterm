@@ -2,20 +2,20 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use pathfinder_color::ColorU;
-use warp_core::ui::Icon;
-use warp_errors::report_error;
-use warp_util::path::LineAndColumnArg;
-use warpui::elements::{
+use leanterm_core::ui::Icon;
+use leanterm_errors::report_error;
+use leanterm_util::path::LineAndColumnArg;
+use leanterm_ui::elements::{
     ChildAnchor, ChildView, Clipped, ConstrainedBox, Container, CrossAxisAlignment, DragBarSide,
     Element, Empty, Flex, MainAxisAlignment, MainAxisSize, MouseStateHandle, ParentElement,
     PositionedElementAnchor, Resizable, ResizableStateHandle, Shrinkable, Text,
     resizable_state_handle,
 };
-use warpui::fonts::{Properties, Weight};
-use warpui::keymap::EditableBinding;
-use warpui::platform::Cursor;
-use warpui::ui_components::components::UiComponent;
-use warpui::{
+use leanterm_ui::fonts::{Properties, Weight};
+use leanterm_ui::keymap::EditableBinding;
+use leanterm_ui::platform::Cursor;
+use leanterm_ui::ui_components::components::UiComponent;
+use leanterm_ui::{
     AppContext, Entity, EntityId, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle, WeakViewHandle,
 };
@@ -118,7 +118,7 @@ impl CodeReviewState {
                 dropdown.set_font_color(font_color, ctx);
                 dropdown.set_font_size(ui_font_size, ctx);
                 dropdown.set_vertical_margin(0., ctx);
-                dropdown.set_top_bar_height(warp_core::ui::icons::ICON_DIMENSIONS, ctx);
+                dropdown.set_top_bar_height(leanterm_core::ui::icons::ICON_DIMENSIONS, ctx);
                 dropdown.set_padding(HEADER_BUTTON_PADDING, ctx);
 
                 // The font color above is derived from the active theme and
@@ -316,7 +316,7 @@ pub struct RightPanelView {
 
 impl RightPanelView {
     pub fn init(app: &mut AppContext) {
-        use warpui::keymap::macros::*;
+        use leanterm_ui::keymap::macros::*;
 
         app.register_editable_bindings([EditableBinding::new(
             "workspace:toggle_maximize_code_review_panel",
@@ -780,8 +780,8 @@ impl RightPanelView {
     #[cfg_attr(not(feature = "local_fs"), allow(dead_code))]
     fn render_maximize_pane_button(&self) -> Box<dyn Element> {
         ConstrainedBox::new(ChildView::new(&self.maximize_button).finish())
-            .with_height(warp_core::ui::icons::ICON_DIMENSIONS)
-            .with_width(warp_core::ui::icons::ICON_DIMENSIONS)
+            .with_height(leanterm_core::ui::icons::ICON_DIMENSIONS)
+            .with_width(leanterm_core::ui::icons::ICON_DIMENSIONS)
             .finish()
     }
 

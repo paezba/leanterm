@@ -4,16 +4,16 @@ use std::path::{Component, Path, PathBuf};
 
 use anyhow::Result;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-pub use warp_core::ui::color::blend::Blend;
-use warp_core::ui::color::pick_foreground_color;
-pub use warp_core::ui::theme::*;
-use warpui::assets::asset_cache::AssetSource;
-use warpui::color::ColorU;
-use warpui::elements::{
+pub use leanterm_core::ui::color::blend::Blend;
+use leanterm_core::ui::color::pick_foreground_color;
+pub use leanterm_core::ui::theme::*;
+use leanterm_ui::assets::asset_cache::AssetSource;
+use leanterm_ui::color::ColorU;
+use leanterm_ui::elements::{
     Align, Border, ConstrainedBox, Container, Element, Empty, Flex, ParentElement, Rect,
     Shrinkable, Stack, Text,
 };
-use warpui::fonts::FamilyId;
+use leanterm_ui::fonts::FamilyId;
 
 use super::default_themes::*;
 use super::theme_creator::{pick_accent_color_from_options, top_colors_for_image};
@@ -679,9 +679,9 @@ pub fn render_preview(
         thumbnail.add_child(
             Shrinkable::new(
                 1.,
-                warpui::elements::Image::new(
+                leanterm_ui::elements::Image::new(
                     background_image.source(),
-                    warpui::elements::CacheOption::BySize,
+                    leanterm_ui::elements::CacheOption::BySize,
                 )
                 .cover()
                 .finish(),

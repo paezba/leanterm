@@ -1,10 +1,10 @@
 use std::path::PathBuf;
 
 use ::settings::ToggleableSetting;
-use warp_core::execution_mode::AppExecutionMode;
-use warp_errors::report_error;
-use warpui::windowing::WindowManager;
-use warpui::{AppContext, SingletonEntity, TypedActionView};
+use leanterm_core::execution_mode::AppExecutionMode;
+use leanterm_errors::report_error;
+use leanterm_ui::windowing::WindowManager;
+use leanterm_ui::{AppContext, SingletonEntity, TypedActionView};
 
 use crate::GlobalResourceHandlesProvider;
 use crate::app_state::get_app_state;

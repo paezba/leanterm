@@ -1,5 +1,5 @@
 use pathfinder_geometry::rect::RectF;
-use warpui::platform::WindowBounds;
+use leanterm_ui::platform::WindowBounds;
 
 use super::*;
 

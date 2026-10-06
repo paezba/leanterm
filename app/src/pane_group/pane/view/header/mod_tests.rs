@@ -1,7 +1,7 @@
-use warp_core::ui::appearance::Appearance;
-use warpui::elements::Empty;
-use warpui::platform::WindowStyle;
-use warpui::{App, AppContext, Element, Entity, TypedActionView, View, ViewContext};
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_ui::elements::Empty;
+use leanterm_ui::platform::WindowStyle;
+use leanterm_ui::{App, AppContext, Element, Entity, TypedActionView, View, ViewContext};
 
 use super::{Event, OpenOverlay};
 use crate::NetworkStatus;

@@ -8,9 +8,9 @@ use repo_metadata::watcher::DirectoryWatcher;
 #[cfg(feature = "local_fs")]
 use tempfile::TempDir;
 #[cfg(feature = "local_fs")]
-use warp_files::FileModel;
-use warpui::platform::WindowStyle;
-use warpui::{AddSingletonModel, App, ViewHandle};
+use leanterm_files::FileModel;
+use leanterm_ui::platform::WindowStyle;
+use leanterm_ui::{AddSingletonModel, App, ViewHandle};
 use watcher::HomeDirectoryWatcher;
 
 use super::*;

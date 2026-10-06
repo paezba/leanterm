@@ -1,4 +1,4 @@
-use warpui::{Entity, ModelContext};
+use leanterm_ui::{Entity, ModelContext};
 
 use crate::editor::InteractionState;
 

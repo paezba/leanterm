@@ -6,10 +6,10 @@ use instant::Instant;
 use objc2::rc::{Retained, autoreleasepool};
 use objc2_app_kit::NSWorkspace;
 use objc2_foundation::{NSBundle, NSString, NSURL};
-use warp_core::AppId;
-use warp_core::channel::ChannelState;
-use warp_errors::report_error;
-use warpui::ApplicationBundleInfo;
+use leanterm_core::AppId;
+use leanterm_core::channel::ChannelState;
+use leanterm_errors::report_error;
+use leanterm_ui::ApplicationBundleInfo;
 
 use super::*;
 

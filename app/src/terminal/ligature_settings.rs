@@ -1,6 +1,6 @@
 use settings::macros::define_settings_group;
 use settings::{Setting, SupportedPlatforms};
-use warpui::{AppContext, SingletonEntity};
+use leanterm_ui::{AppContext, SingletonEntity};
 
 define_settings_group!(LigatureSettings, settings: [
     ligature_rendering_enabled: LigatureRenderingEnabled {

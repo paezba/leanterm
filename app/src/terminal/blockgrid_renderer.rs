@@ -2,10 +2,10 @@ use std::collections::HashMap;
 use std::ops::{Neg, RangeInclusive};
 
 use pathfinder_color::ColorU;
-use warpui::fonts::{FamilyId, Properties, Weight};
-use warpui::geometry::rect::RectF;
-use warpui::geometry::vector::{Vector2F, vec2f};
-use warpui::{AppContext, Element, EntityId, PaintContext};
+use leanterm_ui::fonts::{FamilyId, Properties, Weight};
+use leanterm_ui::geometry::rect::RectF;
+use leanterm_ui::geometry::vector::{Vector2F, vec2f};
+use leanterm_ui::{AppContext, Element, EntityId, PaintContext};
 
 use super::model::SecretHandle;
 use super::model::ansi::{CursorShape, CursorStyle};

@@ -25,12 +25,12 @@ use sum_tree::{self, Cursor, FilterCursor, SeekBias, SumTree};
 use time::{Global, Lamport};
 use undo::{LocalUndoStack, UndoHistory};
 use vec1::{Vec1, vec1};
-use warpui::color::ColorU;
-use warpui::text::point::Point;
-use warpui::text::words::is_default_word_boundary;
-use warpui::text::{BufferIndex, TextBuffer};
-use warpui::text_layout::TextStyle;
-use warpui::{Entity, ModelContext};
+use leanterm_ui::color::ColorU;
+use leanterm_ui::text::point::Point;
+use leanterm_ui::text::words::is_default_word_boundary;
+use leanterm_ui::text::{BufferIndex, TextBuffer};
+use leanterm_ui::text_layout::TextStyle;
+use leanterm_ui::{Entity, ModelContext};
 /// The public interfaces that we expose to the model.
 /// This should be a very limited set of APIs and should
 /// not expose the internal details of the buffer.
@@ -363,9 +363,9 @@ impl TextStyleOperation {
     ///
     /// # Example
     /// ```
-    /// use warpui::color::ColorU;
-    /// use warpui::text_layout::TextStyle;
-    /// use warp::editor::TextStyleOperation;
+    /// use leanterm_ui::color::ColorU;
+    /// use leanterm_ui::text_layout::TextStyle;
+    /// use leanterm::editor::TextStyleOperation;
     /// TextStyleOperation::apply_text_style_operation(
     ///     TextStyle::default(),
     ///     TextStyleOperation::default().set_error_underline_color(ColorU::black()),
@@ -1645,9 +1645,9 @@ impl Buffer {
     ///
     /// # Example
     /// ```ignore
-    /// use warpui::{color::ColorU, App, ModelHandle};
-    /// use warp::Assets;
-    /// use warp::editor::model::buffer::{Buffer, TextStyleOperation, EditOrigin};
+    /// use leanterm_ui::{color::ColorU, App, ModelHandle};
+    /// use leanterm::Assets;
+    /// use leanterm::editor::model::buffer::{Buffer, TextStyleOperation, EditOrigin};
     /// use string_offset::CharOffset;
     /// App::test((), |mut app| async move {
     ///     let buffer_model: &mut ModelHandle<Buffer> =

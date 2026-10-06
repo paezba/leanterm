@@ -1,6 +1,6 @@
 use settings::Setting as _;
-use warpui::fonts::FamilyId;
-use warpui::{AddSingletonModel, AppContext, AssetProvider, Entity, ModelContext, SingletonEntity};
+use leanterm_ui::fonts::FamilyId;
+use leanterm_ui::{AddSingletonModel, AppContext, AssetProvider, Entity, ModelContext, SingletonEntity};
 
 #[cfg(target_os = "macos")]
 mod macos_app_icon {
@@ -8,14 +8,14 @@ mod macos_app_icon {
     pub use objc2::{AnyThread, MainThreadMarker};
     pub use objc2_app_kit::{NSApplication, NSImage, NSWorkspace, NSWorkspaceIconCreationOptions};
     pub use objc2_foundation::{NSBundle, NSString, ns_string};
-    pub use warp_core::channel::{Channel, ChannelState};
+    pub use leanterm_core::channel::{Channel, ChannelState};
 
     pub use crate::settings::app_icon::{AppIcon, AppIconSettings, AppIconSettingsChangedEvent};
 }
 use anyhow::anyhow;
 #[cfg(target_os = "macos")]
 use macos_app_icon::*;
-pub use warp_core::ui::appearance::{Appearance, AppearanceEvent};
+pub use leanterm_core::ui::appearance::{Appearance, AppearanceEvent};
 
 use crate::ASSETS;
 use crate::settings::{
@@ -253,7 +253,7 @@ impl Entity for AppearanceManager {
 impl SingletonEntity for AppearanceManager {}
 
 fn load_default_monospace_font_family(ctx: &mut AppContext) -> anyhow::Result<FamilyId> {
-    warpui::fonts::Cache::handle(ctx).update(ctx, |font_cache, _| {
+    leanterm_ui::fonts::Cache::handle(ctx).update(ctx, |font_cache, _| {
         let default_monospace_font_family = font_cache.load_family_from_bytes(
             "Hack",
             vec![
@@ -280,7 +280,7 @@ fn load_default_monospace_font_family(ctx: &mut AppContext) -> anyhow::Result<Fa
 }
 
 fn load_default_ui_font_family(ctx: &mut AppContext) -> anyhow::Result<FamilyId> {
-    warpui::fonts::Cache::handle(ctx).update(ctx, |font_cache, _| {
+    leanterm_ui::fonts::Cache::handle(ctx).update(ctx, |font_cache, _| {
         let roboto = font_cache.load_family_from_bytes(
             "Roboto",
             vec![
@@ -317,7 +317,7 @@ fn load_default_ui_font_family(ctx: &mut AppContext) -> anyhow::Result<FamilyId>
 }
 
 fn load_password_font_family(ctx: &mut AppContext) -> anyhow::Result<FamilyId> {
-    warpui::fonts::Cache::handle(ctx).update(ctx, |font_cache, _| {
+    leanterm_ui::fonts::Cache::handle(ctx).update(ctx, |font_cache, _| {
         font_cache.load_family_from_bytes(
             "PasswordCircle",
             vec![ASSETS.get("bundled/fonts/password.ttf")?.to_vec()],
@@ -337,10 +337,10 @@ fn get_or_load_font_family(_font_name: &str, _ctx: &mut AppContext) -> Option<Fa
 /// the font cache in case we are using a pre-bundled font like Hack.
 /// Then we fall back to loading a system font.
 fn get_or_load_font_family(font_name: &str, ctx: &mut AppContext) -> Option<FamilyId> {
-    warpui::fonts::Cache::handle(ctx).update(ctx, |font_cache, _| {
+    leanterm_ui::fonts::Cache::handle(ctx).update(ctx, |font_cache, _| {
         match font_cache.get_or_load_system_font(font_name) {
             Ok(family) => {
-                let font_id = font_cache.select_font(family, warpui::fonts::Properties::default());
+                let font_id = font_cache.select_font(family, leanterm_ui::fonts::Properties::default());
 
                 // Validate that the font contains the `m` glyph since this is assumed in
                 // various parts of the code. We already do this when surfacing fonts in the font

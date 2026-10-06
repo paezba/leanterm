@@ -1,5 +1,5 @@
 [package]
-authors = ["Warp Team <dev@warp.dev>"]
+authors = ["Leanterm contributors"]
 name = "sum_tree"
 version = "0.1.0"
 edition = "2024"
@@ -7,7 +7,7 @@ publish.workspace = true
 license.workspace = true
 
 [dependencies]
-warp_errors.workspace = true
+leanterm_errors.workspace = true
 arrayvec.workspace = true
 log.workspace = true
 

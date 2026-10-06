@@ -3,7 +3,7 @@ use std::path::Path;
 
 use settings::SupportedPlatforms;
 use settings::macros::define_settings_group;
-use warp_core::ui::theme::AnsiColorIdentifier;
+use leanterm_core::ui::theme::AnsiColorIdentifier;
 
 #[derive(
     Default,

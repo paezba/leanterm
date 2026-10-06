@@ -2,16 +2,16 @@ use std::default::Default;
 use std::fs;
 use std::fs::remove_file;
 
-use warpui::assets::asset_cache::AssetSource;
-use warpui::elements::{
+use leanterm_ui::assets::asset_cache::AssetSource;
+use leanterm_ui::elements::{
     Container, CornerRadius, CrossAxisAlignment, Flex, MainAxisSize, MouseStateHandle,
     ParentElement, Radius, SavePosition, Shrinkable, Text,
 };
-use warpui::fonts::Weight;
-use warpui::platform::Cursor;
-use warpui::ui_components::button::ButtonVariant;
-use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
-use warpui::{AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext};
+use leanterm_ui::fonts::Weight;
+use leanterm_ui::platform::Cursor;
+use leanterm_ui::ui_components::button::ButtonVariant;
+use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
+use leanterm_ui::{AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext};
 
 use crate::appearance::Appearance;
 use crate::settings::{ThemeSettings, active_theme_kind};

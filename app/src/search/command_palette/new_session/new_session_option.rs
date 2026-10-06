@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use std::fmt;
 
-use warpui::Action;
+use leanterm_ui::Action;
 
 use crate::WorkspaceAction;
 use crate::event_sources::AddTabWithShellSource;

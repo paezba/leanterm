@@ -1,5 +1,5 @@
 use url::Url;
-use warp_errors::report_error;
+use leanterm_errors::report_error;
 
 const DEFAULT_TITLE: &str = "Warp";
 const BASE_APP_PATH: &str = "/app";

@@ -6,12 +6,12 @@ use std::time::Duration;
 use futures::{FutureExt as _, pin_mut};
 use itertools::Itertools;
 use parking_lot::FairMutex;
-use warp_completer::completer::CommandExitStatus;
-use warp_core::r#async::debounce;
-use warp_core::user_preferences::GetUserPreferences;
-use warp_errors::report_error;
-use warpui::r#async::{SpawnedFutureHandle, Timer};
-use warpui::{
+use leanterm_completer::completer::CommandExitStatus;
+use leanterm_core::r#async::debounce;
+use leanterm_core::user_preferences::GetUserPreferences;
+use leanterm_errors::report_error;
+use leanterm_ui::r#async::{SpawnedFutureHandle, Timer};
+use leanterm_ui::{
     AppContext, Entity, ModelAsRef, ModelContext, ModelHandle, SingletonEntity, ViewHandle,
     WeakModelHandle,
 };
@@ -608,7 +608,7 @@ impl CurrentPrompt {
         current_dir_path: Option<String>,
         environment_variables: Option<HashMap<String, String>>,
         timeout: Option<Duration>,
-    ) -> (Option<warp_completer::completer::CommandOutput>, bool) {
+    ) -> (Option<leanterm_completer::completer::CommandOutput>, bool) {
         let command_future = session
             .execute_command(
                 &command,
@@ -1201,7 +1201,7 @@ impl CurrentPrompt {
     #[cfg(test)]
     pub fn await_generators(
         &self,
-        ctx: &mut warpui::AppContext,
+        ctx: &mut leanterm_ui::AppContext,
     ) -> futures_util::future::BoxFuture<'static, ()> {
         use futures_util::FutureExt;
         use itertools::Itertools;

@@ -3,13 +3,13 @@ use std::sync::Arc;
 use fuzzy_match::FuzzyMatchResult;
 use ordered_float::OrderedFloat;
 use pathfinder_color::ColorU;
-use warpui::elements::{
+use leanterm_ui::elements::{
     Align, ConstrainedBox, Container, Flex, Highlight, ParentElement, Shrinkable, Text,
 };
-use warpui::fonts::{Properties, Weight};
-use warpui::keymap::{DescriptionContext, Keystroke};
-use warpui::ui_components::components::UiComponent;
-use warpui::{AppContext, Element, SingletonEntity};
+use leanterm_ui::fonts::{Properties, Weight};
+use leanterm_ui::keymap::{DescriptionContext, Keystroke};
+use leanterm_ui::ui_components::components::UiComponent;
+use leanterm_ui::{AppContext, Element, SingletonEntity};
 
 use crate::appearance::Appearance;
 use crate::search::command_palette::mixer::CommandPaletteItemAction;

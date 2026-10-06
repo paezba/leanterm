@@ -1,21 +1,21 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use warp_core::ui::Icon;
-use warp_core::ui::theme::color::internal_colors;
-use warp_editor::editor::NavigationKey;
-use warpui::elements::{
+use leanterm_core::ui::Icon;
+use leanterm_core::ui::theme::color::internal_colors;
+use leanterm_editor::editor::NavigationKey;
+use leanterm_ui::elements::{
     Border, ChildView, ClippedScrollStateHandle, ClippedScrollable, ConstrainedBox, Container,
     CornerRadius, CrossAxisAlignment, Fill, Flex, Hoverable, MainAxisAlignment, MainAxisSize,
     MouseStateHandle, Padding, ParentElement, Radius, SavePosition, ScrollTarget,
     ScrollToPositionMode, ScrollbarWidth, Shrinkable, Text,
 };
-use warpui::fonts::{Properties, Weight};
-use warpui::keymap::macros::*;
-use warpui::keymap::{FixedBinding, Keystroke};
-use warpui::platform::Cursor;
-use warpui::ui_components::components::UiComponent;
-use warpui::{
+use leanterm_ui::fonts::{Properties, Weight};
+use leanterm_ui::keymap::macros::*;
+use leanterm_ui::keymap::{FixedBinding, Keystroke};
+use leanterm_ui::platform::Cursor;
+use leanterm_ui::ui_components::components::UiComponent;
+use leanterm_ui::{
     AppContext, Element, Entity, FocusContext, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle,
 };

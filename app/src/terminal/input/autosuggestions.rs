@@ -4,18 +4,18 @@ use std::path::PathBuf;
 #[cfg(feature = "local_fs")]
 use std::time::Duration;
 
-use warp_completer::completer::{
+use leanterm_completer::completer::{
     self, AliasExpansionResult, CompleterOptions, CompletionsFallbackStrategy, MatchStrategy,
     expand_command_aliases,
 };
-use warp_completer::meta::Spanned;
-use warp_completer::parsers::ParsedExpression;
+use leanterm_completer::meta::Spanned;
+use leanterm_completer::parsers::ParsedExpression;
 #[cfg(feature = "local_fs")]
-use warp_completer::parsers::hir::ArgType;
-use warp_completer::parsers::hir::{Command, Expression, FlagType};
+use leanterm_completer::parsers::hir::ArgType;
+use leanterm_completer::parsers::hir::{Command, Expression, FlagType};
 #[cfg(feature = "local_fs")]
-use warpui::r#async::FutureExt;
-use warpui::{AppContext, SingletonEntity};
+use leanterm_ui::r#async::FutureExt;
+use leanterm_ui::{AppContext, SingletonEntity};
 
 use super::CompleterData;
 use crate::completer::SessionContext;

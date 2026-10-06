@@ -8,12 +8,12 @@ pub use header_content::{
     HeaderContent, HeaderRenderContext, StandardHeader, StandardHeaderOptions,
 };
 use pathfinder_geometry::rect::RectF;
-use warpui::elements::{
+use leanterm_ui::elements::{
     Border, ConstrainedBox, Container, DropTarget, DropTargetData, Flex, MainAxisSize,
     ParentElement, SavePosition, Shrinkable,
 };
-use warpui::presenter::ChildView;
-use warpui::{
+use leanterm_ui::presenter::ChildView;
+use leanterm_ui::{
     AppContext, Element, Entity, EntityId, ModelHandle, SingletonEntity, TypedActionView, View,
     ViewContext, ViewHandle,
 };
@@ -405,7 +405,7 @@ impl<P: BackingView> View for PaneView<P> {
         .finish()
     }
 
-    fn keymap_context(&self, _ctx: &AppContext) -> warpui::keymap::Context {
+    fn keymap_context(&self, _ctx: &AppContext) -> leanterm_ui::keymap::Context {
         Self::default_keymap_context()
     }
 

@@ -1,6 +1,6 @@
-use warp_core::ui::appearance::Appearance;
-use warp_core::ui::theme::AnsiColorIdentifier;
-use warpui::{AppContext, SingletonEntity};
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_core::ui::theme::AnsiColorIdentifier;
+use leanterm_ui::{AppContext, SingletonEntity};
 
 use crate::ui_components::icons::Icon;
 
@@ -13,8 +13,8 @@ pub fn icon_size(app: &AppContext) -> f32 {
     )
 }
 
-pub fn green_check_icon(appearance: &Appearance) -> warpui::elements::Icon {
-    warpui::elements::Icon::new(
+pub fn green_check_icon(appearance: &Appearance) -> leanterm_ui::elements::Icon {
+    leanterm_ui::elements::Icon::new(
         Icon::Check.into(),
         AnsiColorIdentifier::Green.to_ansi_color(&appearance.theme().terminal_colors().normal),
     )

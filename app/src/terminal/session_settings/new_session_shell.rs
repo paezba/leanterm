@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
-use warp_util::path::ShellFamily;
-use warpui::platform::OperatingSystem;
+use leanterm_util::path::ShellFamily;
+use leanterm_ui::platform::OperatingSystem;
 
 #[derive(
     Debug,

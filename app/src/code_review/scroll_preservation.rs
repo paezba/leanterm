@@ -1,9 +1,9 @@
-use warp_core::features::FeatureFlag;
-use warpui::elements::ScrollOffset;
-use warpui::units::Pixels;
+use leanterm_core::features::FeatureFlag;
+use leanterm_ui::elements::ScrollOffset;
+use leanterm_ui::units::Pixels;
 #[cfg(not(target_family = "wasm"))]
-use warpui::{AppContext, WeakViewHandle};
-use warpui::{ViewContext, ViewHandle};
+use leanterm_ui::{AppContext, WeakViewHandle};
+use leanterm_ui::{ViewContext, ViewHandle};
 
 #[cfg(not(target_family = "wasm"))]
 use super::FILE_HEADER_HEIGHT;

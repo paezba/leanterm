@@ -1,4 +1,4 @@
-use warpui_core::App;
+use leanterm_ui_core::App;
 
 use super::{NETWORK_LOGGING_MAX_ITEMS, NetworkLogItem, NetworkLogModel};
 

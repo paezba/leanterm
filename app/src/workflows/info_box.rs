@@ -2,21 +2,21 @@ use std::collections::HashMap;
 use std::ops::Range;
 
 use string_offset::CharOffset;
-use warp_core::settings::Setting;
-use warp_errors::report_error;
-use warpui::color::ColorU;
-use warpui::elements::{
+use leanterm_core::settings::Setting;
+use leanterm_errors::report_error;
+use leanterm_ui::color::ColorU;
+use leanterm_ui::elements::{
     self, Align, Border, Clipped, ClippedScrollStateHandle, ClippedScrollable, ConstrainedBox,
     Container, CornerRadius, CrossAxisAlignment, DropShadow, Flex, Highlight, MainAxisAlignment,
     MainAxisSize, MouseStateHandle, ParentElement, Radius, Rect, Shrinkable, Text,
 };
-use warpui::fonts::{Properties, Weight};
-use warpui::geometry::vector::Vector2F;
-use warpui::keymap::Keystroke;
-use warpui::text_layout::TextStyle;
-use warpui::ui_components::button::ButtonVariant;
-use warpui::ui_components::components::{UiComponent, UiComponentStyles};
-use warpui::{
+use leanterm_ui::fonts::{Properties, Weight};
+use leanterm_ui::geometry::vector::Vector2F;
+use leanterm_ui::keymap::Keystroke;
+use leanterm_ui::text_layout::TextStyle;
+use leanterm_ui::ui_components::button::ButtonVariant;
+use leanterm_ui::ui_components::components::{UiComponent, UiComponentStyles};
+use leanterm_ui::{
     AppContext, Element, Entity, EventContext, SingletonEntity, TypedActionView, View, ViewContext,
 };
 

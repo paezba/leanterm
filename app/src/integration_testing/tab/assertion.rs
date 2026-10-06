@@ -1,5 +1,5 @@
-use warpui::async_assert;
-use warpui::integration::AssertionCallback;
+use leanterm_ui::async_assert;
+use leanterm_ui::integration::AssertionCallback;
 
 use crate::integration_testing::terminal::util::ExpectedOutput;
 use crate::integration_testing::view_getters::pane_group_view;

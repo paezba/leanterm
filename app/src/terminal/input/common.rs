@@ -2,17 +2,17 @@ use std::sync::Arc;
 
 use pathfinder_geometry::vector::vec2f;
 use vim::vim::{VimMode, VimState};
-use warp_completer::completer::Description;
-use warpui::elements::{
+use leanterm_completer::completer::Description;
+use leanterm_ui::elements::{
     AnchorPair, Border, ChildAnchor, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment,
     DispatchEventResult, Element, EventHandler, Flex, OffsetPositioning, OffsetType, ParentAnchor,
     ParentElement, ParentOffsetBounds, PositionedElementOffsetBounds, PositioningAxis, Radius,
     Shrinkable, Stack, Text, XAxisAnchor,
 };
-use warpui::fonts::Weight;
-use warpui::presenter::ChildView;
-use warpui::ui_components::components::{UiComponent, UiComponentStyles};
-use warpui::{AppContext, ViewHandle};
+use leanterm_ui::fonts::Weight;
+use leanterm_ui::presenter::ChildView;
+use leanterm_ui::ui_components::components::{UiComponent, UiComponentStyles};
+use leanterm_ui::{AppContext, ViewHandle};
 
 use crate::appearance::Appearance;
 use crate::terminal::input::{Input, InputAction, InputSuggestionsMode, MenuPositioning};

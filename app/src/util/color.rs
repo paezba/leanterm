@@ -1,2 +1,2 @@
-pub use warp_core::ui::color::contrast::*;
-pub use warp_core::ui::color::*;
+pub use leanterm_core::ui::color::contrast::*;
+pub use leanterm_core::ui::color::*;

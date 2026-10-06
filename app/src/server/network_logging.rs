@@ -2,8 +2,8 @@ use std::fmt;
 
 use bounded_vec_deque::BoundedVecDeque;
 use chrono::{DateTime, FixedOffset};
-use warp_errors::report_error;
-use warpui_core::{Entity, ModelContext, SingletonEntity};
+use leanterm_errors::report_error;
+use leanterm_ui_core::{Entity, ModelContext, SingletonEntity};
 
 /// Maximum number of network log items retained in memory. Matches the
 /// previous file-rotation threshold so the pane surface behaves consistently

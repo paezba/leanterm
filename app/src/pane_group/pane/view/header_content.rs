@@ -3,10 +3,10 @@
 //! This module provides the infrastructure for backing views to declaratively
 //! specify their header content without worrying about draggable behavior.
 
-use warpui::Element;
-use warpui::elements::{DraggableState, MouseStateHandle};
-use warpui::fonts::Properties;
-use warpui::text_layout::ClipConfig;
+use leanterm_ui::Element;
+use leanterm_ui::elements::{DraggableState, MouseStateHandle};
+use leanterm_ui::fonts::Properties;
+use leanterm_ui::text_layout::ClipConfig;
 
 /// Context provided to backing views when rendering header content.
 ///

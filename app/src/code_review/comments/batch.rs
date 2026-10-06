@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
-use warp_editor::render::model::LineCount;
-use warpui::{Entity, ModelContext};
+use leanterm_editor::render::model::LineCount;
+use leanterm_ui::{Entity, ModelContext};
 
 use super::{AttachedReviewComment, AttachedReviewCommentTarget, CommentId};
 use crate::code::editor::EditorReviewComment;

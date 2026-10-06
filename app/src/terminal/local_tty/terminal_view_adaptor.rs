@@ -4,8 +4,8 @@ use std::sync::mpsc::SyncSender;
 
 use parking_lot::FairMutex;
 #[cfg(windows)]
-use warpui::ModelHandle;
-use warpui::{AppContext, ViewHandle, WindowId};
+use leanterm_ui::ModelHandle;
+use leanterm_ui::{AppContext, ViewHandle, WindowId};
 
 use super::terminal_manager::{TerminalManager, TerminalSurfaceInit, TerminalSurfaceResult};
 use crate::context_chips::current_prompt::CurrentPrompt;

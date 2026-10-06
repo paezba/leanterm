@@ -6,9 +6,9 @@ use async_recursion::async_recursion;
 use async_trait::async_trait;
 use pathfinder_color::ColorU;
 use serde::Deserialize;
-use warp_core::ui::color::hex_color::coloru_from_hex_string;
-use warp_core::ui::theme::{AnsiColor, AnsiColors, TerminalColors, WarpTheme};
-use warpui::fonts::FontInfo;
+use leanterm_core::ui::color::hex_color::coloru_from_hex_string;
+use leanterm_core::ui::theme::{AnsiColor, AnsiColors, TerminalColors, WarpTheme};
+use leanterm_ui::fonts::FontInfo;
 
 use super::config::{
     Config, ConfigError, ImportableSetting, ParseableConfig, SettingType, ThemeType,

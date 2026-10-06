@@ -1,7 +1,7 @@
 use code_diff::workspace::WorkspaceMetadata;
 use fuzzy_match::{FuzzyMatchResult, match_indices_case_insensitive};
 use itertools::Itertools;
-use warpui::{AppContext, Entity, SingletonEntity};
+use leanterm_ui::{AppContext, Entity, SingletonEntity};
 
 use super::RepoSearchItem;
 use crate::persisted_workspace::PersistedWorkspace;

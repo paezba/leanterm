@@ -1,5 +1,5 @@
-use warpui::Element;
-use warpui::elements::{MouseStateHandle, Text};
+use leanterm_ui::Element;
+use leanterm_ui::elements::{MouseStateHandle, Text};
 
 use super::{
     InlineBannerButtonState, InlineBannerCloseButton, InlineBannerContent, InlineBannerStyle,

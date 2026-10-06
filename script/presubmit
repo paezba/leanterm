@@ -25,11 +25,11 @@ echo "Running clippy..."
 # TODO(vorporeal): Re-enable the `all-features` flag once we've fixed things.
 cargo clippy --workspace --all-targets --tests -- -D warnings
 # Also lint the default GUI configuration used by `cargo run` and `./script/run`.
-cargo clippy -p warp --all-targets --tests -- -D warnings
+cargo clippy -p leanterm --all-targets --tests -- -D warnings
 echo "clippy succeeded..."
 
 echo "Running clang-format..."
-./script/run-clang-format.py -r --extensions 'c,h,cpp,m' ./crates/warpui/src/ ./app/src/
+./script/run-clang-format.py -r --extensions 'c,h,cpp,m' ./crates/leanterm_ui/src/ ./app/src/
 echo "clang-format succeeded..."
 
 echo "Running wgslfmt..."

@@ -14,16 +14,16 @@ use rayon::iter::{IndexedParallelIterator, IntoParallelIterator, ParallelIterato
 use string_offset::{ByteOffset, CharOffset};
 use urlocator::{UrlLocation, UrlLocator};
 use vec1::Vec1;
-use warp_core::ui::theme::Fill as ThemeFill;
-use warp_errors::report_error;
-use warpui_core::assets::asset_cache::{AssetCache, AssetSource, AssetState};
-use warpui_core::fonts::Weight;
-use warpui_core::image_cache::ImageType;
-use warpui_core::text::char_slice;
-use warpui_core::text::point::Point;
-use warpui_core::text_layout::{StyleAndFont, TextAlignment};
-use warpui_core::units::{IntoPixels, Pixels};
-use warpui_core::{AppContext, SingletonEntity};
+use leanterm_core::ui::theme::Fill as ThemeFill;
+use leanterm_errors::report_error;
+use leanterm_ui_core::assets::asset_cache::{AssetCache, AssetSource, AssetState};
+use leanterm_ui_core::fonts::Weight;
+use leanterm_ui_core::image_cache::ImageType;
+use leanterm_ui_core::text::char_slice;
+use leanterm_ui_core::text::point::Point;
+use leanterm_ui_core::text_layout::{StyleAndFont, TextAlignment};
+use leanterm_ui_core::units::{IntoPixels, Pixels};
+use leanterm_ui_core::{AppContext, SingletonEntity};
 
 use super::buffer::{StyledBufferBlock, StyledBufferRun, StyledTextBlock};
 use super::mermaid_diagram::{mermaid_asset_source, mermaid_diagram_layout};

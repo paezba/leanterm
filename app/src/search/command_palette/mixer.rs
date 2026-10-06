@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use strum_macros::IntoStaticStr;
-use warp_util::path::LineAndColumnArg;
-use warpui::keymap::BindingId;
-use warpui::{EntityId, WindowId};
+use leanterm_util::path::LineAndColumnArg;
+use leanterm_ui::keymap::BindingId;
+use leanterm_ui::{EntityId, WindowId};
 
 use crate::launch_configs::launch_config::LaunchConfig;
 use crate::search::command_palette::new_session::{NewSessionOption, NewSessionOptionId};

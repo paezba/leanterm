@@ -5,10 +5,10 @@ use std::time::Duration;
 use chrono::Local;
 use itertools::Itertools;
 use ordered_float::OrderedFloat;
-use warp_core::command::ExitCode;
-use warpui::r#async::Timer;
-use warpui::elements::Empty;
-use warpui::{App, AppContext, Element, SingletonEntity};
+use leanterm_core::command::ExitCode;
+use leanterm_ui::r#async::Timer;
+use leanterm_ui::elements::Empty;
+use leanterm_ui::{App, AppContext, Element, SingletonEntity};
 
 use super::*;
 use crate::appearance::Appearance;

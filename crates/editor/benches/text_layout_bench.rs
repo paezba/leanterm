@@ -5,23 +5,23 @@ use std::time::Duration;
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 use rayon::ThreadPoolBuilder;
 use string_offset::CharOffset;
-use warp_editor::content::buffer::{StyledBufferBlock, StyledBufferRun, StyledTextBlock};
-use warp_editor::content::edit::EditDelta;
-use warp_editor::content::text::{BufferBlockStyle, TextStylesWithMetadata};
-use warp_editor::render::layout::TextLayout;
-use warp_editor::render::model::{
+use leanterm_editor::content::buffer::{StyledBufferBlock, StyledBufferRun, StyledTextBlock};
+use leanterm_editor::content::edit::EditDelta;
+use leanterm_editor::content::text::{BufferBlockStyle, TextStylesWithMetadata};
+use leanterm_editor::render::layout::TextLayout;
+use leanterm_editor::render::model::{
     BrokenLinkStyle, CheckBoxStyle, HorizontalRuleStyle, InlineCodeStyle, ParagraphStyles,
     RenderLayoutOptions, RichTextStyles, TableStyle,
 };
 #[cfg(target_os = "macos")]
-use warpui::platform::mac::FontDB as MacFontDB;
-use warpui_core::App;
-use warpui_core::color::ColorU;
-use warpui_core::elements::{Border, Fill};
+use leanterm_ui::platform::mac::FontDB as MacFontDB;
+use leanterm_ui_core::App;
+use leanterm_ui_core::color::ColorU;
+use leanterm_ui_core::elements::{Border, Fill};
 #[cfg(target_os = "macos")]
-use warpui_core::fonts::Cache as FontCache;
-use warpui_core::fonts::{FamilyId, Weight};
-use warpui_core::units::IntoPixels;
+use leanterm_ui_core::fonts::Cache as FontCache;
+use leanterm_ui_core::fonts::{FamilyId, Weight};
+use leanterm_ui_core::units::IntoPixels;
 
 const BLOCK_COUNT: usize = 4_096;
 const RAYON_THREAD_COUNT: usize = 6;
@@ -136,7 +136,7 @@ fn layout_delta(
     delta: &EditDelta,
     text_layout: &TextLayout<'_>,
     layout_options: &RenderLayoutOptions,
-    app: &warpui_core::AppContext,
+    app: &leanterm_ui_core::AppContext,
 ) {
     black_box(delta.layout_delta(text_layout, None, layout_options, None, app));
 }

@@ -6,11 +6,11 @@ use itertools::Itertools;
 use palette::Srgba;
 use pathfinder_color::ColorU;
 use plist::{Dictionary, Value};
-use warp_core::ui::theme::{AnsiColors, TerminalColors, WarpTheme};
-use warpui::DisplayIdx;
-use warpui::fonts::FontInfo;
-use warpui::keymap::Keystroke;
-use warpui::platform::mac::utils::unicode_char_to_key;
+use leanterm_core::ui::theme::{AnsiColors, TerminalColors, WarpTheme};
+use leanterm_ui::DisplayIdx;
+use leanterm_ui::fonts::FontInfo;
+use leanterm_ui::keymap::Keystroke;
+use leanterm_ui::platform::mac::utils::unicode_char_to_key;
 
 use super::config::{
     Config, ConfigError, GlobalHotkey, ImportableSetting, ImportedFont, MouseAndScrollReporting,

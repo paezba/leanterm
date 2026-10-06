@@ -1,10 +1,10 @@
 use std::borrow::Cow;
 
 use async_channel::Sender;
-use warp_completer::meta::Span;
+use leanterm_completer::meta::Span;
 #[cfg(unix)]
-use warpui::AppContext;
-use warpui::{Entity, ViewContext};
+use leanterm_ui::AppContext;
+use leanterm_ui::{Entity, ViewContext};
 
 #[cfg(unix)]
 use crate::terminal::event::AfterBlockCompletedEvent;
@@ -44,7 +44,7 @@ pub trait PtyIntentEvent {
 /// A terminal frontend surface driven by `TerminalManager`.
 ///
 /// Each surface defines how its own event type collapses into a PTY/session intent.
-/// This is bounded by [`Entity`] instead of [`View`](warpui::View) so the same
+/// This is bounded by [`Entity`] instead of [`View`](leanterm_ui::View) so the same
 /// manager can drive both GUI views and TUI views.
 pub trait TerminalSurface: Entity + 'static
 where

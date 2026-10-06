@@ -1,12 +1,12 @@
 use pathfinder_color::ColorU;
-use warpui::Element;
-use warpui::elements::{
+use leanterm_ui::Element;
+use leanterm_ui::elements::{
     Align, Container, CrossAxisAlignment, Flex, MouseStateHandle, ParentElement, Shrinkable,
 };
-use warpui::fonts::Weight;
-use warpui::keymap::Keystroke;
-use warpui::ui_components::button::ButtonVariant;
-use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
+use leanterm_ui::fonts::Weight;
+use leanterm_ui::keymap::Keystroke;
+use leanterm_ui::ui_components::button::ButtonVariant;
+use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
 
 use super::render_block_banner;
 use crate::appearance::Appearance;

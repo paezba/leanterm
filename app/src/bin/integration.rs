@@ -1,8 +1,8 @@
 use anyhow::Result;
 use clap::Parser;
-use warp_cli::WorkerCommand;
-use warp_core::AppId;
-use warp_core::channel::{Channel, ChannelConfig, ChannelState, WarpServerConfig};
+use leanterm_cli::WorkerCommand;
+use leanterm_core::AppId;
+use leanterm_core::channel::{Channel, ChannelConfig, ChannelState, WarpServerConfig};
 
 #[derive(Debug, Default, Parser, Clone)]
 #[command(name = "warp-integration")]
@@ -44,7 +44,7 @@ pub fn main() -> Result<()> {
                 // GUI application), do so.  This must occur before init_logging, as the
                 // terminal server sets up its own logger, and attempting to set a second
                 // logger leads to a panic.
-                warp::terminal::local_tty::run_terminal_server(args);
+                leanterm::terminal::local_tty::run_terminal_server(args);
                 return Ok(());
             }
             #[allow(unreachable_patterns)]
@@ -52,5 +52,5 @@ pub fn main() -> Result<()> {
         }
     }
 
-    warp::run()
+    leanterm::run()
 }

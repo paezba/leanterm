@@ -1,18 +1,18 @@
 use pathfinder_color::ColorU;
 use serde::Serialize;
-pub use warpui::AppContext;
-pub use warpui::accessibility::{AccessibilityContent, WarpA11yRole};
-use warpui::elements::{
+pub use leanterm_ui::AppContext;
+pub use leanterm_ui::accessibility::{AccessibilityContent, WarpA11yRole};
+use leanterm_ui::elements::{
     Align, Border, ChildAnchor, Clipped, ConstrainedBox, Container, CornerRadius,
     CrossAxisAlignment, DropShadow, Element, Flex, Hoverable, MouseStateHandle, OffsetPositioning,
     ParentAnchor, ParentOffsetBounds, Radius, SavePosition, Shrinkable, Text,
 };
-pub use warpui::elements::{ParentElement as _, Stack};
-pub use warpui::geometry::vector::vec2f;
-use warpui::keymap::EditableBinding;
-use warpui::presenter::ChildView;
-use warpui::ui_components::components::UiComponent;
-use warpui::{
+pub use leanterm_ui::elements::{ParentElement as _, Stack};
+pub use leanterm_ui::geometry::vector::vec2f;
+use leanterm_ui::keymap::EditableBinding;
+use leanterm_ui::presenter::ChildView;
+use leanterm_ui::ui_components::components::UiComponent;
+use leanterm_ui::{
     Entity, FocusContext, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle,
 };
@@ -127,7 +127,7 @@ pub enum FindAction {
 }
 
 pub fn init(app: &mut AppContext) {
-    use warpui::keymap::macros::*;
+    use leanterm_ui::keymap::macros::*;
 
     app.register_editable_bindings([
         EditableBinding::new(

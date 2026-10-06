@@ -4,18 +4,18 @@ use std::sync::Arc;
 
 use pathfinder_color::ColorU;
 use pathfinder_geometry::vector::{Vector2F, vec2f};
-use warp_core::ui::theme::Fill;
-use warp_core::ui::theme::color::internal_colors;
-use warpui::elements::{
+use leanterm_core::ui::theme::Fill;
+use leanterm_core::ui::theme::color::internal_colors;
+use leanterm_ui::elements::{
     Border, ChildAnchor, ChildView, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment,
     DEFAULT_UI_LINE_HEIGHT_RATIO, Empty, Flex, Hoverable, MouseStateHandle, OffsetPositioning,
     ParentAnchor, ParentElement, ParentOffsetBounds, Radius, Stack, Text,
 };
-use warpui::fonts::{Cache, FamilyId, Properties, Weight};
-use warpui::keymap::Keystroke;
-use warpui::platform::Cursor;
-use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
-use warpui::{
+use leanterm_ui::fonts::{Cache, FamilyId, Properties, Weight};
+use leanterm_ui::keymap::Keystroke;
+use leanterm_ui::platform::Cursor;
+use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
+use leanterm_ui::{
     AppContext, Element, Entity, Gradient, ModelHandle, SingletonEntity, TypedActionView, View,
     ViewContext, ViewHandle,
 };

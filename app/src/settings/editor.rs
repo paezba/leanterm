@@ -4,7 +4,7 @@ use enum_iterator::{Sequence, all};
 use serde::{Deserialize, Serialize};
 use settings::macros::define_settings_group;
 use settings::{Setting as _, SupportedPlatforms};
-use warpui::ModelContext;
+use leanterm_ui::ModelContext;
 
 #[derive(
     Clone,

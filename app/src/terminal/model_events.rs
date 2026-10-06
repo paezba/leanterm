@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use async_channel::Receiver;
-use warpui::{Entity, ModelContext, ModelHandle};
+use leanterm_ui::{Entity, ModelContext, ModelHandle};
 
 use super::event::{BootstrappedEvent, SshLoginStatus};
 use super::model::ansi;
@@ -332,7 +332,7 @@ pub enum ModelEvent {
     ExternalShellWidgetSelection(ExternalShellWidgetSelectionValue),
     SelectedTextChanged,
     ShellSpawned(ShellType),
-    CompletionsFinished(Vec<ShellCompletion>, Option<warp_completer::meta::Span>),
+    CompletionsFinished(Vec<ShellCompletion>, Option<leanterm_completer::meta::Span>),
     ImageReceived {
         image_id: u32,
         image_data: Vec<u8>,

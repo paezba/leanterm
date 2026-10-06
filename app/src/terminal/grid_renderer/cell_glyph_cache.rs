@@ -2,11 +2,11 @@
 //! when rendering Grids within Warp.
 use std::collections::HashMap;
 
-use warpui::PaintContext;
-use warpui::elements::DEFAULT_LINE_HEIGHT_RATIO;
-use warpui::fonts::{Cache as FontCache, FamilyId, FontId, GlyphId, Properties};
-use warpui::platform::LineStyle;
-use warpui::text_layout::{DEFAULT_TOP_BOTTOM_RATIO, StyleAndFont};
+use leanterm_ui::PaintContext;
+use leanterm_ui::elements::DEFAULT_LINE_HEIGHT_RATIO;
+use leanterm_ui::fonts::{Cache as FontCache, FamilyId, FontId, GlyphId, Properties};
+use leanterm_ui::platform::LineStyle;
+use leanterm_ui::text_layout::{DEFAULT_TOP_BOTTOM_RATIO, StyleAndFont};
 
 /// Stores cached glyph values for characters/strings. Note that we normally only need to look up
 /// characters - we only look up strings in the case of zerowidth characters (which act as modifiers

@@ -1,6 +1,6 @@
-use warp_core::ui::appearance::Appearance;
-use warpui::Element;
-use warpui::elements::Icon;
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_ui::Element;
+use leanterm_ui::elements::Icon;
 
 use crate::search::result_renderer::ItemHighlightState;
 

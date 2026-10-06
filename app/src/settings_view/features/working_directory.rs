@@ -1,9 +1,9 @@
 use itertools::Itertools;
-use warp_errors::report_if_error;
-use warpui::elements::{Container, CrossAxisAlignment, Flex, ParentElement, Shrinkable};
-use warpui::presenter::ChildView;
-use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
-use warpui::{Element, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle};
+use leanterm_errors::report_if_error;
+use leanterm_ui::elements::{Container, CrossAxisAlignment, Flex, ParentElement, Shrinkable};
+use leanterm_ui::presenter::ChildView;
+use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
+use leanterm_ui::{Element, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle};
 
 use crate::appearance::Appearance;
 use crate::editor::{EditorView, Event as EditorEvent, SingleLineEditorOptions, TextOptions};
@@ -122,7 +122,7 @@ impl View for WorkingDirectoryView {
         "WorkingDirectoryView"
     }
 
-    fn render(&self, app: &warpui::AppContext) -> Box<dyn warpui::Element> {
+    fn render(&self, app: &leanterm_ui::AppContext) -> Box<dyn leanterm_ui::Element> {
         let appearance = Appearance::as_ref(app);
         let ui_builder = appearance.ui_builder();
 

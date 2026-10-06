@@ -12,16 +12,16 @@ use parking_lot::Mutex;
 use pathfinder_geometry::vector::{Vector2F, vec2f};
 use rayon::prelude::*;
 use string_offset::ByteOffset;
-use warp_completer::completer::Description;
-use warp_errors::report_error;
-use warpui::fonts::{Cache as FontCache, FamilyId, Properties};
-use warpui::platform::LineStyle;
-use warpui::text::point::Point;
-use warpui::text_layout::{
+use leanterm_completer::completer::Description;
+use leanterm_errors::report_error;
+use leanterm_ui::fonts::{Cache as FontCache, FamilyId, Properties};
+use leanterm_ui::platform::LineStyle;
+use leanterm_ui::text::point::Point;
+use leanterm_ui::text_layout::{
     self, ClipConfig, ComputeBaselinePositionFn, DEFAULT_TOP_BOTTOM_RATIO, LayoutCache,
     StyleAndFont, TextAlignment, TextStyle, default_compute_baseline_position_fn,
 };
-use warpui::{AppContext, EntityId, ModelHandle};
+use leanterm_ui::{AppContext, EntityId, ModelHandle};
 
 use super::model::EditorModel;
 use super::{

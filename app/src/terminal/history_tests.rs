@@ -6,8 +6,8 @@ use futures::Future;
 use futures::future::join_all;
 use futures_lite::StreamExt;
 use itertools::Itertools;
-use warp_core::command::ExitCode;
-use warpui::{App, ModelHandle};
+use leanterm_core::command::ExitCode;
+use leanterm_ui::{App, ModelHandle};
 
 use super::{HistoryEntry, HistoryEvent};
 use crate::terminal::History;

@@ -41,27 +41,27 @@ use vim::{
     vim_inner_line, vim_inner_paragraph, vim_inner_quote, vim_inner_word,
     vim_word_iterator_from_offset,
 };
-use warp_completer::completer::Description;
-use warp_core::semantic_selection::SemanticSelection;
-use warp_editor::editor::NavigationKey;
-use warp_util::path::ShellFamily;
-use warp_util::user_input::UserInput;
-use warpui::accessibility::{AccessibilityContent, ActionAccessibilityContent, WarpA11yRole};
-use warpui::actions::StandardAction;
-use warpui::r#async::Timer;
-use warpui::clipboard::ClipboardContent;
-use warpui::elements::{
+use leanterm_completer::completer::Description;
+use leanterm_core::semantic_selection::SemanticSelection;
+use leanterm_editor::editor::NavigationKey;
+use leanterm_util::path::ShellFamily;
+use leanterm_util::user_input::UserInput;
+use leanterm_ui::accessibility::{AccessibilityContent, ActionAccessibilityContent, WarpA11yRole};
+use leanterm_ui::actions::StandardAction;
+use leanterm_ui::r#async::Timer;
+use leanterm_ui::clipboard::ClipboardContent;
+use leanterm_ui::elements::{
     CornerRadius, DEFAULT_UI_LINE_HEIGHT_RATIO, Hoverable, MouseStateHandle, Radius,
 };
-use warpui::fonts::{Cache as FontCache, FamilyId, Properties, Weight};
-use warpui::keymap::{EditableBinding, FixedBinding, Keystroke, PerPlatformKeystroke};
-use warpui::platform::{Cursor, OperatingSystem};
-use warpui::text::TextBuffer;
-use warpui::text::word_boundaries::WordBoundariesPolicy;
-use warpui::text_layout::TextStyle;
-use warpui::ui_components::components::UiComponentStyles;
-use warpui::windowing::WindowManager;
-use warpui::{
+use leanterm_ui::fonts::{Cache as FontCache, FamilyId, Properties, Weight};
+use leanterm_ui::keymap::{EditableBinding, FixedBinding, Keystroke, PerPlatformKeystroke};
+use leanterm_ui::platform::{Cursor, OperatingSystem};
+use leanterm_ui::text::TextBuffer;
+use leanterm_ui::text::word_boundaries::WordBoundariesPolicy;
+use leanterm_ui::text_layout::TextStyle;
+use leanterm_ui::ui_components::components::UiComponentStyles;
+use leanterm_ui::windowing::WindowManager;
+use leanterm_ui::{
     AppContext, BlurContext, CursorInfo, Element, Entity, EntityId, FocusContext, ModelAsRef,
     ModelContext, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
     WindowId, windowing,
@@ -135,7 +135,7 @@ pub const SELECT_UP_ACTION_NAME: &str = "editor_view:select_up";
 pub const SELECT_DOWN_ACTION_NAME: &str = "editor_view:select_down";
 
 pub fn init(ctx: &mut AppContext) {
-    use warpui::keymap::macros::*;
+    use leanterm_ui::keymap::macros::*;
 
     ctx.register_fixed_bindings(vec![
         // Below are default bindings that are similar to the behavior in all other text editors.
@@ -1322,7 +1322,7 @@ type RenderDecoratorElementsFn = Box<dyn Fn(&AppContext) -> EditorDecoratorEleme
 
 /// Type alias for a closure that allows parent views to add flags to the EditorView's keymap context.
 /// The closure takes the context by mutable reference and can insert additional flags.
-pub type KeymapContextModifierFn = Box<dyn Fn(&mut warpui::keymap::Context, &AppContext)>;
+pub type KeymapContextModifierFn = Box<dyn Fn(&mut leanterm_ui::keymap::Context, &AppContext)>;
 
 /// Enum to choose between different methods of computing the baseline offset for text.
 #[derive(Clone, Debug)]
@@ -1336,7 +1336,7 @@ pub enum BaselinePositionComputationMethod {
 }
 
 // Re-export voice transcription types for backwards compatibility
-use warp_errors::report_error;
+use leanterm_errors::report_error;
 
 /// Interface for picking different options for the editor's behavior.
 pub struct EditorOptions {
@@ -7108,7 +7108,7 @@ impl EditorView {
         };
 
         let input =
-            warpui::clipboard_utils::escaped_paths_str(&transformed_paths, self.shell_family);
+            leanterm_ui::clipboard_utils::escaped_paths_str(&transformed_paths, self.shell_family);
 
         self.user_insert(&input, ctx);
     }
@@ -7562,7 +7562,7 @@ impl View for EditorView {
             .finish()
     }
 
-    fn keymap_context(&self, ctx: &AppContext) -> warpui::keymap::Context {
+    fn keymap_context(&self, ctx: &AppContext) -> leanterm_ui::keymap::Context {
         let mut context = Self::default_keymap_context();
 
         if self.single_cursor_at_buffer_end(false /* respect_line_cap */, ctx) {

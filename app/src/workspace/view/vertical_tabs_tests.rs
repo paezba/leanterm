@@ -3,8 +3,8 @@ use std::iter::once;
 
 use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::Vector2F;
-use warpui::EntityId;
-use warpui::elements::PositionedElementOffsetBounds;
+use leanterm_ui::EntityId;
+use leanterm_ui::elements::PositionedElementOffsetBounds;
 
 use super::{
     SummaryPaneKind, SummaryPaneKindIcons, VerticalTabsDetailTarget, VerticalTabsDetailTargetKind,

@@ -9,9 +9,9 @@
 use std::path::{Path, PathBuf};
 
 use ::settings::Setting;
-use warp_core::channel::ChannelState;
-use warp_errors::report_if_error;
-use warpui::{AppContext, SingletonEntity};
+use leanterm_core::channel::ChannelState;
+use leanterm_errors::report_if_error;
+use leanterm_ui::{AppContext, SingletonEntity};
 use winreg::RegKey;
 use winreg::enums::{HKEY_CURRENT_USER, KEY_SET_VALUE};
 

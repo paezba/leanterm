@@ -15,23 +15,23 @@ use settings_page::{
     HEADER_PADDING, MatchData, SettingsPage, SettingsPageEvent, SettingsPageMeta,
     SettingsPageViewHandle,
 };
-use warp_core::channel::ChannelState;
-use warp_core::context_flag::ContextFlag;
-use warp_core::features::FeatureFlag;
-use warp_core::settings::ToggleableSetting as _;
-use warp_core::ui::theme::color::internal_colors;
-use warp_editor::editor::NavigationKey;
+use leanterm_core::channel::ChannelState;
+use leanterm_core::context_flag::ContextFlag;
+use leanterm_core::features::FeatureFlag;
+use leanterm_core::settings::ToggleableSetting as _;
+use leanterm_core::ui::theme::color::internal_colors;
+use leanterm_editor::editor::NavigationKey;
 use warpify_page::{WarpifyPageAction, WarpifyPageView};
-use warpui::elements::{
+use leanterm_ui::elements::{
     Align, Border, ChildAnchor, ChildView, Clipped, ClippedScrollStateHandle, ClippedScrollable,
     ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, DispatchEventResult, Empty,
     EventHandler, Expanded, Fill, Flex, MainAxisSize, OffsetPositioning, ParentAnchor,
     ParentElement, ParentOffsetBounds, Radius, SavePosition, ScrollbarWidth, Shrinkable, Stack,
     Text,
 };
-use warpui::fonts::{Properties, Weight};
-use warpui::keymap::{ContextPredicate, EnabledPredicate, FixedBinding};
-use warpui::{
+use leanterm_ui::fonts::{Properties, Weight};
+use leanterm_ui::keymap::{ContextPredicate, EnabledPredicate, FixedBinding};
+use leanterm_ui::{
     Action, AppContext, Element, Entity, ModelHandle, SingletonEntity, TypedActionView,
     UpdateView as _, View, ViewContext, ViewHandle, id,
 };
@@ -577,7 +577,7 @@ impl<T: Action + Clone> ToggleSettingActionPair<T> {
         context_prefix: &ContextPredicate,
         context_boolean_flag: &'static str,
     ) -> Self {
-        use warpui::keymap::macros::id;
+        use leanterm_ui::keymap::macros::id;
 
         ToggleSettingActionPair {
             descriptions: SettingActionPairDescriptions {
@@ -2055,16 +2055,16 @@ impl BackingView for SettingsView {
     fn handle_pane_header_overflow_menu_action(
         &mut self,
         action: &Self::PaneHeaderOverflowMenuAction,
-        ctx: &mut warpui::ViewContext<Self>,
+        ctx: &mut leanterm_ui::ViewContext<Self>,
     ) {
         self.handle_action(action, ctx)
     }
 
-    fn close(&mut self, ctx: &mut warpui::ViewContext<Self>) {
+    fn close(&mut self, ctx: &mut leanterm_ui::ViewContext<Self>) {
         ctx.emit(SettingsViewEvent::Pane(PaneEvent::Close));
     }
 
-    fn focus_contents(&mut self, ctx: &mut warpui::ViewContext<Self>) {
+    fn focus_contents(&mut self, ctx: &mut leanterm_ui::ViewContext<Self>) {
         ctx.focus(&self.search_editor)
     }
 

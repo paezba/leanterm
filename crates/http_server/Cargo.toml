@@ -11,6 +11,6 @@ axum.workspace = true
 log.workspace = true
 tokio.workspace = true
 tower-http = { workspace = true, features = ["trace", "cors"] } 
-warpui_core.workspace = true
-warp_core.workspace = true
-warp_errors.workspace = true
+leanterm_ui_core.workspace = true
+leanterm_core.workspace = true
+leanterm_errors.workspace = true

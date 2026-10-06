@@ -14,10 +14,10 @@ use ::local_control::protocol::{
 use ::local_control::{ActionKind, ControlError, ErrorCode, InstanceId};
 use serde_json::json;
 #[cfg(feature = "local_fs")]
-use warp_util::path::LineAndColumnArg;
+use leanterm_util::path::LineAndColumnArg;
 #[cfg(feature = "local_fs")]
-use warpui::SingletonEntity;
-use warpui::{AppContext, ModelContext, TypedActionView};
+use leanterm_ui::SingletonEntity;
+use leanterm_ui::{AppContext, ModelContext, TypedActionView};
 
 #[cfg(feature = "local_fs")]
 use crate::code::editor_management::CodeSource;

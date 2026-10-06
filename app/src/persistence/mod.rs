@@ -30,9 +30,9 @@ use lsp::supported_servers::LSPServerType;
 #[cfg(any(feature = "local_fs", feature = "integration_tests"))]
 #[cfg_attr(not(feature = "integration_tests"), expect(unused_imports))]
 pub use sqlite::database_file_path_for_scope;
-use warp_core::command::ExitCode;
-use warp_errors::report_error;
-use warpui::{AppContext, Entity, SingletonEntity};
+use leanterm_core::command::ExitCode;
+use leanterm_errors::report_error;
+use leanterm_ui::{AppContext, Entity, SingletonEntity};
 
 use crate::app_state::AppState;
 use crate::persisted_workspace::EnablementState;

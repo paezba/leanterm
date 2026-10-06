@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
-use warpui::elements::MouseStateHandle;
-use warpui::fonts::Weight;
-use warpui::{Element, EntityId};
+use leanterm_ui::elements::MouseStateHandle;
+use leanterm_ui::fonts::Weight;
+use leanterm_ui::{Element, EntityId};
 
 use super::{
     InlineBannerButtonState, InlineBannerCloseButton, InlineBannerContent, InlineBannerStyle,

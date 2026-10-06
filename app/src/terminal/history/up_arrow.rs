@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use warpui::{AppContext, SingletonEntity};
+use leanterm_ui::{AppContext, SingletonEntity};
 
 use super::History;
 use crate::input_suggestions::HistoryInputSuggestion;

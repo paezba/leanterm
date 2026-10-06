@@ -1,5 +1,5 @@
-use warpui::Element;
-use warpui::elements::Text;
+use leanterm_ui::Element;
+use leanterm_ui::elements::Text;
 
 use super::{
     InlineBannerContent, InlineBannerIcon, InlineBannerStyle, render_inline_block_list_banner,

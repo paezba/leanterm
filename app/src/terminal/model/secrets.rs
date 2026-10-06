@@ -1,1 +1,1 @@
-pub use warp_terminal::model::secrets::*;
+pub use leanterm_terminal::model::secrets::*;

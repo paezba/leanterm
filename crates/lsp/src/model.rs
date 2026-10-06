@@ -16,11 +16,11 @@ use lsp_types::{
 use simple_logger::manager::LogManager;
 #[cfg(not(target_arch = "wasm32"))]
 #[cfg(not(target_arch = "wasm32"))]
-use warp_errors::report_error;
+use leanterm_errors::report_error;
 #[cfg(not(target_arch = "wasm32"))]
-use warpui_core::SingletonEntity;
-use warpui_core::r#async::executor::Background;
-use warpui_core::{Entity, ModelContext};
+use leanterm_ui_core::SingletonEntity;
+use leanterm_ui_core::r#async::executor::Background;
+use leanterm_ui_core::{Entity, ModelContext};
 
 use crate::config::{LanguageId, lsp_uri_to_path};
 use crate::server_repo_watcher::LspRepoWatcher;

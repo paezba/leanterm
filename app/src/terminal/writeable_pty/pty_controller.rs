@@ -5,12 +5,12 @@ use std::sync::Arc;
 use async_channel::{Receiver, Sender};
 use parking_lot::FairMutex;
 use thiserror::Error;
-use warp_completer::meta::Span;
+use leanterm_completer::meta::Span;
 #[cfg(feature = "local_fs")]
-use warp_errors::report_error;
-use warp_util::path::ShellFamily;
-use warpui::r#async::block_on;
-use warpui::{Entity, ModelContext, ModelHandle, SingletonEntity};
+use leanterm_errors::report_error;
+use leanterm_util::path::ShellFamily;
+use leanterm_ui::r#async::block_on;
+use leanterm_ui::{Entity, ModelContext, ModelHandle, SingletonEntity};
 
 use super::Message;
 use crate::SessionSettings;
@@ -405,7 +405,7 @@ impl<T: EventLoopSender> PtyController<T> {
             let chunks: Vec<Vec<u8>> = bytes.chunks(CHUNK_SIZE).map(|c| c.to_vec()).collect();
             for (i, chunk) in chunks.into_iter().enumerate() {
                 ctx.spawn(
-                    warpui::r#async::Timer::after(std::time::Duration::from_millis(i as u64 * 50)),
+                    leanterm_ui::r#async::Timer::after(std::time::Duration::from_millis(i as u64 * 50)),
                     move |me, _, ctx| me.write_bytes(chunk, ctx),
                 );
             }

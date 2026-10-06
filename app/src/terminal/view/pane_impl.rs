@@ -1,12 +1,12 @@
 //! This module contains the implementation of `BackingView` for `TerminalView`, as well as
 //! business logic for integrating the terminal view with the pane infra (`crate::pane_group`).
-use warpui::elements::{
+use leanterm_ui::elements::{
     ConstrainedBox, CrossAxisAlignment, Flex, MainAxisAlignment, MainAxisSize, ParentElement,
     Shrinkable,
 };
-use warpui::prelude::Container;
-use warpui::text_layout::ClipConfig;
-use warpui::{
+use leanterm_ui::prelude::Container;
+use leanterm_ui::text_layout::ClipConfig;
+use leanterm_ui::{
     AppContext, Element, ModelHandle, SingletonEntity, TypedActionView, ViewContext,
     WeakModelHandle,
 };

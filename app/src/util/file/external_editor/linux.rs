@@ -5,9 +5,9 @@ use std::sync::OnceLock;
 
 use command::blocking::Command;
 use freedesktop_desktop_entry::DesktopEntry;
-use warp_errors::report_error;
-use warp_util::path::LineAndColumnArg;
-use warpui::AppContext;
+use leanterm_errors::report_error;
+use leanterm_util::path::LineAndColumnArg;
+use leanterm_ui::AppContext;
 
 use super::Editor;
 

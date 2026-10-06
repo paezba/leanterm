@@ -1,10 +1,10 @@
-use warpui::assets::asset_cache::AssetSource;
-use warpui::elements::{
+use leanterm_ui::assets::asset_cache::AssetSource;
+use leanterm_ui::elements::{
     Align, CacheOption, ConstrainedBox, Container, CrossAxisAlignment, Element, Flex, Image,
     MainAxisAlignment, MouseStateHandle, ParentElement, Wrap,
 };
-use warpui::ui_components::components::UiComponent;
-use warpui::{AppContext, Entity, TypedActionView, View, ViewContext, ViewHandle};
+use leanterm_ui::ui_components::components::UiComponent;
+use leanterm_ui::{AppContext, Entity, TypedActionView, View, ViewContext, ViewHandle};
 
 use super::SettingsSection;
 use super::settings_page::{

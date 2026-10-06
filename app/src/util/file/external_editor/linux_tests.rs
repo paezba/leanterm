@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use warp_util::path::LineAndColumnArg;
+use leanterm_util::path::LineAndColumnArg;
 
 use super::{DesktopExecError, EditorMetadata, tokenize_exec};
 

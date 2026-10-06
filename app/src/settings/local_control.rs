@@ -7,9 +7,9 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use settings::macros::define_settings_group;
 use settings::{SecureSetting, Setting, SupportedPlatforms};
-use warp_core::channel::{Channel, ChannelState};
-use warpui::{AppContext, ModelContext};
-use warpui_extras::secure_storage;
+use leanterm_core::channel::{Channel, ChannelState};
+use leanterm_ui::{AppContext, ModelContext};
+use leanterm_ui_extras::secure_storage;
 
 const LOCAL_CONTROL_MODE_STORAGE_KEY: &str = "LocalControlMode";
 

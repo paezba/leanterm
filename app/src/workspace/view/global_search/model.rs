@@ -7,10 +7,10 @@ use instant::Instant;
 use num_traits::SaturatingSub;
 use regex::escape;
 use string_offset::ByteOffset;
-use warp_errors::report_error;
-use warp_ripgrep::search::{Match as RipgrepMatch, Submatch};
-use warpui::r#async::SpawnedFutureHandle;
-use warpui::{Entity, ModelContext, ModelSpawner};
+use leanterm_errors::report_error;
+use leanterm_ripgrep::search::{Match as RipgrepMatch, Submatch};
+use leanterm_ui::r#async::SpawnedFutureHandle;
+use leanterm_ui::{Entity, ModelContext, ModelSpawner};
 
 use crate::workspace::view::global_search::view::GlobalSearchEvent;
 use crate::workspace::view::global_search::{GlobalSearchMatch, SearchConfig};
@@ -176,7 +176,7 @@ impl GlobalSearch {
                     }),
                     Err(err) => {
                         report_error!(
-                            err.context("GlobalSearch: warp_ripgrep CLI search failed or aborted")
+                            err.context("GlobalSearch: leanterm_ripgrep CLI search failed or aborted")
                         );
                         None
                     }
@@ -267,13 +267,13 @@ impl GlobalSearch {
     ) -> Result<usize> {
         let roots_display: Vec<_> = roots.iter().map(|r| r.display().to_string()).collect();
         log::info!(
-            "GlobalSearch: starting warp_ripgrep CLI search with pattern={pattern}, roots={:?}",
+            "GlobalSearch: starting leanterm_ripgrep CLI search with pattern={pattern}, roots={:?}",
             roots_display
         );
 
         let patterns = &[pattern];
         let stream =
-            warp_ripgrep::search::search_streaming(patterns, &roots, ignore_case, multiline)?;
+            leanterm_ripgrep::search::search_streaming(patterns, &roots, ignore_case, multiline)?;
         futures::pin_mut!(stream);
 
         let mut total_match_count: usize = 0;

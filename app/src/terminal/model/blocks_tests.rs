@@ -1,8 +1,8 @@
 use float_cmp::{approx_eq, assert_approx_eq};
-use warp_core::features::FeatureFlag;
-use warpui::App;
-use warpui::elements::DEFAULT_UI_LINE_HEIGHT_RATIO;
-use warpui::units::IntoLines;
+use leanterm_core::features::FeatureFlag;
+use leanterm_ui::App;
+use leanterm_ui::elements::DEFAULT_UI_LINE_HEIGHT_RATIO;
+use leanterm_ui::units::IntoLines;
 
 use super::*;
 use crate::settings::TerminalSpacing;

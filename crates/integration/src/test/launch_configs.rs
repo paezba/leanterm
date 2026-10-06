@@ -1,21 +1,21 @@
 use std::path::PathBuf;
 use std::time::Duration;
 
-use warp::integration_testing::pane_group::assert_focused_pane_index;
-use warp::integration_testing::settings::set_window_custom_size;
-use warp::integration_testing::step::new_step_with_default_assertions;
-use warp::integration_testing::terminal::{
+use leanterm::integration_testing::pane_group::assert_focused_pane_index;
+use leanterm::integration_testing::settings::set_window_custom_size;
+use leanterm::integration_testing::step::new_step_with_default_assertions;
+use leanterm::integration_testing::terminal::{
     validate_block_output, wait_until_bootstrapped_single_pane_for_tab,
 };
-use warp::integration_testing::type_getters::get_launch_config_ui_location;
-use warp::integration_testing::window::assert_num_windows_open;
-use warp::integration_testing::workspace::{assert_focused_tab_index, assert_tab_count};
-use warp::integration_testing::{self};
-use warp::search::SyncDataSource;
-use warp::search::command_palette::launch_config;
-use warp::search::data_source::Query;
-use warpui_core::integration::{AssertionOutcome, TestStep};
-use warpui_core::{ModelHandle, async_assert};
+use leanterm::integration_testing::type_getters::get_launch_config_ui_location;
+use leanterm::integration_testing::window::assert_num_windows_open;
+use leanterm::integration_testing::workspace::{assert_focused_tab_index, assert_tab_count};
+use leanterm::integration_testing::{self};
+use leanterm::search::SyncDataSource;
+use leanterm::search::command_palette::launch_config;
+use leanterm::search::data_source::Query;
+use leanterm_ui_core::integration::{AssertionOutcome, TestStep};
+use leanterm_ui_core::{ModelHandle, async_assert};
 
 use super::{TEST_ONLY_ASSETS, assert_approx_eq, new_builder};
 use crate::Builder;
@@ -96,9 +96,9 @@ pub fn test_with_launch_config() -> Builder {
                 move |app, _, _| {
                     app.dispatch_global_action(
                         "root_view:open_launch_config",
-                        warp::root_view::OpenLaunchConfigArg {
+                        leanterm::root_view::OpenLaunchConfigArg {
                             launch_config:
-                                warp::launch_configs::launch_config::make_mock_single_window_launch_config(),
+                                leanterm::launch_configs::launch_config::make_mock_single_window_launch_config(),
                             ui_location: get_launch_config_ui_location(),
                             open_in_active_window: false,
                         },
@@ -123,10 +123,10 @@ pub fn test_with_launch_config() -> Builder {
 }
 
 pub fn test_launch_config_single_child_branch() -> Builder {
-    use warp::launch_configs::launch_config::{
+    use leanterm::launch_configs::launch_config::{
         LaunchConfig, PaneTemplateType, SplitDirection, TabTemplate, WindowTemplate,
     };
-    use warpui_core::actions::StandardAction;
+    use leanterm_ui_core::actions::StandardAction;
 
     /// Create a launch config that has a branch with a single child
     fn create_launch_config() -> LaunchConfig {
@@ -162,7 +162,7 @@ pub fn test_launch_config_single_child_branch() -> Builder {
                 .with_action(move |app, _, _| {
                     app.dispatch_global_action(
                         "root_view:open_launch_config",
-                        warp::root_view::OpenLaunchConfigArg {
+                        leanterm::root_view::OpenLaunchConfigArg {
                             launch_config: create_launch_config(),
                             ui_location: get_launch_config_ui_location(),
                             open_in_active_window: false,
@@ -194,9 +194,9 @@ pub fn test_open_launch_config_with_custom_size() -> Builder {
                 move |app, _, _| {
                     app.dispatch_global_action(
                         "root_view:open_launch_config",
-                        warp::root_view::OpenLaunchConfigArg {
+                        leanterm::root_view::OpenLaunchConfigArg {
                             launch_config:
-                                warp::launch_configs::launch_config::make_mock_single_window_launch_config(),
+                                leanterm::launch_configs::launch_config::make_mock_single_window_launch_config(),
                             ui_location: get_launch_config_ui_location(),
                             open_in_active_window: false,
                         },
@@ -234,9 +234,9 @@ pub fn test_open_launch_config_in_active_window() -> Builder {
                 move |app, _, _| {
                     app.dispatch_global_action(
                         "root_view:open_launch_config",
-                        warp::root_view::OpenLaunchConfigArg {
+                        leanterm::root_view::OpenLaunchConfigArg {
                             launch_config:
-                                warp::launch_configs::launch_config::make_mock_single_window_launch_config(),
+                                leanterm::launch_configs::launch_config::make_mock_single_window_launch_config(),
                             ui_location: get_launch_config_ui_location(),
                             open_in_active_window: true,
                         },
@@ -255,7 +255,7 @@ pub fn test_open_launch_config_in_active_window() -> Builder {
 }
 
 pub fn test_with_launch_config_with_active_tab_index() -> Builder {
-    use warp::launch_configs::launch_config::{
+    use leanterm::launch_configs::launch_config::{
         LaunchConfig, PaneTemplateType, SplitDirection, TabTemplate, WindowTemplate,
     };
 
@@ -299,7 +299,7 @@ pub fn test_with_launch_config_with_active_tab_index() -> Builder {
                 move |app, _, _| {
                     app.dispatch_global_action(
                         "root_view:open_launch_config",
-                        warp::root_view::OpenLaunchConfigArg {
+                        leanterm::root_view::OpenLaunchConfigArg {
                             launch_config: create_launch_config(),
                             ui_location: get_launch_config_ui_location(),
                             open_in_active_window: false,
@@ -316,7 +316,7 @@ pub fn test_with_launch_config_with_active_tab_index() -> Builder {
 }
 
 pub fn test_with_launch_config_with_active_pane() -> Builder {
-    use warp::launch_configs::launch_config::{
+    use leanterm::launch_configs::launch_config::{
         LaunchConfig, PaneTemplateType, SplitDirection, TabTemplate, WindowTemplate,
     };
 
@@ -376,7 +376,7 @@ pub fn test_with_launch_config_with_active_pane() -> Builder {
                 move |app, _, _| {
                     app.dispatch_global_action(
                         "root_view:open_launch_config",
-                        warp::root_view::OpenLaunchConfigArg {
+                        leanterm::root_view::OpenLaunchConfigArg {
                             launch_config: create_launch_config(),
                             ui_location: get_launch_config_ui_location(),
                             open_in_active_window: false,
@@ -394,7 +394,7 @@ pub fn test_with_launch_config_with_active_pane() -> Builder {
 }
 
 pub fn test_with_launch_config_with_no_active_pane() -> Builder {
-    use warp::launch_configs::launch_config::{
+    use leanterm::launch_configs::launch_config::{
         LaunchConfig, PaneTemplateType, SplitDirection, TabTemplate, WindowTemplate,
     };
 
@@ -454,7 +454,7 @@ pub fn test_with_launch_config_with_no_active_pane() -> Builder {
                 move |app, _, _| {
                     app.dispatch_global_action(
                         "root_view:open_launch_config",
-                        warp::root_view::OpenLaunchConfigArg {
+                        leanterm::root_view::OpenLaunchConfigArg {
                             launch_config: create_launch_config(),
                             ui_location: get_launch_config_ui_location(),
                             open_in_active_window: false,
@@ -484,11 +484,11 @@ pub fn test_with_launch_config_with_no_active_pane() -> Builder {
 /// - group "Orphan", which no tab joins. Restore must not put it in workspace
 ///   state, where nothing could reach it.
 pub fn test_launch_config_restores_tab_groups() -> Builder {
-    use warp::integration_testing::workspace::assert_tab_groups;
-    use warp::launch_configs::launch_config::{
+    use leanterm::integration_testing::workspace::assert_tab_groups;
+    use leanterm::launch_configs::launch_config::{
         LaunchConfig, PaneTemplateType, TabGroupTemplate, TabTemplate, WindowTemplate,
     };
-    use warp::themes::theme::AnsiColorIdentifier;
+    use leanterm::themes::theme::AnsiColorIdentifier;
 
     fn tab(title: &str, group: Option<usize>) -> TabTemplate {
         TabTemplate {
@@ -553,7 +553,7 @@ pub fn test_launch_config_restores_tab_groups() -> Builder {
                 .with_action(move |app, _, _| {
                     app.dispatch_global_action(
                         "root_view:open_launch_config",
-                        warp::root_view::OpenLaunchConfigArg {
+                        leanterm::root_view::OpenLaunchConfigArg {
                             launch_config: create_launch_config(),
                             ui_location: get_launch_config_ui_location(),
                             open_in_active_window: false,
@@ -589,11 +589,11 @@ pub fn test_launch_config_restores_tab_groups() -> Builder {
 /// `start_index + tab_index` arithmetic landed one slot late -- grouping a
 /// pre-existing tab and leaving a restored one out.
 pub fn test_launch_config_restores_tab_groups_into_active_window() -> Builder {
-    use warp::integration_testing::workspace::assert_tab_groups;
-    use warp::launch_configs::launch_config::{
+    use leanterm::integration_testing::workspace::assert_tab_groups;
+    use leanterm::launch_configs::launch_config::{
         LaunchConfig, PaneTemplateType, TabGroupTemplate, TabTemplate, WindowTemplate,
     };
-    use warp::themes::theme::AnsiColorIdentifier;
+    use leanterm::themes::theme::AnsiColorIdentifier;
 
     fn tab(title: &str, group: Option<usize>) -> TabTemplate {
         TabTemplate {
@@ -659,7 +659,7 @@ pub fn test_launch_config_restores_tab_groups_into_active_window() -> Builder {
                 .with_action(move |app, _, _| {
                     app.dispatch_global_action(
                         "root_view:open_launch_config",
-                        warp::root_view::OpenLaunchConfigArg {
+                        leanterm::root_view::OpenLaunchConfigArg {
                             launch_config: ungrouped_config(),
                             ui_location: get_launch_config_ui_location(),
                             open_in_active_window: false,
@@ -677,7 +677,7 @@ pub fn test_launch_config_restores_tab_groups_into_active_window() -> Builder {
                 .with_action(move |app, _, _| {
                     app.dispatch_global_action(
                         "root_view:open_launch_config",
-                        warp::root_view::OpenLaunchConfigArg {
+                        leanterm::root_view::OpenLaunchConfigArg {
                             launch_config: grouped_config(),
                             ui_location: get_launch_config_ui_location(),
                             open_in_active_window: true,
@@ -710,11 +710,11 @@ pub fn test_launch_config_restores_tab_groups_into_active_window() -> Builder {
 /// that already holds unpinned tabs therefore used to leave the pinned group
 /// stranded in the middle of the list, which no other code path can produce.
 pub fn test_launch_config_restores_pinned_tab_group_into_pinned_prefix() -> Builder {
-    use warp::integration_testing::workspace::assert_tab_groups;
-    use warp::launch_configs::launch_config::{
+    use leanterm::integration_testing::workspace::assert_tab_groups;
+    use leanterm::launch_configs::launch_config::{
         LaunchConfig, PaneTemplateType, TabGroupTemplate, TabTemplate, WindowTemplate,
     };
-    use warp::themes::theme::AnsiColorIdentifier;
+    use leanterm::themes::theme::AnsiColorIdentifier;
 
     fn tab(title: &str, group: Option<usize>) -> TabTemplate {
         TabTemplate {
@@ -781,7 +781,7 @@ pub fn test_launch_config_restores_pinned_tab_group_into_pinned_prefix() -> Buil
                 .with_action(move |app, _, _| {
                     app.dispatch_global_action(
                         "root_view:open_launch_config",
-                        warp::root_view::OpenLaunchConfigArg {
+                        leanterm::root_view::OpenLaunchConfigArg {
                             launch_config: ungrouped_config(),
                             ui_location: get_launch_config_ui_location(),
                             open_in_active_window: false,
@@ -799,7 +799,7 @@ pub fn test_launch_config_restores_pinned_tab_group_into_pinned_prefix() -> Buil
                 .with_action(move |app, _, _| {
                     app.dispatch_global_action(
                         "root_view:open_launch_config",
-                        warp::root_view::OpenLaunchConfigArg {
+                        leanterm::root_view::OpenLaunchConfigArg {
                             launch_config: pinned_group_config(),
                             ui_location: get_launch_config_ui_location(),
                             open_in_active_window: true,
@@ -837,11 +837,11 @@ pub fn test_launch_config_restores_pinned_tab_group_into_pinned_prefix() -> Buil
 /// inside the host group's run, leaving two runs of one id -- which
 /// `tab_bar_slots` renders as two separate containers for the same group.
 pub fn test_launch_config_restore_keeps_existing_group_contiguous() -> Builder {
-    use warp::integration_testing::workspace::assert_tab_groups;
-    use warp::launch_configs::launch_config::{
+    use leanterm::integration_testing::workspace::assert_tab_groups;
+    use leanterm::launch_configs::launch_config::{
         LaunchConfig, PaneTemplateType, TabGroupTemplate, TabTemplate, WindowTemplate,
     };
-    use warp::themes::theme::AnsiColorIdentifier;
+    use leanterm::themes::theme::AnsiColorIdentifier;
 
     fn tab(title: &str, group: Option<usize>) -> TabTemplate {
         TabTemplate {
@@ -897,7 +897,7 @@ pub fn test_launch_config_restore_keeps_existing_group_contiguous() -> Builder {
                 .with_action(move |app, _, _| {
                     app.dispatch_global_action(
                         "root_view:open_launch_config",
-                        warp::root_view::OpenLaunchConfigArg {
+                        leanterm::root_view::OpenLaunchConfigArg {
                             launch_config: grouped_config(),
                             ui_location: get_launch_config_ui_location(),
                             open_in_active_window: false,
@@ -915,7 +915,7 @@ pub fn test_launch_config_restore_keeps_existing_group_contiguous() -> Builder {
                 .with_action(move |app, _, _| {
                     app.dispatch_global_action(
                         "root_view:open_launch_config",
-                        warp::root_view::OpenLaunchConfigArg {
+                        leanterm::root_view::OpenLaunchConfigArg {
                             launch_config: ungrouped_config(),
                             ui_location: get_launch_config_ui_location(),
                             open_in_active_window: true,

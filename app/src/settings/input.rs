@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use settings::Setting as _;
 /// TODO: move alias_expansion setting into this group.
 use settings::{SupportedPlatforms, define_settings_group};
-use warpui::{AppContext, SingletonEntity};
+use leanterm_ui::{AppContext, SingletonEntity};
 
 use crate::terminal::session_settings::SessionSettings;
 

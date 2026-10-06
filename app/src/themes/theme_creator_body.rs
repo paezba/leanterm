@@ -7,18 +7,18 @@ use std::{fs::copy, io::Write};
 use pathfinder_color::ColorU;
 use pathfinder_geometry::vector::vec2f;
 #[cfg(feature = "local_fs")]
-use warp_core::ui::theme::WarpTheme;
-use warpui::elements::{
+use leanterm_core::ui::theme::WarpTheme;
+use leanterm_ui::elements::{
     Border, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, DispatchEventResult,
     EventHandler, Fill, Flex, Icon, MainAxisAlignment, MainAxisSize, MouseStateHandle,
     ParentElement, Radius, Rect, SavePosition, Shrinkable, Text,
 };
-use warpui::fonts::Weight;
-use warpui::platform::Cursor;
-use warpui::ui_components::button::{ButtonVariant, TextAndIcon, TextAndIconAlignment};
-use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
-use warpui::ui_components::text_input::TextInput;
-use warpui::{
+use leanterm_ui::fonts::Weight;
+use leanterm_ui::platform::Cursor;
+use leanterm_ui::ui_components::button::{ButtonVariant, TextAndIcon, TextAndIconAlignment};
+use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
+use leanterm_ui::ui_components::text_input::TextInput;
+use leanterm_ui::{
     AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
 };
 

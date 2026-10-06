@@ -1,5 +1,5 @@
-use warp_cli::RecoveryMechanism;
-use warpui::{AppContext, SingletonEntity as _, ViewContext};
+use leanterm_cli::RecoveryMechanism;
+use leanterm_ui::{AppContext, SingletonEntity as _, ViewContext};
 
 use super::{Workspace, WorkspaceBannerFields};
 use crate::crash_recovery::CrashRecovery;

@@ -1,7 +1,7 @@
 use pathfinder_color::ColorU;
-use warp_core::ui::theme::Fill;
-use warpui::Element;
-use warpui::elements::{Align, ConstrainedBox, Container, Empty};
+use leanterm_core::ui::theme::Fill;
+use leanterm_ui::Element;
+use leanterm_ui::elements::{Align, ConstrainedBox, Container, Empty};
 
 use crate::appearance::Appearance;
 use crate::search::result_renderer::ItemHighlightState;

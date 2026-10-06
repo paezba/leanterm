@@ -6,7 +6,7 @@ cfg_if::cfg_if! {
     }
 }
 
-use warpui::{Entity, ModelContext, SingletonEntity};
+use leanterm_ui::{Entity, ModelContext, SingletonEntity};
 
 #[derive(Clone, Copy, Default, PartialEq)]
 pub struct SystemStats;
@@ -37,6 +37,6 @@ impl Entity for SystemStats {
 impl SingletonEntity for SystemStats {}
 
 #[cfg(target_family = "wasm")]
-pub fn long_os_version(_ctx: &warpui::AppContext) -> Option<String> {
+pub fn long_os_version(_ctx: &leanterm_ui::AppContext) -> Option<String> {
     None
 }

@@ -1,5 +1,5 @@
-use warpui::clipboard::ClipboardContent;
-use warpui::integration::TestStep;
+use leanterm_ui::clipboard::ClipboardContent;
+use leanterm_ui::integration::TestStep;
 
 use super::assert_clipboard_contains_string;
 

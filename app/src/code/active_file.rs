@@ -3,7 +3,7 @@
 
 use std::path::PathBuf;
 
-use warpui::{Entity, ModelContext};
+use leanterm_ui::{Entity, ModelContext};
 
 /// Events emitted by the ActiveFileModel.
 #[derive(Debug, Clone)]

@@ -20,27 +20,27 @@ use pathfinder_geometry::vector::Vector2F;
 use repo_metadata::repositories::DetectedRepositories;
 use string_offset::CharOffset;
 use vec1::Vec1;
-use warp_core::r#async::debounce;
-use warp_core::ui::appearance::Appearance;
-use warp_core::ui::icons::Icon;
-use warp_editor::content::buffer::InitialBufferState;
-use warp_editor::content::text::IndentUnit;
-use warp_editor::render::model::Decoration;
-use warp_util::content_version::ContentVersion;
-use warp_util::file::{FileId, FileLoadError, FileSaveError};
+use leanterm_core::r#async::debounce;
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_core::ui::icons::Icon;
+use leanterm_editor::content::buffer::InitialBufferState;
+use leanterm_editor::content::text::IndentUnit;
+use leanterm_editor::render::model::Decoration;
+use leanterm_util::content_version::ContentVersion;
+use leanterm_util::file::{FileId, FileLoadError, FileSaveError};
 #[cfg(feature = "local_fs")]
-use warp_util::sync::Condition;
-use warpui::elements::{
+use leanterm_util::sync::Condition;
+use leanterm_ui::elements::{
     ChildAnchor, ChildView, ClippedScrollStateHandle, ConstrainedBox, Container, CornerRadius,
     CrossAxisAlignment, Flex, Hoverable, MainAxisAlignment, MainAxisSize, MouseStateHandle,
     OffsetPositioning, ParentAnchor, ParentElement, ParentOffsetBounds, Radius, Rect, Shrinkable,
     Stack, Text,
 };
-use warpui::platform::SaveFilePickerConfiguration;
-use warpui::text::point::Point;
-use warpui::ui_components::button::ButtonVariant;
-use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
-use warpui::{
+use leanterm_ui::platform::SaveFilePickerConfiguration;
+use leanterm_ui::text::point::Point;
+use leanterm_ui::ui_components::button::ButtonVariant;
+use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
+use leanterm_ui::{
     AppContext, Element, Entity, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle, WindowId,
 };
@@ -135,7 +135,7 @@ struct LoadedFileMetadata {
     location: PathBuf,
 }
 
-use warp_errors::report_error;
+use leanterm_errors::report_error;
 
 pub use super::diff_viewer::DisplayMode;
 
@@ -456,7 +456,7 @@ impl LocalCodeEditorView {
         // Auto-save when the editor's window is navigated away from (mirrors VS
         // Code's `files.autoSave: onWindowChange`).
         ctx.subscribe_to_model(
-            &warpui::windowing::WindowManager::handle(ctx),
+            &leanterm_ui::windowing::WindowManager::handle(ctx),
             Self::handle_window_focus_change,
         );
 
@@ -639,7 +639,7 @@ impl LocalCodeEditorView {
                 let window_id = ctx.window_id();
 
                 // Create the on-click action based on whether we have a definition
-                let on_click: Box<dyn Fn(&mut warpui::AppContext)> = if has_different_definition {
+                let on_click: Box<dyn Fn(&mut leanterm_ui::AppContext)> = if has_different_definition {
                     let target_location = definition_locations.first().unwrap().target.clone();
                     Box::new(move |app| {
                         app.dispatch_typed_action_for_view(
@@ -1194,11 +1194,11 @@ impl LocalCodeEditorView {
     /// handled separately by [`View::on_blur`].
     fn handle_window_focus_change(
         &mut self,
-        _handle: ModelHandle<warpui::windowing::WindowManager>,
-        event: &warpui::windowing::StateEvent,
+        _handle: ModelHandle<leanterm_ui::windowing::WindowManager>,
+        event: &leanterm_ui::windowing::StateEvent,
         ctx: &mut ViewContext<Self>,
     ) {
-        let warpui::windowing::StateEvent::ValueChanged { current, previous } = event;
+        let leanterm_ui::windowing::StateEvent::ValueChanged { current, previous } = event;
         let focused = ctx.is_self_or_child_focused();
         let was_window_focused = focused && previous.active_window == Some(ctx.window_id());
         let is_window_focused = focused && current.active_window == Some(ctx.window_id());
@@ -1930,13 +1930,13 @@ impl View for LocalCodeEditorView {
         "LocalCodeEditorView"
     }
 
-    fn on_focus(&mut self, focus_ctx: &warpui::FocusContext, ctx: &mut ViewContext<Self>) {
+    fn on_focus(&mut self, focus_ctx: &leanterm_ui::FocusContext, ctx: &mut ViewContext<Self>) {
         if focus_ctx.is_self_focused() {
             self.editor.update(ctx, |editor, ctx| editor.focus(ctx));
         }
     }
 
-    fn on_blur(&mut self, _blur_ctx: &warpui::BlurContext, ctx: &mut ViewContext<Self>) {
+    fn on_blur(&mut self, _blur_ctx: &leanterm_ui::BlurContext, ctx: &mut ViewContext<Self>) {
         // When focus leaves this editor's subtree entirely, treat it as a
         // focus-change auto-save (mirrors VS Code's `files.autoSave:
         // onFocusChange`). Focus moving to a child overlay (hover card,
@@ -1947,7 +1947,7 @@ impl View for LocalCodeEditorView {
         }
     }
 
-    fn render(&self, app: &AppContext) -> Box<dyn warpui::Element> {
+    fn render(&self, app: &AppContext) -> Box<dyn leanterm_ui::Element> {
         // Rendering the version conflict banner.
         let base: Box<dyn Element> = if self.has_version_conflicts(app) {
             let appearance = Appearance::as_ref(app);

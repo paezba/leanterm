@@ -4,12 +4,12 @@ use std::rc::Rc;
 use std::sync::Arc;
 
 use code_diff::diff_validation::DiffType;
-use warp_core::ui::appearance::Appearance;
-use warp_editor::content::buffer::InitialBufferState;
-use warp_editor::render::model::LineCount;
-use warp_util::file::{FileLoadError, FileSaveError};
-use warpui::elements::MouseStateHandle;
-use warpui::{
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_editor::content::buffer::InitialBufferState;
+use leanterm_editor::render::model::LineCount;
+use leanterm_util::file::{FileLoadError, FileSaveError};
+use leanterm_ui::elements::MouseStateHandle;
+use leanterm_ui::{
     AppContext, Element, Entity, TypedActionView, View, ViewContext, ViewHandle, WindowId,
 };
 
@@ -113,7 +113,7 @@ impl View for LocalCodeEditorView {
         "LocalCodeEditorView"
     }
     fn render(&self, _app: &AppContext) -> Box<dyn Element> {
-        warpui::elements::Empty::new().finish()
+        leanterm_ui::elements::Empty::new().finish()
     }
 }
 
@@ -130,5 +130,5 @@ pub fn render_unsaved_circle_with_tooltip(
     _right_margin: f32,
     _appearance: &Appearance,
 ) -> Box<dyn Element> {
-    warpui::elements::Empty::new().finish()
+    leanterm_ui::elements::Empty::new().finish()
 }

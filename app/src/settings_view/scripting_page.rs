@@ -2,14 +2,14 @@
 
 use settings::Setting as _;
 #[cfg(target_os = "macos")]
-use warp_core::channel::ChannelState;
-use warp_errors::report_if_error;
-use warpui::elements::{ChildView, Element, MouseStateHandle};
+use leanterm_core::channel::ChannelState;
+use leanterm_errors::report_if_error;
+use leanterm_ui::elements::{ChildView, Element, MouseStateHandle};
 #[cfg(target_os = "macos")]
-use warpui::ui_components::button::ButtonVariant;
+use leanterm_ui::ui_components::button::ButtonVariant;
 #[cfg(target_os = "macos")]
-use warpui::ui_components::components::UiComponent;
-use warpui::{AppContext, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle};
+use leanterm_ui::ui_components::components::UiComponent;
+use leanterm_ui::{AppContext, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle};
 
 use super::settings_page::{
     MatchData, PageTitle, PageType, SettingsPageMeta, SettingsPageViewHandle, SettingsWidget,

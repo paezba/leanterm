@@ -1,8 +1,8 @@
 use settings::macros::define_settings_group;
 use settings::{Setting, SupportedPlatforms};
-use warp_errors::{report_error, report_if_error};
-use warpui::keymap::Keystroke;
-use warpui::{AppContext, DisplayIdx, ModelContext};
+use leanterm_errors::{report_error, report_if_error};
+use leanterm_ui::keymap::Keystroke;
+use leanterm_ui::{AppContext, DisplayIdx, ModelContext};
 
 use crate::root_view::{QuakeModePinPosition, update_quake_window_bounds};
 use crate::settings::{

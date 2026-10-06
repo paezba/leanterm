@@ -5,9 +5,9 @@ use anyhow::Result;
 use clap::Parser;
 use integration::Builder;
 use integration::test::*;
-use warp_cli::WorkerCommand;
-use warp_core::AppId;
-use warp_core::channel::{Channel, ChannelConfig, ChannelState, WarpServerConfig};
+use leanterm_cli::WorkerCommand;
+use leanterm_core::AppId;
+use leanterm_core::channel::{Channel, ChannelConfig, ChannelState, WarpServerConfig};
 
 /// The Warp integration test runner.
 #[derive(Debug, Default, Parser, Clone)]
@@ -55,7 +55,7 @@ pub fn main() -> Result<()> {
                 // GUI application), do so.  This must occur before init_logging, as the
                 // terminal server sets up its own logger, and attempting to set a second
                 // logger leads to a panic.
-                warp::terminal::local_tty::run_terminal_server(args);
+                leanterm::terminal::local_tty::run_terminal_server(args);
                 return Ok(());
             }
             #[allow(unreachable_patterns)]
@@ -92,7 +92,7 @@ pub fn main() -> Result<()> {
     }
 
     #[cfg_attr(not(unix), allow(unreachable_code))]
-    warp::run_integration_test(driver)
+    leanterm::run_integration_test(driver)
 }
 
 /// Type of a function that produces an integration test builder.

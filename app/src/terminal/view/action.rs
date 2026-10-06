@@ -4,10 +4,10 @@ use std::path::PathBuf;
 
 use command_corrections::Correction;
 use pathfinder_geometry::vector::Vector2F;
-use warp_util::user_input::UserInput;
-use warpui::elements::HyperlinkUrl;
-use warpui::event::ModifiersState;
-use warpui::units::Lines;
+use leanterm_util::user_input::UserInput;
+use leanterm_ui::elements::HyperlinkUrl;
+use leanterm_ui::event::ModifiersState;
+use leanterm_ui::units::Lines;
 
 use super::inline_banner::{OpenInWarpBannerAction, VimModeBannerAction};
 use super::{
@@ -150,7 +150,7 @@ pub enum TerminalAction {
     RunNativeShellCompletions {
         buffer_text: String,
         results_tx:
-            async_channel::Sender<(Vec<ShellCompletion>, Option<warp_completer::meta::Span>)>,
+            async_channel::Sender<(Vec<ShellCompletion>, Option<leanterm_completer::meta::Span>)>,
     },
     KeyDown(String),
     TypedCharacters(String),
@@ -194,7 +194,7 @@ pub enum TerminalAction {
     OpenCodeInWarp {
         path: PathBuf,
         layout: crate::util::file::external_editor::settings::EditorLayout,
-        line_col: Option<warp_util::path::LineAndColumnArg>,
+        line_col: Option<leanterm_util::path::LineAndColumnArg>,
     },
     /// Starts a subshell in the active session.
     TriggerSubshellBootstrap,

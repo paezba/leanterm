@@ -3,21 +3,21 @@ use std::time::Duration;
 
 use async_channel::Sender;
 use pathfinder_geometry::vector::vec2f;
-use warp_core::r#async::debounce;
-use warp_editor::render::model::{AutoScrollMode, Decoration};
-use warp_editor::search::{SearchEvent, Searcher};
-use warpui::accessibility::{AccessibilityContent, ActionAccessibilityContent, WarpA11yRole};
-use warpui::elements::{
+use leanterm_core::r#async::debounce;
+use leanterm_editor::render::model::{AutoScrollMode, Decoration};
+use leanterm_editor::search::{SearchEvent, Searcher};
+use leanterm_ui::accessibility::{AccessibilityContent, ActionAccessibilityContent, WarpA11yRole};
+use leanterm_ui::elements::{
     Border, ChildAnchor, Clipped, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment,
     Empty, Flex, MouseStateHandle, OffsetPositioning, ParentElement, PositionedElementAnchor,
     PositionedElementOffsetBounds, Radius, Rect, Shrinkable, Stack,
 };
-use warpui::platform::Cursor;
-use warpui::presenter::ChildView;
-use warpui::ui_components::button::ButtonVariant;
-use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
-use warpui::ui_components::toggle_button::ToggleButton;
-use warpui::{
+use leanterm_ui::platform::Cursor;
+use leanterm_ui::presenter::ChildView;
+use leanterm_ui::ui_components::button::ButtonVariant;
+use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
+use leanterm_ui::ui_components::toggle_button::ToggleButton;
+use leanterm_ui::{
     AppContext, BlurContext, Element, Entity, FocusContext, ModelHandle, SingletonEntity,
     TypedActionView, View, ViewContext, ViewHandle,
 };
@@ -348,7 +348,7 @@ impl View for FindBar {
         "FindBar"
     }
 
-    fn render(&self, app: &warpui::AppContext) -> Box<dyn warpui::Element> {
+    fn render(&self, app: &leanterm_ui::AppContext) -> Box<dyn leanterm_ui::Element> {
         let appearance = Appearance::as_ref(app);
         let searcher = self.searcher.as_ref(app);
         let theme = appearance.theme();

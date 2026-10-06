@@ -120,9 +120,9 @@ use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::Vector2F;
 use serde::{Deserialize, Serialize};
 use settings::Setting as _;
-use warpui::elements::DEFAULT_UI_LINE_HEIGHT_RATIO;
-use warpui::keymap::Keystroke;
-use warpui::{AppContext, DisplayIdx, SingletonEntity};
+use leanterm_ui::elements::DEFAULT_UI_LINE_HEIGHT_RATIO;
+use leanterm_ui::keymap::Keystroke;
+use leanterm_ui::{AppContext, DisplayIdx, SingletonEntity};
 
 use crate::root_view::QuakeModePinPosition;
 use crate::terminal::{BlockListSettings, BlockPadding};
@@ -540,18 +540,18 @@ pub struct ExtraMetaKeysChangedArg {
 
 /// Returns the path to the user preferences file.
 pub fn user_preferences_file_path() -> PathBuf {
-    warp_core::paths::config_local_dir().join("user_preferences.json")
+    leanterm_core::paths::config_local_dir().join("user_preferences.json")
 }
 
 /// Returns the path to the TOML settings file for the active settings surface.
 ///
 /// Both surfaces use the same `settings.toml` file name but live in different
-/// config directories (the GUI under [`warp_core::paths::config_local_dir`], the
-/// TUI under [`warp_core::paths::tui_config_local_dir`]) so an installed GUI and
+/// config directories (the GUI under [`leanterm_core::paths::config_local_dir`], the
+/// TUI under [`leanterm_core::paths::tui_config_local_dir`]) so an installed GUI and
 /// TUI never share (and clobber) one file.
 pub fn user_preferences_toml_file_path() -> PathBuf {
     let config_dir = match settings::settings_mode() {
-        settings::SettingsMode::Gui => warp_core::paths::config_local_dir(),
+        settings::SettingsMode::Gui => leanterm_core::paths::config_local_dir(),
     };
     config_dir.join("settings.toml")
 }

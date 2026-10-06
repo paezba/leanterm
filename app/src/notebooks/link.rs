@@ -8,9 +8,9 @@ use std::sync::Arc;
 
 use futures_util::future::Either;
 use url::Url;
-use warp_util::path::{CleanPathResult, LineAndColumnArg};
-use warpui::r#async::SpawnedFutureHandle;
-use warpui::{AppContext, Entity, ModelContext, ModelHandle, SingletonEntity, WindowId};
+use leanterm_util::path::{CleanPathResult, LineAndColumnArg};
+use leanterm_ui::r#async::SpawnedFutureHandle;
+use leanterm_ui::{AppContext, Entity, ModelContext, ModelHandle, SingletonEntity, WindowId};
 
 use super::file::is_markdown_file;
 use crate::terminal::model::session::Session;

@@ -1,14 +1,14 @@
-use warp_editor::editor::NavigationKey;
-use warp_editor::model::RichTextEditorModel;
-use warp_editor::render::model::RenderState;
-use warpui::elements::{
+use leanterm_editor::editor::NavigationKey;
+use leanterm_editor::model::RichTextEditorModel;
+use leanterm_editor::render::model::RenderState;
+use leanterm_ui::elements::{
     AnchorPair, Container, Flex, MouseStateHandle, OffsetPositioning, OffsetType, ParentElement,
     PositionedElementOffsetBounds, PositioningAxis, XAxisAnchor, YAxisAnchor,
 };
-use warpui::fonts::Weight;
-use warpui::ui_components::button::ButtonVariant;
-use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
-use warpui::{
+use leanterm_ui::fonts::Weight;
+use leanterm_ui::ui_components::button::ButtonVariant;
+use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
+use leanterm_ui::{
     AppContext, BlurContext, Element, Entity, ModelHandle, SingletonEntity, TypedActionView, View,
     ViewContext, ViewHandle,
 };
@@ -198,7 +198,7 @@ impl View for LinkEditor {
         }
     }
 
-    fn render(&self, app: &warpui::AppContext) -> Box<dyn Element> {
+    fn render(&self, app: &leanterm_ui::AppContext) -> Box<dyn Element> {
         let appearance = Appearance::as_ref(app);
         let mut editors = Flex::column();
 

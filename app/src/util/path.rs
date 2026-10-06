@@ -1,6 +1,6 @@
 use std::path::Path;
 
-pub use warp_util::path::*;
+pub use leanterm_util::path::*;
 
 /// Returns the file name of `path` for display (e.g. tab titles).
 pub fn display_name(path: &Path) -> String {

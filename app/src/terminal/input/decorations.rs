@@ -6,10 +6,10 @@ use std::ops::Range;
 
 use settings::Setting as _;
 use string_offset::{ByteOffset, CharOffset};
-pub use warp_completer::completer::SuggestionTypeName;
-pub use warp_completer::util::parse_current_commands_and_tokens;
-pub use warp_completer::{ParsedTokenData, ParsedTokensSnapshot};
-use warpui::{AppContext, SingletonEntity, ViewContext};
+pub use leanterm_completer::completer::SuggestionTypeName;
+pub use leanterm_completer::util::parse_current_commands_and_tokens;
+pub use leanterm_completer::{ParsedTokenData, ParsedTokensSnapshot};
+use leanterm_ui::{AppContext, SingletonEntity, ViewContext};
 
 use super::Input;
 use crate::appearance::Appearance;

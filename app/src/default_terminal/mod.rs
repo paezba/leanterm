@@ -1,5 +1,5 @@
-use warpui::windowing::{StateEvent, WindowManager};
-use warpui::{Entity, ModelContext, ModelHandle, SingletonEntity};
+use leanterm_ui::windowing::{StateEvent, WindowManager};
+use leanterm_ui::{Entity, ModelContext, ModelHandle, SingletonEntity};
 
 #[cfg(target_os = "macos")]
 mod mac;
@@ -27,7 +27,7 @@ mod non_mac {
 #[allow(unused_imports)]
 #[cfg(not(target_os = "macos"))]
 use non_mac::*;
-use warp_errors::report_error;
+use leanterm_errors::report_error;
 
 pub struct DefaultTerminal {
     /// Whether the OS will treat Warp as the default app for scripts/executables.

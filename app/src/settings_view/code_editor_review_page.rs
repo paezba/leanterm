@@ -1,14 +1,14 @@
 //! The "Editor and Code Review" settings page, shown under the Code umbrella.
 
-use warp_core::settings::{Setting as _, ToggleableSetting as _};
-use warp_errors::report_if_error;
-use warpui::elements::Element;
+use leanterm_core::settings::{Setting as _, ToggleableSetting as _};
+use leanterm_errors::report_if_error;
+use leanterm_ui::elements::Element;
 #[cfg(feature = "local_fs")]
-use warpui::elements::{ChildView, Empty};
-use warpui::keymap::ContextPredicate;
-use warpui::ui_components::components::UiComponent;
-use warpui::ui_components::switch::SwitchStateHandle;
-use warpui::{
+use leanterm_ui::elements::{ChildView, Empty};
+use leanterm_ui::keymap::ContextPredicate;
+use leanterm_ui::ui_components::components::UiComponent;
+use leanterm_ui::ui_components::switch::SwitchStateHandle;
+use leanterm_ui::{
     Action, AppContext, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
 };
 

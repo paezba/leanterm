@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use itertools::{Either, Itertools};
-use warpui::{EntityId, UpdateView, ViewContext};
+use leanterm_ui::{EntityId, UpdateView, ViewContext};
 
 use super::{Workspace, group_member_indices};
 use crate::menu::{MenuItem, MenuItemFields};

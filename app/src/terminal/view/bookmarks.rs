@@ -1,9 +1,9 @@
-use warpui::Element;
-use warpui::elements::{
+use leanterm_ui::Element;
+use leanterm_ui::elements::{
     Border, ConstrainedBox, Container, CornerRadius, Flex, ParentElement, Radius,
 };
-use warpui::fonts::Weight;
-use warpui::ui_components::components::{UiComponent, UiComponentStyles};
+use leanterm_ui::fonts::Weight;
+use leanterm_ui::ui_components::components::{UiComponent, UiComponentStyles};
 
 use crate::appearance::Appearance;
 use crate::terminal::model::block::Block;

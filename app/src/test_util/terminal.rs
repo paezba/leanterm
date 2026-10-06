@@ -3,8 +3,8 @@
 use repo_metadata::RepoMetadataModel;
 use repo_metadata::repositories::DetectedRepositories;
 use repo_metadata::watcher::DirectoryWatcher;
-use warp_core::ui::appearance::Appearance;
-use warpui::App;
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_ui::App;
 use watcher::HomeDirectoryWatcher;
 
 use super::settings::initialize_history_persistence_for_tests;

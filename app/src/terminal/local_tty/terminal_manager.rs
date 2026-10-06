@@ -14,10 +14,10 @@ use nix::sys::termios::LocalFlags;
 use parking_lot::{FairMutex, Mutex};
 use pathfinder_geometry::vector::Vector2F;
 use settings::Setting as _;
-use warp_core::SessionId;
-use warp_errors::report_error;
-use warpui::r#async::executor::Background;
-use warpui::{AppContext, Entity, ModelContext, ModelHandle, SingletonEntity, ViewHandle};
+use leanterm_core::SessionId;
+use leanterm_errors::report_error;
+use leanterm_ui::r#async::executor::Background;
+use leanterm_ui::{AppContext, Entity, ModelContext, ModelHandle, SingletonEntity, ViewHandle};
 
 use super::event_loop::EventLoop;
 use super::shell::{ShellStarter, ShellStarterSource};

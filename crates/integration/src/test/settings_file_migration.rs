@@ -4,10 +4,10 @@
 use std::collections::HashMap;
 
 use settings::Setting as _;
-use warp::integration_testing::terminal::wait_until_bootstrapped_single_pane_for_tab;
-use warp::settings::{BlockVisibilitySettings, ScrollSettings};
-use warpui_core::integration::AssertionOutcome;
-use warpui_core::{SingletonEntity, async_assert, async_assert_eq};
+use leanterm::integration_testing::terminal::wait_until_bootstrapped_single_pane_for_tab;
+use leanterm::settings::{BlockVisibilitySettings, ScrollSettings};
+use leanterm_ui_core::integration::AssertionOutcome;
+use leanterm_ui_core::{SingletonEntity, async_assert, async_assert_eq};
 
 use super::{Builder, new_builder};
 
@@ -62,7 +62,7 @@ pub fn test_settings_file_migration_from_native_store() -> Builder {
                 .add_named_assertion(
                     "TOML settings file should contain the migrated settings",
                     move |_app, _window_id| {
-                        let toml_path = warp::settings::user_preferences_toml_file_path();
+                        let toml_path = leanterm::settings::user_preferences_toml_file_path();
                         let contents = match std::fs::read_to_string(&toml_path) {
                             Ok(c) => c,
                             Err(err) => {

@@ -8,18 +8,18 @@ use base64::Engine;
 use itertools::Either;
 use serde::Serialize;
 use string_offset::CharOffset;
-use warp_completer::meta::Span;
-use warp_core::command::ExitCode;
-use warp_core::semantic_selection::SemanticSelection;
-use warp_errors::report_error;
-pub use warp_terminal::event::ExitReason;
-use warp_terminal::event::validate_and_decode_in_band_command_output_to_bytes;
-pub use warp_terminal::model::{BlockIndex, RangeInModel};
-use warp_terminal::model::{KeyboardModes, KeyboardModesApplyBehavior};
-use warpui::AppContext;
-use warpui::assets::asset_cache::Asset;
-use warpui::r#async::executor::Background;
-use warpui::image_cache::ImageType;
+use leanterm_completer::meta::Span;
+use leanterm_core::command::ExitCode;
+use leanterm_core::semantic_selection::SemanticSelection;
+use leanterm_errors::report_error;
+pub use leanterm_terminal::event::ExitReason;
+use leanterm_terminal::event::validate_and_decode_in_band_command_output_to_bytes;
+pub use leanterm_terminal::model::{BlockIndex, RangeInModel};
+use leanterm_terminal::model::{KeyboardModes, KeyboardModesApplyBehavior};
+use leanterm_ui::AppContext;
+use leanterm_ui::assets::asset_cache::Asset;
+use leanterm_ui::r#async::executor::Background;
+use leanterm_ui::image_cache::ImageType;
 
 use super::super::{AltScreen, BlockList};
 use super::ansi::{BootstrappedValue, FinishUpdateValue, InputBufferValue, Mode, PendingHook};
@@ -2050,7 +2050,7 @@ impl ansi::Handler for TerminalModel {
         delegate!(self.set_cursor_shape(shape));
     }
 
-    fn set_hyperlink(&mut self, hyperlink: Option<warp_terminal::model::ansi::Hyperlink>) {
+    fn set_hyperlink(&mut self, hyperlink: Option<leanterm_terminal::model::ansi::Hyperlink>) {
         delegate!(self.set_hyperlink(hyperlink));
     }
 
@@ -2304,7 +2304,7 @@ impl ansi::Handler for TerminalModel {
         delegate!(self.configure_charset(index, charset));
     }
 
-    fn set_color(&mut self, index: usize, color: warpui::color::ColorU) {
+    fn set_color(&mut self, index: usize, color: leanterm_ui::color::ColorU) {
         self.override_colors[index] = Some(color);
     }
 

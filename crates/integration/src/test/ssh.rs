@@ -2,25 +2,25 @@ use std::collections::HashMap;
 
 use regex::Regex;
 use settings::Setting as _;
-use warp::integration_testing::step::new_step_with_default_assertions;
-use warp::integration_testing::subshell::{
+use leanterm::integration_testing::step::new_step_with_default_assertions;
+use leanterm::integration_testing::subshell::{
     enter_ssh_command, enter_ssh_password, setup_gcloud_sdk, wait_for_password_prompt,
 };
-use warp::integration_testing::terminal::util::{
+use leanterm::integration_testing::terminal::util::{
     ExactLine, ExpectedExitStatus, current_shell_starter_and_version, nonce,
 };
-use warp::integration_testing::terminal::{
+use leanterm::integration_testing::terminal::{
     assert_active_block_output_for_single_terminal_in_tab,
     assert_long_running_block_executing_for_single_terminal_in_tab,
     execute_command_for_single_terminal_in_tab, validate_block_output,
     wait_until_bootstrapped_single_pane_for_tab,
 };
-use warp::integration_testing::view_getters::{single_terminal_view, single_terminal_view_for_tab};
-use warp::terminal::model::bootstrap::BootstrapStage;
-use warp::terminal::session_settings::{StartupShell, StartupShellOverride};
-use warp::terminal::shell::ShellType;
-use warpui_core::integration::{AssertionCallback, AssertionOutcome, TestStep};
-use warpui_core::{async_assert, async_assert_eq};
+use leanterm::integration_testing::view_getters::{single_terminal_view, single_terminal_view_for_tab};
+use leanterm::terminal::model::bootstrap::BootstrapStage;
+use leanterm::terminal::session_settings::{StartupShell, StartupShellOverride};
+use leanterm::terminal::shell::ShellType;
+use leanterm_ui_core::integration::{AssertionCallback, AssertionOutcome, TestStep};
+use leanterm_ui_core::{async_assert, async_assert_eq};
 
 use super::new_builder;
 use crate::Builder;

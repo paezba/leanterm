@@ -1,14 +1,14 @@
 use serde::{Deserialize, Serialize};
-use warp_editor::content::text::BufferBlockItem;
-use warpui::elements::{
+use leanterm_editor::content::text::BufferBlockItem;
+use leanterm_ui::elements::{
     AnchorPair, Border, Container, CornerRadius, MouseStateHandle, OffsetPositioning, OffsetType,
     PositionedElementOffsetBounds, PositioningAxis, Radius, SavePosition, Stack, XAxisAnchor,
     YAxisAnchor,
 };
-use warpui::presenter::ChildView;
-use warpui::ui_components::button::ButtonTooltipPosition;
-use warpui::ui_components::components::{UiComponent, UiComponentStyles};
-use warpui::{AppContext, Element, SingletonEntity, ViewContext, ViewHandle};
+use leanterm_ui::presenter::ChildView;
+use leanterm_ui::ui_components::button::ButtonTooltipPosition;
+use leanterm_ui::ui_components::components::{UiComponent, UiComponentStyles};
+use leanterm_ui::{AppContext, Element, SingletonEntity, ViewContext, ViewHandle};
 
 use super::BlockType;
 use super::view::{EditorViewAction, EditorViewEvent, RichTextEditorView};
@@ -58,7 +58,7 @@ impl BlockInsertionMenuState {
                 MenuItemFields::new(block_type.label())
                     .with_icon(block_type.icon())
                     .with_on_select_action(EditorViewAction::InsertBlock(
-                        warp_editor::content::text::BlockType::Text(block_type.into()),
+                        leanterm_editor::content::text::BlockType::Text(block_type.into()),
                     ))
                     .into_item(),
             );
@@ -68,7 +68,7 @@ impl BlockInsertionMenuState {
             let mut item_fields = MenuItemFields::new(block_type.label())
                 .with_icon(block_type.icon())
                 .with_on_select_action(EditorViewAction::InsertBlock(
-                    warp_editor::content::text::BlockType::Text(block_type.into()),
+                    leanterm_editor::content::text::BlockType::Text(block_type.into()),
                 ));
             if let Some(icon_fill) = block_type.icon_color(appearance) {
                 item_fields = item_fields.with_override_icon_color(icon_fill);
@@ -80,7 +80,7 @@ impl BlockInsertionMenuState {
             MenuItemFields::new("Divider")
                 .with_icon(Icon::HorizontalRuleBlock)
                 .with_on_select_action(EditorViewAction::InsertBlock(
-                    warp_editor::content::text::BlockType::Item(BufferBlockItem::HorizontalRule),
+                    leanterm_editor::content::text::BlockType::Item(BufferBlockItem::HorizontalRule),
                 ))
                 .with_override_icon_color(Fill::Solid(appearance.theme().ui_warning_color()))
                 .into_item(),

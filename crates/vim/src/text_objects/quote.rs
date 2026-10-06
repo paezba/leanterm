@@ -2,7 +2,7 @@ use std::ops::Range;
 
 use itertools::Itertools;
 use string_offset::CharOffset;
-use warpui_core::text::TextBuffer;
+use leanterm_ui_core::text::TextBuffer;
 
 use crate::vim::QuoteType;
 

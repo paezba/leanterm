@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Weak};
 
-use warpui::{Entity, EntityId, ModelContext, SingletonEntity, WindowId};
+use leanterm_ui::{Entity, EntityId, ModelContext, SingletonEntity, WindowId};
 
 use crate::terminal::model::session::Session;
 

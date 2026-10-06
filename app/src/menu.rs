@@ -6,10 +6,10 @@ use chrono::{DateTime, Local};
 use pathfinder_color::ColorU;
 use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::{Vector2F, vec2f};
-use warp_core::ui::color::blend::Blend;
-use warpui::accessibility::{AccessibilityContent, ActionAccessibilityContent, WarpA11yRole};
-use warpui::assets::asset_cache::AssetSource;
-use warpui::elements::{
+use leanterm_core::ui::color::blend::Blend;
+use leanterm_ui::accessibility::{AccessibilityContent, ActionAccessibilityContent, WarpA11yRole};
+use leanterm_ui::assets::asset_cache::AssetSource;
+use leanterm_ui::elements::{
     Align, Border, CacheOption, ChildAnchor, ClippedScrollStateHandle, ClippedScrollable,
     ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Dismiss, DispatchEventResult,
     DropShadow, Element, EventHandler, Expanded, Flex, Hoverable, Icon, Image, MainAxisAlignment,
@@ -18,12 +18,12 @@ use warpui::elements::{
     Radius, Rect, SavePosition, ScrollTarget, ScrollToPositionMode, ScrollbarWidth, Shrinkable,
     Stack, Text,
 };
-use warpui::fonts::{FamilyId, Properties};
-use warpui::keymap::FixedBinding;
-use warpui::platform::Cursor;
-use warpui::text_layout::ClipConfig;
-use warpui::ui_components::components::UiComponent;
-use warpui::{
+use leanterm_ui::fonts::{FamilyId, Properties};
+use leanterm_ui::keymap::FixedBinding;
+use leanterm_ui::platform::Cursor;
+use leanterm_ui::text_layout::ClipConfig;
+use leanterm_ui::ui_components::components::UiComponent;
+use leanterm_ui::{
     Action, AppContext, Entity, SingletonEntity, TypedActionView, View, ViewContext, WindowId,
 };
 
@@ -1749,7 +1749,7 @@ pub enum MenuAction {
 }
 
 pub fn init(app: &mut AppContext) {
-    use warpui::keymap::macros::*;
+    use leanterm_ui::keymap::macros::*;
 
     app.register_fixed_bindings([
         FixedBinding::new(
@@ -2231,7 +2231,7 @@ impl<A: Action + Clone> SubMenu<A> {
                             ScrollbarWidth::Auto,
                             appearance.theme().nonactive_ui_detail().into(),
                             appearance.theme().active_ui_detail().into(),
-                            warpui::elements::Fill::None,
+                            leanterm_ui::elements::Fill::None,
                         )
                         .with_overlayed_scrollbar()
                         .finish(),

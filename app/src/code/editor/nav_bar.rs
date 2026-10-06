@@ -1,18 +1,18 @@
 #![cfg_attr(target_family = "wasm", allow(dead_code, unused_imports))]
 // Adding this file level gate as some of the code around editability is not used in WASM yet.
 
-use warp_core::ui::appearance::Appearance;
-use warp_core::ui::theme::Fill;
-use warp_editor::model::CoreEditorModel;
-use warpui::elements::{
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_core::ui::theme::Fill;
+use leanterm_editor::model::CoreEditorModel;
+use leanterm_ui::elements::{
     Align, Border, ConstrainedBox, Container, CrossAxisAlignment, Flex, MouseStateHandle,
     ParentElement, Shrinkable,
 };
-use warpui::presenter::ChildView;
-use warpui::ui_components::button::ButtonVariant;
-use warpui::ui_components::components::{UiComponent, UiComponentStyles};
-use warpui::units::IntoPixels;
-use warpui::{
+use leanterm_ui::presenter::ChildView;
+use leanterm_ui::ui_components::button::ButtonVariant;
+use leanterm_ui::ui_components::components::{UiComponent, UiComponentStyles};
+use leanterm_ui::units::IntoPixels;
+use leanterm_ui::{
     AppContext, Element, Entity, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle,
 };

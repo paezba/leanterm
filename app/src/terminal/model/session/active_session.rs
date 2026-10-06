@@ -1,8 +1,8 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use warp_core::SessionId;
-use warpui::{AppContext, Entity, ModelContext, ModelHandle};
+use leanterm_core::SessionId;
+use leanterm_ui::{AppContext, Entity, ModelContext, ModelHandle};
 
 use super::{Session, SessionType, Sessions};
 use crate::terminal::ShellLaunchData;

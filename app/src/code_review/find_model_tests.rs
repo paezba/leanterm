@@ -2,12 +2,12 @@ use std::path::PathBuf;
 
 use repo_metadata::repositories::DetectedRepositories;
 use string_offset::CharOffset;
-use warp_core::ui::appearance::Appearance;
-use warp_editor::content::buffer::InitialBufferState;
-use warp_editor::render::element::VerticalExpansionBehavior;
-use warpui::elements::Empty;
-use warpui::platform::WindowStyle;
-use warpui::{App, Element as _, ModelHandle, ViewHandle};
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_editor::content::buffer::InitialBufferState;
+use leanterm_editor::render::element::VerticalExpansionBehavior;
+use leanterm_ui::elements::Empty;
+use leanterm_ui::platform::WindowStyle;
+use leanterm_ui::{App, Element as _, ModelHandle, ViewHandle};
 
 use super::*;
 use crate::NotebookKeybindings;
@@ -26,12 +26,12 @@ use crate::workspace::sync_inputs::SyncedInputState;
 #[derive(Default)]
 struct TestView;
 
-impl warpui::Entity for TestView {
+impl leanterm_ui::Entity for TestView {
     type Event = ();
 }
 
-impl warpui::View for TestView {
-    fn render(&self, _: &warpui::AppContext) -> Box<dyn warpui::Element> {
+impl leanterm_ui::View for TestView {
+    fn render(&self, _: &leanterm_ui::AppContext) -> Box<dyn leanterm_ui::Element> {
         Empty::new().finish()
     }
 
@@ -40,7 +40,7 @@ impl warpui::View for TestView {
     }
 }
 
-impl warpui::TypedActionView for TestView {
+impl leanterm_ui::TypedActionView for TestView {
     type Action = ();
 }
 

@@ -2,13 +2,13 @@ use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
 use settings::Setting;
-use warp_util::path::user_friendly_path;
-use warpui::elements::{
+use leanterm_util::path::user_friendly_path;
+use leanterm_ui::elements::{
     Border, ChildView, ConstrainedBox, Container, CrossAxisAlignment, Flex, Hoverable,
     MainAxisSize, MouseStateHandle, ParentElement, Text,
 };
-use warpui::platform::Cursor;
-use warpui::{
+use leanterm_ui::platform::Cursor;
+use leanterm_ui::{
     AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
 };
 

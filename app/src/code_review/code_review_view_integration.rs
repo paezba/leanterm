@@ -1,11 +1,11 @@
 use std::path::PathBuf;
 
-use warp_editor::model::CoreEditorModel;
-use warp_editor::render::model::{
+use leanterm_editor::model::CoreEditorModel;
+use leanterm_editor::render::model::{
     BlockItem, HitTestOptions, LineCount, Location, RenderLineLocation,
 };
-use warpui::units::Pixels;
-use warpui::{AppContext, ViewContext};
+use leanterm_ui::units::Pixels;
+use leanterm_ui::{AppContext, ViewContext};
 
 use super::{CodeReviewView, CodeReviewViewState, FILE_HEADER_HEIGHT};
 use crate::code::editor::line::EditorLineLocation;

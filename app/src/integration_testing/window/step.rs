@@ -1,8 +1,8 @@
 use pathfinder_geometry::rect::RectF;
-use warpui::integration::TestStep;
-use warpui::platform::TerminationMode;
-use warpui::windowing::WindowManager;
-use warpui::{SingletonEntity, async_assert_eq};
+use leanterm_ui::integration::TestStep;
+use leanterm_ui::platform::TerminationMode;
+use leanterm_ui::windowing::WindowManager;
+use leanterm_ui::{SingletonEntity, async_assert_eq};
 
 use crate::integration_testing::step::new_step_with_default_assertions;
 

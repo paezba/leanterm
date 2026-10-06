@@ -1,6 +1,6 @@
 use repo_metadata::DirectoryWatcher;
-use warp_util::standardized_path::StandardizedPath;
-use warpui::{App, ModelHandle};
+use leanterm_util::standardized_path::StandardizedPath;
+use leanterm_ui::{App, ModelHandle};
 
 use super::*;
 use crate::code_review::git_repo_model::GitRepoStatusModel;

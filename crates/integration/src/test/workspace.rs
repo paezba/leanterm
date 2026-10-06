@@ -6,41 +6,41 @@ use std::time::Duration;
 use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::{Vector2F, vec2f};
 use settings::Setting as _;
-use warp::cmd_or_ctrl_shift;
-use warp::integration_testing::clipboard::assert_clipboard_contains_string;
-use warp::integration_testing::command_palette::assert_command_palette_is_closed;
-use warp::integration_testing::pane_group::assert_focused_pane_index;
-use warp::integration_testing::step::new_step_with_default_assertions;
-use warp::integration_testing::terminal::util::{
+use leanterm::cmd_or_ctrl_shift;
+use leanterm::integration_testing::clipboard::assert_clipboard_contains_string;
+use leanterm::integration_testing::command_palette::assert_command_palette_is_closed;
+use leanterm::integration_testing::pane_group::assert_focused_pane_index;
+use leanterm::integration_testing::step::new_step_with_default_assertions;
+use leanterm::integration_testing::terminal::util::{
     ExpectedExitStatus, current_shell_starter_and_version,
 };
-use warp::integration_testing::terminal::{
+use leanterm::integration_testing::terminal::{
     assert_active_session_local_path, assert_command_executed_for_single_terminal_in_tab,
     assert_focused_editor_in_tab, assert_input_editor_contents,
     assert_long_running_block_executing_for_single_terminal_in_tab, execute_command,
     execute_command_for_single_terminal_in_tab, wait_until_bootstrapped_pane,
     wait_until_bootstrapped_single_pane_for_tab,
 };
-use warp::integration_testing::view_getters::{
+use leanterm::integration_testing::view_getters::{
     command_palette_view, terminal_view, workspace_view,
 };
-use warp::integration_testing::window::{
+use leanterm::integration_testing::window::{
     add_and_save_window, assert_num_windows_open, save_active_window_id,
 };
-use warp::integration_testing::workspace::{
+use leanterm::integration_testing::workspace::{
     assert_focused_tab_index, assert_tab_count, press_native_modal_button,
 };
-use warp::search::command_palette::mixer::CommandPaletteItemAction;
-use warp::settings::PaneSettings;
-use warp::terminal::shell::ShellType;
-use warp::themes::theme::AnsiColorIdentifier;
-use warp::workspace::tab_settings::{TabSettings, VerticalTabsDisplayGranularity};
-use warp::workspace::{NEW_TAB_BUTTON_POSITION_ID, WorkspaceAction};
-use warpui_core::event::{Event, ModifiersState};
-use warpui_core::integration::{AssertionCallback, AssertionOutcome, StepDataMap, TestStep};
-use warpui_core::keymap::DescriptionContext;
-use warpui_core::windowing::WindowManager;
-use warpui_core::{
+use leanterm::search::command_palette::mixer::CommandPaletteItemAction;
+use leanterm::settings::PaneSettings;
+use leanterm::terminal::shell::ShellType;
+use leanterm::themes::theme::AnsiColorIdentifier;
+use leanterm::workspace::tab_settings::{TabSettings, VerticalTabsDisplayGranularity};
+use leanterm::workspace::{NEW_TAB_BUTTON_POSITION_ID, WorkspaceAction};
+use leanterm_ui_core::event::{Event, ModifiersState};
+use leanterm_ui_core::integration::{AssertionCallback, AssertionOutcome, StepDataMap, TestStep};
+use leanterm_ui_core::keymap::DescriptionContext;
+use leanterm_ui_core::windowing::WindowManager;
+use leanterm_ui_core::{
     EntityId, SingletonEntity, TypedActionView, WindowId, async_assert, async_assert_eq,
 };
 
@@ -67,7 +67,7 @@ fn tab_position_id(tab_index: usize) -> String {
     format!("tab_position_{tab_index}")
 }
 
-fn vertical_tab_pane_row_position_id(app: &mut warpui_core::App, window_id: WindowId) -> String {
+fn vertical_tab_pane_row_position_id(app: &mut leanterm_ui_core::App, window_id: WindowId) -> String {
     let workspace = workspace_view(app, window_id);
     let pane_group = workspace.read(app, |workspace, _ctx| {
         workspace
@@ -83,7 +83,7 @@ fn vertical_tab_pane_row_position_id(app: &mut warpui_core::App, window_id: Wind
 }
 
 fn vertical_tab_pane_row_position_id_for_pane_index(
-    app: &mut warpui_core::App,
+    app: &mut leanterm_ui_core::App,
     window_id: WindowId,
     pane_index: usize,
 ) -> String {
@@ -104,7 +104,7 @@ fn vertical_tab_pane_row_position_id_for_pane_index(
 }
 
 fn first_vertical_tab_pane_row_position_id(
-    app: &mut warpui_core::App,
+    app: &mut leanterm_ui_core::App,
     window_id: WindowId,
 ) -> String {
     vertical_tab_pane_row_position_id_for_pane_index(app, window_id, 0)
@@ -451,7 +451,7 @@ fn focus_other_window(other_window_key: &'static str, known_window_key: &'static
     })
 }
 
-fn dispatch_mouse_event(app: &mut warpui_core::App, window_id: WindowId, event: Event) {
+fn dispatch_mouse_event(app: &mut leanterm_ui_core::App, window_id: WindowId, event: Event) {
     let window = app.read(|ctx| {
         ctx.windows()
             .platform_window(window_id)
@@ -462,7 +462,7 @@ fn dispatch_mouse_event(app: &mut warpui_core::App, window_id: WindowId, event: 
     });
 }
 
-fn tab_bounds(app: &mut warpui_core::App, window_id: WindowId, tab_index: usize) -> RectF {
+fn tab_bounds(app: &mut leanterm_ui_core::App, window_id: WindowId, tab_index: usize) -> RectF {
     let presenter = app.presenter(window_id).expect("presenter should exist");
 
     presenter
@@ -472,12 +472,12 @@ fn tab_bounds(app: &mut warpui_core::App, window_id: WindowId, tab_index: usize)
         .unwrap_or_else(|| panic!("tab_position_{tab_index} should exist for {window_id:?}"))
 }
 
-fn tab_center(app: &mut warpui_core::App, window_id: WindowId, tab_index: usize) -> Vector2F {
+fn tab_center(app: &mut leanterm_ui_core::App, window_id: WindowId, tab_index: usize) -> Vector2F {
     tab_bounds(app, window_id, tab_index).center()
 }
 
 fn source_local_point_for_screen_point(
-    app: &mut warpui_core::App,
+    app: &mut leanterm_ui_core::App,
     source_window_id: WindowId,
     screen_point: Vector2F,
 ) -> Vector2F {
@@ -488,7 +488,7 @@ fn source_local_point_for_screen_point(
 }
 
 fn tab_screen_point(
-    app: &mut warpui_core::App,
+    app: &mut leanterm_ui_core::App,
     window_id: WindowId,
     tab_index: usize,
     x_offset: f32,
@@ -529,7 +529,7 @@ fn set_saved_window_origin(window_key: &'static str, origin: Vector2F) -> TestSt
 
 fn assert_total_tab_count(
     expected_total_tab_count: usize,
-) -> impl FnMut(&mut warpui_core::App, WindowId) -> AssertionOutcome {
+) -> impl FnMut(&mut leanterm_ui_core::App, WindowId) -> AssertionOutcome {
     move |app, _| {
         let total_tab_count = app
             .window_ids()
@@ -550,9 +550,9 @@ fn drag_tabs_feature_enabled() -> bool {
 pub fn test_cycle_active_tab_color_with_keybinding() -> Builder {
     new_builder()
         .with_setup(|_utils| {
-            warp::integration_testing::create_file_with_contents(
+            leanterm::integration_testing::create_file_with_contents(
                 format!(r#""{CYCLE_TAB_COLOR_BINDING}": ctrl-alt-shift-U"#).as_bytes(),
-                &warp::integration_testing::keybindings::keybinding_file_path(),
+                &leanterm::integration_testing::keybindings::keybinding_file_path(),
             );
         })
         .with_step(wait_until_bootstrapped_single_pane_for_tab(0))
@@ -1285,7 +1285,7 @@ pub fn test_multi_tab_drag_back_to_source_and_out_again() -> Builder {
 /// Dispatches a drag event whose cursor lands on the target window's tab bar,
 /// addressed to the source window (which owns the active drag gesture).
 fn drag_over_target_tab_bar(
-    app: &mut warpui_core::App,
+    app: &mut leanterm_ui_core::App,
     _window_id: WindowId,
     data: &mut StepDataMap,
 ) {
@@ -1318,7 +1318,7 @@ fn drag_over_target_tab_bar(
 /// Dispatches a drag event whose cursor lands back on the source window's own
 /// tab bar (the put-back case), addressed to the source window.
 fn drag_over_source_tab_bar(
-    app: &mut warpui_core::App,
+    app: &mut leanterm_ui_core::App,
     _window_id: WindowId,
     data: &mut StepDataMap,
 ) {

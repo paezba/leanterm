@@ -1,19 +1,19 @@
 use pathfinder_color::ColorU;
 use pathfinder_geometry::vector::vec2f;
-use warp_editor::editor::NavigationKey;
-pub use warp_terminal::model::block_filter::{
+use leanterm_editor::editor::NavigationKey;
+pub use leanterm_terminal::model::block_filter::{
     BlockFilterQuery, ContextLines, DEFAULT_CONTEXT_LINES_VALUE,
 };
-use warpui::accessibility::{AccessibilityContent, WarpA11yRole};
-use warpui::elements::{
+use leanterm_ui::accessibility::{AccessibilityContent, WarpA11yRole};
+use leanterm_ui::elements::{
     Align, Border, ChildAnchor, Clipped, ConstrainedBox, Container, CornerRadius,
     CrossAxisAlignment, Dash, Dismiss, DropShadow, Empty, Flex, Hoverable, MouseStateHandle,
     OffsetPositioning, ParentAnchor, ParentElement, ParentOffsetBounds, Radius, Rect, Shrinkable,
     Stack, Text,
 };
-use warpui::presenter::ChildView;
-use warpui::ui_components::components::UiComponent;
-use warpui::{
+use leanterm_ui::presenter::ChildView;
+use leanterm_ui::ui_components::components::UiComponent;
+use leanterm_ui::{
     AppContext, Element, Entity, FocusContext, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle,
 };

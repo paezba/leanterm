@@ -15,15 +15,15 @@ pub use open_in_warp::*;
 use pathfinder_color::ColorU;
 pub use shell_process_terminated::*;
 pub use vim_mode::*;
-use warpui::Element;
-use warpui::elements::{
+use leanterm_ui::Element;
+use leanterm_ui::elements::{
     Align, Clipped, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Flex, Icon,
     MainAxisAlignment, MainAxisSize, MouseStateHandle, ParentElement, Radius, SavePosition,
     Shrinkable, Text,
 };
-use warpui::fonts::{FamilyId, Properties, Weight};
-use warpui::ui_components::button::ButtonVariant;
-use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
+use leanterm_ui::fonts::{FamilyId, Properties, Weight};
+use leanterm_ui::ui_components::button::ButtonVariant;
+use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
 
 use crate::appearance::Appearance;
 use crate::terminal::view::TerminalAction;
@@ -159,7 +159,7 @@ fn render_inline_block_list_banner(
     let theme = appearance.theme();
     let title_font_size = appearance.ui_font_size() + 1.;
     let button_text_size = title_font_size;
-    let hover_background_fill = warpui::elements::Fill::from(
+    let hover_background_fill = leanterm_ui::elements::Fill::from(
         theme
             .active_ui_text_color()
             .with_opacity(INLINE_BANNER_BUTTON_HOVER_OPACITY),
@@ -385,7 +385,7 @@ fn render_inline_banner_text_button(
             font_color: Some(coloru_with_opacity(button_info.text_color, text_opacity)),
             font_family_id: button_info.font.family,
             font_weight: button_info.font.weight,
-            border_color: Some(warpui::elements::Fill::Solid(coloru_with_opacity(
+            border_color: Some(leanterm_ui::elements::Fill::Solid(coloru_with_opacity(
                 button_info.text_color,
                 text_opacity,
             ))),

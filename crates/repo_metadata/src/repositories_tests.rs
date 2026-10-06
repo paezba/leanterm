@@ -1,8 +1,8 @@
 use std::fs;
 
 use virtual_fs::{Stub, VirtualFS};
-use warp_util::standardized_path::StandardizedPath;
-use warpui_core::App;
+use leanterm_util::standardized_path::StandardizedPath;
+use leanterm_ui_core::App;
 
 use crate::repositories::{DetectedRepositories, RepoDetectionSource, stub_git_repository};
 use crate::watcher::DirectoryWatcher;

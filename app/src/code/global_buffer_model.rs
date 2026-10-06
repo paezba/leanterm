@@ -9,21 +9,21 @@ use futures_util::stream::AbortHandle;
 use lsp::types::TextDocumentContentChangeEvent;
 use lsp::{LspManagerModel, LspServerLogLevel, LspServerModel};
 use vec1::vec1;
-use warp_editor::content::buffer::Buffer;
-use warp_editor::content::diff::{TextDiff, text_diff};
-use warp_editor::content::edit::PreciseDelta;
-use warp_editor::content::version::BufferVersion;
-use warp_util::content_version::ContentVersion;
-use warp_util::file::{FileId, FileLoadError, FileSaveError};
-use warpui::{Entity, ModelContext, ModelHandle, SingletonEntity, WeakModelHandle};
+use leanterm_editor::content::buffer::Buffer;
+use leanterm_editor::content::diff::{TextDiff, text_diff};
+use leanterm_editor::content::edit::PreciseDelta;
+use leanterm_editor::content::version::BufferVersion;
+use leanterm_util::content_version::ContentVersion;
+use leanterm_util::file::{FileId, FileLoadError, FileSaveError};
+use leanterm_ui::{Entity, ModelContext, ModelHandle, SingletonEntity, WeakModelHandle};
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "local_fs")] {
         use lsp::LspManagerModelEvent;
-        use warp_files::{FileModelEvent, FileModel};
-        use warp_editor::content::text::IndentBehavior;
-        use warp_editor::content::text::IndentUnit;
-        use warp_editor::content::buffer::EditOrigin;
+        use leanterm_files::{FileModelEvent, FileModel};
+        use leanterm_editor::content::text::IndentBehavior;
+        use leanterm_editor::content::text::IndentUnit;
+        use leanterm_editor::content::buffer::EditOrigin;
     }
 }
 
@@ -712,7 +712,7 @@ impl GlobalBufferModel {
         // Subscribe to buffer events for LSP sync.
         let path_clone = path.clone();
         ctx.subscribe_to_model(&buffer, move |me, _, event, ctx| {
-            use warp_editor::content::buffer::BufferEvent;
+            use leanterm_editor::content::buffer::BufferEvent;
 
             let Some(state) = me.buffers.get(&file_id) else {
                 return;
@@ -826,7 +826,7 @@ impl GlobalBufferModel {
 
         let path_clone = path.to_path_buf();
         ctx.subscribe_to_model(&buffer, move |me, _, event, ctx| {
-            use warp_editor::content::buffer::BufferEvent;
+            use leanterm_editor::content::buffer::BufferEvent;
 
             let Some(state) = me.buffers.get(&file_id) else {
                 me.log_lsp_sync_debug(
@@ -959,7 +959,7 @@ impl GlobalBufferModel {
         line_numbers: Vec<usize>,
         ctx: &mut ModelContext<Self>,
     ) -> Option<Vec<(usize, String)>> {
-        use warp_editor::content::text::LineCount;
+        use leanterm_editor::content::text::LineCount;
 
         if line_numbers.is_empty() {
             return Some(Vec::new());

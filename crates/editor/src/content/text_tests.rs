@@ -1,5 +1,5 @@
 use markdown_parser::FormattedTable;
-use warpui_core::fonts::Weight;
+use leanterm_ui_core::fonts::Weight;
 
 use super::{BufferBlockItem, BufferTextStyle, MarkdownStyle, TextStyles, format_image_markdown};
 

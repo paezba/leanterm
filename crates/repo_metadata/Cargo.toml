@@ -1,6 +1,6 @@
 [package]
 name = "repo_metadata"
-authors = ["Warp Team <dev@warp.dev>"]
+authors = ["Leanterm contributors"]
 version = "0.1.0"
 edition = "2024"
 description = "Repository metadata utilities for Warp"
@@ -19,10 +19,10 @@ dunce.workspace = true
 serde.workspace = true
 thiserror.workspace = true
 itertools.workspace = true
-warpui_core.workspace = true
-warp_core.workspace = true
-warp_errors.workspace = true
-warp_util.workspace = true
+leanterm_ui_core.workspace = true
+leanterm_core.workspace = true
+leanterm_errors.workspace = true
+leanterm_util.workspace = true
 ignore = "0.4.23"
 log.workspace = true
 futures.workspace = true
@@ -46,4 +46,4 @@ anyhow.workspace = true
 env_logger.workspace = true
 futures = "0.3"
 virtual-fs.workspace = true
-warpui = { workspace = true, features = ["test-util"] }
+leanterm_ui = { workspace = true, features = ["test-util"] }

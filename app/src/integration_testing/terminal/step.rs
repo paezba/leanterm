@@ -1,7 +1,7 @@
 use std::time::Duration;
 
-use warpui::integration::{AssertionOutcome, TestStep};
-use warpui::{SingletonEntity, async_assert};
+use leanterm_ui::integration::{AssertionOutcome, TestStep};
+use leanterm_ui::{SingletonEntity, async_assert};
 
 use super::util::{ExpectedExitStatus, ExpectedOutput, current_shell_starter_and_version, nonce};
 use super::{
@@ -220,7 +220,7 @@ fn execute_command_step(
     tab_idx: usize,
     pane_idx: usize,
     command: String,
-    validate_output_fn: impl FnMut(&mut warpui::App, warpui::WindowId) -> AssertionOutcome + 'static,
+    validate_output_fn: impl FnMut(&mut leanterm_ui::App, leanterm_ui::WindowId) -> AssertionOutcome + 'static,
 ) -> TestStep {
     new_step_with_default_assertions_for_pane(
         &format!("Run '{command}' and verify block exists"),

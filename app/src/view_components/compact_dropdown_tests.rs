@@ -1,6 +1,6 @@
-use warp_core::ui::appearance::Appearance;
-use warpui::platform::WindowStyle;
-use warpui::{App, View};
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_ui::platform::WindowStyle;
+use leanterm_ui::{App, View};
 
 use super::{CompactDropdown, CompactDropdownItem};
 use crate::menu::MenuVariant;

@@ -5,16 +5,16 @@ use num_traits::Float as _;
 use parking_lot::FairMutex;
 use pathfinder_geometry::vector::vec2f;
 use vec1::Vec1;
-use warp_util::user_input::UserInput;
-use warpui::elements::new_scrollable::{NewScrollableElement, ScrollableAxis};
-use warpui::elements::{Axis, Point as UiPoint, ScrollData, ScrollableElement};
-use warpui::event::{DispatchedEvent, InBoundsExt, KeyState, ModifiersState};
-use warpui::fonts::Properties;
-use warpui::geometry::rect::RectF;
-use warpui::geometry::vector::Vector2F;
-use warpui::text::SelectionType;
-use warpui::units::{IntoLines, IntoPixels, Lines, Pixels};
-use warpui::{
+use leanterm_util::user_input::UserInput;
+use leanterm_ui::elements::new_scrollable::{NewScrollableElement, ScrollableAxis};
+use leanterm_ui::elements::{Axis, Point as UiPoint, ScrollData, ScrollableElement};
+use leanterm_ui::event::{DispatchedEvent, InBoundsExt, KeyState, ModifiersState};
+use leanterm_ui::fonts::Properties;
+use leanterm_ui::geometry::rect::RectF;
+use leanterm_ui::geometry::vector::Vector2F;
+use leanterm_ui::text::SelectionType;
+use leanterm_ui::units::{IntoLines, IntoPixels, Lines, Pixels};
+use leanterm_ui::{
     AfterLayoutContext, AppContext, Element, EntityId, Event, EventContext, LayoutContext,
     ModelHandle, PaintContext, SizeConstraint, end_trace, record_trace_event, start_trace,
 };
@@ -219,7 +219,7 @@ impl AltScreenElement {
         ctx.dispatch_typed_action(TerminalAction::Focus);
 
         // On mobile, request soft keyboard so users can input.
-        if warpui::platform::is_mobile_device() {
+        if leanterm_ui::platform::is_mobile_device() {
             ctx.request_soft_keyboard();
         }
 

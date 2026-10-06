@@ -3,12 +3,12 @@ use itertools::Itertools;
 use pathfinder_geometry::vector::vec2f;
 use settings::ToggleableSetting;
 use unindent::Unindent;
-use warp_errors::report_if_error;
-use warpui::color::ColorU;
-use warpui::platform::WindowStyle;
-use warpui::text_layout::TextFrame;
-use warpui::windowing::WindowManager;
-use warpui::{AddSingletonModel, App, UpdateModel, UpdateView};
+use leanterm_errors::report_if_error;
+use leanterm_ui::color::ColorU;
+use leanterm_ui::platform::WindowStyle;
+use leanterm_ui::text_layout::TextFrame;
+use leanterm_ui::windowing::WindowManager;
+use leanterm_ui::{AddSingletonModel, App, UpdateModel, UpdateView};
 
 use super::*;
 use crate::editor::EditorView;
@@ -2023,7 +2023,7 @@ fn test_delete_and_cut_all_right() -> Result<()> {
 
 #[test]
 fn test_autosuggestions() -> Result<()> {
-    use warpui::text_layout::LayoutCache;
+    use leanterm_ui::text_layout::LayoutCache;
 
     App::test((), |mut app| async move {
         initialize_app(&mut app);
@@ -2301,7 +2301,7 @@ fn test_partial_autosuggestion() -> Result<()> {
 
 #[test]
 fn test_placeholder_text() {
-    use warpui::text_layout::LayoutCache;
+    use leanterm_ui::text_layout::LayoutCache;
 
     App::test((), |mut app| async move {
         initialize_app(&mut app);
@@ -2934,7 +2934,7 @@ fn test_move_to_visual_line_start_non_wrapped_unchanged() -> Result<()> {
 /// action.
 #[test]
 fn test_home_end_keybinding_resolution() {
-    use warpui::keymap::{Keystroke, Trigger};
+    use leanterm_ui::keymap::{Keystroke, Trigger};
 
     App::test((), |mut app| async move {
         initialize_app(&mut app);

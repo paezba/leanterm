@@ -1,9 +1,9 @@
 use settings::Setting;
-use warp_errors::report_if_error;
-use warpui::elements::{Flex, MouseStateHandle, ParentElement};
-use warpui::ui_components::components::UiComponent;
-use warpui::ui_components::switch::SwitchStateHandle;
-use warpui::{Element, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle};
+use leanterm_errors::report_if_error;
+use leanterm_ui::elements::{Flex, MouseStateHandle, ParentElement};
+use leanterm_ui::ui_components::components::UiComponent;
+use leanterm_ui::ui_components::switch::SwitchStateHandle;
+use leanterm_ui::{Element, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle};
 
 use crate::appearance::Appearance;
 use crate::settings_view::settings_page::{
@@ -207,7 +207,7 @@ impl View for ExternalEditorView {
         "ExternalEditorView"
     }
 
-    fn render(&self, app: &warpui::AppContext) -> Box<dyn warpui::Element> {
+    fn render(&self, app: &leanterm_ui::AppContext) -> Box<dyn leanterm_ui::Element> {
         let appearance = Appearance::as_ref(app);
 
         let default_editor = render_dropdown_item(

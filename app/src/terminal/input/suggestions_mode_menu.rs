@@ -6,13 +6,13 @@
 //! - StaticWorkflowEnumSuggestions
 //! - DynamicWorkflowEnumSuggestions
 
-use warpui::elements::{
+use leanterm_ui::elements::{
     Align, Border, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, DragBarSide,
     DropShadow, Element, Empty, Flex, ParentElement, Radius, Resizable, Shrinkable,
     SizeConstraintCondition, SizeConstraintSwitch, Text,
 };
-use warpui::presenter::ChildView;
-use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
+use leanterm_ui::presenter::ChildView;
+use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
 
 use super::{
     DYNAMIC_ENUM_FAILURE_MESSAGE, DYNAMIC_ENUM_GENERATE_MESSAGE,

@@ -1,11 +1,11 @@
-use warpui::Element;
-use warpui::elements::{
+use leanterm_ui::Element;
+use leanterm_ui::elements::{
     Align, Border, ConstrainedBox, Container, CornerRadius, Flex, Highlight, ParentElement, Radius,
     Shrinkable, Text,
 };
-use warpui::fonts::{Properties, Weight};
-use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
-use warpui::ui_components::text::Span;
+use leanterm_ui::fonts::{Properties, Weight};
+use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
+use leanterm_ui::ui_components::text::Span;
 
 use crate::appearance::Appearance;
 use crate::launch_configs::launch_config::LaunchConfig;

@@ -1,10 +1,10 @@
 use pathfinder_geometry::vector::vec2f;
-use warpui::Element;
-use warpui::elements::{
+use leanterm_ui::Element;
+use leanterm_ui::elements::{
     ChildAnchor, ConstrainedBox, Container, Empty, OffsetPositioning, ParentAnchor,
     ParentElement as _, ParentOffsetBounds, Stack,
 };
-use warpui::ui_components::components::UiComponentStyles;
+use leanterm_ui::ui_components::components::UiComponentStyles;
 
 pub struct RedNotificationDot {}
 

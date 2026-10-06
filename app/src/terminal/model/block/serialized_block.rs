@@ -1,7 +1,7 @@
 use chrono::{DateTime, Local, TimeZone as _};
 use serde::{Deserialize, Serialize};
 use serde_bytes_repr::{ByteFmtDeserializer, ByteFmtSerializer};
-use warp_core::command::ExitCode;
+use leanterm_core::command::ExitCode;
 
 use crate::terminal::ShellHost;
 use crate::terminal::model::BlockId;

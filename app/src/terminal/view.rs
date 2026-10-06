@@ -75,28 +75,28 @@ use serde_json::json;
 use settings::Setting;
 use ssh_file_upload::{FileUpload, FileUploadEvent};
 use vec1::vec1;
-use warp_completer::meta::Span;
-use warp_core::r#async::debounce;
-use warp_core::channel::ChannelState;
-use warp_core::command::ExitCode;
-use warp_core::context_flag::ContextFlag;
-use warp_core::semantic_selection::SemanticSelection;
-use warp_core::user_preferences::GetUserPreferences as _;
-use warp_errors::{report_error, report_if_error};
+use leanterm_completer::meta::Span;
+use leanterm_core::r#async::debounce;
+use leanterm_core::channel::ChannelState;
+use leanterm_core::command::ExitCode;
+use leanterm_core::context_flag::ContextFlag;
+use leanterm_core::semantic_selection::SemanticSelection;
+use leanterm_core::user_preferences::GetUserPreferences as _;
+use leanterm_errors::{report_error, report_if_error};
 #[cfg(feature = "local_fs")]
-use warp_util::path::LineAndColumnArg;
-use warp_util::path::ShellFamily;
-use warpui::accessibility::{AccessibilityContent, ActionAccessibilityContent, WarpA11yRole};
-use warpui::assets::asset_cache::{AssetCache, AssetCacheEvent};
-use warpui::r#async::executor::Background;
-use warpui::r#async::{SpawnedFutureHandle, Timer};
-use warpui::clipboard::ClipboardContent;
-use warpui::clipboard_utils::get_image_filepaths_from_paths;
-use warpui::elements::new_scrollable::{
+use leanterm_util::path::LineAndColumnArg;
+use leanterm_util::path::ShellFamily;
+use leanterm_ui::accessibility::{AccessibilityContent, ActionAccessibilityContent, WarpA11yRole};
+use leanterm_ui::assets::asset_cache::{AssetCache, AssetCacheEvent};
+use leanterm_ui::r#async::executor::Background;
+use leanterm_ui::r#async::{SpawnedFutureHandle, Timer};
+use leanterm_ui::clipboard::ClipboardContent;
+use leanterm_ui::clipboard_utils::get_image_filepaths_from_paths;
+use leanterm_ui::elements::new_scrollable::{
     AxisConfiguration, ClippedAxisConfiguration, DualAxisConfig, NewScrollableElement,
     ScrollableAppearance, SingleAxisConfig,
 };
-use warpui::elements::{
+use leanterm_ui::elements::{
     Align, ChildAnchor, ChildView, Clipped, ClippedScrollStateHandle, ConstrainedBox, Container,
     CornerRadius, DispatchEventResult, DropTarget, DropTargetData, Empty, EventHandler, Fill, Flex,
     Hoverable, Icon, LiveElement, MouseStateHandle, NewScrollable, OffsetPositioning, ParentAnchor,
@@ -104,18 +104,18 @@ use warpui::elements::{
     Radius, Rect, SavePosition, ScrollStateHandle, Scrollable, ScrollableElement, ScrollbarWidth,
     Shrinkable, Stack, Text, get_rich_content_position_id,
 };
-use warpui::event::ModifiersState;
-use warpui::fonts::{Cache as FontCache, FamilyId, Properties};
-use warpui::geometry::vector::{Vector2F, vec2f};
-use warpui::image_cache::ImageType;
-use warpui::keymap::Keystroke;
-use warpui::notification::{NotificationSendError, RequestPermissionsOutcome, UserNotification};
-use warpui::platform::{Cursor, OperatingSystem};
-use warpui::text::SelectionType;
-use warpui::ui_components::components::UiComponent;
-use warpui::units::{IntoLines, IntoPixels, Lines, Pixels};
-use warpui::windowing::WindowManager;
-use warpui::{
+use leanterm_ui::event::ModifiersState;
+use leanterm_ui::fonts::{Cache as FontCache, FamilyId, Properties};
+use leanterm_ui::geometry::vector::{Vector2F, vec2f};
+use leanterm_ui::image_cache::ImageType;
+use leanterm_ui::keymap::Keystroke;
+use leanterm_ui::notification::{NotificationSendError, RequestPermissionsOutcome, UserNotification};
+use leanterm_ui::platform::{Cursor, OperatingSystem};
+use leanterm_ui::text::SelectionType;
+use leanterm_ui::ui_components::components::UiComponent;
+use leanterm_ui::units::{IntoLines, IntoPixels, Lines, Pixels};
+use leanterm_ui::windowing::WindowManager;
+use leanterm_ui::{
     AccessibilityData, AppContext, BlurContext, CursorInfo, Element, Entity, EntityId,
     EventContext, FocusContext, ModelAsRef, ModelHandle, SingletonEntity, Tracked, TypedActionView,
     View, ViewContext, ViewHandle, WeakModelHandle, WeakViewHandle, WindowId, end_trace_after_next,
@@ -1642,14 +1642,14 @@ pub struct TerminalView {
     ///   2. Whether this View's window is the active window.
     ///
     /// We need to derive and cache this state on this View in order to correctly implement focus
-    /// reporting. Because focus is window-scoped, i.e. warpui does not consider activating a
+    /// reporting. Because focus is window-scoped, i.e. leanterm_ui does not consider activating a
     /// different window as blurring the focused View in the previously active window, we cannot
-    /// simply rely on the warpui::View::on_blur and on_focus methods to report focus-in/out to the
+    /// simply rely on the leanterm_ui::View::on_blur and on_focus methods to report focus-in/out to the
     /// PTY, as those methods will not trigger when changing active windows. The singleton model
-    /// [`warpui::windowing::State`] will allow us to subscribe to active window change. So, we can
+    /// [`leanterm_ui::windowing::State`] will allow us to subscribe to active window change. So, we can
     /// subscribe to that and have that callback also report focus-in/out. However, that will still
     /// leave cases for potential double-reporting, as a single click can trigger both
-    /// [`warpui::View::on_focus`] and emit a [`warpui::windowing::StateEvent`]. This field will
+    /// [`leanterm_ui::View::on_focus`] and emit a [`leanterm_ui::windowing::StateEvent`]. This field will
     /// guard against that double- reporting case, though it needs to be kept in sync with the
     /// focused view and active window.
     is_focused_and_active: bool,
@@ -2805,7 +2805,7 @@ impl TerminalView {
     }
 
     #[cfg(any(test, feature = "integration_tests"))]
-    pub fn sessions<'a, A: warpui::ModelAsRef>(&self, ctx: &'a A) -> &'a Sessions {
+    pub fn sessions<'a, A: leanterm_ui::ModelAsRef>(&self, ctx: &'a A) -> &'a Sessions {
         self.sessions.as_ref(ctx)
     }
 
@@ -3382,7 +3382,7 @@ impl TerminalView {
         });
     }
 
-    /// Receiving the warpui::Event::KeyDown event from a child element.
+    /// Receiving the leanterm_ui::Event::KeyDown event from a child element.
     /// Generally, this should be control characters rather than printable characters.
     fn keydown_on_terminal(&mut self, characters: &str, ctx: &mut ViewContext<Self>) {
         if self.is_long_running() {
@@ -3423,7 +3423,7 @@ impl TerminalView {
             .has_pending_or_bootstrapped_session();
         was_bootstrap_script_echoed
     }
-    /// Receiving a warpui::Event::TypedCharacters event from a child element.
+    /// Receiving a leanterm_ui::Event::TypedCharacters event from a child element.
     /// We can assume `characters` consists of all printable characters, and therefore,
     /// can go into the input box.
     fn typed_characters_on_terminal(&mut self, characters: &str, ctx: &mut ViewContext<Self>) {
@@ -4984,7 +4984,7 @@ impl TerminalView {
                 if self.is_login_shell_bootstrapped {
                     let _ = ctx.spawn(
                         async move {
-                            warpui::r#async::Timer::after(EXECUTE_PENDING_COMMAND_DELAY).await;
+                            leanterm_ui::r#async::Timer::after(EXECUTE_PENDING_COMMAND_DELAY).await;
                         },
                         Self::execute_pending_command,
                     );
@@ -5025,14 +5025,14 @@ impl TerminalView {
                                 .and_then(|session_id| self.sessions.as_ref(ctx).get(session_id))
                                 .and_then(|session| {
                                     let escape_char = session.shell_family().escape_char();
-                                    let cmd = warp_completer::parsers::simple::top_level_command(
+                                    let cmd = leanterm_completer::parsers::simple::top_level_command(
                                         command,
                                         escape_char,
                                     )?;
                                     let cmd = session
                                         .alias_value(cmd.as_str())
                                         .and_then(|alias| {
-                                            warp_completer::parsers::simple::top_level_command(
+                                            leanterm_completer::parsers::simple::top_level_command(
                                                 alias,
                                                 escape_char,
                                             )
@@ -5327,7 +5327,7 @@ impl TerminalView {
 
                 ctx.spawn(
                     async {
-                        warpui::r#async::Timer::after(*TRIGGER_RC_FILE_SUBSHELL_BOOTSTRAP_DELAY)
+                        leanterm_ui::r#async::Timer::after(*TRIGGER_RC_FILE_SUBSHELL_BOOTSTRAP_DELAY)
                             .await
                     },
                     move |me, _, ctx| {
@@ -6057,7 +6057,7 @@ impl TerminalView {
     fn start_bootstrap_timer(&self, duration: Duration, ctx: &mut ViewContext<Self>) {
         let _ = ctx.spawn(
             async move {
-                warpui::r#async::Timer::after(duration).await;
+                leanterm_ui::r#async::Timer::after(duration).await;
             },
             Self::on_bootstrap_failed_timer_complete,
         );
@@ -11430,7 +11430,7 @@ impl TerminalView {
                 && session.shell_family() == ShellFamily::Posix
                 && is_in_long_running_command;
             if is_msys2_long_running {
-                let input = warpui::clipboard_utils::escaped_paths_str(paths, None);
+                let input = leanterm_ui::clipboard_utils::escaped_paths_str(paths, None);
                 self.typed_characters_on_terminal(&input, ctx);
                 return;
             }
@@ -11441,7 +11441,7 @@ impl TerminalView {
             let paths = if session.is_wsl() {
                 paths_converted = paths
                     .iter()
-                    .map(|p| warp_util::path::convert_windows_path_to_wsl(p))
+                    .map(|p| leanterm_util::path::convert_windows_path_to_wsl(p))
                     .collect::<Vec<_>>();
                 paths_converted.as_slice()
             } else {
@@ -11449,7 +11449,7 @@ impl TerminalView {
             };
 
             let input =
-                warpui::clipboard_utils::escaped_paths_str(paths, Some(self.shell_family(ctx)));
+                leanterm_ui::clipboard_utils::escaped_paths_str(paths, Some(self.shell_family(ctx)));
             self.typed_characters_on_terminal(&input, ctx);
         }
     }
@@ -11512,7 +11512,7 @@ impl TerminalView {
                 let active_block_id = self.model.lock().block_list().active_block_id().clone();
                 ctx.spawn(
                     async {
-                        warpui::r#async::Timer::after(Duration::from_secs(3)).await;
+                        leanterm_ui::r#async::Timer::after(Duration::from_secs(3)).await;
                         active_block_id
                     },
                     move |terminal_view, active_block_id, _| {
@@ -12682,7 +12682,7 @@ impl View for TerminalView {
         }
     }
 
-    fn keymap_context(&self, app: &AppContext) -> warpui::keymap::Context {
+    fn keymap_context(&self, app: &AppContext) -> leanterm_ui::keymap::Context {
         let mut context = Self::default_keymap_context();
         context.map.insert(
             "TerminalView_BlockSelectionCardinality",

@@ -11,16 +11,16 @@ pub(crate) use modal_shell::{
 };
 use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::vec2f;
-use warp_core::ui::theme::Fill;
-use warpui::elements::{
+use leanterm_core::ui::theme::Fill;
+use leanterm_ui::elements::{
     Border, ConstrainedBox, Container, CrossAxisAlignment, Dash, DispatchEventResult, Draggable,
     DraggableState, Element, Empty, EventHandler, Flex, Hoverable, MouseStateHandle,
     OffsetPositioning, ParentElement, ParentOffsetBounds, SavePosition, Stack, Text, Wrap,
 };
-use warpui::fonts::Properties;
-use warpui::platform::Cursor;
-use warpui::ui_components::components::UiComponent;
-use warpui::{Action, View, ViewContext};
+use leanterm_ui::fonts::Properties;
+use leanterm_ui::platform::Cursor;
+use leanterm_ui::ui_components::components::UiComponent;
+use leanterm_ui::{Action, View, ViewContext};
 
 use crate::appearance::Appearance;
 use crate::context_chips::display_chip::{chip_container, udi_font_size};
@@ -229,8 +229,8 @@ impl ControlItemRenderer {
                 OffsetPositioning::offset_from_parent(
                     vec2f(0., -2.5 * font_size),
                     ParentOffsetBounds::Unbounded,
-                    warpui::elements::ParentAnchor::Center,
-                    warpui::elements::ChildAnchor::Center,
+                    leanterm_ui::elements::ParentAnchor::Center,
+                    leanterm_ui::elements::ChildAnchor::Center,
                 ),
             );
             stack.finish()

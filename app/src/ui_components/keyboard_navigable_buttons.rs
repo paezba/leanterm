@@ -1,14 +1,14 @@
-use warpui::elements::{Container, CrossAxisAlignment, Flex, ParentElement};
-use warpui::keymap::FixedBinding;
-use warpui::ui_components::button::Button;
-use warpui::ui_components::components::UiComponent;
-use warpui::{AppContext, Element, Entity, TypedActionView, View, ViewContext};
+use leanterm_ui::elements::{Container, CrossAxisAlignment, Flex, ParentElement};
+use leanterm_ui::keymap::FixedBinding;
+use leanterm_ui::ui_components::button::Button;
+use leanterm_ui::ui_components::components::UiComponent;
+use leanterm_ui::{AppContext, Element, Entity, TypedActionView, View, ViewContext};
 
 const MARGIN_BETWEEN_BUTTONS: f32 = 4.;
 const HAS_OPTIONS: &str = "HasOptions";
 
 pub fn init(app: &mut AppContext) {
-    use warpui::keymap::macros::*;
+    use leanterm_ui::keymap::macros::*;
 
     app.register_fixed_bindings([
         FixedBinding::new(
@@ -46,7 +46,7 @@ pub enum KeyboardNavigableButtonsAction {
 
 pub enum KeyboardNavigableButtonsEvent {}
 
-pub type ButtonBuilder = Box<dyn Fn(bool, &warpui::AppContext) -> Button>;
+pub type ButtonBuilder = Box<dyn Fn(bool, &leanterm_ui::AppContext) -> Button>;
 pub type OnButtonClickFn = Box<dyn Fn(&mut ViewContext<KeyboardNavigableButtons>)>;
 
 pub struct KeyboardNavigableButtonBuilder {
@@ -78,7 +78,7 @@ impl View for KeyboardNavigableButtons {
         "KeyboardNavigableButtons"
     }
 
-    fn render(&self, app: &warpui::AppContext) -> Box<dyn warpui::Element> {
+    fn render(&self, app: &leanterm_ui::AppContext) -> Box<dyn leanterm_ui::Element> {
         let mut content = Flex::column().with_cross_axis_alignment(CrossAxisAlignment::Stretch);
         for (index, button_builder) in self.button_builders.iter().enumerate() {
             let is_selected = index == self.selected_button_index();
@@ -108,7 +108,7 @@ impl View for KeyboardNavigableButtons {
         content.finish()
     }
 
-    fn keymap_context(&self, _app: &AppContext) -> warpui::keymap::Context {
+    fn keymap_context(&self, _app: &AppContext) -> leanterm_ui::keymap::Context {
         let mut context = Self::default_keymap_context();
         if !self.button_builders.is_empty() {
             context.set.insert(HAS_OPTIONS);

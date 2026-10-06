@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use chrono::Local;
 use futures_lite::future::yield_now;
-use warpui::{AppContext, SingletonEntity};
+use leanterm_ui::{AppContext, SingletonEntity};
 
 use super::HistorySearchItem;
 use super::rank::{self, RankInputs};

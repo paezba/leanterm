@@ -14,14 +14,14 @@ default-members = [
   "crates/editor",
   "crates/markdown_parser",
   "crates/sum_tree",
-  "crates/warpui",
-  "crates/warp_completer",
-  "crates/warp_terminal",
-  "crates/warp_util",
+  "crates/leanterm_ui",
+  "crates/leanterm_completer",
+  "crates/leanterm_terminal",
+  "crates/leanterm_util",
 ]
 
 [workspace.package]
-authors = ["Warp Team <dev@warp.dev>"]
+authors = ["Leanterm contributors"]
 license = "AGPL-3.0-only"
 publish = false
 
@@ -60,25 +60,25 @@ syntax_tree = { path = "crates/syntax_tree" }
 ui_components = { path = "crates/ui_components" }
 vim = { path = "crates/vim" }
 virtual-fs = { path = "crates/virtual_fs" }
-warp = { path = "app" }
-warp_assets = { path = "crates/warp_assets" }
-warp_cli = { path = "crates/warp_cli" }
-warp_completer = { path = "crates/warp_completer" }
-warp_core = { path = "crates/warp_core" }
-warp_editor = { path = "crates/editor" }
-warp_errors = { path = "crates/warp_errors" }
-warp_features = { path = "crates/warp_features" }
-warp_files = { path = "crates/warp_files" }
-warp_isolation_platform = { path = "crates/isolation_platform" }
-warp_logging = { path = "crates/warp_logging" }
-warp_ripgrep = { path = "crates/warp_ripgrep" }
-warp_search_core = { path = "crates/warp_search_core" }
-warp_terminal = { path = "crates/warp_terminal" }
-warp_util = { path = "crates/warp_util" }
-warp_web_event_bus = { path = "crates/warp_web_event_bus" }
-warpui = { path = "crates/warpui" }
-warpui_core = { path = "crates/warpui_core" }
-warpui_extras = { path = "crates/warpui_extras", default-features = false }
+leanterm = { path = "app" }
+leanterm_assets = { path = "crates/leanterm_assets" }
+leanterm_cli = { path = "crates/leanterm_cli" }
+leanterm_completer = { path = "crates/leanterm_completer" }
+leanterm_core = { path = "crates/leanterm_core" }
+leanterm_editor = { path = "crates/editor" }
+leanterm_errors = { path = "crates/leanterm_errors" }
+leanterm_features = { path = "crates/leanterm_features" }
+leanterm_files = { path = "crates/leanterm_files" }
+leanterm_isolation_platform = { path = "crates/isolation_platform" }
+leanterm_logging = { path = "crates/leanterm_logging" }
+leanterm_ripgrep = { path = "crates/leanterm_ripgrep" }
+leanterm_search_core = { path = "crates/leanterm_search_core" }
+leanterm_terminal = { path = "crates/leanterm_terminal" }
+leanterm_util = { path = "crates/leanterm_util" }
+leanterm_web_event_bus = { path = "crates/leanterm_web_event_bus" }
+leanterm_ui = { path = "crates/leanterm_ui" }
+leanterm_ui_core = { path = "crates/leanterm_ui_core" }
+leanterm_ui_extras = { path = "crates/leanterm_ui_extras", default-features = false }
 watcher = { path = "crates/watcher" }
 websocket = { path = "crates/websocket" }
 
@@ -409,7 +409,7 @@ split-debuginfo = "unpacked"
 
 [profile.dev.package]
 # Improve the performance of core terminal logic.
-warp_terminal.opt-level = 3
+leanterm_terminal.opt-level = 3
 # Minimize the runtime overhead of CPU profiling at the cost of a small
 # increase in compile time for this crate.
 backtrace.opt-level = 3

@@ -1,12 +1,12 @@
 use pathfinder_geometry::vector::vec2f;
-use warpui::elements::{
+use leanterm_ui::elements::{
     Align, Border, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Flex, Highlight,
     ParentElement, Radius, Shrinkable, Wrap,
 };
-use warpui::fonts::{Properties, Weight};
-use warpui::ui_components::components::{UiComponent, UiComponentStyles};
-use warpui::units::IntoPixels;
-use warpui::{AppContext, Element, SingletonEntity};
+use leanterm_ui::fonts::{Properties, Weight};
+use leanterm_ui::ui_components::components::{UiComponent, UiComponentStyles};
+use leanterm_ui::units::IntoPixels;
+use leanterm_ui::{AppContext, Element, SingletonEntity};
 
 use crate::appearance::Appearance;
 use crate::context_chips::display_chip::{

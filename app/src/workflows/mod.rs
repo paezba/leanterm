@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use warpui::AppContext;
+use leanterm_ui::AppContext;
 
 pub mod categories;
 use workflow::Workflow;

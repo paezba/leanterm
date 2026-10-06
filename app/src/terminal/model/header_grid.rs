@@ -6,9 +6,9 @@ use std::io;
 
 use instant::Instant;
 use pathfinder_color::ColorU;
-use warp_errors::report_error;
-use warp_terminal::model::{KeyboardModes, KeyboardModesApplyBehavior};
-use warpui::units::{IntoLines as _, Lines};
+use leanterm_errors::report_error;
+use leanterm_terminal::model::{KeyboardModes, KeyboardModesApplyBehavior};
+use leanterm_ui::units::{IntoLines as _, Lines};
 
 use super::ansi::{self, Attr, Handler, PrecmdValue, PreexecValue, Processor, PromptMetadata};
 use super::block::{BlockGridPoint, BlockSize};

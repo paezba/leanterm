@@ -1,9 +1,9 @@
 use std::path::{Path, PathBuf};
 
 use code_diff::diff_validation::DiffDelta;
-use warp_util::path::LineAndColumnArg;
-use warpui::elements::{DraggableState, Empty, MouseStateHandle};
-use warpui::{
+use leanterm_util::path::LineAndColumnArg;
+use leanterm_ui::elements::{DraggableState, Empty, MouseStateHandle};
+use leanterm_ui::{
     AppContext, Element, Entity, ModelHandle, TypedActionView, View, ViewContext, ViewHandle,
 };
 

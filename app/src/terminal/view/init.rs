@@ -1,7 +1,7 @@
-use warpui::AppContext;
-use warpui::keymap::{EditableBinding, FixedBinding, PerPlatformKeystroke};
-use warpui::platform::OperatingSystem;
-use warpui::units::IntoLines;
+use leanterm_ui::AppContext;
+use leanterm_ui::keymap::{EditableBinding, FixedBinding, PerPlatformKeystroke};
+use leanterm_ui::platform::OperatingSystem;
+use leanterm_ui::units::IntoLines;
 
 use super::TerminalAction;
 use crate::channel::{Channel, ChannelState};
@@ -44,7 +44,7 @@ pub const CAN_SHOW_CONVERSATION_DETAILS_KEY: &str = "CanShowConversationDetails"
 /// these into their own function to ensure we pay special attention to
 /// these overlaps, and ensure only 1 action is taken.
 fn init_overlapping_keybindings(app: &mut AppContext) {
-    use warpui::keymap::macros::*;
+    use leanterm_ui::keymap::macros::*;
 
     let escape_key: &str = "escape";
 
@@ -60,7 +60,7 @@ fn init_overlapping_keybindings(app: &mut AppContext) {
 
 /// Register keybindings for [`TerminalView`] actions.
 pub fn init(app: &mut AppContext) {
-    use warpui::keymap::macros::*;
+    use leanterm_ui::keymap::macros::*;
 
     app.register_binding_validator::<TerminalView>(is_binding_pty_compliant);
 
@@ -126,7 +126,7 @@ pub fn init(app: &mut AppContext) {
         // On the web, we get pastes from system paste events.
         #[cfg(target_family = "wasm")]
         FixedBinding::standard(
-            warpui::actions::StandardAction::Paste,
+            leanterm_ui::actions::StandardAction::Paste,
             TerminalAction::Paste,
             id!("Terminal") & !id!("IMEOpen"),
         ),

@@ -7,22 +7,22 @@ use std::time::Duration;
 use pathfinder_geometry::vector::vec2f;
 use regex::Regex;
 use settings::Setting as _;
-use warp_core::context_flag::ContextFlag;
-use warp_core::ui::theme::WarpTheme;
-use warp_core::ui::theme::color::internal_colors;
-use warp_errors::{report_error, report_if_error};
-use warpui::r#async::{SpawnedFutureHandle, Timer};
-use warpui::elements::{
+use leanterm_core::context_flag::ContextFlag;
+use leanterm_core::ui::theme::WarpTheme;
+use leanterm_core::ui::theme::color::internal_colors;
+use leanterm_errors::{report_error, report_if_error};
+use leanterm_ui::r#async::{SpawnedFutureHandle, Timer};
+use leanterm_ui::elements::{
     Align, ChildView, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Empty, Expanded,
     Flex, MainAxisAlignment, MainAxisSize, MouseStateHandle, ParentElement, Radius, Rect,
     Shrinkable, Text,
 };
-use warpui::fonts::Weight;
-use warpui::keymap::ContextPredicate;
-use warpui::ui_components::button::{ButtonVariant, TextAndIcon, TextAndIconAlignment};
-use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
-use warpui::ui_components::switch::SwitchStateHandle;
-use warpui::{
+use leanterm_ui::fonts::Weight;
+use leanterm_ui::keymap::ContextPredicate;
+use leanterm_ui::ui_components::button::{ButtonVariant, TextAndIcon, TextAndIconAlignment};
+use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
+use leanterm_ui::ui_components::switch::SwitchStateHandle;
+use leanterm_ui::{
     Action, AppContext, Element, Entity, ModelHandle, SingletonEntity, TypedActionView,
     UpdateModel, View, ViewContext, ViewHandle,
 };
@@ -1072,6 +1072,6 @@ mod styles {
     pub const DESCRIPTION_LINE_MARGIN_BOTTOM: f32 = 6.;
 }
 
-fn description_text_color(theme: &WarpTheme) -> warp_core::ui::theme::Fill {
+fn description_text_color(theme: &WarpTheme) -> leanterm_core::ui::theme::Fill {
     theme.sub_text_color(theme.surface_2())
 }

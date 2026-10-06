@@ -3,10 +3,10 @@
 #![cfg_attr(feature = "release_bundle", windows_subsystem = "windows")]
 
 use anyhow::Result;
-use warp_core::AppId;
-use warp_core::channel::{Channel, ChannelConfig, ChannelState, WarpServerConfig};
+use leanterm_core::AppId;
+use leanterm_core::channel::{Channel, ChannelConfig, ChannelState, WarpServerConfig};
 
-// Simple wrapper around warp::run() for Leanterm builds.
+// Simple wrapper around leanterm::run() for Leanterm builds.
 fn main() -> Result<()> {
     let mut state = ChannelState::new(
         Channel::Oss,
@@ -17,11 +17,11 @@ fn main() -> Result<()> {
         },
     );
     if cfg!(debug_assertions) {
-        state = state.with_additional_features(warp_core::features::DEBUG_FLAGS);
+        state = state.with_additional_features(leanterm_core::features::DEBUG_FLAGS);
     }
     ChannelState::set(state);
 
-    warp::run()
+    leanterm::run()
 }
 
 // If we're not using an external plist, embed the following as the Info.plist.

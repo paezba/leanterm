@@ -2,7 +2,7 @@ use std::any::Any;
 use std::sync::Arc;
 
 use parking_lot::FairMutex;
-use warpui::App;
+use leanterm_ui::App;
 
 use super::*;
 use crate::pane_group::focus_state::PaneGroupFocusState;

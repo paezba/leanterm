@@ -4,13 +4,13 @@ use std::sync::Arc;
 use chrono::Local;
 use lsp::LspManagerModel;
 use repo_metadata::repositories::DetectedRepositories;
-use warp_core::ui::appearance::Appearance;
-use warp_editor::content::buffer::InitialBufferState;
-use warp_editor::render::element::VerticalExpansionBehavior;
-use warp_editor::render::model::LineCount;
-use warpui::elements::{Empty, MouseStateHandle};
-use warpui::platform::WindowStyle;
-use warpui::{App, ViewHandle};
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_editor::content::buffer::InitialBufferState;
+use leanterm_editor::render::element::VerticalExpansionBehavior;
+use leanterm_editor::render::model::LineCount;
+use leanterm_ui::elements::{Empty, MouseStateHandle};
+use leanterm_ui::platform::WindowStyle;
+use leanterm_ui::{App, ViewHandle};
 
 use super::*;
 use crate::NotebookKeybindings;
@@ -39,12 +39,12 @@ use crate::workspace::sync_inputs::SyncedInputState;
 #[derive(Default)]
 struct TestView;
 
-impl warpui::Entity for TestView {
+impl leanterm_ui::Entity for TestView {
     type Event = ();
 }
 
-impl warpui::View for TestView {
-    fn render(&self, _: &warpui::AppContext) -> Box<dyn warpui::Element> {
+impl leanterm_ui::View for TestView {
+    fn render(&self, _: &leanterm_ui::AppContext) -> Box<dyn leanterm_ui::Element> {
         Empty::new().finish()
     }
 
@@ -53,7 +53,7 @@ impl warpui::View for TestView {
     }
 }
 
-impl warpui::TypedActionView for TestView {
+impl leanterm_ui::TypedActionView for TestView {
     type Action = ();
 }
 
@@ -238,7 +238,7 @@ fn create_general_comment(comment_content: &str) -> AttachedReviewComment {
 /// Must be called within an App context.
 fn create_loaded_state_with_editors(
     app: &mut App,
-    window_id: warpui::WindowId,
+    window_id: leanterm_ui::WindowId,
     file_editors: Vec<(String, ViewHandle<LocalCodeEditorView>)>,
 ) -> LoadedState {
     let file_states = file_editors
@@ -288,7 +288,7 @@ struct TestContext {
     repo_path: PathBuf,
     repo_location: PathBuf,
     #[allow(dead_code)]
-    window_id: warpui::WindowId,
+    window_id: leanterm_ui::WindowId,
     state: LoadedState,
     code_review_view: ViewHandle<CodeReviewView>,
 }

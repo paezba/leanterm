@@ -19,10 +19,10 @@ use reqwest::IntoUrl;
 use reqwest_eventsource::RequestBuilderExt;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
-use warp_core::channel::{Channel, ChannelState};
-use warp_core::execution_mode;
-use warp_core::operating_system_info::OperatingSystemInfo;
-use warp_errors::report_error;
+use leanterm_core::channel::{Channel, ChannelState};
+use leanterm_core::execution_mode;
+use leanterm_core::operating_system_info::OperatingSystemInfo;
+use leanterm_errors::report_error;
 
 use crate::iap::{IapTokenProvider, proxy_auth_header};
 

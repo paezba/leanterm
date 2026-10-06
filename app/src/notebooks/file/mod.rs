@@ -4,27 +4,27 @@ use std::sync::Arc;
 
 use pathfinder_geometry::vector::vec2f;
 #[cfg(not(target_family = "wasm"))]
-use warp_core::features::FeatureFlag;
-use warp_core::ui::icons::ICON_DIMENSIONS;
-use warp_editor::model::CoreEditorModel;
+use leanterm_core::features::FeatureFlag;
+use leanterm_core::ui::icons::ICON_DIMENSIONS;
+use leanterm_editor::model::CoreEditorModel;
 #[cfg(feature = "local_fs")]
-use warp_files::{FileModel, FileModelEvent};
+use leanterm_files::{FileModel, FileModelEvent};
 #[cfg(feature = "local_fs")]
-use warp_util::file::FileId;
-use warp_util::path::user_friendly_path;
-use warpui::accessibility::{AccessibilityContent, WarpA11yRole};
+use leanterm_util::file::FileId;
+use leanterm_util::path::user_friendly_path;
+use leanterm_ui::accessibility::{AccessibilityContent, WarpA11yRole};
 #[cfg(feature = "local_fs")]
-use warpui::clipboard::ClipboardContent;
-use warpui::elements::{
+use leanterm_ui::clipboard::ClipboardContent;
+use leanterm_ui::elements::{
     Align, Container, CrossAxisAlignment, DispatchEventResult, Empty, EventHandler, Flex,
     MainAxisAlignment, MainAxisSize, MouseStateHandle, ParentElement, SavePosition, Shrinkable,
     Stack, Text,
 };
-use warpui::keymap::EditableBinding;
-use warpui::presenter::ChildView;
-use warpui::ui_components::button::{ButtonVariant, TextAndIcon, TextAndIconAlignment};
-use warpui::ui_components::components::{UiComponent, UiComponentStyles};
-use warpui::{
+use leanterm_ui::keymap::EditableBinding;
+use leanterm_ui::presenter::ChildView;
+use leanterm_ui::ui_components::button::{ButtonVariant, TextAndIcon, TextAndIconAlignment};
+use leanterm_ui::ui_components::components::{UiComponent, UiComponentStyles};
+use leanterm_ui::{
     AppContext, Element, Entity, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle,
 };
@@ -112,7 +112,7 @@ pub enum FileNotebookEvent {
     OpenFileWithTarget {
         path: PathBuf,
         target: FileTarget,
-        line_col: Option<warp_util::path::LineAndColumnArg>,
+        line_col: Option<leanterm_util::path::LineAndColumnArg>,
     },
 }
 
@@ -209,7 +209,7 @@ impl FileState {
 }
 
 pub fn init(app: &mut AppContext) {
-    use warpui::keymap::macros::*;
+    use leanterm_ui::keymap::macros::*;
 
     app.register_editable_bindings([
         EditableBinding::new(
@@ -1064,14 +1064,14 @@ impl BackingView for FileNotebookView {
             let title_text = render_pane_header_title_text(
                 title,
                 appearance,
-                warpui::text_layout::ClipConfig::start(),
+                leanterm_ui::text_layout::ClipConfig::start(),
             );
 
             let title_element: Box<dyn Element> = if let Some(display_path) =
                 self.file_state.path().map(|p| p.display().to_string())
             {
                 use pathfinder_geometry::vector::vec2f;
-                use warpui::elements::{
+                use leanterm_ui::elements::{
                     ChildAnchor, Hoverable, OffsetPositioning, ParentAnchor, ParentOffsetBounds,
                     Stack,
                 };
@@ -1120,7 +1120,7 @@ impl BackingView for FileNotebookView {
                 title,
                 title_secondary: None,
                 title_style: None,
-                title_clip_config: warpui::text_layout::ClipConfig::start(),
+                title_clip_config: leanterm_ui::text_layout::ClipConfig::start(),
                 title_max_width: None,
                 left_of_title: None,
                 right_of_title: None,

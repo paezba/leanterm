@@ -3,11 +3,11 @@
 #[cfg(feature = "local_fs")]
 use std::path::Path;
 
-use warpui::elements::{
+use leanterm_ui::elements::{
     Border, Container, CornerRadius, Flex, MouseStateHandle, ParentElement, Radius,
 };
-use warpui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
-use warpui::{AppContext, Element, EventContext};
+use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
+use leanterm_ui::{AppContext, Element, EventContext};
 
 use crate::appearance::Appearance;
 
@@ -125,7 +125,7 @@ where
 ///   different affordance (skips Markdown and, when enabled, Jupyter notebooks)
 #[cfg(feature = "local_fs")]
 pub fn should_show_open_in_warp_link(path: &Path, app: &AppContext) -> bool {
-    use warpui::SingletonEntity;
+    use leanterm_ui::SingletonEntity;
 
     use crate::code::view::is_binary_file;
     use crate::notebooks::file::renders_in_warp_notebook_viewer;

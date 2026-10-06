@@ -1,11 +1,11 @@
-use warp_completer::completer::{
+use leanterm_completer::completer::{
     EngineFileType, Match, MatchStrategy, MatchedSuggestion, Priority, Suggestion,
     SuggestionResults, SuggestionType, TopLevelCommandCaseSensitivity,
 };
-use warp_completer::meta::Span;
-use warp_core::ui::appearance::Appearance;
-use warpui::App;
-use warpui::platform::WindowStyle;
+use leanterm_completer::meta::Span;
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_ui::App;
+use leanterm_ui::platform::WindowStyle;
 
 use super::{InputSuggestions, TabCompletionsPreselectOption};
 use crate::input_suggestions::filter_tab_suggestions;
@@ -31,7 +31,7 @@ fn test_basic_tab_prefix() {
         prefix_matched_suggestion("stash"),
         prefix_matched_suggestion("status"),
         prefix_matched_suggestion("stats/")
-            .with_file_type(warp_completer::completer::EngineFileType::Directory),
+            .with_file_type(leanterm_completer::completer::EngineFileType::Directory),
     ];
 
     let suggestion_results = SuggestionResults {

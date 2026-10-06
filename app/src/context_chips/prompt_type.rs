@@ -1,5 +1,5 @@
-use warp_errors::report_error;
-use warpui::{AppContext, Entity, ModelContext, ModelHandle};
+use leanterm_errors::report_error;
+use leanterm_ui::{AppContext, Entity, ModelContext, ModelHandle};
 
 use super::current_prompt::CurrentPrompt;
 use super::prompt_snapshot::PromptSnapshot;

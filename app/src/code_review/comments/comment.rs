@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
-use warp_editor::render::model::LineCount;
+use leanterm_editor::render::model::LineCount;
 
 use crate::code::editor::EditorReviewComment;
 use crate::code::editor::line::EditorLineLocation;

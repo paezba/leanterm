@@ -1,10 +1,10 @@
-use warp_core::ui::Icon;
-use warp_core::ui::appearance::Appearance;
-use warp_core::ui::color::ContrastingColor;
-use warp_core::ui::color::contrast::MinimumAllowedContrast;
-use warp_core::ui::theme::Fill;
-use warp_core::ui::theme::color::internal_colors;
-use warpui::elements::MouseState;
+use leanterm_core::ui::Icon;
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_core::ui::color::ContrastingColor;
+use leanterm_core::ui::color::contrast::MinimumAllowedContrast;
+use leanterm_core::ui::theme::Fill;
+use leanterm_core::ui::theme::color::internal_colors;
+use leanterm_ui::elements::MouseState;
 
 use crate::view_components::action_button::{
     ActionButtonTheme, DisabledSecondaryTheme, SecondaryTheme,

@@ -5,12 +5,12 @@
 //! filtering across both top-level pages and umbrella subpages — so that
 //! refactors of the settings page model cannot silently regress them.
 
-use warp::integration_testing::settings::{
+use leanterm::integration_testing::settings::{
     assert_settings_nav_page_visible, assert_settings_section, assert_umbrella_expanded,
     clear_settings_search, open_settings_page, type_settings_search,
 };
-use warp::integration_testing::terminal::wait_until_bootstrapped_single_pane_for_tab;
-use warp::settings_view::SettingsSection;
+use leanterm::integration_testing::terminal::wait_until_bootstrapped_single_pane_for_tab;
+use leanterm::settings_view::SettingsSection;
 
 use super::{Builder, new_builder};
 

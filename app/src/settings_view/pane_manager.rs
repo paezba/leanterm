@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use warpui::{Entity, EntityId, ModelContext, SingletonEntity, ViewHandle, WindowId};
+use leanterm_ui::{Entity, EntityId, ModelContext, SingletonEntity, ViewHandle, WindowId};
 
 use super::SettingsView;
 use crate::PaneViewLocator;

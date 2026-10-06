@@ -1,0 +1,27 @@
+[package]
+name = "leanterm_files"
+version = "0.1.0"
+edition = "2024"
+authors = ["Leanterm contributors"]
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow = "1.0"
+async-channel.workspace = true
+async-fs.workspace = true
+futures.workspace = true
+thiserror.workspace = true
+leanterm_ui_core.workspace = true
+leanterm_util.workspace = true
+watcher.workspace = true
+notify-debouncer-full.workspace = true
+repo_metadata.workspace = true
+log.workspace = true
+
+[features]
+test-util = []
+
+[dev-dependencies]
+async-channel.workspace = true
+tempfile.workspace = true

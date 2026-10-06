@@ -6,23 +6,23 @@ use std::sync::Arc;
 
 use fuzzy_match::{FuzzyMatchResult, match_indices_case_insensitive};
 use itertools::Itertools;
-use warp_core::ui::builder::UiBuilder;
-use warp_core::ui::theme::color::internal_colors;
-use warp_editor::editor::NavigationKey;
+use leanterm_core::ui::builder::UiBuilder;
+use leanterm_core::ui::theme::color::internal_colors;
+use leanterm_editor::editor::NavigationKey;
 use warp_workflows::workflows as global_workflows;
-use warpui::accessibility::{AccessibilityContent, WarpA11yRole};
-use warpui::color::ColorU;
-use warpui::elements::{
+use leanterm_ui::accessibility::{AccessibilityContent, WarpA11yRole};
+use leanterm_ui::color::ColorU;
+use leanterm_ui::elements::{
     Align, ConstrainedBox, Container, CrossAxisAlignment, DispatchEventResult, Element,
     EventHandler, Fill, Flex, Highlight, Hoverable, LEFT_PADDING as SCROLLABLE_LEFT_PADDING,
     MainAxisSize, MouseStateHandle, ParentElement, ScrollStateHandle, Scrollable,
     ScrollableElement, ScrollbarWidth, Shrinkable, Text, UniformList, UniformListState,
 };
-use warpui::fonts::{Properties, Weight};
-use warpui::keymap::FixedBinding;
-use warpui::text_layout::TextStyle;
-use warpui::ui_components::components::{UiComponent, UiComponentStyles};
-use warpui::{
+use leanterm_ui::fonts::{Properties, Weight};
+use leanterm_ui::keymap::FixedBinding;
+use leanterm_ui::text_layout::TextStyle;
+use leanterm_ui::ui_components::components::{UiComponent, UiComponentStyles};
+use leanterm_ui::{
     AppContext, Entity, SingletonEntity, TypedActionView, View, ViewContext, WeakViewHandle,
 };
 
@@ -47,7 +47,7 @@ const WORKFLOW_LIST_PADDING_MIDDLE: f32 = 5.;
 pub const WORKFLOW_SUBTEXT_FONT_SIZE: f32 = 14.0;
 
 pub fn init(app: &mut AppContext) {
-    use warpui::keymap::macros::*;
+    use leanterm_ui::keymap::macros::*;
 
     app.register_fixed_bindings(vec![
         FixedBinding::new("up", WorkflowsViewAction::Up, id!("WorkflowsView")),

@@ -11,13 +11,13 @@ use repo_metadata::repositories::DetectedRepositories;
 use repo_metadata::watcher::DirectoryWatcher;
 use smol_str::SmolStr;
 use unindent::Unindent;
-use warp_completer::completer::{
+use leanterm_completer::completer::{
     Match, MatchStrategy, MatchedSuggestion, Priority, Suggestion, SuggestionResults,
     SuggestionType,
 };
-use warp_completer::meta::Span;
-use warpui::platform::WindowStyle;
-use warpui::{App, UpdateView, WindowId};
+use leanterm_completer::meta::Span;
+use leanterm_ui::platform::WindowStyle;
+use leanterm_ui::{App, UpdateView, WindowId};
 use watcher::HomeDirectoryWatcher;
 use workflows::workflow::{Argument, ArgumentType, Workflow};
 
@@ -600,7 +600,7 @@ impl CommandExecutor for CancellationTrackingExecutor {
         _current_directory_path: Option<&str>,
         _environment_variables: Option<HashMap<String, String>>,
         _execute_command_options: ExecuteCommandOptions,
-    ) -> anyhow::Result<warp_completer::completer::CommandOutput> {
+    ) -> anyhow::Result<leanterm_completer::completer::CommandOutput> {
         anyhow::bail!("no executor command expected")
     }
 
@@ -2724,7 +2724,7 @@ fn test_custom_terminal_page_scroll_binding_applies_when_prompt_is_focused() {
         app.update(|ctx| {
             ctx.set_custom_trigger(
                 "terminal:scroll_up_one_page".to_owned(),
-                warpui::keymap::Trigger::Keystrokes(vec![
+                leanterm_ui::keymap::Trigger::Keystrokes(vec![
                     Keystroke::parse("shift-pageup").unwrap(),
                 ]),
             );

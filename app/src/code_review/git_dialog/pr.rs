@@ -4,12 +4,12 @@
 //! with expandable per-file stats. On confirm, spawns `create_pr` and shows
 //! a toast with a clickable "Open PR" link.
 
-use warp_core::ui::appearance::Appearance;
-use warp_errors::report_error;
-use warpui::elements::{
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_errors::report_error;
+use leanterm_ui::elements::{
     ClippedScrollStateHandle, Container, Element, Flex, MouseStateHandle, ParentElement, Text,
 };
-use warpui::{SingletonEntity, ViewContext};
+use leanterm_ui::{SingletonEntity, ViewContext};
 
 use crate::code_review::git_dialog::{
     GitDialog, GitDialogAction, GitDialogEvent, GitDialogMode, render_branch_section,

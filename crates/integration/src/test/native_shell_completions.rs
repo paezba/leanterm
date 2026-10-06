@@ -10,23 +10,23 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use settings::Setting as _;
-use warp::integration_testing::input::{input_is_empty, tab_completions_menu_is_open};
-use warp::integration_testing::step::new_step_with_default_assertions;
-use warp::integration_testing::terminal::util::{
+use leanterm::integration_testing::input::{input_is_empty, tab_completions_menu_is_open};
+use leanterm::integration_testing::step::new_step_with_default_assertions;
+use leanterm::integration_testing::terminal::util::{
     ExpectedExitStatus, current_shell_starter_and_version,
 };
-use warp::integration_testing::terminal::{
+use leanterm::integration_testing::terminal::{
     clear_blocklist_to_remove_bootstrapped_blocks, execute_command_for_single_terminal_in_tab,
     execute_echo, wait_until_bootstrapped_single_pane_for_tab,
 };
-use warp::integration_testing::view_getters::{
+use leanterm::integration_testing::view_getters::{
     single_input_suggestions_view_for_tab, single_input_view_for_tab, single_terminal_view_for_tab,
 };
-use warp::settings::{NativeShellCompletionsEnabled, WarpCompletionsEnabled};
-use warp::terminal::model::block::TranscriptScope;
-use warp::terminal::shell::ShellType;
-use warpui_core::async_assert;
-use warpui_core::units::Lines;
+use leanterm::settings::{NativeShellCompletionsEnabled, WarpCompletionsEnabled};
+use leanterm::terminal::model::block::TranscriptScope;
+use leanterm::terminal::shell::ShellType;
+use leanterm_ui_core::async_assert;
+use leanterm_ui_core::units::Lines;
 
 use super::new_builder;
 use crate::Builder;
@@ -264,7 +264,7 @@ fn write_spec_command_marker_override_rc_files(dir: impl AsRef<Path>) {
 /// height), so a non-zero-height block carrying it is the ghost block this guards against. The name
 /// is normalized to match both `warp_run_generator_command*` and `Warp-Run-GeneratorCommand*`.
 fn assert_no_visible_generator_block()
--> impl Fn(&mut warpui_core::App, warpui_core::WindowId) -> warpui_core::integration::AssertionOutcome
+-> impl Fn(&mut leanterm_ui_core::App, leanterm_ui_core::WindowId) -> leanterm_ui_core::integration::AssertionOutcome
 {
     move |app, window_id| {
         let terminal_view = single_terminal_view_for_tab(app, window_id, 0);

@@ -11,7 +11,7 @@ cfg_if::cfg_if! {
         use std::collections::HashSet;
         use std::path::Path;
         use std::path::PathBuf;
-        use warp_util::path::CleanPathResult;
+        use leanterm_util::path::CleanPathResult;
     }
 }
 
@@ -21,7 +21,7 @@ pub(crate) enum DetectedLinkType {
     #[cfg(feature = "local_fs")]
     FilePath {
         absolute_path: PathBuf,
-        line_and_column_num: Option<warp_util::path::LineAndColumnArg>,
+        line_and_column_num: Option<leanterm_util::path::LineAndColumnArg>,
     },
 }
 
@@ -209,7 +209,7 @@ pub(crate) fn detect_file_paths(
                             // Create a new DetectedLinkType with the same file path but with the line number
                             let line_range_link = DetectedLinkType::FilePath {
                                 absolute_path: absolute_path.clone(),
-                                line_and_column_num: Some(warp_util::path::LineAndColumnArg {
+                                line_and_column_num: Some(leanterm_util::path::LineAndColumnArg {
                                     line_num: line_number as usize,
                                     column_num: None,
                                 }),
@@ -227,8 +227,8 @@ pub(crate) fn detect_file_paths(
 }
 
 use string_offset::CharOffset;
-use warp_editor::content::buffer::Buffer;
-use warpui::text::word_boundaries::WordBoundariesPolicy;
+use leanterm_editor::content::buffer::Buffer;
+use leanterm_ui::text::word_boundaries::WordBoundariesPolicy;
 
 /// Returns the range of the word surrounding the given offset.
 pub(crate) fn get_word_range_at_offset(
@@ -236,9 +236,9 @@ pub(crate) fn get_word_range_at_offset(
     offset: CharOffset,
     word_boundary_policy: Option<WordBoundariesPolicy>,
 ) -> Option<Range<CharOffset>> {
-    use warp_editor::content::buffer::{ToBufferCharOffset, ToBufferPoint};
-    use warpui::text::TextBuffer;
-    use warpui::text::words::is_default_word_boundary;
+    use leanterm_editor::content::buffer::{ToBufferCharOffset, ToBufferPoint};
+    use leanterm_ui::text::TextBuffer;
+    use leanterm_ui::text::words::is_default_word_boundary;
 
     let word_boundary_policy = word_boundary_policy.unwrap_or(WordBoundariesPolicy::Default);
     let mut word_found_at: Option<CharOffset> = None;

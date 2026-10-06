@@ -1,7 +1,7 @@
 use anyhow::{Result, anyhow};
 use url::Url;
 #[cfg(target_family = "wasm")]
-use warp_core::context_flag::ContextFlag;
+use leanterm_core::context_flag::ContextFlag;
 
 use crate::ChannelState;
 #[cfg(target_family = "wasm")]

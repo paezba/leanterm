@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use warpui::elements::{ResizableStateHandle, resizable_state_handle};
-use warpui::{Entity, SingletonEntity, WindowId};
+use leanterm_ui::elements::{ResizableStateHandle, resizable_state_handle};
+use leanterm_ui::{Entity, SingletonEntity, WindowId};
 
 use crate::app_state::WindowSnapshot;
 

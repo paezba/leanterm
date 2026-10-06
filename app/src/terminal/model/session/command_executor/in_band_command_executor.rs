@@ -8,11 +8,11 @@ use anyhow::Result;
 use async_channel::{self, Receiver, Sender};
 use async_trait::async_trait;
 use parking_lot::{Mutex, MutexGuard};
-use warp_completer::completer::{CommandExitStatus, CommandOutput};
-use warp_core::command::ExitCode;
-use warp_terminal::model::Point;
-use warp_util::on_cancel::OnCancelFutureExt;
-use warpui::r#async::block_on;
+use leanterm_completer::completer::{CommandExitStatus, CommandOutput};
+use leanterm_core::command::ExitCode;
+use leanterm_terminal::model::Point;
+use leanterm_util::on_cancel::OnCancelFutureExt;
+use leanterm_ui::r#async::block_on;
 
 use super::ExecuteCommandOptions;
 use crate::safe_info;

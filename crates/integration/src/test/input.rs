@@ -1,24 +1,24 @@
 use std::time::Duration;
 
-use warp::features::FeatureFlag;
-use warp::integration_testing::clipboard::write_to_clipboard;
-use warp::integration_testing::input::{
+use leanterm::features::FeatureFlag;
+use leanterm::integration_testing::clipboard::write_to_clipboard;
+use leanterm::integration_testing::input::{
     AutosuggestionState, assert_autosuggestion_state, input_contains_string, input_is_empty,
     latest_buffer_operations_are_empty, tab_completions_menu_is_open,
 };
-use warp::integration_testing::step::new_step_with_default_assertions;
-use warp::integration_testing::terminal::util::{
+use leanterm::integration_testing::step::new_step_with_default_assertions;
+use leanterm::integration_testing::terminal::util::{
     ExpectedExitStatus, current_shell_starter_and_version,
 };
-use warp::integration_testing::terminal::{
+use leanterm::integration_testing::terminal::{
     execute_command_for_single_terminal_in_tab, wait_until_bootstrapped_single_pane_for_tab,
 };
-use warp::integration_testing::view_getters::{
+use leanterm::integration_testing::view_getters::{
     single_input_view_for_tab, single_terminal_view_for_tab,
 };
-use warp::terminal::shell::ShellType;
-use warpui_core::integration::TestStep;
-use warpui_core::{Event, async_assert_eq};
+use leanterm::terminal::shell::ShellType;
+use leanterm_ui_core::integration::TestStep;
+use leanterm_ui_core::{Event, async_assert_eq};
 
 use super::new_builder;
 use crate::Builder;

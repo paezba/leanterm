@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use serde::{Serialize, Serializer};
-use warpui::ViewContext;
-use warpui::platform::Cursor;
+use leanterm_ui::ViewContext;
+use leanterm_ui::platform::Cursor;
 
 use crate::terminal::TerminalModel;
 use crate::terminal::model::RespectObfuscatedSecrets;
@@ -21,13 +21,13 @@ cfg_if::cfg_if! {
         use std::path::PathBuf;
         use unicode_general_category::{get_general_category, GeneralCategory};
         use unicode_width::UnicodeWidthChar;
-        use warp_util::path::CleanPathResult;
-        use warp_util::path::LineAndColumnArg;
+        use leanterm_util::path::CleanPathResult;
+        use leanterm_util::path::LineAndColumnArg;
     }
 }
 
 #[cfg(feature = "local_fs")]
-use warp_errors::report_error;
+use leanterm_errors::report_error;
 
 use super::{FindLinkArg, TerminalEditor};
 

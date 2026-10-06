@@ -1,7 +1,7 @@
-use warp_core::ui::icons::Icon as WarpIcon;
-use warp_core::ui::theme::color::internal_colors;
-use warp_core::ui::theme::{Fill as WarpThemeFill, WarpTheme};
-use warpui::elements::{ConstrainedBox, Container, CornerRadius, Element, Radius};
+use leanterm_core::ui::icons::Icon as WarpIcon;
+use leanterm_core::ui::theme::color::internal_colors;
+use leanterm_core::ui::theme::{Fill as WarpThemeFill, WarpTheme};
+use leanterm_ui::elements::{ConstrainedBox, Container, CornerRadius, Element, Radius};
 
 /// The inner glyph occupies `NEUTRAL_GLYPH_RATIO * total_size`, matching the old sizing where a
 /// 24px container held a 16px glyph (16/24 ≈ 0.667).

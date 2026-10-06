@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
-use warpui::elements::MouseStateHandle;
-use warpui::{AppContext, EntityId, SingletonEntity, ViewContext, ViewHandle, WindowId};
+use leanterm_ui::elements::MouseStateHandle;
+use leanterm_ui::{AppContext, EntityId, SingletonEntity, ViewContext, ViewHandle, WindowId};
 
 use crate::appearance::Appearance;
 use crate::pane_group::PaneId;
@@ -327,7 +327,7 @@ pub fn get_context_target_terminal_view(
 pub fn get_terminal_background_fill(
     window_id: WindowId,
     app: &AppContext,
-) -> warpui::elements::Fill {
+) -> leanterm_ui::elements::Fill {
     let theme = Appearance::as_ref(app).theme();
     let terminal_opacity = get_terminal_background_opacity(window_id, app);
     theme.background().with_opacity(terminal_opacity).into()

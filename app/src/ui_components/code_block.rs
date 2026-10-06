@@ -1,14 +1,14 @@
 use std::iter;
 use std::path::Path;
 
-use warp_core::ui::theme::Fill;
-use warpui::elements::{
+use leanterm_core::ui::theme::Fill;
+use leanterm_ui::elements::{
     Border, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Empty, Expanded, Flex,
     HighlightedRange, MainAxisAlignment, MainAxisSize, MouseStateHandle, ParentElement, Radius,
     Shrinkable, Text,
 };
-use warpui::ui_components::components::UiComponent;
-use warpui::{AppContext, Element, EventContext, SingletonEntity};
+use leanterm_ui::ui_components::components::UiComponent;
+use leanterm_ui::{AppContext, Element, EventContext, SingletonEntity};
 
 use crate::appearance::Appearance;
 use crate::code::editor_management::CodeSource;

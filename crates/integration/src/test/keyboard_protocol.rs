@@ -1,16 +1,16 @@
 use std::time::Duration;
 
-use warp::integration_testing::step::new_step_with_default_assertions;
-use warp::integration_testing::terminal::{
+use leanterm::integration_testing::step::new_step_with_default_assertions;
+use leanterm::integration_testing::terminal::{
     assert_long_running_block_executing_for_single_terminal_in_tab,
     wait_until_bootstrapped_single_pane_for_tab,
 };
-use warp::integration_testing::view_getters::single_terminal_view_for_tab;
-use warpui_core::event::{KeyEventDetails, KeyState};
-use warpui_core::integration::TestStep;
-use warpui_core::keymap::Keystroke;
-use warpui_core::platform::keyboard::KeyCode;
-use warpui_core::{Event, async_assert};
+use leanterm::integration_testing::view_getters::single_terminal_view_for_tab;
+use leanterm_ui_core::event::{KeyEventDetails, KeyState};
+use leanterm_ui_core::integration::TestStep;
+use leanterm_ui_core::keymap::Keystroke;
+use leanterm_ui_core::platform::keyboard::KeyCode;
+use leanterm_ui_core::{Event, async_assert};
 
 use super::new_builder;
 use crate::Builder;
@@ -47,7 +47,7 @@ fn wait_for_protocol_enabled() -> TestStep {
 fn assert_output_contains(
     expected: &'static str,
     description: &'static str,
-) -> impl FnMut(&mut warpui_core::App, warpui_core::WindowId) -> warpui_core::integration::AssertionOutcome
+) -> impl FnMut(&mut leanterm_ui_core::App, leanterm_ui_core::WindowId) -> leanterm_ui_core::integration::AssertionOutcome
 {
     move |app, window_id| {
         let terminal_view = single_terminal_view_for_tab(app, window_id, 0);

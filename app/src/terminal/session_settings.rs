@@ -7,8 +7,8 @@ use lazy_static::lazy_static;
 pub use new_session_shell::*;
 use serde::{Deserialize, Serialize};
 pub use startup_shell::*;
-use warp_core::settings::SupportedPlatforms;
-use warp_core::settings::macros::define_settings_group;
+use leanterm_core::settings::SupportedPlatforms;
+use leanterm_core::settings::macros::define_settings_group;
 pub use working_directory_config::*;
 
 use crate::context_chips::prompt::PromptSelection;

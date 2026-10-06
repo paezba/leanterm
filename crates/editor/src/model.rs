@@ -4,9 +4,9 @@ use itertools::{Either, Itertools};
 use line_ending::LineEnding;
 use string_offset::{ByteOffset, CharOffset};
 use vec1::{Vec1, vec1};
-use warpui_core::clipboard::ClipboardContent;
-use warpui_core::elements::ListIndentLevel;
-use warpui_core::{AppContext, Entity, ModelAsRef, ModelContext, ModelHandle};
+use leanterm_ui_core::clipboard::ClipboardContent;
+use leanterm_ui_core::elements::ListIndentLevel;
+use leanterm_ui_core::{AppContext, Entity, ModelAsRef, ModelContext, ModelHandle};
 
 use crate::content::anchor::Anchor;
 use crate::content::buffer::{

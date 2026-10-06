@@ -16,18 +16,18 @@
 use std::sync::OnceLock;
 
 use parking_lot::Mutex;
-use warp::cmd_or_ctrl_shift;
-use warp::integration_testing::step::new_step_with_default_assertions;
-use warp::integration_testing::terminal::util::{ExactLine, ExpectedExitStatus};
-use warp::integration_testing::terminal::{
+use leanterm::cmd_or_ctrl_shift;
+use leanterm::integration_testing::step::new_step_with_default_assertions;
+use leanterm::integration_testing::terminal::util::{ExactLine, ExpectedExitStatus};
+use leanterm::integration_testing::terminal::{
     execute_command_for_single_terminal_in_tab, wait_until_bootstrapped_single_pane_for_tab,
 };
-use warp::integration_testing::view_getters::single_terminal_view;
-use warp::terminal::block_list_element::GridType;
-use warp::terminal::model::index::Point;
-use warp::terminal::model::terminal_model::{WithinBlock, WithinModel};
-use warp::terminal::view::{GridHighlightedLink, TerminalAction};
-use warpui_core::async_assert;
+use leanterm::integration_testing::view_getters::single_terminal_view;
+use leanterm::terminal::block_list_element::GridType;
+use leanterm::terminal::model::index::Point;
+use leanterm::terminal::model::terminal_model::{WithinBlock, WithinModel};
+use leanterm::terminal::view::{GridHighlightedLink, TerminalAction};
+use leanterm_ui_core::async_assert;
 
 use super::new_builder;
 use crate::Builder;

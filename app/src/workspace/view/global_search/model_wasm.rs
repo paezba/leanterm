@@ -1,4 +1,4 @@
-use warpui::{Entity, ModelContext};
+use leanterm_ui::{Entity, ModelContext};
 
 use crate::workspace::view::global_search::SearchConfig;
 use crate::workspace::view::global_search::view::GlobalSearchEvent;

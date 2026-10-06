@@ -10,10 +10,10 @@ use std::str::FromStr;
 
 use anyhow::{Result, anyhow, ensure};
 use url::Url;
-use warp_util::path::LineAndColumnArg;
-use warpui::notification::UserNotification;
-use warpui::platform::TerminationMode;
-use warpui::{AppContext, SingletonEntity as _, TypedActionView, WindowId};
+use leanterm_util::path::LineAndColumnArg;
+use leanterm_ui::notification::UserNotification;
+use leanterm_ui::platform::TerminationMode;
+use leanterm_ui::{AppContext, SingletonEntity as _, TypedActionView, WindowId};
 
 use self::docker::open_docker_container;
 use crate::event_sources::LaunchConfigUiLocation;

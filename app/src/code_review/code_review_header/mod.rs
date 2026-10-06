@@ -1,8 +1,8 @@
 mod header_revamp;
 
-use warpui::elements::{ChildView, ConstrainedBox, Container};
-use warpui::ui_components::components::Coords;
-use warpui::{Element, ViewHandle};
+use leanterm_ui::elements::{ChildView, ConstrainedBox, Container};
+use leanterm_ui::ui_components::components::Coords;
+use leanterm_ui::{Element, ViewHandle};
 
 use crate::appearance::Appearance;
 use crate::view_components::action_button::ActionButton;

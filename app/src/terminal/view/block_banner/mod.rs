@@ -9,8 +9,8 @@
 mod warpify;
 
 pub use warpify::*;
-use warpui::Element;
-use warpui::elements::{
+use leanterm_ui::Element;
+use leanterm_ui::elements::{
     ConstrainedBox, Container, CornerRadius, Hoverable, MouseState, MouseStateHandle,
     ParentElement, Radius, Stack,
 };
