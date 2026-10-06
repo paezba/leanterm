@@ -1,46 +1,29 @@
 {
-  "fill" : "system-dark",
-  "groups" : [
+  "fill": {
+    "solid": "extended-srgb:0.08235,0.09020,0.13333,1.00000"
+  },
+  "groups": [
     {
-      "layers" : [
+      "layers": [
         {
-          "fill-specializations" : [
-            {
-              "value" : "none"
-            },
-            {
-              "appearance" : "dark",
-              "value" : "none"
-            }
-          ],
-          "image-name" : "Glyph.svg",
-          "name" : "Glyph"
-        },
-        {
-          "glass" : false,
-          "image-name" : "Guidelines.svg",
-          "name" : "Guidelines"
-        },
-        {
-          "fill" : "none",
-          "image-name" : "PLACE HERE.png",
-          "name" : "PLACE HERE"
+          "image-name": "Leanterm.png",
+          "name": "Leanterm"
         }
       ],
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.5
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
       },
-      "translucency" : {
-        "enabled" : true,
-        "value" : 0.5
+      "translucency": {
+        "enabled": false,
+        "value": 0
       }
     }
   ],
-  "supported-platforms" : {
-    "circles" : [
+  "supported-platforms": {
+    "circles": [
       "watchOS"
     ],
-    "squares" : "shared"
+    "squares": "shared"
   }
 }

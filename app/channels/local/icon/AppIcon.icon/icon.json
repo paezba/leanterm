@@ -1,47 +1,29 @@
 {
-  "fill-specializations" : [
+  "fill": {
+    "solid": "extended-srgb:0.08235,0.09020,0.13333,1.00000"
+  },
+  "groups": [
     {
-      "value" : {
-        "linear-gradient" : [
-          "gray:0.19068,1.00000",
-          "gray:0.08158,1.00000"
-        ]
-      }
-    },
-    {
-      "appearance" : "dark",
-      "value" : {
-        "linear-gradient" : [
-          "gray:0.08342,1.00000",
-          "gray:0.00000,1.00000"
-        ]
-      }
-    }
-  ],
-  "groups" : [
-    {
-      "layers" : [
+      "layers": [
         {
-          "blend-mode" : "normal",
-          "glass" : true,
-          "image-name" : "leanterm-glyph 3.svg",
-          "name" : "leanterm-glyph 3"
+          "image-name": "Leanterm.png",
+          "name": "Leanterm"
         }
       ],
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.5
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
       },
-      "translucency" : {
-        "enabled" : true,
-        "value" : 0.5
+      "translucency": {
+        "enabled": false,
+        "value": 0
       }
     }
   ],
-  "supported-platforms" : {
-    "circles" : [
+  "supported-platforms": {
+    "circles": [
       "watchOS"
     ],
-    "squares" : "shared"
+    "squares": "shared"
   }
 }
