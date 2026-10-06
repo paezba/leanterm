@@ -1,6 +1,5 @@
 use std::path::PathBuf;
 
-use leanterm_util::path::user_friendly_path;
 use leanterm_ui::elements::{Border, ChildView, Container, Hoverable, MouseStateHandle, Text};
 use leanterm_ui::platform::Cursor;
 use leanterm_ui::text_layout::ClipConfig;
@@ -8,6 +7,7 @@ use leanterm_ui::ui_components::components::UiComponentStyles;
 use leanterm_ui::{
     AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
 };
+use leanterm_util::path::user_friendly_path;
 
 use crate::appearance::Appearance;
 use crate::persisted_workspace::{PersistedWorkspace, PersistedWorkspaceEvent};

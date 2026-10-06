@@ -65,7 +65,7 @@ macro_rules! check_command {
     };
 }
 
-/// Tests that the shell reports its input buffer to the Warp typeahead model after
+/// Tests that the shell reports its input buffer to the Leanterm typeahead model after
 /// a long-running command completes.
 pub fn test_input_reporting_posix_shells() -> Builder {
     // When the shell can report its input buffer, we can handle typeahead with
@@ -205,10 +205,10 @@ pub fn test_background_output() -> Builder {
     use std::io::Write;
     use std::os::unix::prelude::OpenOptionsExt;
 
-    use regex::Regex;
     use leanterm::integration_testing::block::assert_background_output;
     use leanterm::integration_testing::terminal::execute_command_for_single_terminal_in_tab;
     use leanterm::integration_testing::terminal::util::ExpectedExitStatus;
+    use regex::Regex;
 
     let (starter, _) = current_shell_starter_and_version();
     let (spawn_command, kill_command) = match starter.shell_type() {

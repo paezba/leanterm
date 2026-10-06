@@ -11,7 +11,6 @@
 
 use std::path::PathBuf;
 
-use pathfinder_geometry::vector::vec2f;
 use leanterm_core::ui::appearance::Appearance;
 use leanterm_ui::elements::{
     Align, Border, ChildAnchor, ChildView, ClippedScrollStateHandle, ClippedScrollable,
@@ -26,6 +25,7 @@ use leanterm_ui::{
     AppContext, Entity, FocusContext, ModelHandle, SingletonEntity, TypedActionView, View,
     ViewContext, ViewHandle,
 };
+use pathfinder_geometry::vector::vec2f;
 
 use crate::code::editor::{add_color, remove_color};
 use crate::code_review::diff_state::{DiffStateModel, DiffStateModelEvent, GitOpResult};

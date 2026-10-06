@@ -1,4 +1,3 @@
-use settings::Setting as _;
 use leanterm_core::ui::theme::Fill;
 use leanterm_ui::elements::{Align, Container, Empty, Flex, MouseStateHandle, ParentElement};
 use leanterm_ui::fonts::Weight;
@@ -11,6 +10,7 @@ use leanterm_ui::ui_components::text::Span;
 use leanterm_ui::{
     AppContext, Element, Entity, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
 };
+use settings::Setting as _;
 
 use crate::appearance::Appearance;
 use crate::terminal::general_settings::{GeneralSettings, GeneralSettingsChangedEvent};
@@ -25,7 +25,7 @@ pub(super) fn init(app: &mut AppContext) {
     ]);
 }
 
-/// Used to show a Warp-native modal dialog above a [`super::Workspace`]. The first button is [`ButtonVariant::Accent`].
+/// Used to show a Leanterm-native modal dialog above a [`super::Workspace`]. The first button is [`ButtonVariant::Accent`].
 pub struct NativeModal {
     alert_dialog: Option<AlertDialogWithCallbacks<AppModalCallback>>,
     dont_show_again: bool,

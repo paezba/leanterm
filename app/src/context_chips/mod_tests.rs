@@ -10,15 +10,15 @@
 
 use leanterm_core::ui::color::blend::Blend;
 use leanterm_core::ui::color::contrast::{MinimumAllowedContrast, high_enough_contrast};
-use leanterm_core::ui::theme::{Details, Fill, WarpTheme, mock_terminal_colors};
+use leanterm_core::ui::theme::{Details, Fill, LeantermTheme, mock_terminal_colors};
 use leanterm_ui::color::ColorU;
 
 use super::readable_chip_label_color;
 
 /// Builds a solid-background/foreground theme (colors as `0xRRGGBBAA`). The
 /// terminal palette does not affect text/surface contrast, so a mock is fine.
-fn theme_with(background: u32, foreground: u32, details: Details) -> WarpTheme {
-    WarpTheme::new(
+fn theme_with(background: u32, foreground: u32, details: Details) -> LeantermTheme {
+    LeantermTheme::new(
         Fill::Solid(ColorU::from_u32(background)),
         ColorU::from_u32(foreground),
         Fill::Solid(ColorU::from_u32(0x2AA198FF)),

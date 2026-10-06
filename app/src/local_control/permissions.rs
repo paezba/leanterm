@@ -6,8 +6,8 @@ use crate::features::FeatureFlag;
 use crate::local_control::LocalControlBridge;
 use crate::settings::LocalControlSettings;
 
-pub(super) fn warp_control_cli_enabled() -> bool {
-    FeatureFlag::WarpControlCli.is_enabled()
+pub(super) fn leanterm_control_cli_enabled() -> bool {
+    FeatureFlag::LeantermControlCli.is_enabled()
 }
 
 pub(super) fn ensure_protocol_version(protocol_version: u32) -> Result<(), ControlError> {
@@ -21,12 +21,12 @@ pub(super) fn ensure_protocol_version(protocol_version: u32) -> Result<(), Contr
 }
 
 pub(super) fn ensure_feature_enabled() -> Result<(), ControlError> {
-    if warp_control_cli_enabled() {
+    if leanterm_control_cli_enabled() {
         return Ok(());
     }
     Err(ControlError::new(
         ErrorCode::LocalControlDisabled,
-        "Warp control CLI is disabled by feature flag",
+        "Leanterm control CLI is disabled by feature flag",
     ))
 }
 

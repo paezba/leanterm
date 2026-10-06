@@ -5,12 +5,12 @@ use leanterm_ui_core::{Entity, ModelContext, SingletonEntity};
 // Global execution mode, for logic that runs outside the UI framework.
 static GLOBAL_EXECUTION_MODE: OnceLock<ExecutionMode> = OnceLock::new();
 
-/// Execution mode that Warp is running under.
+/// Execution mode that Leanterm is running under.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ExecutionMode {
-    /// Warp is running as a normal desktop app.
+    /// Leanterm is running as a normal desktop app.
     App,
-    /// Warp is running as a CLI.
+    /// Leanterm is running as a CLI.
     Sdk,
 }
 
@@ -19,8 +19,8 @@ impl ExecutionMode {
     /// This must stay in sync with the util/client.go constants on the server.
     pub fn client_id(&self) -> &'static str {
         match self {
-            ExecutionMode::App => "warp-app",
-            ExecutionMode::Sdk => "warp-cli",
+            ExecutionMode::App => "leanterm-app",
+            ExecutionMode::Sdk => "leanterm-cli",
         }
     }
 
@@ -30,7 +30,7 @@ impl ExecutionMode {
     /// The desktop app keeps requiring a shell-derived path, so a failed MCP spawn surfaces
     /// as an actionable toast instead of silently launching with the wrong PATH. The SDK CLI
     /// and the TUI receive an authoritative PATH from their own launcher (an interactive shell
-    /// or a CLI invocation) before Warp starts, so inheriting it is safe and is the only PATH
+    /// or a CLI invocation) before Leanterm starts, so inheriting it is safe and is the only PATH
     /// available to a fresh SDK process before terminal bootstrap populates
     /// `mcp_execution_path`.
     pub fn can_inherit_process_path_for_mcp(&self) -> bool {
@@ -41,9 +41,9 @@ impl ExecutionMode {
     }
 }
 
-/// Model tracking the mode that Warp is running in.
+/// Model tracking the mode that Leanterm is running in.
 ///
-/// This gates functionality that's disabled when Warp is running in SDK mode.
+/// This gates functionality that's disabled when Leanterm is running in SDK mode.
 #[derive(Clone, Debug)]
 pub struct AppExecutionMode {
     mode: ExecutionMode,
@@ -128,7 +128,7 @@ impl AppExecutionMode {
         self.mode.can_inherit_process_path_for_mcp()
     }
 
-    /// If true, Warp is running in a sandbox like a Docker container or VM, rather than directly
+    /// If true, Leanterm is running in a sandbox like a Docker container or VM, rather than directly
     /// on a user machine.
     pub fn is_sandboxed(&self) -> bool {
         self.is_sandboxed

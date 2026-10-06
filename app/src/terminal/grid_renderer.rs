@@ -8,8 +8,6 @@ use std::collections::HashMap;
 use std::ops::{Range, RangeInclusive};
 
 use lazy_static::lazy_static;
-use num_traits::Float as _;
-use unicode_width::UnicodeWidthChar;
 use leanterm_core::features::FeatureFlag;
 use leanterm_errors::{ReportErrorLogMode, report_error};
 use leanterm_ui::assets::asset_cache::{AssetCache, AssetSource, AssetState};
@@ -23,6 +21,8 @@ use leanterm_ui::platform::LineStyle;
 use leanterm_ui::text_layout::{DEFAULT_TOP_BOTTOM_RATIO, Line, StyleAndFont, TextStyle};
 use leanterm_ui::units::{IntoLines as _, Lines, Pixels};
 use leanterm_ui::{AppContext, Element, EntityId, PaintContext, Scene, SingletonEntity};
+use num_traits::Float as _;
+use unicode_width::UnicodeWidthChar;
 
 pub use self::cell_glyph_cache::CellGlyphCache;
 use self::cell_type::{CellType, IsFocused, Secret};
@@ -42,7 +42,7 @@ use crate::terminal::model::index::Point;
 use crate::terminal::model::selection::SelectionPoint;
 use crate::terminal::model::{ObfuscateSecrets, SecretHandle};
 use crate::terminal::{SizeInfo, color};
-use crate::themes::theme::WarpTheme;
+use crate::themes::theme::LeantermTheme;
 use crate::util::color::{ContrastingColor, MinimumAllowedContrast};
 
 // The scale factor of the cursor relative to the cursor width.
@@ -291,7 +291,7 @@ pub fn render_grid<'a>(
     end_row: usize,
     colors: &color::List,
     override_colors: &color::OverrideList,
-    theme: &WarpTheme,
+    theme: &LeantermTheme,
     default_font_properties: Properties,
     font_family: FamilyId,
     font_size: f32,
@@ -471,7 +471,7 @@ fn render_grid_without_ligatures<'a>(
     used_displayed_output_rows: bool,
     colors: &color::List,
     override_colors: &color::OverrideList,
-    theme: &WarpTheme,
+    theme: &LeantermTheme,
     default_font_properties: Properties,
     font_family: FamilyId,
     font_size: f32,
@@ -645,7 +645,7 @@ fn render_grid_without_ligatures<'a>(
 
             // Skip the cursor cell when CLI agent rich input is open
             // AND the agent draws its own cursor (SHOW_CURSOR is off).
-            // When Warp draws the cursor (SHOW_CURSOR on), we keep the cell
+            // When Leanterm draws the cursor (SHOW_CURSOR on), we keep the cell
             // and only suppress the draw_cursor call.
             if hide_cursor_cell
                 && visible_cursor_shape.is_none()
@@ -985,7 +985,7 @@ fn render_grid_with_ligatures<'a>(
     used_displayed_output_rows: bool,
     colors: &color::List,
     override_colors: &color::OverrideList,
-    theme: &WarpTheme,
+    theme: &LeantermTheme,
     default_font_properties: Properties,
     font_family: FamilyId,
     font_size: f32,
@@ -1188,7 +1188,7 @@ fn render_grid_with_ligatures<'a>(
 
             // Skip the cursor cell when CLI agent rich input is open
             // AND the agent draws its own cursor (SHOW_CURSOR is off).
-            // When Warp draws the cursor (SHOW_CURSOR on), we keep the cell
+            // When Leanterm draws the cursor (SHOW_CURSOR on), we keep the cell
             // and only suppress the draw_cursor call.
             if hide_cursor_cell
                 && visible_cursor_shape.is_none()

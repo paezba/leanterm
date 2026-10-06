@@ -4,16 +4,16 @@ use super::*;
 0 1 2 3
 w a r p
 -------
-0     4  << the span for the string "warp" is (0, 4)
+0     4  << the span for the string "lean" is (0, 4)
 
 Spanned {
-    item: String::new("warp"),  << warp string
+    item: String::new("lean"),  << lean string
     span: Span::new(0, 4)       << span
 }
 
-or >> String::new("warp").spanned(Span::new(0, 4))        */
-fn warp() -> Spanned<String> {
-    String::from("warp").spanned(Span::new(0, 4))
+or >> String::new("lean").spanned(Span::new(0, 4))        */
+fn lean() -> Spanned<String> {
+    String::from("lean").spanned(Span::new(0, 4))
 }
 
 fn empty() -> Spanned<String> {
@@ -22,14 +22,14 @@ fn empty() -> Spanned<String> {
 
 #[test]
 fn knows_distances() {
-    assert!(warp().span.distance() == 4);
+    assert!(lean().span.distance() == 4);
     assert!(empty().span.distance() == 0);
 }
 
 #[test]
 fn slice_returns_the_exact_substring_for_a_well_formed_span() {
-    assert_eq!(Span::new(0, 4).slice("warp terminal"), "warp");
-    assert_eq!(Span::new(5, 13).slice("warp terminal"), "terminal");
+    assert_eq!(Span::new(0, 4).slice("lean terminal"), "lean");
+    assert_eq!(Span::new(5, 13).slice("lean terminal"), "terminal");
 }
 
 #[test]
@@ -56,15 +56,15 @@ fn slice_clamps_a_char_boundary_violation_to_the_nearest_valid_boundary_at_or_be
 
 #[test]
 fn slice_clamps_out_of_bounds_offsets_to_the_end_of_the_string() {
-    assert_eq!(Span::new(0, 1000).slice("warp"), "warp");
-    assert_eq!(Span::new(1000, 2000).slice("warp"), "");
+    assert_eq!(Span::new(0, 1000).slice("lean"), "lean");
+    assert_eq!(Span::new(1000, 2000).slice("lean"), "");
 }
 
 #[test]
 fn clamped_to_pulls_offsets_inside_the_source_and_onto_char_boundaries() {
-    assert_eq!(Span::new(0, 4).clamped_to("warp terminal"), Span::new(0, 4));
-    assert_eq!(Span::new(1000, 2000).clamped_to("warp"), Span::new(4, 4));
-    assert_eq!(Span::new(2, usize::MAX).clamped_to("warp"), Span::new(2, 4));
+    assert_eq!(Span::new(0, 4).clamped_to("lean terminal"), Span::new(0, 4));
+    assert_eq!(Span::new(1000, 2000).clamped_to("lean"), Span::new(4, 4));
+    assert_eq!(Span::new(2, usize::MAX).clamped_to("lean"), Span::new(2, 4));
 
     let source = "echo \u{4e2d} Get-Ch";
     assert_eq!(Span::new(7, 13).clamped_to(source), Span::new(5, 13));
@@ -76,5 +76,5 @@ fn slice_clamps_an_end_before_start_to_start_rather_than_underflowing() {
     // should not assume that invariant given how it's exercised here: defensively clamping
     // the end down to a char boundary must never leave it before the (already-clamped) start.
     let span = Span { start: 10, end: 2 };
-    assert_eq!(span.slice("warp terminal"), "");
+    assert_eq!(span.slice("lean terminal"), "");
 }

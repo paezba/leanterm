@@ -2,22 +2,22 @@
 
 #import <Metal/Metal.h>
 
-void warp_view_did_change_backing_properties(WarpHostView *, BOOL);
-void warp_view_set_frame_size(WarpHostView *, NSSize, BOOL);
-void warp_update_layer(WarpHostView *);
-BOOL warp_handle_view_event(WarpHostView *, NSEvent *, BOOL);
-BOOL warp_handle_first_mouse_event(WarpHostView *, NSEvent *);
-void warp_handle_insert_text(WarpHostView *, id);
-void warp_update_ime_state(WarpHostView *, BOOL);
-void warp_handle_drag_and_drop(WarpHostView *, NSArray *, NSPoint);
-void warp_handle_file_drag(WarpHostView *, NSPoint);
-void warp_handle_file_drag_exit(WarpHostView *);
-NSRect warp_ime_position(WarpHostView *, NSRect *);
-id warp_get_accessibility_contents(WarpHostView *);
-void warp_marked_text_updated(WarpHostView *, NSString *, NSRange);
-void warp_marked_text_cleared(WarpHostView *);
+void leanterm_view_did_change_backing_properties(LeantermHostView *, BOOL);
+void leanterm_view_set_frame_size(LeantermHostView *, NSSize, BOOL);
+void leanterm_update_layer(LeantermHostView *);
+BOOL leanterm_handle_view_event(LeantermHostView *, NSEvent *, BOOL);
+BOOL leanterm_handle_first_mouse_event(LeantermHostView *, NSEvent *);
+void leanterm_handle_insert_text(LeantermHostView *, id);
+void leanterm_update_ime_state(LeantermHostView *, BOOL);
+void leanterm_handle_drag_and_drop(LeantermHostView *, NSArray *, NSPoint);
+void leanterm_handle_file_drag(LeantermHostView *, NSPoint);
+void leanterm_handle_file_drag_exit(LeantermHostView *);
+NSRect leanterm_ime_position(LeantermHostView *, NSRect *);
+id leanterm_get_accessibility_contents(LeantermHostView *);
+void leanterm_marked_text_updated(LeantermHostView *, NSString *, NSRange);
+void leanterm_marked_text_cleared(LeantermHostView *);
 
-@implementation NSPasteboard (Warp)
+@implementation NSPasteboard (Leanterm)
 
 - (NSArray *)getFilePaths {
     NSMutableArray *paths = [NSMutableArray array];
@@ -33,7 +33,7 @@ void warp_marked_text_cleared(WarpHostView *);
 
 @end
 
-@implementation WarpHostView {
+@implementation LeantermHostView {
     // The windowState is managed on the Rust side.
     // Note Rust expects this name even though we are not a window.
     void *windowState;
@@ -73,7 +73,7 @@ void warp_marked_text_cleared(WarpHostView *);
     return !titlebarDragEnabled;
 }
 
-- (BOOL)readyForWarp {
+- (BOOL)readyForLeanterm {
     return windowState != NULL;
 }
 
@@ -126,7 +126,7 @@ void warp_marked_text_cleared(WarpHostView *);
 }
 
 - (void)viewDidChangeBackingProperties {
-    if (self.readyForWarp) warp_view_did_change_backing_properties(self, asyncCallback);
+    if (self.readyForLeanterm) leanterm_view_did_change_backing_properties(self, asyncCallback);
     [super viewDidChangeBackingProperties];
 }
 
@@ -138,15 +138,15 @@ void warp_marked_text_cleared(WarpHostView *);
     if (size.height >= self.window.minSize.height && size.width >= self.window.minSize.width) {
         [super setFrameSize:size];
         // It's an important optimization to only invoke this if the size changed.
-        if (self.readyForWarp && changed) {
-            warp_view_set_frame_size(self, size, asyncCallback);
+        if (self.readyForLeanterm && changed) {
+            leanterm_view_set_frame_size(self, size, asyncCallback);
         }
     }
 }
 
 - (void)displayLayer:(CALayer *)layer {
-    if (!testMode && self.readyForWarp) {
-        warp_update_layer(self);
+    if (!testMode && self.readyForLeanterm) {
+        leanterm_update_layer(self);
     }
 }
 
@@ -174,8 +174,8 @@ void warp_marked_text_cleared(WarpHostView *);
     interpretingKeyEvents = NO;
 
     BOOL handled = NO;
-    if (self.readyForWarp) {
-        handled = warp_handle_view_event(self, event, wasComposing || [self hasMarkedText]);
+    if (self.readyForLeanterm) {
+        handled = leanterm_handle_view_event(self, event, wasComposing || [self hasMarkedText]);
     }
 
     // It's possible to have keybinding conflicts between terminal apps which use the meta key and
@@ -194,7 +194,7 @@ void warp_marked_text_cleared(WarpHostView *);
 
     // Dispatch TypedCharacter event after KeyDown has been dispatched.
     if ([textToInsert length] > 0 && !handled) {
-        warp_handle_insert_text(self, (NSString *)textToInsert);
+        leanterm_handle_insert_text(self, (NSString *)textToInsert);
         // Only clear marked text if the IME did not touch it during this
         // interpretKeyEvents pass. Otherwise we'd either fire a redundant
         // ClearMarkedText (if IME already cleared) or, worse, wipe the new
@@ -210,8 +210,8 @@ void warp_marked_text_cleared(WarpHostView *);
 
 - (BOOL)acceptsFirstMouse:(NSEvent *)event {
     // We want to receive mouseDown events even if the window is not key
-    // and we explicity fire the event here so that Warp can handle it.
-    if (self.readyForWarp) warp_handle_first_mouse_event(self, event);
+    // and we explicity fire the event here so that Leanterm can handle it.
+    if (self.readyForLeanterm) leanterm_handle_first_mouse_event(self, event);
 
     // We return NO though so that the event is not fired twice (returning YES
     // would result in the event being passed to the mouseDown handler).
@@ -219,10 +219,10 @@ void warp_marked_text_cleared(WarpHostView *);
 }
 
 - (void)mouseDown:(NSEvent *)event {
-    if (self.readyForWarp) {
-        BOOL eventHandled = warp_handle_view_event(self, event, NO);
+    if (self.readyForLeanterm) {
+        BOOL eventHandled = leanterm_handle_view_event(self, event, NO);
         if (self->titlebarDragEnabled && !eventHandled && [self mouseInTitleBar:event]) {
-            // If Warp doesn't do anything with the event, indicated by returning `false`, and
+            // If Leanterm doesn't do anything with the event, indicated by returning `false`, and
             // if the drag starts in the titlebar, begin dragging the window
             [self.window performWindowDragWithEvent:event];
         }
@@ -232,37 +232,37 @@ void warp_marked_text_cleared(WarpHostView *);
 - (void)mouseUp:(NSEvent *)event {
     // Our content view is full-size so we don't get the default behavior
     // on titlebar clicks. Implement it manually.
-    BOOL warp_handled = NO;
-    if (self.readyForWarp) {
-        warp_handled = warp_handle_view_event(self, event, NO);
+    BOOL leanterm_handled = NO;
+    if (self.readyForLeanterm) {
+        leanterm_handled = leanterm_handle_view_event(self, event, NO);
     }
-    if (!warp_handled) {
+    if (!leanterm_handled) {
         [self handleTitleBarDoubleClick:event];
     }
 }
 
 - (void)otherMouseDown:(NSEvent *)event {
-    if (self.readyForWarp) warp_handle_view_event(self, event, NO);
+    if (self.readyForLeanterm) leanterm_handle_view_event(self, event, NO);
 }
 
 - (void)rightMouseDown:(NSEvent *)event {
-    if (self.readyForWarp) warp_handle_view_event(self, event, NO);
+    if (self.readyForLeanterm) leanterm_handle_view_event(self, event, NO);
 }
 
 - (void)mouseDragged:(NSEvent *)event {
-    if (self.readyForWarp) warp_handle_view_event(self, event, NO);
+    if (self.readyForLeanterm) leanterm_handle_view_event(self, event, NO);
 }
 
 - (void)scrollWheel:(NSEvent *)event {
-    if (self.readyForWarp) warp_handle_view_event(self, event, NO);
+    if (self.readyForLeanterm) leanterm_handle_view_event(self, event, NO);
 }
 
 - (void)mouseMoved:(NSEvent *)event {
-    if (self.readyForWarp) warp_handle_view_event(self, event, NO);
+    if (self.readyForLeanterm) leanterm_handle_view_event(self, event, NO);
 }
 
 - (void)flagsChanged:(NSEvent *)event {
-    if (self.readyForWarp) warp_handle_view_event(self, event, NO);
+    if (self.readyForLeanterm) leanterm_handle_view_event(self, event, NO);
 }
 
 - (void)dealloc {
@@ -285,7 +285,7 @@ void warp_marked_text_cleared(WarpHostView *);
     return layer;
 }
 
-- (WarpHostView *)initWithFrame:(NSRect)frame
+- (LeantermHostView *)initWithFrame:(NSRect)frame
                     metalDevice:(id)device
              enableTitlebarDrag:(BOOL)enableTitlebarDrag
                        testMode:(BOOL)testModeFlag {
@@ -327,10 +327,10 @@ void warp_marked_text_cleared(WarpHostView *);
     NSPoint localPoint = [self convertPoint:dragPoint fromView:nil];
 
     NSPasteboard *pasteboard = [sender draggingPasteboard];
-    if (self.readyForWarp) {
+    if (self.readyForLeanterm) {
         NSArray *types = [pasteboard types];
         if ([types containsObject:NSPasteboardTypeFileURL]) {
-            warp_handle_file_drag(self, localPoint);
+            leanterm_handle_file_drag(self, localPoint);
             return YES;
         }
     }
@@ -338,8 +338,8 @@ void warp_marked_text_cleared(WarpHostView *);
 }
 
 - (void)draggingExited:(id<NSDraggingInfo>)sender {
-    if (self.readyForWarp) {
-        warp_handle_file_drag_exit(self);
+    if (self.readyForLeanterm) {
+        leanterm_handle_file_drag_exit(self);
     }
 }
 
@@ -350,10 +350,10 @@ void warp_marked_text_cleared(WarpHostView *);
     NSPoint dragPoint = [sender draggingLocation];
     NSPoint localPoint = [self convertPoint:dragPoint fromView:nil];
 
-    if (self.readyForWarp && (dragOperation & NSDragOperationCopy)) {
+    if (self.readyForLeanterm && (dragOperation & NSDragOperationCopy)) {
         NSArray *types = [pasteboard types];
         if ([types containsObject:NSPasteboardTypeFileURL]) {
-            warp_handle_drag_and_drop(self, [pasteboard getFilePaths], localPoint);
+            leanterm_handle_drag_and_drop(self, [pasteboard getFilePaths], localPoint);
             return YES;
         }
     }
@@ -387,7 +387,7 @@ void warp_marked_text_cleared(WarpHostView *);
 }
 
 - (id)accessibilityValue {
-    return warp_get_accessibility_contents(self);
+    return leanterm_get_accessibility_contents(self);
 }
 
 - (NSInteger)accessibilityNumberOfCharacters {
@@ -423,9 +423,9 @@ void warp_marked_text_cleared(WarpHostView *);
 - (NSRect)firstRectForCharacterRange:(NSRange)range
                          actualRange:(nullable NSRangePointer)actualRange {
     NSWindow *window = self.window;
-    if (self.readyForWarp) {
+    if (self.readyForLeanterm) {
         NSRect contentRect = [window contentRectForFrameRect:[window frame]];
-        NSRect rect = warp_ime_position(self, &contentRect);
+        NSRect rect = leanterm_ime_position(self, &contentRect);
         return rect;
     } else {
         return NSZeroRect;
@@ -439,7 +439,7 @@ void warp_marked_text_cleared(WarpHostView *);
 // Referenced glfw for this implementation.
 // https://github.com/glfw/glfw/blob/7ef34eb06de54dd9186d3d21a401b2ef819b59e7/src/cocoa_window.m#L814
 - (void)insertText:(id)string replacementRange:(NSRange)replacementRange {
-    if (self.readyForWarp) {
+    if (self.readyForLeanterm) {
         NSMutableString *characters = [[NSMutableString alloc] init];
 
         if ([string isKindOfClass:[NSAttributedString class]]) {
@@ -459,7 +459,7 @@ void warp_marked_text_cleared(WarpHostView *);
         if (interpretingKeyEvents) {
             [textToInsert appendString:characters];
         } else {
-            warp_handle_insert_text(self, (NSString *)characters);
+            leanterm_handle_insert_text(self, (NSString *)characters);
         }
 
         [characters release];
@@ -495,12 +495,12 @@ void warp_marked_text_cleared(WarpHostView *);
     else
         markedText = [[NSMutableAttributedString alloc] initWithString:string];
 
-    if (self.readyForWarp) {
-        warp_marked_text_updated(self, markedText.string, selectedRange);
+    if (self.readyForLeanterm) {
+        leanterm_marked_text_updated(self, markedText.string, selectedRange);
         if ([markedText length] > 0) {
-            warp_update_ime_state(self, YES);
+            leanterm_update_ime_state(self, YES);
         } else {
-            warp_update_ime_state(self, NO);
+            leanterm_update_ime_state(self, NO);
         }
     }
 }
@@ -510,9 +510,9 @@ void warp_marked_text_cleared(WarpHostView *);
         imeTouchedMarkedTextDuringInterpret = YES;
     }
     [[markedText mutableString] setString:@""];
-    if (self.readyForWarp) {
-        warp_update_ime_state(self, NO);
-        warp_marked_text_cleared(self);
+    if (self.readyForLeanterm) {
+        leanterm_update_ime_state(self, NO);
+        leanterm_marked_text_cleared(self);
     }
 }
 

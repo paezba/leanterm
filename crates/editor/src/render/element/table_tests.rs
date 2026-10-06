@@ -1,14 +1,14 @@
 use std::cell::Cell;
 use std::sync::Arc;
 
-use pathfinder_color::ColorU;
-use string_offset::CharOffset;
 use leanterm_ui_core::elements::{Axis, scroll_delta_for_pointer_movement};
 use leanterm_ui_core::fonts::FamilyId;
 use leanterm_ui_core::geometry::rect::RectF;
 use leanterm_ui_core::geometry::vector::vec2f;
 use leanterm_ui_core::text_layout::TextFrame;
 use leanterm_ui_core::units::{IntoPixels, Pixels};
+use pathfinder_color::ColorU;
+use string_offset::CharOffset;
 
 use crate::content::text::{FormattedTable, table_cell_offset_maps};
 use crate::render::element::table::{

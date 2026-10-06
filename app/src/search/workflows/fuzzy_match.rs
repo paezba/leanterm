@@ -1,6 +1,6 @@
 use fuzzy_match::FuzzyMatchResult;
-use ordered_float::OrderedFloat;
 use leanterm_errors::report_error;
+use ordered_float::OrderedFloat;
 
 use crate::workflows::workflow::Workflow;
 

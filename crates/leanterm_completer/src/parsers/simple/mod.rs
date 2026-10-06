@@ -6,10 +6,10 @@ mod lexer;
 mod parser;
 mod token;
 
+use leanterm_util::path::EscapeChar;
 use lexer::Lexer;
 use parser::Parser;
 use string_offset::ByteOffset;
-use leanterm_util::path::EscapeChar;
 
 use crate::parsers::LiteCommand;
 

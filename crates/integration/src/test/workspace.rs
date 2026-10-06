@@ -3,9 +3,6 @@
 use std::fs;
 use std::time::Duration;
 
-use pathfinder_geometry::rect::RectF;
-use pathfinder_geometry::vector::{Vector2F, vec2f};
-use settings::Setting as _;
 use leanterm::cmd_or_ctrl_shift;
 use leanterm::integration_testing::clipboard::assert_clipboard_contains_string;
 use leanterm::integration_testing::command_palette::assert_command_palette_is_closed;
@@ -43,6 +40,9 @@ use leanterm_ui_core::windowing::WindowManager;
 use leanterm_ui_core::{
     EntityId, SingletonEntity, TypedActionView, WindowId, async_assert, async_assert_eq,
 };
+use pathfinder_geometry::rect::RectF;
+use pathfinder_geometry::vector::{Vector2F, vec2f};
+use settings::Setting as _;
 
 use super::new_builder;
 use crate::Builder;
@@ -67,7 +67,10 @@ fn tab_position_id(tab_index: usize) -> String {
     format!("tab_position_{tab_index}")
 }
 
-fn vertical_tab_pane_row_position_id(app: &mut leanterm_ui_core::App, window_id: WindowId) -> String {
+fn vertical_tab_pane_row_position_id(
+    app: &mut leanterm_ui_core::App,
+    window_id: WindowId,
+) -> String {
     let workspace = workspace_view(app, window_id);
     let pane_group = workspace.read(app, |workspace, _ctx| {
         workspace

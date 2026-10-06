@@ -10,9 +10,9 @@ use std::sync::Arc;
 
 use futures_lite::future::yield_now;
 use instant::Instant;
-use parking_lot::FairMutex;
 use leanterm_terminal::model::grid::Dimensions;
 use leanterm_ui::{Entity, ModelContext};
+use parking_lot::FairMutex;
 
 use super::work_queue::{FindWorkItem, FindWorkQueue};
 use super::{AbsoluteMatch, AsyncFindConfig, FindTaskMessage};

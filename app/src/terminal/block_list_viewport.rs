@@ -2,12 +2,12 @@ use std::ops::Range;
 use std::rc::Rc;
 use std::sync::MutexGuard;
 
-use pathfinder_geometry::vector::Vector2F;
-use serde::{Deserialize, Serialize};
-use sum_tree::{Cursor, SeekBias};
 use leanterm_ui::AppContext;
 use leanterm_ui::elements::ClippedScrollStateHandle;
 use leanterm_ui::units::{IntoLines, IntoPixels, Lines, Pixels};
+use pathfinder_geometry::vector::Vector2F;
+use serde::{Deserialize, Serialize};
+use sum_tree::{Cursor, SeekBias};
 
 use super::block_list_element::{
     GridType, SnackbarHeader, SnackbarHeaderState, SnackbarPoint, VisibleItem,

@@ -1,9 +1,9 @@
 use std::any::Any;
 use std::sync::Arc;
 
+use leanterm_ui::{AppContext, ModelHandle, ViewHandle, WindowId};
 use parking_lot::FairMutex;
 use pathfinder_geometry::vector::Vector2F;
-use leanterm_ui::{AppContext, ModelHandle, ViewHandle, WindowId};
 
 use super::event_listener::ChannelEventListener;
 use super::model::session::Sessions;

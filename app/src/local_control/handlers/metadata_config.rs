@@ -6,10 +6,10 @@ use ::local_control::protocol::{
     TabTarget, TargetSelector, ThemeNameParams, WindowTarget,
 };
 use ::local_control::{ActionKind, ControlError, ErrorCode, InstanceId};
-use serde_json::json;
-use settings::Setting as _;
 use leanterm_core::ui::theme::AnsiColorIdentifier;
 use leanterm_ui::{ModelContext, SingletonEntity as _, WindowId};
+use serde_json::json;
+use settings::Setting as _;
 
 use super::metadata::{
     PaneEntry, TabEntry, WindowEntry, pane_entries_for_tabs, tab_entries_for_windows,
@@ -25,7 +25,7 @@ use crate::pane_group::PaneId;
 use crate::settings::{AccessibilitySettings, FontSettings, InputSettings, ThemeSettings};
 use crate::tab::SelectedTabColor;
 use crate::themes::theme::{SelectedSystemThemes, ThemeKind};
-use crate::user_config::WarpConfig;
+use crate::user_config::LeantermConfig;
 use crate::window_settings::ZoomLevel;
 
 pub(crate) fn tab_rename(
@@ -664,7 +664,7 @@ fn theme_kind_for_name(
     name: &str,
     ctx: &ModelContext<LocalControlBridge>,
 ) -> Result<ThemeKind, ControlError> {
-    let matches = WarpConfig::as_ref(ctx)
+    let matches = LeantermConfig::as_ref(ctx)
         .theme_config()
         .theme_items()
         .filter_map(|(kind, _)| (public_theme_name(kind) == name).then_some(kind.clone()))

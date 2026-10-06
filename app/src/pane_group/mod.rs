@@ -7,21 +7,10 @@ use std::sync::mpsc::SyncSender;
 
 use itertools::Itertools;
 use lazy_static::lazy_static;
-use markdown_parser::FormattedTextFragment;
-use parking_lot::FairMutex;
-use pathfinder_geometry::rect::RectF;
-use pathfinder_geometry::vector::{Vector2F, vec2f};
-use serde::{Deserialize, Serialize};
-use settings::Setting as _;
-use typed_path::TypedPath;
-use uuid::Uuid;
 use leanterm_core::command::ExitCode;
 use leanterm_core::context_flag::ContextFlag;
 use leanterm_errors::report_if_error;
 use leanterm_terminal::focus_env::add_session_focus_env_vars;
-#[cfg(feature = "local_fs")]
-use leanterm_util::path::LineAndColumnArg;
-use leanterm_util::path::convert_wsl_to_windows_host_path;
 use leanterm_ui::elements::{
     ChildView, CrossAxisAlignment, DispatchEventResult, Element, EventHandler, Flex, MainAxisSize,
     ParentElement, Shrinkable, Stack,
@@ -33,6 +22,17 @@ use leanterm_ui::{
     AppContext, Entity, EntityId, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle, WindowId,
 };
+#[cfg(feature = "local_fs")]
+use leanterm_util::path::LineAndColumnArg;
+use leanterm_util::path::convert_wsl_to_windows_host_path;
+use markdown_parser::FormattedTextFragment;
+use parking_lot::FairMutex;
+use pathfinder_geometry::rect::RectF;
+use pathfinder_geometry::vector::{Vector2F, vec2f};
+use serde::{Deserialize, Serialize};
+use settings::Setting as _;
+use typed_path::TypedPath;
+use uuid::Uuid;
 
 #[cfg(feature = "local_fs")]
 use crate::app_state::CodePaneSnapShot;
@@ -98,6 +98,7 @@ use focus_state::PaneGroupFocusState;
 #[path = "mod_tests.rs"]
 mod tests;
 
+use leanterm_errors::report_error;
 pub use pane::code_pane::CodePane;
 pub use pane::file_pane::FilePane;
 pub use pane::network_log_pane::NetworkLogPane;
@@ -108,7 +109,6 @@ pub use pane::{
     PaneHeaderAction, PaneHeaderCustomAction, PaneId, PaneView, TerminalPaneId,
 };
 pub use tree::{Direction, PaneData, PaneFlex, PaneNode, SplitDirection};
-use leanterm_errors::report_error;
 pub use working_directories::{WorkingDirectoriesEvent, WorkingDirectoriesModel};
 
 use self::pane::{DetachType, PaneViewEvent};
@@ -146,7 +146,7 @@ fn get_minimum_pane_size(app: &AppContext) -> f32 {
 /// 2. Otherwise look up by command name in the already-discovered
 ///    [`AvailableShells`]. Its shell discovery supplements the process `PATH`
 ///    with well-known install locations (e.g. `/opt/homebrew/bin` on macOS,
-///    MSYS2/WSL on Windows) that a raw `PATH` lookup would miss when Warp is
+///    MSYS2/WSL on Windows) that a raw `PATH` lookup would miss when Leanterm is
 ///    launched outside an interactive shell.
 /// 3. As a final fallback, perform a plain `PATH` lookup via
 ///    [`AvailableShell::try_from`] in case the user put something exotic in
@@ -163,7 +163,7 @@ fn resolve_tab_config_shell(name: &str, ctx: &AppContext) -> Option<AvailableShe
 
     AvailableShell::try_from(name).ok()
 }
-const WARP_SHELL_COMPATIBILITY_DOCS: &str =
+const LEANTERM_SHELL_COMPATIBILITY_DOCS: &str =
     "https://docs.warp.dev/getting-started/supported-shells";
 // Default minimum width for a newly created Agent Mode pane so that it is legible. Called "default"
 // because this value may be too large for small windows. In that case, we fall back to 50% of the
@@ -414,21 +414,21 @@ pub enum Event {
     // open in the index. If the invitee email is provided, it will be added to the share dialog.
     // Tell the workspace to open the workflow modal with an unsaved workflow.
     OpenPromptEditor,
-    /// tell the workspace to open a file within Warp.
-    OpenFileInWarp {
+    /// tell the workspace to open a file within Leanterm.
+    OpenFileInLeanterm {
         /// The file path to open.
         path: PathBuf,
         /// The session that the path was opened from.
         session: Arc<Session>,
     },
     #[cfg(feature = "local_fs")]
-    OpenCodeInWarp {
+    OpenCodeInLeanterm {
         source: CodeSource,
         layout: crate::util::file::external_editor::settings::EditorLayout,
         line_col: Option<LineAndColumnArg>,
     },
     #[cfg(feature = "local_fs")]
-    PreviewCodeInWarp {
+    PreviewCodeInLeanterm {
         source: CodeSource,
     },
     OpenCodeReviewPane(CodeReviewPanelArg),
@@ -1663,7 +1663,7 @@ impl PaneGroup {
     }
 
     /// Send prompt change bindkey events to all terminal sessions in this pane group. This
-    /// is used for intra-session prompt switching between Warp prompt and PS1.
+    /// is used for intra-session prompt switching between Leanterm prompt and PS1.
     #[cfg_attr(not(feature = "local_tty"), allow(unused_variables))]
     pub fn send_prompt_change_bindkey_to_all_sessions(
         &self,
@@ -1684,7 +1684,7 @@ impl PaneGroup {
                                 if honor_ps1 {
                                     manager.send_switch_to_ps1_bindkey(ctx);
                                 } else {
-                                    manager.send_switch_to_warp_prompt_bindkey(ctx);
+                                    manager.send_switch_to_leanterm_prompt_bindkey(ctx);
                                 }
                             }
                         });
@@ -1780,9 +1780,9 @@ impl PaneGroup {
             Banner::<PaneGroupAction>::new_permanently_dismissible(
                 BannerTextContent::formatted_text(vec![
                     FormattedTextFragment::plain_text(
-                        "Warp doesn't currently support your default shell, falling back to zsh.  ",
+                        "Leanterm doesn't currently support your default shell, falling back to zsh.  ",
                     ),
-                    FormattedTextFragment::hyperlink("Learn more", WARP_SHELL_COMPATIBILITY_DOCS),
+                    FormattedTextFragment::hyperlink("Learn more", LEANTERM_SHELL_COMPATIBILITY_DOCS),
                 ]),
             )
         });

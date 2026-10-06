@@ -1,6 +1,6 @@
 use itertools::Itertools;
-use string_offset::ByteOffset;
 use leanterm_util::path::EscapeChar;
+use string_offset::ByteOffset;
 
 use super::LocationType;
 use crate::completer::CompletionContext;
@@ -105,10 +105,10 @@ fn completes_command_names() {
 #[test]
 fn completes_unregistered_command_names() {
     assert_eq!(
-        location("warp", CommandRegistry::empty(), 4),
+        location("lean", CommandRegistry::empty(), 4),
         vec![LocationType::Command {
             is_recognized: false,
-            parsed_token: ParsedToken::new("warp")
+            parsed_token: ParsedToken::new("lean")
         }]
     );
 

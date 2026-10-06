@@ -1,4 +1,4 @@
-use leanterm_ui_core::elements::Icon as WarpUiIcon;
+use leanterm_ui_core::elements::Icon as LeantermUiIcon;
 
 use crate::ui::theme::Fill;
 
@@ -53,8 +53,8 @@ impl ExternalProductIcon {
         }
     }
 
-    pub fn to_warpui_icon(&self, color: Fill) -> WarpUiIcon {
+    pub fn to_leanterm_ui_icon(&self, color: Fill) -> LeantermUiIcon {
         let path = self.get_path();
-        WarpUiIcon::new(path, color.into_solid())
+        LeantermUiIcon::new(path, color.into_solid())
     }
 }

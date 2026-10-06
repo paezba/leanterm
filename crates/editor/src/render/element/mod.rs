@@ -6,10 +6,6 @@ use std::time::Duration;
 
 use float_cmp::ApproxEq;
 use instant::Instant;
-use parking_lot::Mutex;
-use string_offset::CharOffset;
-use temporary_block::RenderableTemporaryBlock;
-use vim::vim::VimMode;
 use leanterm_core::ui::theme::Fill as ThemeFill;
 use leanterm_errors::report_error;
 use leanterm_ui_core::color::ColorU;
@@ -26,6 +22,10 @@ use leanterm_ui_core::{
     AfterLayoutContext, AppContext, Element, Event, EventContext, LayoutContext, ModelHandle,
     PaintContext, SizeConstraint, WeakViewHandle,
 };
+use parking_lot::Mutex;
+use string_offset::CharOffset;
+use temporary_block::RenderableTemporaryBlock;
+use vim::vim::VimMode;
 
 use self::empty::Empty;
 use self::header::RenderableHeader;
@@ -1270,7 +1270,12 @@ impl<V: EditorView> NewScrollableElement for RichTextElement<V> {
         })
     }
 
-    fn scroll(&mut self, delta: leanterm_ui_core::units::Pixels, axis: Axis, ctx: &mut EventContext) {
+    fn scroll(
+        &mut self,
+        delta: leanterm_ui_core::units::Pixels,
+        axis: Axis,
+        ctx: &mut EventContext,
+    ) {
         if let Some(action) = V::Action::scroll(delta, axis) {
             ctx.dispatch_typed_action(action);
         }

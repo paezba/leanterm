@@ -13,9 +13,9 @@ use std::thread::{self, panicking};
 use anyhow::Result;
 use geometry::rect::RectF;
 use itertools::Itertools;
+use leanterm_errors::report_error;
 use parking_lot::Mutex;
 use serde::de::IntoDeserializer;
-use leanterm_errors::report_error;
 use winit::event_loop::{ActiveEventLoop, EventLoopProxy};
 
 #[cfg(not(target_family = "wasm"))]
@@ -81,7 +81,7 @@ pub fn open_url_in_system(url: &str) -> bool {
         // 1. First attempt to open with `wslview`, since that is basically made to open stuff in wsl
         // 2. Use `rundll32.exe url.dll,FileProtocolHandler {url}` to open in the user's default windows browser
         //    - If a user does not want this behavior, and wants all opening to go through
-        //      WSL, they can set the env variable WARP_FORCE_WSL_BROWSER.
+        //      WSL, they can set the env variable LEANTERM_FORCE_WSL_BROWSER.
         // 3. Fall back to default linux url opening behavior.
         if platform::linux::is_wsl() {
             match open::with_detached(url, "wslview") {
@@ -160,7 +160,7 @@ pub fn open_url_in_system(url: &str) -> bool {
 fn use_wsl_browser() -> bool {
     static USE_WSL_BROWSER: OnceLock<bool> = OnceLock::new();
     USE_WSL_BROWSER
-        .get_or_init(|| std::env::var("WARP_FORCE_WSL_BROWSER").is_ok())
+        .get_or_init(|| std::env::var("LEANTERM_FORCE_WSL_BROWSER").is_ok())
         .to_owned()
 }
 

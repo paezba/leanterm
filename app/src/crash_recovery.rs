@@ -4,12 +4,12 @@ use std::collections::HashMap;
 use ::settings::Setting as _;
 use cfg_if::cfg_if;
 use lazy_static::lazy_static;
-use parking_lot::RwLock;
 use leanterm_cli::RecoveryMechanism;
 use leanterm_core::channel::{Channel, ChannelState};
 use leanterm_errors::{report_error, report_if_error};
 use leanterm_ui::{Entity, ModelContext, SingletonEntity, WindowId};
 use leanterm_ui_extras::user_preferences::UserPreferences;
+use parking_lot::RwLock;
 
 use crate::settings;
 

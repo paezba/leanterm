@@ -3,9 +3,9 @@ use std::time::Duration;
 
 use instant::Instant;
 use itertools::Itertools;
+use leanterm_ui_core::r#async::executor::Background;
 use parking_lot::Mutex;
 use tantivy::tokenizer::{TextAnalyzer, Token};
-use leanterm_ui_core::r#async::executor::Background;
 
 use crate::define_search_schema;
 use crate::searcher::{
@@ -128,14 +128,14 @@ fn test_tokenizer_simple() {
 }
 
 #[test]
-fn test_tokenizer_warp_special_chars() {
-    // Test string includes warp-related terms with hyphen, underscore, forward slash, backslash, and colon
-    let test_string = "warp-cli/launch_command:run C:\\\\Program_Files\\\\Warp\\\\core-engine.dll check_status:/dev/warp_drive-0";
+fn test_tokenizer_lean_special_chars() {
+    // Test string includes lean-related terms with hyphen, underscore, forward slash, backslash, and colon
+    let test_string = "lean-cli/launch_command:run C:\\\\Program_Files\\\\Lean\\\\core-engine.dll check_status:/dev/lean_drive-0";
     let tokens = token_stream_helper(test_string);
 
     assert_eq!(tokens.len(), 25);
-    assert_token(&tokens[0], 0, "warp-cli/launch_command:run", 0, 27);
-    assert_token(&tokens[1], 1, "warp", 0, 4);
+    assert_token(&tokens[0], 0, "lean-cli/launch_command:run", 0, 27);
+    assert_token(&tokens[1], 1, "lean", 0, 4);
     assert_token(&tokens[2], 2, "cli", 5, 8);
     assert_token(&tokens[3], 3, "launch_command", 9, 23);
     assert_token(&tokens[4], 4, "launch", 9, 15);
@@ -144,12 +144,12 @@ fn test_tokenizer_warp_special_chars() {
     assert_token(
         &tokens[7],
         7,
-        "C:\\\\Program_Files\\\\Warp\\\\core-engine",
+        "C:\\\\Program_Files\\\\Lean\\\\core-engine",
         28,
         64,
     );
     assert_token(&tokens[15], 15, "dll", 65, 68);
-    assert_token(&tokens[16], 16, "check_status:/dev/warp_drive-0", 69, 99);
+    assert_token(&tokens[16], 16, "check_status:/dev/lean_drive-0", 69, 99);
 }
 
 #[test]
@@ -162,7 +162,7 @@ fn test_searcher() {
         search_fields: [name: 1.0],
         id_fields: [id: u64]
     );
-    let search_strings = ["run warp on web server", "run warp-on-web server"];
+    let search_strings = ["run lean on web server", "run lean-on-web server"];
 
     let searcher = TEST_SCHEMA.create_searcher(MIN_MEMORY_BUDGET);
     searcher
@@ -177,7 +177,7 @@ fn test_searcher() {
         )
         .unwrap();
 
-    let result = searcher.search_full_doc("warp on web").unwrap();
+    let result = searcher.search_full_doc("lean on web").unwrap();
     assert_eq!(
         result.len(),
         2,
@@ -194,14 +194,14 @@ fn test_searcher() {
         "should highlight the correct positions"
     );
 
-    let result = searcher.search_full_doc("warp-on-web").unwrap();
+    let result = searcher.search_full_doc("lean-on-web").unwrap();
     assert_eq!(
         result.len(),
         1,
         "should only match the second search string"
     );
     assert_eq!(
-        result[0].values.name, "run warp-on-web server",
+        result[0].values.name, "run lean-on-web server",
         "should match the second search string"
     );
     assert_eq!(
@@ -222,7 +222,7 @@ fn test_searcher_scores() {
         id_fields: [id: u64]
     );
 
-    let search_strings = ["run warp on web server", "run warp_on_web:server"];
+    let search_strings = ["run lean on web server", "run lean_on_web:server"];
 
     let searcher = TEST_SCHEMA.create_searcher(MIN_MEMORY_BUDGET);
     searcher
@@ -237,7 +237,7 @@ fn test_searcher_scores() {
         )
         .unwrap();
 
-    let result = searcher.search_full_doc("warp").unwrap();
+    let result = searcher.search_full_doc("lean").unwrap();
     assert_eq!(
         result.len(),
         2,
@@ -253,7 +253,7 @@ fn test_searcher_scores() {
         "the score difference of similar strings should be less than 15%"
     );
 
-    let result = searcher.search_full_doc("warp on web").unwrap();
+    let result = searcher.search_full_doc("lean on web").unwrap();
     let score_delta = result[0].score - result[1].score;
     assert!(
         score_delta / result[0].score < 0.15,
@@ -276,8 +276,8 @@ fn test_searcher_async() {
         "Fix clippy formatting after commit",
         "Undo the last git commit",
         "Run cargo fmt on changed files",
-        "Run warp-on-web",
-        "Run fresh warp-local and clear warp-dev permissions",
+        "Run lean-on-web",
+        "Run fresh lean-local and clear lean-dev permissions",
         "Give user unlimited AI",
     ];
     let background_executor = Arc::new(Background::default());
@@ -362,7 +362,7 @@ fn test_searcher_async() {
         .collect_vec();
     assert_eq!(result.len(), 1, "there should be exactly 1 match for id 4");
     assert_eq!(
-        result[0].name, "Run fresh warp-local and clear warp-dev permissions",
+        result[0].name, "Run fresh lean-local and clear lean-dev permissions",
         "the original document with id 4 should be unchanged"
     );
 
@@ -503,7 +503,7 @@ fn test_searcher_async_rebuild_coalesces_burst() {
 /// Regression test for a correctness bug in an earlier version of the rebuild coalescer: when a
 /// second rebuild superseded a first, not-yet-applied rebuild, the coalescer reused the first
 /// rebuild's position in the operation queue for the second rebuild's (newer) document set. Any
-/// insert/delete call made in between -- as Warp Drive's per-object updates do -- ended up placed
+/// insert/delete call made in between -- as Lean Drive's per-object updates do -- ended up placed
 /// *after* the superseding rebuild in the resolved operation list, even though it was requested
 /// *before* that rebuild. Because inserts overwrite by composite key, the stale interleaved
 /// update would silently win over the newer rebuild's value for the same document.
@@ -543,7 +543,7 @@ fn test_searcher_async_rebuild_preserves_operation_order_with_interleaved_update
     };
 
     // Request a rebuild (R1), then -- before the background writer gets a chance to apply it --
-    // incremental updates land (as Warp Drive's per-object insert calls do), then a second
+    // incremental updates land (as Lean Drive's per-object insert calls do), then a second
     // rebuild (R2) is requested whose snapshot holds a newer value for document 1 and no longer
     // contains document 2 at all. R2 supersedes R1 in the coalescer, but the interleaved updates
     // must still be treated as older than R2, since they were requested before it.

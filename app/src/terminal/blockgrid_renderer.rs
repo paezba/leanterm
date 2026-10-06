@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 use std::ops::{Neg, RangeInclusive};
 
-use pathfinder_color::ColorU;
 use leanterm_ui::fonts::{FamilyId, Properties, Weight};
 use leanterm_ui::geometry::rect::RectF;
 use leanterm_ui::geometry::vector::{Vector2F, vec2f};
 use leanterm_ui::{AppContext, Element, EntityId, PaintContext};
+use pathfinder_color::ColorU;
 
 use super::model::SecretHandle;
 use super::model::ansi::{CursorShape, CursorStyle};
@@ -18,10 +18,10 @@ use crate::terminal::model::blockgrid::{BlockGrid, CursorDisplayPoint};
 use crate::terminal::model::grid::grid_handler::Link;
 use crate::terminal::model::index::Point;
 use crate::terminal::{SizeInfo, color};
-use crate::themes::theme::WarpTheme;
+use crate::themes::theme::LeantermTheme;
 
 pub struct GridRenderParams {
-    pub warp_theme: WarpTheme,
+    pub leanterm_theme: LeantermTheme,
     pub font_family: FamilyId,
     pub font_size: f32,
     pub font_weight: Weight,
@@ -32,7 +32,7 @@ pub struct GridRenderParams {
     pub cell_size: Vector2F,
     pub use_ligature_rendering: bool,
     /// When true, suppresses cursor rendering for CLI agents when rich input is open. For agents that draw their own cursor (SHOW_CURSOR off),
-    /// the cursor cell is skipped. For agents that let Warp draw the cursor
+    /// the cursor cell is skipped. For agents that let Leanterm draw the cursor
     /// (SHOW_CURSOR on), the `draw_cursor` call and cursor contrast colouring
     /// are suppressed instead.
     pub hide_cursor_cell: bool,
@@ -133,7 +133,7 @@ impl BlockGridRenderer for BlockGrid {
             end_row,
             &block_grid_params.colors,
             &block_grid_params.override_colors,
-            &block_grid_params.grid_render_params.warp_theme,
+            &block_grid_params.grid_render_params.leanterm_theme,
             properties,
             block_grid_params.grid_render_params.font_family,
             block_grid_params.grid_render_params.font_size,

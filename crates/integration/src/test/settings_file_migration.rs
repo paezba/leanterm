@@ -3,11 +3,11 @@
 
 use std::collections::HashMap;
 
-use settings::Setting as _;
 use leanterm::integration_testing::terminal::wait_until_bootstrapped_single_pane_for_tab;
 use leanterm::settings::{BlockVisibilitySettings, ScrollSettings};
 use leanterm_ui_core::integration::AssertionOutcome;
 use leanterm_ui_core::{SingletonEntity, async_assert, async_assert_eq};
+use settings::Setting as _;
 
 use super::{Builder, new_builder};
 

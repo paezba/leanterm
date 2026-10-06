@@ -1,16 +1,12 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use pathfinder_geometry::vector::{Vector2F, vec2f};
-use unindent::Unindent;
-use vim::vim::{MotionType, VimMode};
 use leanterm_core::settings::Setting;
 use leanterm_core::ui::appearance::Appearance;
 use leanterm_editor::content::buffer::{InitialBufferState, ToBufferCharOffset, ToBufferPoint};
 use leanterm_editor::model::CoreEditorModel;
 use leanterm_editor::render::element::VerticalExpansionBehavior;
 use leanterm_editor::render::model::viewport::SizeInfo;
-use leanterm_util::user_input::UserInput;
 use leanterm_ui::keymap::Keystroke;
 use leanterm_ui::platform::WindowStyle;
 use leanterm_ui::text::point::Point;
@@ -19,6 +15,10 @@ use leanterm_ui::{
     App, EntityId, EntityIdSet, Event, Presenter, SingletonEntity, TypedActionView, UpdateModel,
     ViewHandle, WindowId, WindowInvalidation,
 };
+use leanterm_util::user_input::UserInput;
+use pathfinder_geometry::vector::{Vector2F, vec2f};
+use unindent::Unindent;
+use vim::vim::{MotionType, VimMode};
 
 use crate::code::editor::find::view::CodeEditorFind;
 use crate::code::editor::view::{CodeEditorRenderOptions, CodeEditorView, CodeEditorViewAction};
@@ -1214,11 +1214,11 @@ fn test_vim_delete_word_db() {
 fn test_vim_delete_word_dge() {
     App::test((), |mut app| async move {
         initialize_code_editor_app(&mut app);
-        let editor = add_code_editor("echo hello-hi warp-dev", &mut app);
+        let editor = add_code_editor("echo hello-hi lean-dev", &mut app);
 
         set_cursor_position(&editor, 1, 20, &mut app);
         vim_user_insert(&editor, "dge", &mut app);
-        assert_eq!(buffer_text(&editor, &app), "echo hello-hi warpev");
+        assert_eq!(buffer_text(&editor, &app), "echo hello-hi leanev");
         assert_eq!(cursor_position(&editor, &app), (1, 18));
 
         vim_user_insert(&editor, "dge", &mut app);

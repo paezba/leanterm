@@ -1,5 +1,5 @@
-use pathfinder_color::ColorU;
 use leanterm_ui::fonts::Properties;
+use pathfinder_color::ColorU;
 
 use super::{Renderer, RendererStyles};
 use crate::context_chips::{ChipAvailability, ChipDisabledReason, ContextChipKind};

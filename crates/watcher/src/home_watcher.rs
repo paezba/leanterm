@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 use std::time::Duration;
 
-use notify_debouncer_full::notify::{RecursiveMode, WatchFilter};
 use leanterm_ui_core::{Entity, ModelContext, ModelHandle, SingletonEntity};
+use notify_debouncer_full::notify::{RecursiveMode, WatchFilter};
 
 use crate::{BulkFilesystemWatcher, BulkFilesystemWatcherEvent};
 

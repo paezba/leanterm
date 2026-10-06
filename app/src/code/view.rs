@@ -1,15 +1,10 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use lsp::LspManagerModel;
-use pathfinder_color::ColorU;
-use pathfinder_geometry::rect::RectF;
-use pathfinder_geometry::vector::vec2f;
 use leanterm_core::channel::{Channel, ChannelState};
 use leanterm_core::ui::appearance::Appearance;
 use leanterm_core::ui::icons::ICON_DIMENSIONS;
 use leanterm_editor::render::element::VerticalExpansionBehavior;
-use leanterm_util::path::LineAndColumnArg;
 #[cfg(feature = "local_fs")]
 use leanterm_ui::clipboard::ClipboardContent;
 use leanterm_ui::elements::{
@@ -28,6 +23,11 @@ use leanterm_ui::{
     AppContext, Element, Entity, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle, WindowId, id,
 };
+use leanterm_util::path::LineAndColumnArg;
+use lsp::LspManagerModel;
+use pathfinder_color::ColorU;
+use pathfinder_geometry::rect::RectF;
+use pathfinder_geometry::vector::vec2f;
 
 use super::editor::view::{CodeEditorEvent, CodeEditorView};
 use super::editor_management::CodeSource;
@@ -40,7 +40,7 @@ use crate::code::local_code_editor::ShowFindReferencesCard;
 use crate::code::{EditorTabBarDropTargetData, ImmediateSaveError, SaveOutcome, SaveStatus};
 use crate::input::Vector2F;
 use crate::menu::{MenuItem, MenuItemFields};
-use crate::notebooks::file::{MarkdownDisplayMode, renders_in_warp_notebook_viewer};
+use crate::notebooks::file::{MarkdownDisplayMode, renders_in_leanterm_notebook_viewer};
 use crate::pane_group::focus_state::PaneFocusHandle;
 use crate::pane_group::pane::view::header::components::{
     CenteredHeaderEdgeWidth, render_pane_header_buttons, render_pane_header_title_text,
@@ -261,7 +261,9 @@ impl CodeView {
             .tab_at(self.active_tab_index)
             .and_then(|t| t.location.as_ref())
             .map(|loc| {
-                renders_in_warp_notebook_viewer(std::path::Path::new(&loc.display().to_string()))
+                renders_in_leanterm_notebook_viewer(std::path::Path::new(
+                    &loc.display().to_string(),
+                ))
             })
             .unwrap_or(false);
 
@@ -1984,11 +1986,11 @@ impl CodeView {
 
             let renders_in_notebook_viewer = local_path
                 .as_ref()
-                .map(renders_in_warp_notebook_viewer)
+                .map(renders_in_leanterm_notebook_viewer)
                 .unwrap_or_else(|| {
                     active_location
                         .map(|loc| {
-                            renders_in_warp_notebook_viewer(std::path::Path::new(
+                            renders_in_leanterm_notebook_viewer(std::path::Path::new(
                                 &loc.display().to_string(),
                             ))
                         })

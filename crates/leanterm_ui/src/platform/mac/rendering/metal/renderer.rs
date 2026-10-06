@@ -7,6 +7,12 @@ use std::ptr::NonNull;
 use std::sync::Once;
 
 use dispatch2::DispatchData;
+use leanterm_errors::report_error;
+use leanterm_ui_core::fonts::{self, RasterizedGlyph, SubpixelAlignment, canvas};
+use leanterm_ui_core::platform::CapturedFrame;
+use leanterm_ui_core::rendering::texture_cache::TextureCache;
+use leanterm_ui_core::rendering::{self};
+use leanterm_ui_core::scene::{CornerRadius, GlyphFade, GlyphKey, Icon, Image, Layer, Scene};
 use objc2::rc::Retained;
 use objc2::runtime::ProtocolObject;
 use objc2_foundation::NSString;
@@ -22,12 +28,6 @@ use objc2_quartz_core::CAMetalDrawable;
 use pathfinder_color::{ColorF, ColorU};
 use pathfinder_geometry::rect::{RectF, RectI};
 use pathfinder_geometry::vector::{Vector2F, vec2f};
-use leanterm_errors::report_error;
-use leanterm_ui_core::fonts::{self, RasterizedGlyph, SubpixelAlignment, canvas};
-use leanterm_ui_core::platform::CapturedFrame;
-use leanterm_ui_core::rendering::texture_cache::TextureCache;
-use leanterm_ui_core::rendering::{self};
-use leanterm_ui_core::scene::{CornerRadius, GlyphFade, GlyphKey, Icon, Image, Layer, Scene};
 
 use super::frame_capture::capture_frame;
 use crate::platform::mac::rendering::renderer::Device;
@@ -1055,7 +1055,7 @@ impl MetalDrawContext<'_> {
 
 impl super::super::Renderer for Renderer {
     fn render(&mut self, scene: &Scene, window: &WindowState, font_cache: &fonts::Cache) {
-        // SAFETY: `render` is called via `warp_update_layer`, which is only be invoked for
+        // SAFETY: `render` is called via `leanterm_update_layer`, which is only be invoked for
         // windows created via Window::open() and always sets a non-`None` device.
         #[allow(irrefutable_let_patterns)]
         let Device::Metal(metal_device) = window

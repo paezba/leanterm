@@ -3,25 +3,25 @@
 use std::collections::HashSet;
 use std::path::PathBuf;
 
+use leanterm_core::command::ExitCode;
 use ordered_float::OrderedFloat;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Deserializer, Serialize};
-use leanterm_core::command::ExitCode;
 
 use crate::model::block::BlockId;
 use crate::model::session::SessionId;
 
-/// Indicates that the following JSON-encoded message is hex-encoded for Warp's lifecycle hooks.
+/// Indicates that the following JSON-encoded message is hex-encoded for Leanterm's lifecycle hooks.
 /// In DCS, it is used as the final char in the DCS start sequence.
 /// In OSC, it is used as the first parameter.
 pub(super) const HEX_ENCODED_JSON_MARKER: char = 'd';
 
-/// Indicates that the following JSON-encoded message is unencoded for Warp's lifecycle hooks.
+/// Indicates that the following JSON-encoded message is unencoded for Leanterm's lifecycle hooks.
 /// In DCS, it is used as the final char in the DCS start sequence.
 /// In OSC, it is used as the first parameter.
 pub(super) const UNENCODED_JSON_MARKER: char = 'f';
 
-/// Indicates that the following message is a ANSI-C quoted message for receiving Warp's lifecycle
+/// Indicates that the following message is a ANSI-C quoted message for receiving Leanterm's lifecycle
 /// hooks via key-value pairs.
 /// In OSC< it is used as the first parameter.
 pub(super) const UNENCODED_KV_MARKER: char = 'k';
@@ -33,7 +33,7 @@ pub(super) const UNENCODED_KV_MARKER: char = 'k';
 /// rejects missing or unregistered IDs for hooks that require a registered session.
 pub type HookSessionId = Option<u64>;
 
-/// Enum representing all possible JSON payloads for Warp's DCS's.
+/// Enum representing all possible JSON payloads for Leanterm's DCS's.
 ///
 /// Serialization derives the internally tagged form
 /// (`{"hook": "...", "value": {...}}`). Deserialization is hand-written
@@ -78,8 +78,8 @@ pub(super) enum DProtoHook {
     InitSubshell {
         value: InitSubshellValue,
     },
-    SourcedRcFileForWarp {
-        value: SourcedRcFileForWarpValue,
+    SourcedRcFileForLeanterm {
+        value: SourcedRcFileForLeantermValue,
     },
     FinishUpdate {
         value: FinishUpdateValue,
@@ -102,7 +102,7 @@ const DPROTO_HOOK_VARIANTS: &[&str] = &[
     "ExternalShellWidgetSelection",
     "Clear",
     "InitSubshell",
-    "SourcedRcFileForWarp",
+    "SourcedRcFileForLeanterm",
     "FinishUpdate",
     "ExitShell",
 ];
@@ -162,7 +162,7 @@ impl<'de> Deserialize<'de> for DProtoHook {
             "InitSubshell" => DProtoHook::InitSubshell {
                 value: parse_hook_value::<_, D::Error>(raw.value)?,
             },
-            "SourcedRcFileForWarp" => DProtoHook::SourcedRcFileForWarp {
+            "SourcedRcFileForLeanterm" => DProtoHook::SourcedRcFileForLeanterm {
                 value: parse_hook_value::<_, D::Error>(raw.value)?,
             },
             "FinishUpdate" => DProtoHook::FinishUpdate {
@@ -195,7 +195,7 @@ impl DProtoHook {
             DProtoHook::ExternalShellWidgetSelection { .. } => "ExternalShellWidgetSelection",
             DProtoHook::Clear { .. } => "Clear",
             DProtoHook::InitSubshell { .. } => "InitSubshell",
-            DProtoHook::SourcedRcFileForWarp { .. } => "SourcedRcFileForWarp",
+            DProtoHook::SourcedRcFileForLeanterm { .. } => "SourcedRcFileForLeanterm",
             DProtoHook::FinishUpdate { .. } => "FinishUpdate",
             DProtoHook::ExitShell { .. } => "ExitShell",
         }
@@ -220,7 +220,7 @@ impl DProtoHook {
             DProtoHook::PreInteractiveSSHSession { value } => value.session_id.map(SessionId::from),
             DProtoHook::SSH { value } => value.session_id.map(SessionId::from),
             DProtoHook::InitSubshell { value } => value.session_id.map(SessionId::from),
-            DProtoHook::SourcedRcFileForWarp { .. } => None,
+            DProtoHook::SourcedRcFileForLeanterm { .. } => None,
         }
     }
 
@@ -241,7 +241,7 @@ impl DProtoHook {
             | DProtoHook::InitSubshell { .. }
             | DProtoHook::FinishUpdate { .. }
             | DProtoHook::ExitShell { .. } => true,
-            DProtoHook::SourcedRcFileForWarp { .. } => false,
+            DProtoHook::SourcedRcFileForLeanterm { .. } => false,
         }
     }
 
@@ -276,7 +276,7 @@ impl DProtoHook {
             "InitSubshell" => Some(DProtoHook::InitSubshell {
                 value: Default::default(),
             }),
-            "SourcedRcFileForWarp" => Some(DProtoHook::SourcedRcFileForWarp {
+            "SourcedRcFileForLeanterm" => Some(DProtoHook::SourcedRcFileForLeanterm {
                 value: Default::default(),
             }),
             "FinishUpdate" => Some(DProtoHook::FinishUpdate {
@@ -658,7 +658,7 @@ pub struct PromptMetadata {
 impl PromptMetadata {
     /// Returns `true` if this prompt metadata was emitted after the completion of an in-band command.
     ///
-    /// This relies on the assumption that the warp_precmd shell function (responsible for writing
+    /// This relies on the assumption that the leanterm_precmd shell function (responsible for writing
     /// this to the PTY from the shell) does not populate `pwd` or `ps1` when the previous command
     /// was an in-band command; for all other cases these fields should always be populated.
     pub fn was_sent_after_in_band_command(&self) -> bool {
@@ -700,7 +700,7 @@ pub struct PreexecValue {
     pub session_id: HookSessionId,
 }
 
-/// Received from the pty after the shell has finished executing Warp's
+/// Received from the pty after the shell has finished executing Leanterm's
 /// bootstrap script.
 ///
 /// Deserialization is hand-written through [`RawBootstrappedValue`] below,
@@ -750,7 +750,7 @@ pub struct BootstrappedValue {
     pub rcfiles_end_time: Option<OrderedFloat<f64>>,
 
     /// Tags for known shell configurations/plugins, especially ones that are
-    /// incompatible with Warp.
+    /// incompatible with Leanterm.
     pub shell_plugins: Option<HashSet<String>>,
 
     /// Whether the shell's native vi mode implementation is on.
@@ -915,7 +915,7 @@ fn parse_float_from_string(s: String) -> Option<OrderedFloat<f64>> {
     s.parse::<f64>().map(|f| f.into()).ok()
 }
 
-/// Received from the pty when Warp's SSH wrapper is executed, prior to
+/// Received from the pty when Leanterm's SSH wrapper is executed, prior to
 /// bootstrapping the SSH session.
 #[derive(Debug, Default, PartialEq, Eq, Deserialize, Serialize, Clone)]
 pub struct PreInteractiveSSHSessionValue {
@@ -935,7 +935,7 @@ pub struct SSHValue {
     pub remote_session_id: HookSessionId,
     /// `true` when `socket_path` points at a ControlMaster the user already
     /// had running (the wrapper attached to it instead of creating its own).
-    /// Warp must not tear down such a master on session exit. Defaults to
+    /// Leanterm must not tear down such a master on session exit. Defaults to
     /// `false` for hooks emitted by older bootstrap scripts.
     #[serde(default)]
     pub external_control_master: bool,
@@ -973,21 +973,21 @@ pub struct InitSubshellValue {
 }
 
 /// Emitted by a snippet included in the user's RC file, which signals a new session is being
-/// created; if the session is for a subshell, this triggers Warp's bootstrap process.
+/// created; if the session is for a subshell, this triggers Leanterm's bootstrap process.
 /// Otherwise, it's ignored.
 ///
-/// NOTE: snippets installed by older Warp versions may also include a `tmux` field; serde
+/// NOTE: snippets installed by older Leanterm versions may also include a `tmux` field; serde
 /// ignores unknown fields, so it is simply dropped now that the tmux SSH flow is removed.
 #[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct SourcedRcFileForWarpValue {
+pub struct SourcedRcFileForLeantermValue {
     pub shell: String,
     pub uname: Option<String>,
 }
 
 /// Received from the pty via a shell line editor hook, whether readline (bash),
 /// ZLE, or the fish [command line editor](https://fishshell.com/docs/current/interactive.html#command-line-editor).
-/// The binding is triggered when Warp writes the `ESC-i` escape sequence to the pty.
-/// Warp usually does this after a block completes, to collect any typeahead
+/// The binding is triggered when Leanterm writes the `ESC-i` escape sequence to the pty.
+/// Leanterm usually does this after a block completes, to collect any typeahead
 /// that the user entered while the block was running (see
 /// [`TerminalView::request_input_buffer`]).
 #[derive(Debug, Default, PartialEq, Eq, Clone, Deserialize, Serialize)]
@@ -1023,7 +1023,7 @@ pub struct ClearValue {
     pub session_id: HookSessionId,
 }
 
-/// Received from the pty when warp_finish_update is called at the end of an
+/// Received from the pty when leanterm_finish_update is called at the end of an
 /// assisted auto-update.
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct FinishUpdateValue {
@@ -1033,7 +1033,7 @@ pub struct FinishUpdateValue {
 }
 
 /// Received from the pty right before the remote shell exits (via `exit`,
-/// `logout`, Ctrl-D on an empty prompt, etc.). Lets the Warp client drop
+/// `logout`, Ctrl-D on an empty prompt, etc.). Lets the Leanterm client drop
 /// per-session resources — in particular the `ssh … remote-server-proxy`
 /// child process that holds a multiplexed channel on the foreground ssh
 /// ControlMaster — before the user's outer ssh tunnel tries to close, so

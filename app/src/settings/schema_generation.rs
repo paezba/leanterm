@@ -2,13 +2,13 @@ use std::io::Write as _;
 use std::path::Path;
 
 use anyhow::{Context as _, Result};
+use leanterm_core::channel::ChannelState;
+use leanterm_core::features::FeatureFlag;
 use schemars::SchemaGenerator;
 use serde_json::{Map, Value};
 use settings::schema::SettingSchemaEntry;
 use settings::{SettingSurfaces, SettingsMode};
 use tempfile::NamedTempFile;
-use leanterm_core::channel::ChannelState;
-use leanterm_core::features::FeatureFlag;
 
 /// Writes the settings schema to a file or prints it to standard output.
 pub fn dump_settings_schema(output_path: Option<&Path>) -> Result<()> {
@@ -47,7 +47,7 @@ fn settings_schema_json(is_flag_enabled: impl Fn(FeatureFlag) -> bool) -> Result
             .as_object_mut()
             .expect("setting schema should be an object")
             .insert(
-                "x-warp-surfaces".to_string(),
+                "x-leanterm-surfaces".to_string(),
                 Value::Array(setting_surface_names((entry.surfaces_fn)())),
             );
         let default_json = (entry.file_default_value_fn)();
@@ -85,12 +85,12 @@ fn settings_schema_json(is_flag_enabled: impl Fn(FeatureFlag) -> bool) -> Result
     );
     root.insert(
         "title".to_string(),
-        Value::String("Warp Settings".to_string()),
+        Value::String("Leanterm Settings".to_string()),
     );
     root.insert(
         "description".to_string(),
         Value::String(format!(
-            "JSON Schema for Warp settings ({} channel, {entry_count} settings)",
+            "JSON Schema for Leanterm settings ({} channel, {entry_count} settings)",
             ChannelState::channel()
         )),
     );

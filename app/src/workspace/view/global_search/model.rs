@@ -4,13 +4,13 @@ use std::path::PathBuf;
 use anyhow::Result;
 use futures::StreamExt as _;
 use instant::Instant;
-use num_traits::SaturatingSub;
-use regex::escape;
-use string_offset::ByteOffset;
 use leanterm_errors::report_error;
 use leanterm_ripgrep::search::{Match as RipgrepMatch, Submatch};
 use leanterm_ui::r#async::SpawnedFutureHandle;
 use leanterm_ui::{Entity, ModelContext, ModelSpawner};
+use num_traits::SaturatingSub;
+use regex::escape;
+use string_offset::ByteOffset;
 
 use crate::workspace::view::global_search::view::GlobalSearchEvent;
 use crate::workspace::view::global_search::{GlobalSearchMatch, SearchConfig};
@@ -160,7 +160,7 @@ impl GlobalSearch {
             search_id,
             SearchSource::Local,
             async move {
-                let result = Self::run_warp_ripgrep_cli(
+                let result = Self::run_leanterm_ripgrep_cli(
                     search_id,
                     pattern,
                     roots,
@@ -175,9 +175,9 @@ impl GlobalSearch {
                         capped: false,
                     }),
                     Err(err) => {
-                        report_error!(
-                            err.context("GlobalSearch: leanterm_ripgrep CLI search failed or aborted")
-                        );
+                        report_error!(err.context(
+                            "GlobalSearch: leanterm_ripgrep CLI search failed or aborted"
+                        ));
                         None
                     }
                 }
@@ -257,7 +257,7 @@ impl GlobalSearch {
         }
     }
 
-    async fn run_warp_ripgrep_cli(
+    async fn run_leanterm_ripgrep_cli(
         search_id: u32,
         pattern: String,
         roots: Vec<PathBuf>,

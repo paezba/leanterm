@@ -2,17 +2,13 @@ use std::mem;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use pathfinder_geometry::vector::vec2f;
 #[cfg(not(target_family = "wasm"))]
 use leanterm_core::features::FeatureFlag;
 use leanterm_core::ui::icons::ICON_DIMENSIONS;
 use leanterm_editor::model::CoreEditorModel;
 #[cfg(feature = "local_fs")]
 use leanterm_files::{FileModel, FileModelEvent};
-#[cfg(feature = "local_fs")]
-use leanterm_util::file::FileId;
-use leanterm_util::path::user_friendly_path;
-use leanterm_ui::accessibility::{AccessibilityContent, WarpA11yRole};
+use leanterm_ui::accessibility::{AccessibilityContent, LeantermA11yRole};
 #[cfg(feature = "local_fs")]
 use leanterm_ui::clipboard::ClipboardContent;
 use leanterm_ui::elements::{
@@ -28,6 +24,10 @@ use leanterm_ui::{
     AppContext, Element, Entity, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle,
 };
+#[cfg(feature = "local_fs")]
+use leanterm_util::file::FileId;
+use leanterm_util::path::user_friendly_path;
+use pathfinder_geometry::vector::vec2f;
 
 use super::context_menu::{ContextMenuAction, ContextMenuState, show_rich_editor_context_menu};
 use super::editor::view::{EditorViewEvent, RichTextEditorConfig, RichTextEditorView};
@@ -52,12 +52,12 @@ use crate::terminal::model::session::Session;
 use crate::ui_components::icons::Icon;
 #[cfg(feature = "local_fs")]
 use crate::util::openable_file_type::FileTarget;
-// `renders_in_warp_notebook_viewer` is only consumed by non-wasm views
+// `renders_in_leanterm_notebook_viewer` is only consumed by non-wasm views
 // (`code::view` resolves to `view.rs` off-wasm and to `wasm.rs` on-wasm, and the
 // tooltips helper is `local_fs`-gated). Gate the re-export to match, otherwise it
 // is flagged as an unused import on the wasm build where those consumers are absent.
 #[cfg(not(target_family = "wasm"))]
-pub use crate::util::openable_file_type::renders_in_warp_notebook_viewer;
+pub use crate::util::openable_file_type::renders_in_leanterm_notebook_viewer;
 pub use crate::util::openable_file_type::{is_jupyter_notebook_file, is_markdown_file};
 use crate::view_components::{MarkdownToggleEvent, MarkdownToggleView};
 use crate::workflows::{WorkflowSource, WorkflowType};
@@ -71,7 +71,7 @@ pub enum MarkdownDisplayMode {
     Raw,
 }
 
-/// View for a read-only notebook backed by a file, rather than Warp Drive.
+/// View for a read-only notebook backed by a file, rather than Leanterm Drive.
 pub struct FileNotebookView {
     /// Cached for displaying the title and breadcrumbs.
     location: Option<FileLocation>,
@@ -756,7 +756,7 @@ impl FileNotebookView {
                             TextAndIcon::new(
                                 TextAndIconAlignment::TextFirst,
                                 "Try again".to_string(),
-                                Icon::Refresh.to_warpui_icon(error_text_color),
+                                Icon::Refresh.to_leanterm_ui_icon(error_text_color),
                                 MainAxisSize::Min,
                                 MainAxisAlignment::Center,
                                 vec2f(16., 16.),
@@ -824,7 +824,7 @@ impl View for FileNotebookView {
     fn accessibility_contents(&self, _ctx: &AppContext) -> Option<AccessibilityContent> {
         Some(AccessibilityContent::new_without_help(
             format!("{} notebook", self.title()),
-            WarpA11yRole::TextRole,
+            LeantermA11yRole::TextRole,
         ))
     }
 
@@ -1070,11 +1070,11 @@ impl BackingView for FileNotebookView {
             let title_element: Box<dyn Element> = if let Some(display_path) =
                 self.file_state.path().map(|p| p.display().to_string())
             {
-                use pathfinder_geometry::vector::vec2f;
                 use leanterm_ui::elements::{
                     ChildAnchor, Hoverable, OffsetPositioning, ParentAnchor, ParentOffsetBounds,
                     Stack,
                 };
+                use pathfinder_geometry::vector::vec2f;
                 Hoverable::new(self.header_title_mouse_state.clone(), move |hover_state| {
                     let mut stack = Stack::new();
                     stack.add_child(title_text);

@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use leanterm_ui::Entity;
+use serde::{Deserialize, Serialize};
 
 #[derive(
     Debug,

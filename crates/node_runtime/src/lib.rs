@@ -1,4 +1,4 @@
-//! Node.js and npm runtime management for Warp.
+//! Node.js and npm runtime management for Leanterm.
 //!
 //! This module provides functionality to install and manage Node.js/npm,
 //! supporting multiple platforms (macOS, Linux, Windows) and architectures
@@ -137,7 +137,9 @@ impl NodeDistribution {
 pub fn node_installation_dir() -> Result<PathBuf> {
     let dist = NodeDistribution::current()?;
     let folder_name = dist.folder_name(NODE_VERSION);
-    Ok(leanterm_core::paths::data_dir().join("node").join(folder_name))
+    Ok(leanterm_core::paths::data_dir()
+        .join("node")
+        .join(folder_name))
 }
 
 /// Returns the path to the installed node binary.
@@ -157,7 +159,7 @@ pub fn npm_binary_path() -> Result<PathBuf> {
 /// This function will:
 /// 1. Check if a valid Node.js installation already exists
 /// 2. Download the appropriate Node.js distribution for the current platform
-/// 3. Extract it to the Warp data directory
+/// 3. Extract it to the Leanterm data directory
 ///
 /// # Returns
 /// Returns the path to the Node.js installation directory on success.
@@ -392,7 +394,7 @@ where
 /// Finds a working Node.js binary, preferring our custom installation over system node.
 ///
 /// This function checks:
-/// 1. First, our custom Node.js installation in the Warp data directory
+/// 1. First, our custom Node.js installation in the Leanterm data directory
 /// 2. Falls back to system Node.js if custom isn't available
 ///
 /// # Arguments
@@ -453,7 +455,7 @@ pub async fn detect_system_node(path_env_var: impl AsRef<OsStr>) -> Result<()> {
     // (set via `.env("PATH", ...)`) is used for executable search.
     // `CreateProcessW` uses the parent process's PATH, not the child's
     // `lpEnvironment` PATH, so running `node` directly would find node.exe
-    // via Warp's inherited env rather than the captured interactive PATH.
+    // via Leanterm's inherited env rather than the captured interactive PATH.
     #[cfg(windows)]
     let output = Command::new("cmd.exe")
         .args(["/c", "node", "--version"])

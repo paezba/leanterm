@@ -3,24 +3,24 @@ use std::fmt::Debug;
 use std::mem;
 use std::ops::RangeInclusive;
 
-use sum_tree::SeekBias;
-use vec1::{Vec1, vec1};
 use leanterm_core::semantic_selection::SemanticSelection;
 use leanterm_terminal::model::grid::CellType;
 use leanterm_ui::text::{IsRect, SelectionType};
 use leanterm_ui::units::{IntoLines as _, Lines};
 use leanterm_ui::{AppContext, EntityId, ViewAsRef as _};
+use sum_tree::SeekBias;
+use vec1::{Vec1, vec1};
 
 use super::{
     BlockHeight, BlockHeightItem, BlockHeightSummary, BlockList, BlockListPoint, RichContentItem,
 };
 use crate::terminal::GridType;
 use crate::terminal::event::Event as TerminalEvent;
+use crate::terminal::leantermify::success_block::LeantermifySuccessBlock;
 use crate::terminal::model::block::BlockSection;
 use crate::terminal::model::index::{Direction, Point, Side};
 use crate::terminal::model::selection::{ExpandedSelectionRange, Selection, SelectionDirection};
 use crate::terminal::model::terminal_model::{BlockIndex, WithinBlock};
-use crate::terminal::warpify::success_block::WarpifySuccessBlock;
 
 /// A selection that can span multiple blocks (and thus grids). Here row is the number of lines from
 /// the top of all blocks.
@@ -985,10 +985,15 @@ impl BlockList {
                         BlockHeightItem::RichContent(RichContentItem { view_id, .. }) => {
                             if let Some(active_window_id) = app.windows().active_window()
                                 && let Some(ssh_block) = app
-                                    .view_with_id::<WarpifySuccessBlock>(active_window_id, *view_id)
+                                    .view_with_id::<LeantermifySuccessBlock>(
+                                        active_window_id,
+                                        *view_id,
+                                    )
                             {
-                                let warpify_success_block = app.view(&ssh_block);
-                                if let Some(selected_text) = warpify_success_block.selected_text() {
+                                let leantermify_success_block = app.view(&ssh_block);
+                                if let Some(selected_text) =
+                                    leantermify_success_block.selected_text()
+                                {
                                     selected_texts.push(selected_text);
                                 }
                             }
@@ -1072,10 +1077,10 @@ impl BlockList {
                 for view_id in ids {
                     if let Some(active_window_id) = app.windows().active_window() {
                         if let Some(ssh_block) =
-                            app.view_with_id::<WarpifySuccessBlock>(active_window_id, view_id)
+                            app.view_with_id::<LeantermifySuccessBlock>(active_window_id, view_id)
                         {
-                            let warpify_success_block = app.view(&ssh_block);
-                            if let Some(selected_text) = warpify_success_block.selected_text() {
+                            let leantermify_success_block = app.view(&ssh_block);
+                            if let Some(selected_text) = leantermify_success_block.selected_text() {
                                 selected_texts.push(selected_text);
                             }
                         }

@@ -704,8 +704,8 @@ fn test_smart_selection_in_single_block() {
 
             let block_index = insert_block(
                 &mut block_list,
-                "echo https://warp.dev/about hello/world.js\n",
-                "https://warp.dev/about hello/world.js\n",
+                "echo https://lean.dev/about hello/world.js\n",
+                "https://lean.dev/about hello/world.js\n",
             );
             let block = block_list
                 .block_at(block_index)
@@ -729,11 +729,11 @@ fn test_smart_selection_in_single_block() {
 
             assert_eq!(
                 block_list.selection_to_string(&semantic_selection, false, ctx),
-                Some("https://warp.dev/about".to_string())
+                Some("https://lean.dev/about".to_string())
             );
             block_list.clear_selection();
 
-            // Start a selection at the "p" in "warp", which has wrapped to the third
+            // Start a selection at the "p" in "lean", which has wrapped to the third
             // line of the command grid.
             block_list.start_selection(
                 BlockListPoint::new(command_grid_offset + 2.0, 2),
@@ -747,7 +747,7 @@ fn test_smart_selection_in_single_block() {
 
             assert_eq!(
                 block_list.selection_to_string(&semantic_selection, false, ctx),
-                Some("https://warp.dev/about".to_string())
+                Some("https://lean.dev/about".to_string())
             );
             block_list.clear_selection();
 
@@ -765,7 +765,7 @@ fn test_smart_selection_in_single_block() {
 
             assert_eq!(
                 block_list.selection_to_string(&semantic_selection, false, ctx),
-                Some("https://warp.dev/about hello".to_string())
+                Some("https://lean.dev/about hello".to_string())
             );
             block_list.clear_selection();
 
@@ -799,8 +799,8 @@ fn test_smart_selection_in_multiple_blocks() {
 
             let first_block_index = insert_block(
                 &mut block_list,
-                "echo https://warp.dev/about hello/world.js\n",
-                "https://warp.dev/about hello/world.js\n",
+                "echo https://lean.dev/about hello/world.js\n",
+                "https://lean.dev/about hello/world.js\n",
             );
             let second_block_index =
                 insert_block(&mut block_list, "echo 192.168.0.1\n", "192.168.0.1\n");
@@ -837,7 +837,7 @@ fn test_smart_selection_in_multiple_blocks() {
 
             assert_eq!(
                 block_list.selection_to_string(&semantic_selection, false, ctx),
-                Some("https://warp.dev/about hello/world.js\nhttps".to_string())
+                Some("https://lean.dev/about hello/world.js\nhttps".to_string())
             );
             block_list.clear_selection();
 
@@ -857,7 +857,7 @@ fn test_smart_selection_in_multiple_blocks() {
             assert_eq!(
         block_list.selection_to_string(&semantic_selection, false, ctx),
         Some(
-            "hello/world.js\nhttps://warp.dev/about hello/world.js\necho 192.168.0.1\n192.168"
+            "hello/world.js\nhttps://lean.dev/about hello/world.js\necho 192.168.0.1\n192.168"
                 .to_string()
         )
     );
@@ -930,11 +930,11 @@ fn test_smart_selection_override() {
 
             let block_index = insert_block(
                 &mut block_list,
-                "echo https://warp.dev/about hello/world",
-                "https://warp.dev/about hello/world",
+                "echo https://lean.dev/about hello/world",
+                "https://lean.dev/about hello/world",
             );
 
-            // the override wraps "https://warp.dev/about hello/world"
+            // the override wraps "https://lean.dev/about hello/world"
             block_list.set_smart_select_override(WithinBlock::new(
                 Point::new(0, 5)..=Point::new(5, 3),
                 block_index,
@@ -943,7 +943,7 @@ fn test_smart_selection_override() {
 
             let semantic_selection = SemanticSelection::mock(true, "");
 
-            // Start a selection at the "w" in "warp"
+            // Start a selection at the "w" in "lean"
             // TODO(vorporeal): this comment doesn't seem to match the code
             block_list.start_selection(
                 BlockListPoint::new(2.0, 6),
@@ -954,7 +954,7 @@ fn test_smart_selection_override() {
 
             assert_eq!(
                 block_list.selection_to_string(&semantic_selection, false, ctx),
-                Some("https://warp.dev/about hello/world".to_string())
+                Some("https://lean.dev/about hello/world".to_string())
             );
         })
     })

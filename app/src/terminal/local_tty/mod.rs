@@ -1,12 +1,12 @@
 pub mod terminal_manager;
 mod terminal_view_adaptor;
 
+pub use leanterm_terminal::local_tty::*;
 pub use terminal_manager::TerminalManager;
 #[cfg(windows)]
 pub use terminal_view_adaptor::shutdown_all_pty_event_loops;
 #[cfg(all(feature = "local_tty", not(feature = "remote_tty")))]
 pub(crate) use terminal_view_adaptor::{TerminalViewSurfaceConfig, create_terminal_view_surface};
-pub use leanterm_terminal::local_tty::*;
 
 #[cfg(unix)]
 pub fn run_terminal_server(args: &leanterm_cli::TerminalServerArgs) {

@@ -3,15 +3,15 @@ use std::env::var_os;
 
 use anyhow::Context;
 use itertools::Itertools;
-use serde::{Deserialize, Serialize};
-use vec1::{Vec1, vec1};
 use leanterm_ui::AppContext;
 use leanterm_ui::keymap::Keystroke;
 #[cfg(not(test))]
 use leanterm_ui::keymap::Trigger;
+use serde::{Deserialize, Serialize};
+use vec1::{Vec1, vec1};
 
 /// Environment variable to disable saving keybindings to file (used in integration tests)
-pub const DISABLE_SAVE_ENV_VAR: &str = "WARP_TEST_DISABLE_KEYBINDING_SAVE";
+pub const DISABLE_SAVE_ENV_VAR: &str = "LEANTERM_TEST_DISABLE_KEYBINDING_SAVE";
 const REMOVED_KEYBINDING_SERIALIZATION: &str = "none";
 
 #[derive(PartialEq, Debug)]

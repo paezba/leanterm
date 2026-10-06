@@ -3,13 +3,13 @@ use std::sync::Arc;
 use async_channel::Sender;
 use async_trait::async_trait;
 use ipc::{Client, ConnectionAddress};
-use url::Url;
 use leanterm_errors::report_error;
 use leanterm_ui::r#async::executor::Background;
+use url::Url;
 
 use super::single_instance_manager::uri_named_pipe_name;
 
-/// IPC Service to respond to URIs sent to the active Warp instance.
+/// IPC Service to respond to URIs sent to the active Leanterm instance.
 pub(super) struct UriService {}
 
 impl ipc::Service for UriService {
@@ -41,7 +41,7 @@ impl ipc::ServiceImpl for UriServiceImpl {
     }
 }
 
-/// Forwards the given URLs to the main running instance of Warp.
+/// Forwards the given URLs to the main running instance of Leanterm.
 pub(super) async fn forward_uri_to_sole_running_instance(
     urls: Vec<Url>,
 ) -> Result<(), ipc::ClientError> {

@@ -3,7 +3,9 @@ use leanterm_ui::elements::{
     DispatchEventResult, EventHandler, Flex, Icon, ParentElement, Radius, Shrinkable,
 };
 use leanterm_ui::ui_components::components::{Coords, UiComponentStyles};
-use leanterm_ui::{Element, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle};
+use leanterm_ui::{
+    Element, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
+};
 
 use crate::appearance::Appearance;
 use crate::editor::EditorView;

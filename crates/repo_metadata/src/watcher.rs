@@ -6,8 +6,8 @@ use std::pin::Pin;
 
 #[cfg(feature = "local_fs")]
 use futures::{FutureExt as _, future::OptionFuture};
-use leanterm_util::standardized_path::StandardizedPath;
 use leanterm_ui_core::{Entity, ModelContext, ModelHandle, SingletonEntity, WeakModelHandle};
+use leanterm_util::standardized_path::StandardizedPath;
 
 use crate::repository::SubscriberId;
 use crate::{RepoMetadataError, Repository};

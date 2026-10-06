@@ -2,15 +2,15 @@
 //! like formatting and changing block types.
 
 use itertools::Itertools;
-use pathfinder_geometry::rect::RectF;
-use pathfinder_geometry::vector::Vector2F;
 use leanterm_editor::content::text::{
     BlockType as ContentBlockType, BufferBlockStyle, BufferTextStyle, TextStyles,
     TextStylesWithMetadata,
 };
 use leanterm_editor::model::RichTextEditorModel;
 use leanterm_editor::render::model::RenderState;
-use leanterm_ui::accessibility::{AccessibilityContent, ActionAccessibilityContent, WarpA11yRole};
+use leanterm_ui::accessibility::{
+    AccessibilityContent, ActionAccessibilityContent, LeantermA11yRole,
+};
 use leanterm_ui::elements::{
     AnchorPair, Border, ConstrainedBox, Container, CornerRadius, DropShadow, Flex, MainAxisSize,
     MouseStateHandle, OffsetPositioning, OffsetType, ParentElement, Point,
@@ -22,6 +22,8 @@ use leanterm_ui::{
     AppContext, Element, Entity, ModelHandle, SingletonEntity, SizeConstraint, TypedActionView,
     View, ViewContext, ViewHandle,
 };
+use pathfinder_geometry::rect::RectF;
+use pathfinder_geometry::vector::Vector2F;
 
 use super::BlockType;
 use super::model::{NotebooksEditorModel, RichTextEditorModelEvent};
@@ -442,12 +444,12 @@ impl TypedActionView for Omnibar {
             OmnibarAction::ConvertBlock(style) => {
                 ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
                     format!("Convert to {}", BlockType::from(style).label()),
-                    WarpA11yRole::UserAction,
+                    LeantermA11yRole::UserAction,
                 ))
             }
             OmnibarAction::OpenLinkEditor => ActionAccessibilityContent::from_debug(),
             OmnibarAction::UnstyleLink => ActionAccessibilityContent::Custom(
-                AccessibilityContent::new_without_help("Remove link", WarpA11yRole::UserAction),
+                AccessibilityContent::new_without_help("Remove link", LeantermA11yRole::UserAction),
             ),
         }
     }

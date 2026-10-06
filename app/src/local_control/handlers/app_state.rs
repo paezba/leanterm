@@ -12,12 +12,12 @@ use ::local_control::protocol::{
     TargetSelector, TextParams,
 };
 use ::local_control::{ActionKind, ControlError, ErrorCode, InstanceId};
-use serde_json::json;
-#[cfg(feature = "local_fs")]
-use leanterm_util::path::LineAndColumnArg;
 #[cfg(feature = "local_fs")]
 use leanterm_ui::SingletonEntity;
 use leanterm_ui::{AppContext, ModelContext, TypedActionView};
+#[cfg(feature = "local_fs")]
+use leanterm_util::path::LineAndColumnArg;
+use serde_json::json;
 
 #[cfg(feature = "local_fs")]
 use crate::code::editor_management::CodeSource;
@@ -37,7 +37,7 @@ use crate::settings_view::SettingsSection;
 #[cfg(feature = "local_fs")]
 use crate::util::file::external_editor::EditorSettings;
 #[cfg(feature = "local_fs")]
-use crate::util::openable_file_type::{EditorLayout, resolve_file_target_to_open_in_warp};
+use crate::util::openable_file_type::{EditorLayout, resolve_file_target_to_open_in_leanterm};
 #[cfg(feature = "local_fs")]
 use crate::workspace::PaneViewLocator;
 use crate::workspace::{CommandSearchOptions, InitContent, WorkspaceAction};
@@ -704,7 +704,7 @@ fn file_open(
     {
         let layout = params.new_tab.then_some(EditorLayout::NewTab);
         let file_target =
-            resolve_file_target_to_open_in_warp(&path, EditorSettings::as_ref(ctx), layout);
+            resolve_file_target_to_open_in_leanterm(&path, EditorSettings::as_ref(ctx), layout);
         workspace.update(ctx, |workspace, ctx| {
             workspace.open_file_with_target(
                 path.clone(),
@@ -728,8 +728,8 @@ fn file_open(
 }
 
 /// Resolves the path for `file.open` against the targeted terminal session's working
-/// directory, so a caller running `warpctrl file open README.md` from a session gets the
-/// file the shell would resolve rather than one relative to Warp's own process directory.
+/// directory, so a caller running `leantermctl file open README.md` from a session gets the
+/// file the shell would resolve rather than one relative to Leanterm's own process directory.
 #[cfg(feature = "local_fs")]
 fn resolve_file_open_path(
     path: &str,

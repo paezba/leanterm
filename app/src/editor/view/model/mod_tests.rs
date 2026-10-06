@@ -1,7 +1,7 @@
-use string_offset::{ByteOffset, CharOffset};
-use vec1::vec1;
 use leanterm_ui::App;
 use leanterm_ui::text_layout::TextStyle;
+use string_offset::{ByteOffset, CharOffset};
+use vec1::vec1;
 
 use super::{EditOrigin, EditorModel, Edits, InteractionState, UpdateBufferOption};
 use crate::editor::{EditorSnapshot, PlainTextEditorViewAction, TextRun, ValidInputType};

@@ -3,7 +3,7 @@ use std::cell::RefCell;
 
 use leanterm_core::ui::appearance::Appearance;
 use leanterm_core::ui::builder::UiBuilder;
-use leanterm_core::ui::theme::WarpTheme;
+use leanterm_core::ui::theme::LeantermTheme;
 use leanterm_core::ui::theme::color::internal_colors;
 use leanterm_ui::clipboard::ClipboardContent;
 use leanterm_ui::elements::*;
@@ -152,7 +152,7 @@ impl TerminationType {
         Container::new(
             ConstrainedBox::new(
                 icon_type
-                    .to_warpui_icon(appearance.theme().background())
+                    .to_leanterm_ui_icon(appearance.theme().background())
                     .finish(),
             )
             .with_width(ICON_SIZE)
@@ -183,8 +183,8 @@ impl TerminationType {
                 format!("{pty_spawn_error:#}").into()
             }
             TerminationType::Premature { shell_detail, .. } => format!(
-                "Something went wrong while starting {shell_detail} and Warpifying it, causing the \
-                process to terminate. Warpify script output is displayed here, which may point at \
+                "Something went wrong while starting {shell_detail} and Leantermifying it, causing the \
+                process to terminate. Leantermify script output is displayed here, which may point at \
                 a cause."
             )
             .into(),
@@ -276,7 +276,7 @@ impl TerminationType {
 
 fn inverted_color_ui_builder(appearance: &Appearance) -> UiBuilder {
     let theme = appearance.theme();
-    let theme = WarpTheme::new(
+    let theme = LeantermTheme::new(
         theme.foreground(),
         theme.background().into_solid(),
         theme.background(),

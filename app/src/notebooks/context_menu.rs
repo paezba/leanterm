@@ -1,12 +1,14 @@
 //! Shared context menu implementation for notebooks.
 
-use pathfinder_geometry::vector::Vector2F;
 use leanterm_core::context_flag::ContextFlag;
 use leanterm_ui::clipboard::ClipboardContent;
-use leanterm_ui::elements::{ChildAnchor, OffsetPositioning, ParentAnchor, ParentOffsetBounds, Stack};
+use leanterm_ui::elements::{
+    ChildAnchor, OffsetPositioning, ParentAnchor, ParentOffsetBounds, Stack,
+};
 use leanterm_ui::keymap::Trigger;
 use leanterm_ui::presenter::ChildView;
 use leanterm_ui::{Action, Element, EventContext, TypedActionView, View, ViewContext, ViewHandle};
+use pathfinder_geometry::vector::Vector2F;
 
 use super::editor::keys::custom_action_to_display;
 use super::editor::view::RichTextEditorView;

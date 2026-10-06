@@ -2,10 +2,10 @@ use std::ops::Range;
 use std::sync::Arc;
 
 use enum_iterator::all;
+use leanterm_ui_core::elements::ListIndentLevel;
 use markdown_parser::{FormattedText, FormattedTextFragment, FormattedTextLine};
 use string_offset::CharOffset;
 use sum_tree::SumTree;
-use leanterm_ui_core::elements::ListIndentLevel;
 
 use super::buffer::{Buffer, EditOrigin, EditResult};
 use super::cursor::BufferSumTree;
@@ -235,7 +235,7 @@ impl Buffer {
             // Safety: if a previous edit in this batch caused the anchors for this
             // action to cross (start > end), skip the action rather than panicking.
             // This can happen when overlapping DiffDeltas slip through the diff
-            // matching layer (see WARP-CLIENT-DEV-NYY).
+            // matching layer (see LEANTERM-CLIENT-DEV-NYY).
             if edit_start > edit_end {
                 log::warn!(
                     "Skipping edit action with inverted range {edit_start}..{edit_end} \

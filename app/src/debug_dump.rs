@@ -1,7 +1,7 @@
 //! This module contains the code path for the [`leanterm_cli::Command::DumpDebugInfo`] subcommand.
 //!
 //! This is intended to never be used by a vast majority of users. This is only intended for users
-//! who are unable to run Warp and want to provide us, the dev team, with useful debugging
+//! who are unable to run Leanterm and want to provide us, the dev team, with useful debugging
 //! information.
 #[cfg(not(windows))]
 use command::blocking::Command;
@@ -9,7 +9,7 @@ use leanterm_core::channel::ChannelState;
 use leanterm_ui::windowing;
 
 pub(crate) fn run() -> anyhow::Result<()> {
-    println!("Warp version: {:?}", ChannelState::app_version());
+    println!("Leanterm version: {:?}", ChannelState::app_version());
 
     #[cfg(not(windows))]
     {
@@ -58,8 +58,8 @@ pub(crate) fn run() -> anyhow::Result<()> {
     {
         use std::ops::Deref as _;
 
-        use settings::Setting as _;
         use leanterm_ui::rendering::GPUPowerPreference;
+        use settings::Setting as _;
 
         use crate::settings::{
             PreferLowPowerGPU, PreferredGraphicsBackend, init_private_user_preferences,

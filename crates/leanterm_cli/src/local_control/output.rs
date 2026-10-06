@@ -1,4 +1,4 @@
-//! Output rendering helpers for `warpctrl`.
+//! Output rendering helpers for `leantermctl`.
 use std::io::Write as _;
 
 use local_control::protocol::{ControlError, ErrorCode};
@@ -6,7 +6,7 @@ use serde::Serialize;
 
 use crate::output_format::OutputFormat;
 
-/// JSON/NDJSON error payload emitted by `warpctrl`.
+/// JSON/NDJSON error payload emitted by `leantermctl`.
 #[derive(Serialize)]
 pub(crate) struct ErrorSummary<'a> {
     pub ok: bool,

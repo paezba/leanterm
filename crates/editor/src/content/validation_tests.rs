@@ -1,5 +1,5 @@
-use sum_tree::SumTree;
 use leanterm_ui_core::elements::ListIndentLevel;
+use sum_tree::SumTree;
 
 use crate::content::cursor::BufferSumTree;
 use crate::content::text::{

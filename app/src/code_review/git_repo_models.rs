@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+use leanterm_ui::{Entity, ModelContext, ModelHandle, SingletonEntity, WeakModelHandle};
 #[cfg(feature = "local_fs")]
 use repo_metadata::repositories::DetectedRepositories;
-use leanterm_ui::{Entity, ModelContext, ModelHandle, SingletonEntity, WeakModelHandle};
 
 use super::git_repo_model::GitRepoStatusModel;
 #[cfg(feature = "local_fs")]

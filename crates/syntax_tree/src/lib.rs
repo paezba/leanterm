@@ -6,12 +6,6 @@ use std::sync::Arc;
 use arborium::tree_sitter::{InputEdit, Parser, Tree};
 use futures::stream::AbortHandle;
 use languages::Language;
-use parking_lot::Mutex;
-use queries::highlight_query::HighlightQuery;
-pub use queries::highlight_query::{ColorMap, TextSlice};
-use queries::indent_query::{IndentDelta, indentation_delta};
-use rangemap::{RangeMap, RangeSet};
-use string_offset::{ByteOffset, CharOffset};
 use leanterm_editor::content::buffer::{Buffer, BufferSnapshot};
 use leanterm_editor::content::edit::PreciseDelta;
 use leanterm_editor::content::text::IndentUnit;
@@ -20,6 +14,12 @@ use leanterm_editor::decoration::DecorationLayer;
 use leanterm_ui_core::color::ColorU;
 use leanterm_ui_core::text::point::Point;
 use leanterm_ui_core::{AppContext, Entity, ModelContext, WeakModelHandle};
+use parking_lot::Mutex;
+use queries::highlight_query::HighlightQuery;
+pub use queries::highlight_query::{ColorMap, TextSlice};
+use queries::indent_query::{IndentDelta, indentation_delta};
+use rangemap::{RangeMap, RangeSet};
+use string_offset::{ByteOffset, CharOffset};
 
 const MAX_SYNTAX_TREES: usize = 3;
 

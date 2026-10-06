@@ -3,12 +3,12 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use lazy_static::lazy_static;
+use leanterm_ui::{App, ModelHandle, SingletonEntity, WindowId};
+use leanterm_util::path::LineAndColumnArg;
 use parking_lot::Mutex;
 use settings::Setting as _;
 use tempfile::tempdir;
 use url::Url;
-use leanterm_util::path::LineAndColumnArg;
-use leanterm_ui::{App, ModelHandle, SingletonEntity, WindowId};
 
 use super::{LinkTarget, NotebookLinks, ResolveError, SessionSource};
 use crate::notebooks::file::is_markdown_file;
@@ -142,8 +142,8 @@ fn test_resolve_bare_url() {
             url("http://google.com")
         );
         assert_eq!(
-            resolve(&app, &links, "warp.dev").await,
-            url("http://warp.dev")
+            resolve(&app, &links, "lean.dev").await,
+            url("http://lean.dev")
         );
         assert_eq!(
             resolve(&app, &links, "bbc.co.uk").await,
@@ -212,7 +212,7 @@ fn test_open_local_image_uses_system_generic_target() {
 #[test]
 fn test_open_extensionless_non_text_file_does_not_emit_open_event() {
     // Regression test: an extensionless file (e.g. a disguised executable) is classified as
-    // binary by `is_file_openable_in_warp`, which previously routed it to `SystemGeneric` and
+    // binary by `is_file_openable_in_leanterm`, which previously routed it to `SystemGeneric` and
     // ultimately `NSWorkspace.openURL` — allowing arbitrary code execution. After the fix,
     // such files are revealed in Finder / Explorer instead of opened, so no `OpenFileWithTarget`
     // event should be emitted.
@@ -252,12 +252,12 @@ fn test_resolve_valid_url() {
         let links = init_link_model(&mut app, None);
 
         assert_eq!(
-            resolve(&app, &links, "https://warp.dev").await,
-            url("https://warp.dev")
+            resolve(&app, &links, "https://lean.dev").await,
+            url("https://lean.dev")
         );
         assert_eq!(
-            resolve(&app, &links, "mailto:test@warp.dev").await,
-            url("mailto:test@warp.dev")
+            resolve(&app, &links, "mailto:test@lean.dev").await,
+            url("mailto:test@lean.dev")
         );
     });
 }

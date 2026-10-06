@@ -2,21 +2,22 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 #[cfg(feature = "local_fs")]
+use leanterm_files::FileModel;
+use leanterm_ui::platform::WindowStyle;
+use leanterm_ui::{AddSingletonModel, App, ViewHandle};
+#[cfg(feature = "local_fs")]
 use repo_metadata::RepoMetadataModel;
 use repo_metadata::repositories::DetectedRepositories;
 use repo_metadata::watcher::DirectoryWatcher;
 #[cfg(feature = "local_fs")]
 use tempfile::TempDir;
-#[cfg(feature = "local_fs")]
-use leanterm_files::FileModel;
-use leanterm_ui::platform::WindowStyle;
-use leanterm_ui::{AddSingletonModel, App, ViewHandle};
 use watcher::HomeDirectoryWatcher;
 
 use super::*;
 use crate::context_chips::prompt::Prompt;
 use crate::editor::Event;
 use crate::gpu_state::GPUState;
+use crate::leanterm_managed_paths_watcher::LeantermManagedPathsWatcher;
 use crate::network::NetworkStatus;
 use crate::notebooks::editor::keys::NotebookKeybindings;
 use crate::pane_group::{Direction, PaneGroupAction};
@@ -34,7 +35,6 @@ use crate::test_util::settings::initialize_settings_for_tests;
 use crate::undo_close::UndoCloseSettings;
 #[cfg(windows)]
 use crate::util::traffic_lights::windows::RendererState;
-use crate::warp_managed_paths_watcher::WarpManagedPathsWatcher;
 use crate::workflows::local_workflows::LocalWorkflows;
 use crate::{GlobalResourceHandlesProvider, workspace};
 pub(crate) fn initialize_app(app: &mut App) {
@@ -70,7 +70,7 @@ pub(crate) fn initialize_app(app: &mut App) {
     app.add_singleton_model(|_| DetectedRepositories::default());
     app.add_singleton_model(HomeDirectoryWatcher::new_for_test);
     app.add_singleton_model(DirectoryWatcher::new);
-    app.add_singleton_model(WarpManagedPathsWatcher::new_for_testing);
+    app.add_singleton_model(LeantermManagedPathsWatcher::new_for_testing);
 
     #[cfg(feature = "local_fs")]
     app.add_singleton_model(FileModel::new);
@@ -101,7 +101,7 @@ pub(crate) fn initialize_app(app: &mut App) {
     app.add_singleton_model(|_| History::new(vec![]));
 
     // SkillManager is registered after `HomeDirectoryWatcher`, `DirectoryWatcher`,
-    // `WarpManagedPathsWatcher`, `DetectedRepositories`, and `RepoMetadataModel`
+    // `LeantermManagedPathsWatcher`, `DetectedRepositories`, and `RepoMetadataModel`
     // because `SkillWatcher::new` subscribes to all of them.
 
     // Make sure to initialize the keybindings so that they are available for subviews

@@ -4,7 +4,7 @@
 
 use anyhow::Result;
 use leanterm_core::AppId;
-use leanterm_core::channel::{Channel, ChannelConfig, ChannelState, WarpServerConfig};
+use leanterm_core::channel::{Channel, ChannelConfig, ChannelState, LeantermServerConfig};
 
 // Simple wrapper around leanterm::run() for Leanterm builds.
 fn main() -> Result<()> {
@@ -13,7 +13,7 @@ fn main() -> Result<()> {
         ChannelConfig {
             app_id: AppId::new("dev", "leanterm", "Leanterm"),
             logfile_name: "leanterm.log".into(),
-            server_config: WarpServerConfig::production(),
+            server_config: LeantermServerConfig::production(),
         },
     );
     if cfg!(debug_assertions) {

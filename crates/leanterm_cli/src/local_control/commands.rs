@@ -1,4 +1,5 @@
-//! Implementations for user-facing `warpctrl` command groups.
+//! Implementations for user-facing `leantermctl` command groups.
+use leanterm_core::channel::ChannelState;
 use local_control::discovery::InstanceRecord;
 use local_control::protocol::{
     Action, ActionKind, ActionNameParams, BindingNameParams, BooleanValueParams, ColorValueParams,
@@ -9,7 +10,6 @@ use local_control::protocol::{
 };
 use local_control::selection::select_instance;
 use serde::Serialize;
-use leanterm_core::channel::ChannelState;
 
 use crate::local_control::output::{write_json, write_json_line};
 use crate::local_control::selectors::{instance_selector, target_selector};
@@ -103,12 +103,12 @@ pub(super) fn run_surface_command(
 fn render_human_readable(action: ActionKind, data: &serde_json::Value) -> String {
     match action {
         ActionKind::AppPing => format!(
-            "Warp instance {} is reachable (protocol version {})",
+            "Leanterm instance {} is reachable (protocol version {})",
             value_or_unknown(data, "instance_id"),
             value_or_unknown(data, "protocol_version")
         ),
         ActionKind::AppVersion => format!(
-            "Warp instance {}\nchannel: {}\napp_id: {}\nprotocol_version: {}",
+            "Leanterm instance {}\nchannel: {}\napp_id: {}\nprotocol_version: {}",
             value_or_unknown(data, "instance_id"),
             value_or_unknown(data, "channel"),
             value_or_unknown(data, "app_id"),
@@ -171,7 +171,7 @@ pub(super) fn run_instance_command(
     }
 }
 
-/// JSON payload for `warpctrl instance list`.
+/// JSON payload for `leantermctl instance list`.
 #[derive(Serialize)]
 pub(super) struct InstanceListOutput {
     instances: Vec<InstanceSummary>,
@@ -217,7 +217,7 @@ fn render_instance_list(
         OutputFormat::Ndjson => write_json_line(&output),
         OutputFormat::Pretty | OutputFormat::Text => {
             if output.instances.is_empty() {
-                println!("No running Warp instances with local control were found.");
+                println!("No running Leanterm instances with local control were found.");
                 return Ok(());
             }
             for instance in &output.instances {

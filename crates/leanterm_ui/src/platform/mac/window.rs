@@ -10,6 +10,17 @@ use std::time::Duration;
 use anyhow::{Result, anyhow};
 use cocoa::base::id;
 use instant::Instant;
+use leanterm_ui_core::accessibility::AccessibilityContent;
+use leanterm_ui_core::actions::StandardAction;
+use leanterm_ui_core::r#async::{Timer, executor};
+use leanterm_ui_core::event::ModifiersState;
+use leanterm_ui_core::platform::{
+    self, FilePickerCallback, FilePickerConfiguration, FullscreenState, GraphicsBackend,
+    TerminationMode, WindowBounds, WindowFocusBehavior, WindowOptions, WindowStyle, file_picker,
+};
+use leanterm_ui_core::rendering::GPUPowerPreference;
+use leanterm_ui_core::windowing::WindowCallbacks;
+use leanterm_ui_core::{DisplayId, DisplayIdx, Event, OptionalPlatformWindow, Scene, WindowId};
 use num_traits::FromPrimitive;
 use objc::runtime::Object;
 use objc2::rc::{Retained, autoreleasepool};
@@ -23,17 +34,6 @@ use objc2_metal::{MTLCopyAllDevices, MTLCreateSystemDefaultDevice, MTLDevice};
 use objc2_quartz_core::CAMetalLayer;
 use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::{Vector2F, vec2f};
-use leanterm_ui_core::accessibility::AccessibilityContent;
-use leanterm_ui_core::actions::StandardAction;
-use leanterm_ui_core::r#async::{Timer, executor};
-use leanterm_ui_core::event::ModifiersState;
-use leanterm_ui_core::platform::{
-    self, FilePickerCallback, FilePickerConfiguration, FullscreenState, GraphicsBackend,
-    TerminationMode, WindowBounds, WindowFocusBehavior, WindowOptions, WindowStyle, file_picker,
-};
-use leanterm_ui_core::rendering::GPUPowerPreference;
-use leanterm_ui_core::windowing::WindowCallbacks;
-use leanterm_ui_core::{DisplayId, DisplayIdx, Event, OptionalPlatformWindow, Scene, WindowId};
 
 use super::delegate::DispatchDelegate;
 use super::rendering::{self, Device, RendererManager, is_integrated_gpu};
@@ -106,8 +106,8 @@ impl platform::WindowManager for WindowManager {
     }
 
     fn app_is_active(&self) -> bool {
-        // SAFETY: `get_warp_app()` returns the running NSApplication subclass instance.
-        let app = unsafe { &*app::get_warp_app().cast::<NSApplication>() };
+        // SAFETY: `get_leanterm_app()` returns the running NSApplication subclass instance.
+        let app = unsafe { &*app::get_leanterm_app().cast::<NSApplication>() };
         app.isActive()
     }
 
@@ -230,10 +230,10 @@ impl platform::WindowManager for WindowManager {
         let mut result = Vec::with_capacity(count);
         for i in 0..count {
             let window = ordered_windows.objectAtIndex(i);
-            // SAFETY: `is_warp_window` is an FFI call into the WarpWindow class, and
-            // warp windows always carry the window-state ivar.
+            // SAFETY: `is_leanterm_window` is an FFI call into the LeantermWindow class, and
+            // leanterm windows always carry the window-state ivar.
             unsafe {
-                if is_warp_window(&window).as_bool() {
+                if is_leanterm_window(&window).as_bool() {
                     result.push(get_window_state(as_objc_object(&window)).window_id);
                 }
             }
@@ -415,27 +415,27 @@ mod Ivar {
 // Declarations of functions implemented in ObjC files.
 // These signatures must be manually synced - there's no type checking here.
 unsafe extern "C" {
-    fn create_warp_nswindow(
+    fn create_leanterm_nswindow(
         contentRect: NSRect,
         metalDevice: *mut ProtocolObject<dyn MTLDevice>,
         hideTitleBar: Bool,
         backgroundBlurRadiusPixels: u8,
         testMode: Bool,
     ) -> *mut NSWindow;
-    fn create_warp_nspanel(
+    fn create_leanterm_nspanel(
         contentRect: NSRect,
         metalDevice: *mut ProtocolObject<dyn MTLDevice>,
         hideTitleBar: Bool,
         backgroundBlurRadiusPixels: u8,
         testMode: Bool,
     ) -> *mut NSWindow;
-    fn is_warp_window(window: &NSWindow) -> Bool;
+    fn is_leanterm_window(window: &NSWindow) -> Bool;
     fn get_frontmost_window() -> *mut NSWindow;
     fn set_accessibility_contents(
         window: &NSWindow,
         value: &NSString,
         help: &NSString,
-        warpRole: &NSString,
+        leantermRole: &NSString,
         setFrame: Bool,
         frame: NSRect,
     );
@@ -512,7 +512,7 @@ impl Window {
             };
 
             let test_mode = cfg!(feature = "integration_tests")
-                && std::env::var("WARPUI_USE_REAL_DISPLAY_IN_INTEGRATION_TESTS").is_err();
+                && std::env::var("LEANTERM_UI_USE_REAL_DISPLAY_IN_INTEGRATION_TESTS").is_err();
 
             // Pick the GPU: for `LowPower`, scan all devices for
             // an integrated GPU and fall back to the system default; otherwise use
@@ -554,7 +554,7 @@ impl Window {
             let native_window: *mut NSWindow = unsafe {
                 match options.style {
                     WindowStyle::Pin => {
-                        let panel = create_warp_nspanel(
+                        let panel = create_leanterm_nspanel(
                             frame,
                             metal_device_ptr,
                             Bool::new(options.hide_title_bar),
@@ -565,7 +565,7 @@ impl Window {
                         let _: () = msg_send![panel, positionPinnedPanel];
                         panel
                     }
-                    _ => create_warp_nswindow(
+                    _ => create_leanterm_nswindow(
                         frame,
                         metal_device_ptr,
                         Bool::new(options.hide_title_bar),
@@ -574,21 +574,21 @@ impl Window {
                     ),
                 }
             };
-            // SAFETY: `native_window` is either null or a valid `WarpWindow`.
+            // SAFETY: `native_window` is either null or a valid `LeantermWindow`.
             let Some(native_window_ref) = (unsafe { native_window.as_ref() }) else {
-                return Err(anyhow!("WarpWindow returned nil from initializer"));
+                return Err(anyhow!("LeantermWindow returned nil from initializer"));
             };
 
             if options.fullscreen_state == FullscreenState::Fullscreen {
                 // Instead of directly calling toggleFullScreen, we call a wrapper method that
                 // ensures MacOS window animations don't overlap.
-                // SAFETY: `enqueueFullscreenTransition` is a custom WarpWindow selector.
+                // SAFETY: `enqueueFullscreenTransition` is a custom LeantermWindow selector.
                 let _: () = unsafe { msg_send![native_window_ref, enqueueFullscreenTransition] };
             }
 
             let native_view = native_window_ref
                 .contentView()
-                .expect("WarpWindow always has a content view");
+                .expect("LeantermWindow always has a content view");
 
             let device = match metal_device {
                 Some(metal_device) => Some(Device::new(
@@ -625,7 +625,7 @@ impl Window {
                     .set_ivar(WINDOW_STATE_IVAR, Ivar::from_state(&window_state));
                 let native_window_delegate = native_window_ref
                     .delegate()
-                    .expect("WarpWindow always has a delegate");
+                    .expect("LeantermWindow always has a delegate");
                 (*Retained::as_ptr(&native_window_delegate)
                     .cast::<Object>()
                     .cast_mut())
@@ -633,7 +633,7 @@ impl Window {
             }
 
             // Set the initial scale properly.
-            warp_view_did_change_backing_properties(as_objc_object(&native_view), true);
+            leanterm_view_did_change_backing_properties(as_objc_object(&native_view), true);
 
             // SAFETY: these call into the hand-written Objective-C positioning helpers.
             unsafe {
@@ -673,10 +673,10 @@ impl Window {
 
     pub fn active_window_id() -> Option<WindowId> {
         let native_window = Self::key_window()?;
-        // SAFETY: `is_warp_window` and the window-state ivar accessor are FFI calls
-        // into the WarpWindow class.
+        // SAFETY: `is_leanterm_window` and the window-state ivar accessor are FFI calls
+        // into the LeantermWindow class.
         unsafe {
-            if is_warp_window(&native_window).as_bool() {
+            if is_leanterm_window(&native_window).as_bool() {
                 Some(get_window_state(as_objc_object(&native_window)).window_id)
             } else {
                 None
@@ -685,11 +685,11 @@ impl Window {
     }
 
     pub fn frontmost_window_id() -> Option<WindowId> {
-        // SAFETY: `get_frontmost_window` returns null or a valid `WarpWindow`, and
+        // SAFETY: `get_frontmost_window` returns null or a valid `LeantermWindow`, and
         // the window-state ivar accessor reads its ivar.
         unsafe {
             let native_window = get_frontmost_window().as_ref()?;
-            if is_warp_window(native_window).as_bool() {
+            if is_leanterm_window(native_window).as_bool() {
                 Some(get_window_state(as_objc_object(native_window)).window_id)
             } else {
                 None
@@ -701,7 +701,7 @@ impl Window {
         let Some(native_window) = Self::key_window() else {
             return false;
         };
-        // `isModalPanel` is a custom WarpWindow selector returning a BOOL.
+        // `isModalPanel` is a custom LeantermWindow selector returning a BOOL.
         // SAFETY: messaging a valid window.
         unsafe { msg_send![&*native_window, isModalPanel] }
     }
@@ -710,15 +710,15 @@ impl Window {
         let Some(native_window) = Self::key_window() else {
             return;
         };
-        // SAFETY: `is_warp_window` is an FFI call into the WarpWindow class.
-        if unsafe { is_warp_window(&native_window) }.as_bool() {
+        // SAFETY: `is_leanterm_window` is an FFI call into the LeantermWindow class.
+        if unsafe { is_leanterm_window(&native_window) }.as_bool() {
             Self::send_close_ime_msg(&native_window);
         }
     }
 
     fn send_close_ime_msg(native_window: &NSWindow) {
-        // SAFETY: warp windows carry the window-state ivar, and the content view is a
-        // WarpHostView exposing the custom `closeIMEAsync` selector.
+        // SAFETY: leanterm windows carry the window-state ivar, and the content view is a
+        // LeantermHostView exposing the custom `closeIMEAsync` selector.
         unsafe {
             let state = get_window_state(as_objc_object(native_window));
             if let Some(view) = (*state.native_window).contentView() {
@@ -802,10 +802,10 @@ impl Window {
         let Some(native_window) = Self::key_window() else {
             return false;
         };
-        // SAFETY: `is_warp_window` and the window-state ivar accessor are FFI calls
-        // into the WarpWindow class.
+        // SAFETY: `is_leanterm_window` and the window-state ivar accessor are FFI calls
+        // into the LeantermWindow class.
         unsafe {
-            if is_warp_window(&native_window).as_bool() {
+            if is_leanterm_window(&native_window).as_bool() {
                 get_window_state(as_objc_object(&native_window))
                     .ime_active
                     .get()
@@ -819,8 +819,8 @@ impl Window {
         let Some(native_window) = Self::key_window() else {
             return;
         };
-        // SAFETY: `is_warp_window` is an FFI call into the WarpWindow class.
-        if unsafe { is_warp_window(&native_window) }.as_bool() {
+        // SAFETY: `is_leanterm_window` is an FFI call into the LeantermWindow class.
+        if unsafe { is_leanterm_window(&native_window) }.as_bool() {
             let frame = if let Some(frame) = content.frame {
                 RectF::new(
                     transform_origin_from_rect_coord_to_frame_coord(frame.origin(), frame.size()),
@@ -857,10 +857,10 @@ impl Window {
         let windows = NSApplication::sharedApplication(mtm).windows();
         for i in 0..windows.count() {
             let window = windows.objectAtIndex(i);
-            // SAFETY: `is_warp_window` / `set_window_background_blur_radius` are FFI
-            // calls into the WarpWindow class.
+            // SAFETY: `is_leanterm_window` / `set_window_background_blur_radius` are FFI
+            // calls into the LeantermWindow class.
             unsafe {
-                if is_warp_window(&window).as_bool() {
+                if is_leanterm_window(&window).as_bool() {
                     set_window_background_blur_radius(&window, blur_radius_pixels)
                 }
             }
@@ -894,7 +894,7 @@ impl Window {
         }
     }
 
-    /// Returns a reference to a `WarpWindow` identified by `window_id`, if any.
+    /// Returns a reference to a `LeantermWindow` identified by `window_id`, if any.
     ///
     /// # Safety
     /// This code is unsafe since it requires interfacing with platform code.
@@ -905,7 +905,7 @@ impl Window {
             (0..windows.count())
                 .find(|&i| {
                     let window = windows.objectAtIndex(i);
-                    is_warp_window(&window).as_bool()
+                    is_leanterm_window(&window).as_bool()
                         && get_window_state(as_objc_object(&window)).window_id == window_id
                 })
                 .map(|idx| windows.objectAtIndex(idx))
@@ -918,7 +918,7 @@ impl Window {
             TerminationMode::ForceTerminate | TerminationMode::ContentTransferred => true,
         };
         // SAFETY: `find_window_with_id` enumerates the window list; `closeWindowAsync:`
-        // is a custom WarpWindow selector taking a BOOL.
+        // is a custom LeantermWindow selector taking a BOOL.
         unsafe {
             if let Some(window) = Self::find_window_with_id(window_id) {
                 let _: () = msg_send![&*window, closeWindowAsync: Bool::new(force_terminate)];
@@ -975,13 +975,13 @@ impl platform::Window for Window {
     }
 
     fn toggle_fullscreen(&self) {
-        // `enqueueFullscreenTransition` is a custom WarpWindow selector.
+        // `enqueueFullscreenTransition` is a custom LeantermWindow selector.
         // SAFETY: messaging a valid window.
         let _: () = unsafe { msg_send![self.0.window(), enqueueFullscreenTransition] };
     }
 
     fn toggle_maximized(&self) {
-        // `zoomAsync:` is a custom WarpWindow selector taking a nil sender.
+        // `zoomAsync:` is a custom LeantermWindow selector taking a nil sender.
         // SAFETY: messaging a valid window.
         let _: () = unsafe { msg_send![self.0.window(), zoomAsync: ptr::null_mut::<AnyObject>()] };
     }
@@ -1061,7 +1061,7 @@ impl WindowState {
     /// Returns a reference to the backing `NSWindow`.
     ///
     /// The window outlives the `WindowState`: the window owns the state through its
-    /// ivar and clears it in `warp_dealloc_window`.
+    /// ivar and clears it in `leanterm_dealloc_window`.
     fn window(&self) -> &NSWindow {
         // SAFETY: `native_window` stays valid for the whole lifetime of the state.
         unsafe { &*self.native_window }
@@ -1072,7 +1072,7 @@ impl WindowState {
         let view = self
             .window()
             .contentView()
-            .expect("WarpWindow always has a content view");
+            .expect("LeantermWindow always has a content view");
         let view_frame = view.frame();
         vec2f(view_frame.size.width as f32, view_frame.size.height as f32)
     }
@@ -1109,10 +1109,10 @@ impl WindowState {
         let view = self
             .window()
             .contentView()
-            .expect("WarpHostView content view");
+            .expect("LeantermHostView content view");
         let layer = view
             .layer()
-            .expect("WarpHostView always has a backing layer");
+            .expect("LeantermHostView always has a backing layer");
         layer
             .downcast::<CAMetalLayer>()
             .expect("backing layer is a CAMetalLayer")
@@ -1162,7 +1162,7 @@ impl platform::WindowContext for WindowState {
         let view = self
             .window()
             .contentView()
-            .expect("WarpWindow always has a content view");
+            .expect("LeantermWindow always has a content view");
         let view_frame = view.frame();
         vec2f(view_frame.size.width as f32, view_frame.size.height as f32)
     }
@@ -1186,14 +1186,14 @@ impl platform::WindowContext for WindowState {
 
     fn render_scene(&self, scene: Rc<Scene>) {
         *self.next_scene.borrow_mut() = Some(scene);
-        // `setNeedsDisplayAsync` is a custom WarpWindow selector.
+        // `setNeedsDisplayAsync` is a custom LeantermWindow selector.
         // SAFETY: messaging a valid window.
         let _: () = unsafe { msg_send![self.window(), setNeedsDisplayAsync] };
     }
 
     fn request_redraw(&self) {
         let _ = self.next_scene.borrow_mut().take();
-        // `setNeedsDisplayAsync` is a custom WarpWindow selector.
+        // `setNeedsDisplayAsync` is a custom LeantermWindow selector.
         // SAFETY: messaging a valid window.
         let _: () = unsafe { msg_send![self.window(), setNeedsDisplayAsync] };
     }
@@ -1203,7 +1203,7 @@ impl platform::WindowContext for WindowState {
         callback: Box<dyn FnOnce(platform::CapturedFrame) + Send + 'static>,
     ) {
         *self.capture_callback.borrow_mut() = Some(callback);
-        // `setNeedsDisplayAsync` is a custom WarpWindow selector.
+        // `setNeedsDisplayAsync` is a custom LeantermWindow selector.
         // SAFETY: messaging a valid window.
         let _: () = unsafe { msg_send![self.window(), setNeedsDisplayAsync] };
     }
@@ -1279,15 +1279,18 @@ fn dispatch_window_resized(window: &Rc<WindowState>, force_async: bool) {
 }
 
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_view_did_change_backing_properties(this: &Object, async_callback: bool) {
-    // SAFETY: `this` is a WarpHostView carrying the window-state ivar; its backing
+extern "C-unwind" fn leanterm_view_did_change_backing_properties(
+    this: &Object,
+    async_callback: bool,
+) {
+    // SAFETY: `this` is a LeantermHostView carrying the window-state ivar; its backing
     // layer is always a CAMetalLayer.
     let (window, layer) = unsafe {
         let window = get_window_state(this);
         let view = &*(this as *const Object).cast::<NSView>();
         let layer = view
             .layer()
-            .expect("WarpHostView always has a backing layer");
+            .expect("LeantermHostView always has a backing layer");
         (window, layer)
     };
     layer.setContentsScale(window.backing_scale_factor());
@@ -1305,7 +1308,7 @@ extern "C-unwind" fn warp_view_did_change_backing_properties(this: &Object, asyn
         );
         layer
             .downcast_ref::<CAMetalLayer>()
-            .expect("WarpHostView backing layer is a CAMetalLayer")
+            .expect("LeantermHostView backing layer is a CAMetalLayer")
             .setDrawableSize(drawable_size);
     }
 
@@ -1315,7 +1318,7 @@ extern "C-unwind" fn warp_view_did_change_backing_properties(this: &Object, asyn
 }
 
 #[unsafe(no_mangle)]
-pub extern "C-unwind" fn warp_get_accessibility_contents(object: &mut Object) -> id {
+pub extern "C-unwind" fn leanterm_get_accessibility_contents(object: &mut Object) -> id {
     let state = unsafe { get_window_state(object) };
     let window_id = state.window_id;
     let accessibility_data = app::callback_dispatcher()
@@ -1329,7 +1332,10 @@ pub extern "C-unwind" fn warp_get_accessibility_contents(object: &mut Object) ->
 }
 
 #[unsafe(no_mangle)]
-pub extern "C-unwind" fn warp_ime_position(object: &mut Object, content_rect: NSRect) -> NSRect {
+pub extern "C-unwind" fn leanterm_ime_position(
+    object: &mut Object,
+    content_rect: NSRect,
+) -> NSRect {
     let state = unsafe { get_window_state(object) };
 
     let cursor_info = app::callback_dispatcher()
@@ -1358,15 +1364,19 @@ pub extern "C-unwind" fn warp_ime_position(object: &mut Object, content_rect: NS
 }
 
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_view_set_frame_size(this: &Object, size: NSSize, async_callback: bool) {
-    // SAFETY: `this` is a WarpHostView carrying the window-state ivar; its backing
+extern "C-unwind" fn leanterm_view_set_frame_size(
+    this: &Object,
+    size: NSSize,
+    async_callback: bool,
+) {
+    // SAFETY: `this` is a LeantermHostView carrying the window-state ivar; its backing
     // layer is always a CAMetalLayer.
     let (window, layer) = unsafe {
         let window = get_window_state(this);
         let view = &*(this as *const Object).cast::<NSView>();
         let layer = view
             .layer()
-            .expect("WarpHostView always has a backing layer");
+            .expect("LeantermHostView always has a backing layer");
         (window, layer)
     };
     // Manually convert the size into the drawable size by multiplying by the scale factor. For
@@ -1379,7 +1389,7 @@ extern "C-unwind" fn warp_view_set_frame_size(this: &Object, size: NSSize, async
     };
     layer
         .downcast_ref::<CAMetalLayer>()
-        .expect("WarpHostView backing layer is a CAMetalLayer")
+        .expect("LeantermHostView backing layer is a CAMetalLayer")
         .setDrawableSize(drawable_size);
 
     window.resize_renderer();
@@ -1388,7 +1398,7 @@ extern "C-unwind" fn warp_view_set_frame_size(this: &Object, size: NSSize, async
 }
 
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_update_layer(this: &Object) {
+extern "C-unwind" fn leanterm_update_layer(this: &Object) {
     if !app::callback_dispatcher().can_borrow_mut() {
         #[cfg(debug_assertions)]
         log::warn!(
@@ -1423,19 +1433,18 @@ extern "C-unwind" fn warp_update_layer(this: &Object) {
             "Should not be holding a borrow of the scene RefCell before beginning to render."
         );
 
-        // SAFETY: warp_update_layer should only be invoked for windows
+        // SAFETY: leanterm_update_layer should only be invoked for windows
         // created via Window::open(), which always sets a non-None device.
-        let device = window
-            .device
-            .as_ref()
-            .expect("warp_update_layer should not be called for a window that has no real display");
-        // SAFETY: warp_update_layer is only invoked by the event loop,
+        let device = window.device.as_ref().expect(
+            "leanterm_update_layer should not be called for a window that has no real display",
+        );
+        // SAFETY: leanterm_update_layer is only invoked by the event loop,
         // which should never attempt to draw a window while it is already
         // being drawn.
         let mut renderer_manager = window
             .renderer_manager
             .as_ref()
-            .expect("warp_update_layer should never be called twice in parallel")
+            .expect("leanterm_update_layer should never be called twice in parallel")
             .borrow_mut();
         let renderer = renderer_manager.renderer_for_device(device, window.physical_size());
 
@@ -1451,7 +1460,7 @@ extern "C-unwind" fn warp_update_layer(this: &Object) {
 
 /// Returns whether this event was handled.
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_handle_view_event(
+extern "C-unwind" fn leanterm_handle_view_event(
     this: &Object,
     native_event: id,
     composing_state: bool,
@@ -1496,7 +1505,7 @@ extern "C-unwind" fn warp_handle_view_event(
 /// gain focus.
 /// Returns whether this event was handled.
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_handle_first_mouse_event(this: &Object, native_event: id) -> bool {
+extern "C-unwind" fn leanterm_handle_first_mouse_event(this: &Object, native_event: id) -> bool {
     let window = unsafe { get_window_state(this) };
     let event =
         unsafe { super::event::from_native(native_event, Some(window.logical_size().y()), true) };
@@ -1510,7 +1519,7 @@ extern "C-unwind" fn warp_handle_first_mouse_event(this: &Object, native_event: 
 }
 
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_handle_insert_text(this: &Object, characters: id) {
+extern "C-unwind" fn leanterm_handle_insert_text(this: &Object, characters: id) {
     // SAFETY: `characters` is a valid `NSString` of the inserted text.
     let string = unsafe { &*characters.cast::<NSString>() }.to_string();
     let window = unsafe { get_window_state(this) };
@@ -1520,7 +1529,7 @@ extern "C-unwind" fn warp_handle_insert_text(this: &Object, characters: id) {
 }
 
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_handle_drag_and_drop(this: &Object, paths: id, point: NSPoint) {
+extern "C-unwind" fn leanterm_handle_drag_and_drop(this: &Object, paths: id, point: NSPoint) {
     // SAFETY: `paths` is an `NSArray<NSString>` of dropped file paths.
     let paths = unsafe {
         let paths = &*paths.cast::<NSArray<NSString>>();
@@ -1537,7 +1546,7 @@ extern "C-unwind" fn warp_handle_drag_and_drop(this: &Object, paths: id, point: 
 }
 
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_handle_file_drag(this: &Object, point: NSPoint) {
+extern "C-unwind" fn leanterm_handle_file_drag(this: &Object, point: NSPoint) {
     let window = unsafe { get_window_state(this) };
     let location = vec2f(point.x as f32, window.logical_size().y() - point.y as f32);
 
@@ -1547,7 +1556,7 @@ extern "C-unwind" fn warp_handle_file_drag(this: &Object, point: NSPoint) {
 }
 
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_handle_file_drag_exit(this: &Object) {
+extern "C-unwind" fn leanterm_handle_file_drag_exit(this: &Object) {
     let window = unsafe { get_window_state(this) };
 
     app::callback_dispatcher()
@@ -1556,7 +1565,7 @@ extern "C-unwind" fn warp_handle_file_drag_exit(this: &Object) {
 }
 
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_update_ime_state(this: &mut Object, ime_active: bool) {
+extern "C-unwind" fn leanterm_update_ime_state(this: &mut Object, ime_active: bool) {
     let state = unsafe { get_window_state(this) };
     state.ime_active.set(ime_active);
 }
@@ -1570,7 +1579,7 @@ fn nsrange_to_rust_range(ns_range: NSRange) -> std::ops::Range<usize> {
 }
 
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_marked_text_updated(
+extern "C-unwind" fn leanterm_marked_text_updated(
     this: &mut Object,
     marked_text: id,
     selected_range: NSRange,
@@ -1588,7 +1597,7 @@ extern "C-unwind" fn warp_marked_text_updated(
 }
 
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_marked_text_cleared(this: &mut Object) {
+extern "C-unwind" fn leanterm_marked_text_cleared(this: &mut Object) {
     let state = unsafe { get_window_state(&*this) };
     app::callback_dispatcher()
         .for_window(&Window(state.clone()))
@@ -1596,7 +1605,7 @@ extern "C-unwind" fn warp_marked_text_cleared(this: &mut Object) {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C-unwind" fn warp_dispatch_standard_action(this: id, tag: NSInteger) {
+pub extern "C-unwind" fn leanterm_dispatch_standard_action(this: id, tag: NSInteger) {
     if let Some(action) = StandardAction::from_isize(tag) {
         let state = unsafe { get_window_state(&*this) };
         app::callback_dispatcher()
@@ -1606,7 +1615,7 @@ pub extern "C-unwind" fn warp_dispatch_standard_action(this: id, tag: NSInteger)
 }
 
 #[unsafe(no_mangle)]
-pub extern "C-unwind" fn warp_app_window_moved(this: id, rect: NSRect) {
+pub extern "C-unwind" fn leanterm_app_window_moved(this: id, rect: NSRect) {
     let state = unsafe { get_window_state(&*this) };
     let point = Vector2F::new(rect.origin.x as f32, rect.origin.y as f32);
     let size = Vector2F::new(rect.size.width as f32, rect.size.height as f32);
@@ -1643,10 +1652,10 @@ unsafe fn remove_state_ivar_from_object(object: &mut Object) -> Rc<WindowState> 
 // because its retain count has dropped to zero. This is our chance to release
 // our Rust resources. Do not call this manually.
 #[unsafe(no_mangle)]
-pub extern "C-unwind" fn warp_dealloc_window(native_window: &mut Object) {
+pub extern "C-unwind" fn leanterm_dealloc_window(native_window: &mut Object) {
     log::info!("dealloc native window {native_window:p}");
     let state;
-    // SAFETY: `native_window` is a WarpWindow being deallocated; its content view
+    // SAFETY: `native_window` is a LeantermWindow being deallocated; its content view
     // and delegate both carry the window-state ivar.
     unsafe {
         let window = &*(native_window as *const Object).cast::<NSWindow>();
@@ -1654,13 +1663,15 @@ pub extern "C-unwind" fn warp_dealloc_window(native_window: &mut Object) {
         // Remove the window state from the content NSView and drop a reference.
         let native_view = window
             .contentView()
-            .expect("WarpWindow always has a content view");
+            .expect("LeantermWindow always has a content view");
         let _ = remove_state_ivar_from_object(
             &mut *Retained::as_ptr(&native_view).cast::<Object>().cast_mut(),
         );
 
         // Remove the window state from the NSWindowDelegate and drop a reference.
-        let native_window_delegate = window.delegate().expect("WarpWindow always has a delegate");
+        let native_window_delegate = window
+            .delegate()
+            .expect("LeantermWindow always has a delegate");
         let _ = remove_state_ivar_from_object(
             &mut *Retained::as_ptr(&native_window_delegate)
                 .cast::<Object>()

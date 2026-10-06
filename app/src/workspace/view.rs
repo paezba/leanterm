@@ -37,15 +37,6 @@ use command::blocking::Command;
 use instant::Instant;
 use itertools::Itertools;
 use lazy_static::lazy_static;
-use parking_lot::FairMutex;
-use pathfinder_color::ColorU;
-use pathfinder_geometry::rect::RectF;
-#[cfg(feature = "local_fs")]
-#[cfg(feature = "local_fs")]
-use repo_metadata::repositories::DetectedRepositories;
-use serde_json;
-#[cfg(target_family = "wasm")]
-use url::Url;
 use leanterm_core::context_flag::ContextFlag;
 use leanterm_core::features::FeatureFlag;
 use leanterm_core::semantic_selection::SemanticSelection;
@@ -56,9 +47,8 @@ use leanterm_core::ui::theme::phenomenon::PhenomenonStyle;
 use leanterm_core::ui::theme::{AnsiColors, Fill};
 use leanterm_editor::editor::NavigationKey;
 use leanterm_errors::{report_error, report_if_error};
-use leanterm_util::path::{LineAndColumnArg, user_friendly_path};
 use leanterm_ui::accessibility::{
-    AccessibilityContent, AccessibilityVerbosity, ActionAccessibilityContent, WarpA11yRole,
+    AccessibilityContent, AccessibilityVerbosity, ActionAccessibilityContent, LeantermA11yRole,
 };
 use leanterm_ui::clipboard::ClipboardContent;
 #[cfg(target_family = "wasm")]
@@ -77,7 +67,9 @@ use leanterm_ui::fonts::{Properties, Weight};
 use leanterm_ui::geometry::vector::{Vector2F, vec2f};
 use leanterm_ui::keymap::Context;
 use leanterm_ui::modals::{AlertDialogWithCallbacks, AppModalCallback};
-use leanterm_ui::notification::{NotificationSendError, RequestPermissionsOutcome, UserNotification};
+use leanterm_ui::notification::{
+    NotificationSendError, RequestPermissionsOutcome, UserNotification,
+};
 use leanterm_ui::platform::{
     Cursor, FilePickerConfiguration, FullscreenState, SystemTheme, TerminationMode,
 };
@@ -90,6 +82,16 @@ use leanterm_ui::{
     AppContext, Entity, EntityId, FocusContext, ModelHandle, SingletonEntity, TypedActionView,
     UpdateModel, UpdateView, View, ViewAsRef, ViewContext, ViewHandle, WindowId,
 };
+use leanterm_util::path::{LineAndColumnArg, user_friendly_path};
+use parking_lot::FairMutex;
+use pathfinder_color::ColorU;
+use pathfinder_geometry::rect::RectF;
+#[cfg(feature = "local_fs")]
+#[cfg(feature = "local_fs")]
+use repo_metadata::repositories::DetectedRepositories;
+use serde_json;
+#[cfg(target_family = "wasm")]
+use url::Url;
 
 use self::vertical_tabs::{
     SummaryPaneKind, SummaryPaneKindIcons, VERTICAL_TABS_SETTINGS_BUTTON_POSITION_ID,
@@ -208,6 +210,7 @@ use crate::terminal::available_shells::AvailableShells;
 use crate::terminal::general_settings::GeneralSettings;
 use crate::terminal::input::{EXTERNAL_ALT_C_BINDING_CONTEXT, Input, MenuPositioning};
 use crate::terminal::keys_settings::KeysSettings;
+use crate::terminal::leantermify::settings::LeantermifySettings;
 use crate::terminal::ligature_settings::should_use_ligature_rendering;
 use crate::terminal::model::block::SerializedBlockListItem;
 use crate::terminal::model::blockgrid::BlockGrid;
@@ -229,7 +232,6 @@ use crate::terminal::view::ssh_file_upload::FileUploadId;
 use crate::terminal::view::{
     LeftPanelTargetView, NOTIFICATIONS_TROUBLESHOOT_URL, SyncEvent, SyncInputType,
 };
-use crate::terminal::warpify::settings::WarpifySettings;
 use crate::terminal::{self, BlockListSettings, SizeInfo, TerminalModel, TerminalView};
 use crate::themes::theme::{AnsiColorIdentifier, RespectSystemTheme, ThemeKind};
 use crate::themes::theme_chooser::{ThemeChooser, ThemeChooserEvent, ThemeChooserMode};
@@ -241,7 +243,7 @@ use crate::ui_components::window_focus_dimming::WindowFocusDimming;
 use crate::undo_close::UndoCloseStack;
 #[cfg(target_family = "wasm")]
 use crate::uri::browser_url_handler::{parse_current_url, update_browser_url};
-use crate::user_config::{WarpConfig, WarpConfigUpdateEvent};
+use crate::user_config::{LeantermConfig, LeantermConfigUpdateEvent};
 #[cfg(feature = "local_fs")]
 use crate::user_config::{
     ensure_default_worktree_config, find_unused_tab_config_path, find_unused_toml_path,
@@ -307,7 +309,7 @@ const MAX_FONT_SIZE: f32 = 25.0;
 const FONT_SIZE_INCREMENT: f32 = 1.0;
 
 pub const TAB_BAR_HEIGHT: f32 = 34.;
-/// Height for all panel headers (tab bar, warp drive, resource center, theme chooser, etc.).
+/// Height for all panel headers (tab bar, leanterm drive, resource center, theme chooser, etc.).
 /// This ensures consistent header heights across all UI panels.
 pub const PANEL_HEADER_HEIGHT: f32 = TAB_BAR_HEIGHT;
 /// The hover area height for states where the tab bar is revealed on hover.
@@ -322,8 +324,8 @@ pub const TOTAL_TAB_BAR_HEIGHT: f32 = TAB_BAR_HEIGHT + TAB_BAR_BORDER_HEIGHT;
 
 const TAB_BAR_ICON_PADDING: f32 = 4.;
 
-// We use the word "Warp" in the Update Ready button to make it obvious that the terminal is Warp.
-// This can lead to free advertising when users screen-share Warp when an update is available.
+// We use the word "Leanterm" in the Update Ready button to make it obvious that the terminal is Leanterm.
+// This can lead to free advertising when users screen-share Leanterm when an update is available.
 
 // Ratio of terminal : theme chooser when theme chooser is active
 const THEME_CHOOSER_RATIO: f32 = 3.5;
@@ -409,7 +411,7 @@ const MAX_WINDOW_TITLE_LENGTH: usize = 80;
 pub const DEFAULT_USER_DISPLAY_NAME: &str = "User";
 
 lazy_static! {
-    static ref OPENING_WARP_DRIVE_ON_START_UP: Arc<Mutex<bool>> = Arc::new(Mutex::new(false));
+    static ref OPENING_LEANTERM_DRIVE_ON_START_UP: Arc<Mutex<bool>> = Arc::new(Mutex::new(false));
     static ref PANEL_CORNER_RADIUS: CornerRadius = CornerRadius::with_all(Radius::Pixels(8.));
     static ref PANEL_HEADER_CORNER_RADIUS: CornerRadius =
         CornerRadius::with_top(Radius::Pixels(8.));
@@ -501,7 +503,7 @@ impl ShowTabBar {
 #[cfg(target_family = "wasm")]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum SimplifiedWasmTabBarContent {
-    /// Viewing a Warp Drive object (notebook, workflow, env vars, AI facts, MCP servers)
+    /// Viewing a Leanterm Drive object (notebook, workflow, env vars, AI facts, MCP servers)
     /// Viewing a conversation transcript. Contains the optional ambient agent task ID.
     ConversationTranscript { task_id: Option<AmbientAgentTaskId> },
 }
@@ -542,7 +544,7 @@ pub enum BannerSeverity {
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 enum BannerButtonVariant {
     /// No fill, no border, just text (and optional icon). Used for the primary
-    /// action in the Figma design (e.g. "Fix with Warp Agent").
+    /// action in the Figma design (e.g. "Fix with Leanterm Agent").
     Naked,
     /// Border-only, no fill (e.g. "Open file").
     Outlined,
@@ -706,7 +708,7 @@ pub struct Workspace {
     #[cfg(target_family = "wasm")]
     wasm_nux_dialog: ViewHandle<WasmNUXDialog>,
     #[cfg(target_family = "wasm")]
-    open_in_warp_button: ViewHandle<ActionButton>,
+    open_in_leanterm_button: ViewHandle<ActionButton>,
     #[cfg(target_family = "wasm")]
     view_cloud_runs_button: ViewHandle<ActionButton>,
     #[cfg(target_family = "wasm")]
@@ -1402,8 +1404,8 @@ impl Workspace {
                         );
                     });
                 } else {
-                    WarpConfig::handle(ctx).update(ctx, |warp_config, ctx| {
-                        warp_config.remove_tab_config_by_path(path, ctx);
+                    LeantermConfig::handle(ctx).update(ctx, |leanterm_config, ctx| {
+                        leanterm_config.remove_tab_config_by_path(path, ctx);
                     });
                 }
                 self.current_workspace_state
@@ -1563,7 +1565,9 @@ impl Workspace {
             |hover_state| {
                 let icon = ConstrainedBox::new(
                     icons::Icon::X
-                        .to_warpui_icon(Fill::Solid(PhenomenonStyle::modal_close_button_text()))
+                        .to_leanterm_ui_icon(
+                            Fill::Solid(PhenomenonStyle::modal_close_button_text()),
+                        )
                         .finish(),
                 )
                 .with_width(16.)
@@ -1659,7 +1663,7 @@ impl Workspace {
         );
     }
 
-    /// Subscribes to `WarpConfigUpdateEvent::TabConfigErrors` (and the equivalent
+    /// Subscribes to `LeantermConfigUpdateEvent::TabConfigErrors` (and the equivalent
     /// `ModelConfigErrors` for custom model router configs) and shows a persistent
     /// error toast for each file that failed to parse.  Uses `object_id` keyed by
     /// file path so that re-saving the same file auto-dismisses the stale toast.
@@ -1667,9 +1671,9 @@ impl Workspace {
         toast_stack: ViewHandle<DismissibleToastStack<WorkspaceAction>>,
         ctx: &mut ViewContext<Self>,
     ) {
-        ctx.subscribe_to_model(&WarpConfig::handle(ctx), move |_me, _, event, ctx| {
+        ctx.subscribe_to_model(&LeantermConfig::handle(ctx), move |_me, _, event, ctx| {
             match event {
-                WarpConfigUpdateEvent::TabConfigs => {
+                LeantermConfigUpdateEvent::TabConfigs => {
                     // On every tab config reload, dismiss error toasts for
                     // files that now parse successfully.  The model has already
                     // been updated with the current error set before this event
@@ -1684,7 +1688,7 @@ impl Workspace {
                         toast_stack.dismiss_toasts_by_prefix("tab_config_error:", ctx);
                     });
                 }
-                WarpConfigUpdateEvent::TabConfigErrors(errors) => {
+                LeantermConfigUpdateEvent::TabConfigErrors(errors) => {
                     let home_dir = dirs::home_dir();
                     for error in errors {
                         let object_id = format!("tab_config_error:{}", error.file_path.display());
@@ -1718,23 +1722,26 @@ impl Workspace {
         });
     }
 
-    /// Subscribes to `WarpConfigUpdateEvent::SettingsErrors` and
+    /// Subscribes to `LeantermConfigUpdateEvent::SettingsErrors` and
     /// `SettingsErrorsCleared` to update the workspace settings-error banner
     /// and mirror the state into the settings pane for its nav-rail footer.
     fn subscribe_to_settings_errors(ctx: &mut ViewContext<Self>) {
-        ctx.subscribe_to_model(&WarpConfig::handle(ctx), |me, _, event, ctx| match event {
-            WarpConfigUpdateEvent::SettingsErrors(error) => {
-                me.settings_file_error = Some(error.clone());
-                me.sync_settings_error_state_into_settings_pane(ctx);
-                ctx.notify();
-            }
-            WarpConfigUpdateEvent::SettingsErrorsCleared => {
-                me.settings_file_error = None;
-                me.sync_settings_error_state_into_settings_pane(ctx);
-                ctx.notify();
-            }
-            _ => {}
-        });
+        ctx.subscribe_to_model(
+            &LeantermConfig::handle(ctx),
+            |me, _, event, ctx| match event {
+                LeantermConfigUpdateEvent::SettingsErrors(error) => {
+                    me.settings_file_error = Some(error.clone());
+                    me.sync_settings_error_state_into_settings_pane(ctx);
+                    ctx.notify();
+                }
+                LeantermConfigUpdateEvent::SettingsErrorsCleared => {
+                    me.settings_file_error = None;
+                    me.sync_settings_error_state_into_settings_pane(ctx);
+                    ctx.notify();
+                }
+                _ => {}
+            },
+        );
     }
 
     /// Mirrors the current settings-file error and banner-dismissal state into the settings pane's
@@ -1928,7 +1935,7 @@ impl Workspace {
         let wasm_nux_dialog = Self::build_wasm_nux_dialog(ctx);
 
         #[cfg(target_family = "wasm")]
-        let open_in_warp_button = Self::build_open_in_warp_button(ctx);
+        let open_in_leanterm_button = Self::build_open_in_leanterm_button(ctx);
 
         #[cfg(target_family = "wasm")]
         let transcript_info_button = Self::build_transcript_info_button(ctx);
@@ -2052,7 +2059,7 @@ impl Workspace {
             #[cfg(target_family = "wasm")]
             wasm_nux_dialog,
             #[cfg(target_family = "wasm")]
-            open_in_warp_button,
+            open_in_leanterm_button,
             #[cfg(target_family = "wasm")]
             transcript_info_button,
             #[cfg(target_family = "wasm")]
@@ -2591,7 +2598,7 @@ impl Workspace {
         self.left_panel_view.update(ctx, |lp, ctx| {
             // Restore which panel tab was active
             let active_view = match left_panel_snapshot.left_panel_displayed_tab {
-                LeftPanelDisplayedTab::FileTree | LeftPanelDisplayedTab::WarpDrive => {
+                LeftPanelDisplayedTab::FileTree | LeftPanelDisplayedTab::LeantermDrive => {
                     ToolPanelView::ProjectExplorer
                 }
                 LeftPanelDisplayedTab::GlobalSearch => ToolPanelView::GlobalSearch {
@@ -2865,7 +2872,7 @@ impl Workspace {
     }
 
     /// This function shifts focus to the panel on the left.
-    /// The current focusable panels are: Warp Drive, theme chooser, AI, and resource center (keyboard shortcuts page only)
+    /// The current focusable panels are: Leanterm Drive, theme chooser, AI, and resource center (keyboard shortcuts page only)
     fn focus_left_panel(&mut self, ctx: &mut ViewContext<Self>) {
         // Starts from terminal
         if self.active_tab_pane_group().is_self_or_child_focused(ctx) {
@@ -4003,7 +4010,7 @@ impl Workspace {
         }
 
         // 4. User tab configs
-        let tab_configs = WarpConfig::as_ref(ctx).tab_configs().to_vec();
+        let tab_configs = LeantermConfig::as_ref(ctx).tab_configs().to_vec();
 
         // Count occurrences of each config name so we can disambiguate
         // duplicates in the menu (e.g. "My Tab Config", "My Tab Config (1)").
@@ -4289,7 +4296,7 @@ impl Workspace {
         }
     }
 
-    /// Writes the default tab config template to an unused path in `~/.warp/tab_configs/`
+    /// Writes the default tab config template to an unused path in `~/.leanterm/tab_configs/`
     /// and opens it respecting the user's configured editor setting.
     #[cfg(feature = "local_fs")]
     fn create_and_open_new_tab_config(&mut self, ctx: &mut ViewContext<Self>) {
@@ -4327,7 +4334,7 @@ impl Workspace {
     }
 
     /// Snapshots the given tab's pane layout and writes it as a new tab config
-    /// TOML to `~/.warp/tab_configs/`, then opens the file in the user's editor.
+    /// TOML to `~/.leanterm/tab_configs/`, then opens the file in the user's editor.
     #[cfg(feature = "local_fs")]
     fn save_current_tab_as_new_config(&mut self, tab_index: usize, ctx: &mut ViewContext<Self>) {
         use crate::tab_configs::session_config::{tab_config_from_pane_snapshot, write_tab_config};
@@ -5154,7 +5161,7 @@ impl Workspace {
         let settings_pane_manager = SettingsPaneManager::handle(ctx);
         if let Some(locator) = settings_pane_manager.as_ref(ctx).find_pane(ctx.window_id()) {
             // Update the page and/or search query if specified. The search query
-            // must be applied even when no page is given (e.g. `warp://settings?q=`)
+            // must be applied even when no page is given (e.g. `leanterm://settings?q=`)
             // so an already-open settings tab reflects the new query.
             if page.is_some() || search_query.is_some() {
                 self.settings_pane.update(ctx, |settings_pane, ctx| {
@@ -5437,7 +5444,7 @@ impl Workspace {
             .read(ctx, |pane_group, ctx| pane_group.active_session_view(ctx))
     }
 
-    /// Find an active session and pre-fill the input editor the Warp executable with the
+    /// Find an active session and pre-fill the input editor the Leanterm executable with the
     /// [`leanterm_cli::Command::DumpDebugInfo`] subcommand.
     fn dump_debug_info(&mut self, ctx: &mut ViewContext<Self>) {
         if let Some(exec) = std::env::current_exe()
@@ -5505,39 +5512,39 @@ impl Workspace {
         }
     }
 
-    /// Install the Warp Control CLI by creating a symlink in /usr/local/bin
+    /// Install the Leanterm Control CLI by creating a symlink in /usr/local/bin
     #[cfg(target_os = "macos")]
-    fn install_warpctrl(&mut self, ctx: &mut ViewContext<Self>) {
+    fn install_leantermctl(&mut self, ctx: &mut ViewContext<Self>) {
         ctx.spawn(
-            async { cli_install::install_warpctrl() },
+            async { cli_install::install_leantermctl() },
             |view, result, ctx| {
-                let command_name = ChannelState::channel().warpctrl_command_name();
-                let message = format!("Installed the Warp Control CLI globally. You can now run '{command_name}' from any terminal outside of Warp.");
+                let command_name = ChannelState::channel().leantermctl_command_name();
+                let message = format!("Installed the Leanterm Control CLI globally. You can now run '{command_name}' from any terminal outside of Leanterm.");
                 let toast = DismissibleToast::success(message);
                 view.handle_cli_command_result(
                     result,
                     toast,
-                    "Failed to install Warp Control command",
+                    "Failed to install Leanterm Control command",
                     ctx,
                 );
             },
         );
     }
 
-    /// Uninstall the Warp Control CLI by removing the symlink from /usr/local/bin
+    /// Uninstall the Leanterm Control CLI by removing the symlink from /usr/local/bin
     #[cfg(target_os = "macos")]
-    fn uninstall_warpctrl(&mut self, ctx: &mut ViewContext<Self>) {
+    fn uninstall_leantermctl(&mut self, ctx: &mut ViewContext<Self>) {
         ctx.spawn(
-            async { cli_install::uninstall_warpctrl() },
+            async { cli_install::uninstall_leantermctl() },
             |view, result, ctx| {
                 let toast = DismissibleToast::success(
-                    "Removed the global Warp Control CLI installation — it still works inside Warp."
+                    "Removed the global Leanterm Control CLI installation — it still works inside Leanterm."
                         .to_string(),
                 );
                 view.handle_cli_command_result(
                     result,
                     toast,
-                    "Failed to uninstall Warp Control command",
+                    "Failed to uninstall Leanterm Control command",
                     ctx,
                 );
             },
@@ -5958,7 +5965,7 @@ impl Workspace {
 
         #[cfg(not(target_family = "wasm"))]
         items.push(
-            MenuItemFields::new("View Warp logs")
+            MenuItemFields::new("View Leanterm logs")
                 .with_on_select_action(WorkspaceAction::ViewLogs)
                 .into_item(),
         );
@@ -6399,7 +6406,7 @@ impl Workspace {
                 let theme = appearance.theme();
                 let search_icon = ConstrainedBox::new(
                     icons::Icon::SearchSmall
-                        .to_warpui_icon(theme.sub_text_color(theme.surface_2()))
+                        .to_leanterm_ui_icon(theme.sub_text_color(theme.surface_2()))
                         .finish(),
                 )
                 .with_width(16.)
@@ -6733,8 +6740,8 @@ impl Workspace {
                 ctx.notify();
             }
             LaunchConfigModalEvent::SuccessfullySavedConfig(launch_config) => {
-                ctx.update_model(&WarpConfig::handle(ctx), move |warp_config, ctx| {
-                    warp_config.append_launch_config(launch_config, ctx);
+                ctx.update_model(&LeantermConfig::handle(ctx), move |leanterm_config, ctx| {
+                    leanterm_config.append_launch_config(launch_config, ctx);
                 });
                 ctx.notify();
             }
@@ -6944,12 +6951,10 @@ impl Workspace {
             .map(crate::util::git::list_local_branches_sync)
             .unwrap_or_default();
         let branch_refs: HashSet<&str> = branches.iter().map(|s| s.as_str()).collect();
-        Some(leanterm_util::worktree_names::generate_worktree_branch_name(
-            &branch_refs,
-        ))
+        Some(leanterm_util::worktree_names::generate_worktree_branch_name(&branch_refs))
     }
 
-    /// Generates a worktree tab config TOML, writes it to `~/.warp/tab_configs/`,
+    /// Generates a worktree tab config TOML, writes it to `~/.leanterm/tab_configs/`,
     /// and opens the resulting config as a new tab.
     ///
     /// When `worktree_branch_name` is `None` (autogenerate), the TOML stores
@@ -7063,7 +7068,7 @@ impl Workspace {
     }
 
     /// Opens a worktree in the given repo using the default worktree tab config,
-    /// saving the materialized config to `~/.warp/tab_configs/` first.
+    /// saving the materialized config to `~/.leanterm/tab_configs/` first.
     /// The branch name is auto-generated.
     #[cfg(feature = "local_fs")]
     fn open_worktree_in_repo(&mut self, repo_path: String, ctx: &mut ViewContext<Self>) {
@@ -7079,7 +7084,8 @@ impl Workspace {
         };
         let branches = crate::util::git::list_local_branches_sync(Path::new(&repo_path));
         let branch_refs: HashSet<&str> = branches.iter().map(|s| s.as_str()).collect();
-        let branch_name = leanterm_util::worktree_names::generate_worktree_branch_name(&branch_refs);
+        let branch_name =
+            leanterm_util::worktree_names::generate_worktree_branch_name(&branch_refs);
         let repo_display_name = Path::new(&repo_path)
             .file_name()
             .map(|name| name.to_string_lossy().to_string())
@@ -7415,10 +7421,10 @@ impl Workspace {
                 .size()
         });
 
-        let warp_drive_index_width = modal_sizes.map(|ms| {
-            ms.warp_drive_index_width
+        let leanterm_drive_index_width = modal_sizes.map(|ms| {
+            ms.leanterm_drive_index_width
                 .lock()
-                .expect("should be able to lock warp drive resizable state handle")
+                .expect("should be able to lock leanterm drive resizable state handle")
                 .size()
         });
 
@@ -7444,7 +7450,7 @@ impl Workspace {
             quake_mode,
             universal_search_width,
             voltron_width,
-            warp_drive_index_width,
+            leanterm_drive_index_width,
             left_panel_open: self.left_panel_open,
             vertical_tabs_panel_open: self.vertical_tabs_panel_open,
             left_panel_width,
@@ -8596,7 +8602,7 @@ impl Workspace {
                         let url = NOTIFICATIONS_TROUBLESHOOT_URL.to_string();
                         view.toast_stack.update(ctx, |toast_stack, ctx| {
                             let toast = DismissibleToast::error(
-                                "Warp doesn't have permission to send desktop notifications."
+                                "Leanterm doesn't have permission to send desktop notifications."
                                     .to_string(),
                             )
                             .with_link(
@@ -9199,7 +9205,7 @@ impl Workspace {
                 self.open_prompt_editor(PromptEditorOpenSource::InputContextMenu, ctx);
             }
             #[cfg_attr(not(feature = "local_fs"), allow(unused_variables))]
-            pane_group::Event::OpenFileInWarp { path, session } => {
+            pane_group::Event::OpenFileInLeanterm { path, session } => {
                 #[cfg(feature = "local_fs")]
                 {
                     let layout = *EditorSettings::as_ref(ctx).open_file_layout.value();
@@ -9207,7 +9213,7 @@ impl Workspace {
                 }
             }
             #[cfg(feature = "local_fs")]
-            pane_group::Event::OpenCodeInWarp {
+            pane_group::Event::OpenCodeInLeanterm {
                 source,
                 layout,
                 line_col,
@@ -9215,7 +9221,7 @@ impl Workspace {
                 self.open_code(source.clone(), *layout, *line_col, false, &[], ctx);
             }
             #[cfg(feature = "local_fs")]
-            pane_group::Event::PreviewCodeInWarp { source } => {
+            pane_group::Event::PreviewCodeInLeanterm { source } => {
                 self.open_code(
                     source.clone(),
                     EditorLayout::SplitPane, // preview always uses split pane
@@ -9936,7 +9942,7 @@ impl Workspace {
     }
 
     /// Insert the given command that should open a subshell. And set a flag that we should
-    /// automatically bootstrap AKA "warpify" that subshell if we support it. No-op if there is
+    /// automatically bootstrap AKA "leantermify" that subshell if we support it. No-op if there is
     /// no active terminal session.
     pub fn insert_subshell_command_and_bootstrap_if_supported(
         &mut self,
@@ -11475,7 +11481,7 @@ impl Workspace {
         };
 
         // Build the button content: Diff icon + optional diff stats
-        let icon = ConstrainedBox::new(icons::Icon::Diff.to_warpui_icon(font_color).finish())
+        let icon = ConstrainedBox::new(icons::Icon::Diff.to_leanterm_ui_icon(font_color).finish())
             .with_width(16.)
             .with_height(16.)
             .finish();
@@ -11656,7 +11662,7 @@ impl Workspace {
                     .with_spacing(10.)
                     .with_child(
                         ConstrainedBox::new(
-                            icons::Icon::Search.to_warpui_icon(text_color).finish(),
+                            icons::Icon::Search.to_leanterm_ui_icon(text_color).finish(),
                         )
                         .with_width(16.)
                         .with_height(16.)
@@ -11716,7 +11722,7 @@ impl Workspace {
         let mut tab_bar = Flex::row().with_cross_axis_alignment(CrossAxisAlignment::Center);
         let is_web_anonymous_user = false;
 
-        // Simplified mode for viewing Warp Drive objects, shared sessions, or conversation transcripts on WASM
+        // Simplified mode for viewing Leanterm Drive objects, shared sessions, or conversation transcripts on WASM
         #[cfg(target_family = "wasm")]
         if let Some(content_type) = self.get_simplified_wasm_tab_bar_content(ctx) {
             // Use MainAxisAlignment::SpaceBetween and expand to fill width
@@ -11725,11 +11731,11 @@ impl Workspace {
                 .with_main_axis_size(MainAxisSize::Max);
             let bg_color = blended_colors::neutral_1(appearance.theme());
 
-            // Left: Warp logo - clickable to link to warp.dev
-            let warp_logo = Hoverable::new(self.mouse_states.warp_logo.clone(), |_state| {
+            // Left: Leanterm logo - clickable to link to warp.dev
+            let leanterm_logo = Hoverable::new(self.mouse_states.leanterm_logo.clone(), |_state| {
                 ConstrainedBox::new(
-                    leanterm_core::ui::Icon::Warp
-                        .to_warpui_icon(appearance.theme().foreground())
+                    leanterm_core::ui::Icon::Leanterm
+                        .to_leanterm_ui_icon(appearance.theme().foreground())
                         .finish(),
                 )
                 .with_height(24.)
@@ -11741,9 +11747,9 @@ impl Workspace {
             })
             .with_cursor(Cursor::PointingHand)
             .finish();
-            tab_bar.add_child(warp_logo);
+            tab_bar.add_child(leanterm_logo);
 
-            // Right: Info button + "View all cloud runs" button (for ambient agent sessions) + "Open in Warp" button
+            // Right: Info button + "View all cloud runs" button (for ambient agent sessions) + "Open in Leanterm" button
             let mut right_row = Flex::row()
                 .with_cross_axis_alignment(CrossAxisAlignment::Center)
                 .with_main_axis_size(MainAxisSize::Min);
@@ -11777,9 +11783,9 @@ impl Workspace {
                 }
             }
 
-            // Hide "Open in Warp" button on mobile devices
+            // Hide "Open in Leanterm" button on mobile devices
             if !leanterm_ui::platform::wasm::is_mobile_device() {
-                right_row.add_child(ChildView::new(&self.open_in_warp_button).finish());
+                right_row.add_child(ChildView::new(&self.open_in_leanterm_button).finish());
             }
             tab_bar.add_child(right_row.finish());
 
@@ -12348,7 +12354,7 @@ impl Workspace {
         let icon = ConstrainedBox::new(
             Container::new(
                 icons::Icon::CloudOffline
-                    .to_warpui_icon(appearance.theme().foreground())
+                    .to_leanterm_ui_icon(appearance.theme().foreground())
                     .finish(),
             )
             .with_uniform_padding(3.)
@@ -12624,11 +12630,14 @@ impl Workspace {
         let text_color = theme.main_text_color(Fill::Solid(bg_color)).into_solid();
 
         // Left side: alert icon + bold heading + regular description, all inline.
-        let icon =
-            ConstrainedBox::new(Icon::AlertCircle.to_warpui_icon(text_color.into()).finish())
-                .with_width(16.)
-                .with_height(16.)
-                .finish();
+        let icon = ConstrainedBox::new(
+            Icon::AlertCircle
+                .to_leanterm_ui_icon(text_color.into())
+                .finish(),
+        )
+        .with_width(16.)
+        .with_height(16.)
+        .finish();
 
         let ui_font_family = appearance.ui_font_family();
         const BANNER_FONT_SIZE: f32 = 12.;
@@ -12726,7 +12735,7 @@ impl Workspace {
                                     // `x-close.svg`), matching the Figma
                                     // design. `Icon::XCircle` wraps the x in
                                     // a circle which is not what we want.
-                                    Icon::X.to_warpui_icon(text_color.into()).finish(),
+                                    Icon::X.to_leanterm_ui_icon(text_color.into()).finish(),
                                 )
                                 .with_width(16.)
                                 .with_height(16.)
@@ -12789,7 +12798,7 @@ impl Workspace {
             if let Some(icon) = icon {
                 row.add_child(
                     Container::new(
-                        ConstrainedBox::new(icon.to_warpui_icon(text_color.into()).finish())
+                        ConstrainedBox::new(icon.to_leanterm_ui_icon(text_color.into()).finish())
                             .with_width(14.)
                             .with_height(14.)
                             .finish(),
@@ -13128,7 +13137,7 @@ impl Workspace {
         let reporting_setings = AltScreenReporting::as_ref(app);
         let general_settings = GeneralSettings::as_ref(app);
         let theme_settings = ThemeSettings::as_ref(app);
-        let warpify_settings = WarpifySettings::as_ref(app);
+        let leantermify_settings = LeantermifySettings::as_ref(app);
         let terminal_settings = TerminalSettings::as_ref(app);
         let window_settings = WindowSettings::as_ref(app);
         let pane_settings = PaneSettings::as_ref(app);
@@ -13172,7 +13181,7 @@ impl Workspace {
             .value()
             .same_line_prompt_enabled()
         {
-            context.set.insert(flags::WARP_SAME_LINE_PROMPT_FLAG);
+            context.set.insert(flags::LEANTERM_SAME_LINE_PROMPT_FLAG);
         }
 
         if *ssh_settings.reuse_existing_control_master.value() {
@@ -13180,8 +13189,10 @@ impl Workspace {
                 .set
                 .insert(flags::SSH_REUSE_CONTROL_MASTER_CONTEXT_FLAG);
         }
-        if *warpify_settings.enable_ssh_warpification.value() {
-            context.set.insert(flags::SSH_WARPIFICATION_CONTEXT_FLAG);
+        if *leantermify_settings.enable_ssh_leantermification.value() {
+            context
+                .set
+                .insert(flags::SSH_LEANTERMIFICATION_CONTEXT_FLAG);
         }
 
         if keys_settings.extra_meta_keys.left_alt {
@@ -13237,8 +13248,8 @@ impl Workspace {
                 .insert(flags::COMPLETIONS_OPEN_WHILE_TYPING_CONTEXT_FLAG);
         }
 
-        if *input_settings.warp_completions_enabled.value() {
-            context.set.insert(flags::WARP_COMPLETIONS_CONTEXT_FLAG);
+        if *input_settings.leanterm_completions_enabled.value() {
+            context.set.insert(flags::LEANTERM_COMPLETIONS_CONTEXT_FLAG);
         }
 
         if *input_settings.native_shell_completions_enabled.value() {
@@ -13499,7 +13510,7 @@ impl Workspace {
     fn process_updated_sync_state(&self, ctx: &mut ViewContext<Self>) {
         // If there is an active terminal, return a sync event that all
         // other synced terminals should apply to match it.
-        // If there is no active terminal (like when all Warp windows are
+        // If there is no active terminal (like when all Leanterm windows are
         // minimized), return an event to start syncing.
         let sync_event = self
             .active_tab_pane_group()
@@ -13609,7 +13620,7 @@ impl Workspace {
         });
     }
 
-    /// Opens a given URL in the desktop Warp app if installed, or redirects to download page.
+    /// Opens a given URL in the desktop Leanterm app if installed, or redirects to download page.
     #[cfg(target_family = "wasm")]
     fn open_link_on_desktop(&mut self, url: &Url, ctx: &mut ViewContext<Self>) {
         use crate::settings::app_installation_detection::{
@@ -13632,7 +13643,7 @@ impl Workspace {
             // Many users' browser settings will block Local Network Access so this will end up redirecting to download page,
             // even if they have the app installed.
             let toast_message = format!(
-                "Have Warp installed but redirecting to download page?\nEnable Local Network Access for {} in your browser.",
+                "Have Leanterm installed but redirecting to download page?\nEnable Local Network Access for {} in your browser.",
                 ChannelState::server_root_url()
             );
             self.toast_stack.update(ctx, |toast_stack, ctx| {
@@ -13662,7 +13673,7 @@ impl TypedActionView for Workspace {
             WorkspaceAction::SetA11yVerbosityLevel(verbosity) => {
                 ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
                     format!("{verbosity:?} accessibility announcements set"),
-                    WarpA11yRole::UserAction,
+                    LeantermA11yRole::UserAction,
                 ))
             }
             _ => ActionAccessibilityContent::from_debug(),
@@ -14019,9 +14030,9 @@ impl TypedActionView for Workspace {
             OpenLinkOnDesktop(url) => self.open_link_on_desktop(url, ctx),
             DumpDebugInfo => self.dump_debug_info(ctx),
             #[cfg(target_os = "macos")]
-            InstallWarpctrl => self.install_warpctrl(ctx),
+            InstallLeantermctl => self.install_leantermctl(ctx),
             #[cfg(target_os = "macos")]
-            UninstallWarpctrl => self.uninstall_warpctrl(ctx),
+            UninstallLeantermctl => self.uninstall_leantermctl(ctx),
             UndoRevertInCodeReviewPane { window_id, view_id } => {
                 self.undo_revert_in_code_review_pane(*window_id, *view_id, ctx)
             }
@@ -14471,7 +14482,7 @@ impl TypedActionView for Workspace {
                     .unwrap_or_default()
                     .as_secs();
                 let output_path = env::temp_dir()
-                    .join(format!("warp_sample_{timestamp}.txt"))
+                    .join(format!("leanterm_sample_{timestamp}.txt"))
                     .display()
                     .to_string();
 
@@ -14790,8 +14801,8 @@ impl View for Workspace {
         }
 
         let default_terminal = DefaultTerminal::as_ref(app);
-        if default_terminal.is_warp_default() {
-            context.set.insert(flags::WARP_IS_DEFAULT_TERMINAL);
+        if default_terminal.is_leanterm_default() {
+            context.set.insert(flags::LEANTERM_IS_DEFAULT_TERMINAL);
         }
 
         if FeatureFlag::DebugMode.is_enabled() {
@@ -14846,7 +14857,7 @@ impl View for Workspace {
 
         let tab_bar_mode = self.tab_bar_mode(app);
 
-        // For WASM simplified tab bar views (Warp Drive objects, shared sessions, conversation transcripts),
+        // For WASM simplified tab bar views (Leanterm Drive objects, shared sessions, conversation transcripts),
         // we render the tab bar outside of panels so that the details panel only affects content below the tab bar.
         cfg_if::cfg_if! {
             if #[cfg(target_family = "wasm")] {
@@ -17037,7 +17048,7 @@ fn render_horizontal_group_pin_indicator(appearance: &Appearance) -> Box<dyn Ele
     let theme = appearance.theme();
     ConstrainedBox::new(
         Icon::PinFilledDiagonal
-            .to_warpui_icon(theme.main_text_color(theme.background()))
+            .to_leanterm_ui_icon(theme.main_text_color(theme.background()))
             .finish(),
     )
     .with_width(TAB_PIN_INDICATOR_ICON_SIZE)

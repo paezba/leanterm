@@ -1,6 +1,5 @@
 //! This module contains the code for the ignore button shown inline next to autosuggestions.
 
-use pathfinder_geometry::vector::vec2f;
 use leanterm_core::ui::theme::Fill;
 use leanterm_ui::elements::{
     ChildAnchor, ConstrainedBox, Container, CornerRadius, Element, Hoverable, MouseStateHandle,
@@ -9,6 +8,7 @@ use leanterm_ui::elements::{
 use leanterm_ui::platform::Cursor;
 use leanterm_ui::ui_components::components::UiComponent;
 use leanterm_ui::{Entity, SingletonEntity, TypedActionView, View, ViewContext};
+use pathfinder_geometry::vector::vec2f;
 
 use super::EditorElement;
 use crate::appearance::Appearance;
@@ -111,17 +111,22 @@ impl View for AutosuggestionIgnore {
 
             let height_without_border = height - border_width * 2.;
             let close_icon = Container::new(
-                ConstrainedBox::new(Icon::X.to_warpui_icon(Fill::Solid(icon_color)).finish())
-                    .with_height(height_without_border)
-                    .with_width(height_without_border)
-                    .finish(),
+                ConstrainedBox::new(
+                    Icon::X
+                        .to_leanterm_ui_icon(Fill::Solid(icon_color))
+                        .finish(),
+                )
+                .with_height(height_without_border)
+                .with_width(height_without_border)
+                .finish(),
             )
             .finish();
 
             let mut ignore_button = Container::new(close_icon)
                 .with_uniform_padding(2.)
                 .with_border(
-                    leanterm_ui::elements::Border::all(border_width).with_border_color(disabled_color),
+                    leanterm_ui::elements::Border::all(border_width)
+                        .with_border_color(disabled_color),
                 )
                 .with_corner_radius(CornerRadius::with_all(Radius::Percentage(25.)));
 

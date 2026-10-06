@@ -1,9 +1,9 @@
-use pathfinder_color::ColorU;
 use leanterm_ui::elements::{Align, Container};
 use leanterm_ui::presenter::ChildView;
 use leanterm_ui::ui_components::components::{UiComponent, UiComponentStyles};
 use leanterm_ui::ui_components::slider::{Slider, SliderStateHandle};
 use leanterm_ui::{AppContext, Element, Entity, TypedActionView, View, ViewContext, ViewHandle};
+use pathfinder_color::ColorU;
 
 /// Renders a center-aligned slider component against a black background. When the slider is
 /// dragged, the updated value is printed to stdout.

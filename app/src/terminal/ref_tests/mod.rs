@@ -6,9 +6,9 @@ use std::io::{self, Read};
 use std::path::Path;
 use std::sync::Arc;
 
+use leanterm_ui::r#async::executor::Background;
 use serde::Deserialize;
 use serde_json as json;
-use leanterm_ui::r#async::executor::Background;
 
 use crate::terminal::color::Colors;
 use crate::terminal::event_listener::ChannelEventListener;
@@ -119,7 +119,7 @@ fn ref_test(dir: &Path) {
         block_padding,
         size,
         max_block_scroll_limit: history_size as usize,
-        warp_prompt_height_lines: 0.1,
+        leanterm_prompt_height_lines: 0.1,
     };
     let mut terminal = TerminalModel::new(
         None, /* restored_blocks */

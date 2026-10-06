@@ -1,6 +1,6 @@
+use leanterm_ui::accessibility::AccessibilityVerbosity;
 use settings::SupportedPlatforms;
 use settings::macros::define_settings_group;
-use leanterm_ui::accessibility::AccessibilityVerbosity;
 
 define_settings_group!(AccessibilitySettings, settings: [
     a11y_verbosity: AccessibilityVerbosityState {

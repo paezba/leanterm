@@ -97,7 +97,7 @@ impl ActiveSession {
     /// case-insensitive filesystems. Remote sessions have no location.
     pub fn location_for_path(&self, path: &str, app: &AppContext) -> Option<PathBuf> {
         match self.session_type(app) {
-            Some(SessionType::WarpifiedRemote) => None,
+            Some(SessionType::LeantermifiedRemote) => None,
             Some(SessionType::Local) | None => {
                 let path =
                     dunce::canonicalize(Path::new(path)).unwrap_or_else(|_| PathBuf::from(path));

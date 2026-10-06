@@ -1,7 +1,7 @@
-use serde::Serialize;
 use leanterm_ui::Element;
 use leanterm_ui::elements::MouseStateHandle;
 use leanterm_ui::notification::RequestPermissionsOutcome;
+use serde::Serialize;
 
 use super::{
     InlineBannerButtonState, InlineBannerCloseButton, InlineBannerContent, InlineBannerStyle,
@@ -109,7 +109,7 @@ pub fn render_inline_notifications_discovery_banner(
                         learn_more_button,
                     ),
                     RequestPermissionsOutcome::PermissionsDenied => (
-                        "Warp was denied permissions to send you notifications.",
+                        "Leanterm was denied permissions to send you notifications.",
                         troubleshoot_button,
                     ),
                     RequestPermissionsOutcome::OtherError { .. } => (

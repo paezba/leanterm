@@ -1,6 +1,5 @@
 use std::path::PathBuf;
 
-use pathfinder_geometry::vector::vec2f;
 use leanterm_ui::elements::{
     ChildAnchor, ChildView, ConstrainedBox, Container, CrossAxisAlignment, Flex,
     FormattedTextElement, MouseStateHandle, OffsetPositioning, ParentAnchor, ParentElement,
@@ -14,6 +13,7 @@ use leanterm_ui::{
     AppContext, Element, Entity, FocusContext, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle,
 };
+use pathfinder_geometry::vector::vec2f;
 
 use super::session_config::{SessionConfigSelection, SessionType, is_git_repo};
 use super::session_config_rendering;
@@ -85,7 +85,7 @@ impl SessionConfigModal {
         });
 
         let submit_button = ctx.add_view(|ctx| {
-            ActionButton::new("Get Warping", PrimaryTheme)
+            ActionButton::new("Get Leanterming", PrimaryTheme)
                 .with_full_width(true)
                 .with_keybinding(
                     KeystrokeSource::Fixed(Keystroke::parse("enter").unwrap_or_default()),

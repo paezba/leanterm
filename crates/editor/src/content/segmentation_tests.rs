@@ -1,10 +1,10 @@
 use itertools::Itertools;
-use markdown_parser::parse_markdown;
-use string_offset::CharOffset;
 use leanterm_ui_core::App;
 use leanterm_ui_core::text::TextBuffer;
 use leanterm_ui_core::text::point::Point;
 use leanterm_ui_core::text::word_boundaries::WordBoundariesPolicy;
+use markdown_parser::parse_markdown;
+use string_offset::CharOffset;
 
 use crate::content::buffer::{Buffer, EditOrigin};
 use crate::content::selection_model::BufferSelectionModel;

@@ -11,20 +11,20 @@ fn safe_browser_open_url_accepts_browser_safe_urls() {
         Some("http://example.com/path?q=1")
     );
     assert_eq!(
-        safe_browser_open_url("mailto:support@warp.dev").as_deref(),
-        Some("mailto:support@warp.dev")
+        safe_browser_open_url("mailto:support@lean.dev").as_deref(),
+        Some("mailto:support@lean.dev")
     );
 }
 
 #[test]
-fn safe_browser_open_url_accepts_warp_channel_urls() {
+fn safe_browser_open_url_accepts_leanterm_channel_urls() {
     for scheme in [
-        "warp",
-        "warppreview",
-        "warpdev",
-        "warplocal",
         "leanterm",
-        "warpintegration",
+        "leantermpreview",
+        "leantermdev",
+        "leantermlocal",
+        "leanterm",
+        "leantermintegration",
     ] {
         let url = format!("{scheme}://action/focus_cloud_mode");
         assert_eq!(safe_browser_open_url(&url).as_deref(), Some(url.as_str()));

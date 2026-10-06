@@ -23,11 +23,11 @@ cfg_if::cfg_if! {
 use leanterm_core::channel::ChannelState;
 #[cfg(feature = "local_fs")]
 use leanterm_core::sync_queue::SyncQueue;
-use leanterm_util::git::run_git_command;
 #[cfg(not(target_arch = "wasm32"))]
 use leanterm_ui::AppContext;
 use leanterm_ui::r#async::SpawnedFutureHandle;
 use leanterm_ui::{ModelContext, SingletonEntity};
+use leanterm_util::git::run_git_command;
 
 use crate::code_review::diff_size_limits::{
     DiffSize, MAX_DIFF_SIZE, UnrenderableReason, compute_diff_size,

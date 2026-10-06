@@ -20,14 +20,6 @@ use futures::FutureExt as _;
 use futures::stream::AbortHandle;
 use itertools::Itertools;
 use lazy_static::lazy_static;
-use ordered_float::Float;
-use parking_lot::FairMutex;
-use regex::Regex;
-use serde::{Deserialize, Serialize};
-use settings::Setting as _;
-use string_offset::{ByteOffset, CharOffset};
-use vec1::Vec1;
-use vim::vim::VimMode;
 use leanterm_completer::completer::{
     self, CompleterOptions, CompletionContext, CompletionsFallbackStrategy, Description,
     ExplicitTabCompletion, MatchStrategy, MatchType, PathSeparators, PreparedSuggestion,
@@ -41,9 +33,10 @@ use leanterm_core::r#async::debounce;
 use leanterm_core::context_flag::ContextFlag;
 use leanterm_editor::editor::NavigationKey;
 use leanterm_errors::{report_error, report_if_error};
-use leanterm_util::path::ShellFamily;
 pub use leanterm_ui::WindowId;
-use leanterm_ui::accessibility::{AccessibilityContent, ActionAccessibilityContent, WarpA11yRole};
+use leanterm_ui::accessibility::{
+    AccessibilityContent, ActionAccessibilityContent, LeantermA11yRole,
+};
 use leanterm_ui::r#async::SpawnedFutureHandle;
 use leanterm_ui::clipboard::ClipboardContent;
 use leanterm_ui::color::ColorU;
@@ -63,10 +56,20 @@ use leanterm_ui::{
     AppContext, Entity, EntityId, FocusContext, ModelAsRef, ModelHandle, SingletonEntity,
     TypedActionView, View, ViewContext, ViewHandle, WeakViewHandle, end_trace, start_trace,
 };
+use leanterm_util::path::ShellFamily;
+use ordered_float::Float;
+use parking_lot::FairMutex;
+use regex::Regex;
+use serde::{Deserialize, Serialize};
+use settings::Setting as _;
+use string_offset::{ByteOffset, CharOffset};
+use vec1::Vec1;
+use vim::vim::VimMode;
 
 use self::decorations::InputBackgroundJobOptions;
 use super::alias::is_expandable_alias;
 use super::event::{BlockCompletedEvent, BlockType, UserBlockCompleted};
+use super::leantermify::SubshellSource;
 use super::ligature_settings::LigatureSettings;
 use super::model::block::{BlockId, BlockMetadata, BlocklistEnvVarMetadata};
 use super::model::completions::ShellCompletion;
@@ -84,7 +87,6 @@ use super::shell::ShellType;
 use super::view::{
     ExecuteCommandEvent, PADDING_LEFT as TERMINAL_VIEW_PADDING_LEFT, SyncInputType, TerminalAction,
 };
-use super::warpify::SubshellSource;
 use super::{History, HistoryEntry, SizeInfo, TerminalModel, prompt, should_right_click_paste};
 #[allow(unused_imports)]
 use crate::ASSETS;
@@ -126,7 +128,7 @@ use crate::terminal::input::buffer_model::InputBufferModel;
 use crate::terminal::input::suggestions_mode_model::InputSuggestionsModeModel;
 use crate::terminal::model::session::active_session::ActiveSession;
 use crate::terminal::model::session::shell_quote_arg;
-use crate::user_config::WarpConfig;
+use crate::user_config::LeantermConfig;
 use crate::util::bindings::{self, CustomAction};
 #[cfg(feature = "local_fs")]
 use crate::util::file::external_editor;
@@ -480,7 +482,7 @@ pub enum Event {
     EditorFocused,
     OpenSettings(SettingsSection),
     #[cfg(feature = "local_fs")]
-    OpenCodeInWarp {
+    OpenCodeInLeanterm {
         source: CodeSource,
         layout: external_editor::settings::EditorLayout,
     },
@@ -814,17 +816,23 @@ fn strip_control_characters(text: &str) -> Cow<'_, str> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum CompletionSources {
     None,
-    WarpOnly,
+    LeantermOnly,
     NativeOnly,
     /// Bundled specs first, asking the shell only if they come back empty.
-    WarpThenNative,
+    LeantermThenNative,
 }
 
 impl CompletionSources {
-    fn resolve(warp_completions_enabled: bool, native_shell_completions_eligible: bool) -> Self {
-        match (warp_completions_enabled, native_shell_completions_eligible) {
-            (true, true) => Self::WarpThenNative,
-            (true, false) => Self::WarpOnly,
+    fn resolve(
+        leanterm_completions_enabled: bool,
+        native_shell_completions_eligible: bool,
+    ) -> Self {
+        match (
+            leanterm_completions_enabled,
+            native_shell_completions_eligible,
+        ) {
+            (true, true) => Self::LeantermThenNative,
+            (true, false) => Self::LeantermOnly,
             (false, true) => Self::NativeOnly,
             (false, false) => Self::None,
         }
@@ -832,7 +840,7 @@ impl CompletionSources {
 
     /// Whether the shell's native completions are consulted for this request.
     fn uses_native(self) -> bool {
-        matches!(self, Self::NativeOnly | Self::WarpThenNative)
+        matches!(self, Self::NativeOnly | Self::LeantermThenNative)
     }
 }
 
@@ -842,14 +850,17 @@ impl CompletionSources {
 fn resolve_completion_sources(
     buffer_text_is_multiline: bool,
     completions_trigger: CompletionsTrigger,
-    warp_completions_enabled: bool,
+    leanterm_completions_enabled: bool,
     native_shell_completions_enabled: bool,
 ) -> CompletionSources {
     let native_shell_completions_eligible = completions_trigger != CompletionsTrigger::AsYouType
         && native_shell_completions_enabled
         && !buffer_text_is_multiline; // For now, don't use native shell completions for multi-line commands.
 
-    CompletionSources::resolve(warp_completions_enabled, native_shell_completions_eligible)
+    CompletionSources::resolve(
+        leanterm_completions_enabled,
+        native_shell_completions_eligible,
+    )
 }
 
 /// Builds [`SuggestionResults`] from a shell's native-completions reply.
@@ -1117,7 +1128,7 @@ pub fn init(app: &mut AppContext) {
 
     app.register_editable_bindings([EditableBinding::new(
         "input:insert_network_logging_workflow",
-        "Show Warp network log",
+        "Show Leanterm network log",
         WorkspaceAction::OpenNetworkLogPane,
     )
     .with_enabled(|| ContextFlag::NetworkLogConsole.is_enabled())]);
@@ -1432,7 +1443,7 @@ impl Input {
             .app_workflows()
             .cloned()
             .collect_vec();
-        let local_user_workflows = WarpConfig::as_ref(ctx).local_user_workflows().clone();
+        let local_user_workflows = LeantermConfig::as_ref(ctx).local_user_workflows().clone();
 
         let workflows_search_view = ctx.add_typed_action_view(|ctx| {
             workflows::CategoriesView::new(local_user_workflows, app_workflows, ctx)
@@ -1650,7 +1661,7 @@ impl Input {
                 range_end: None,
             };
             // Emit an event to create a new code pane
-            ctx.emit(Event::OpenCodeInWarp {
+            ctx.emit(Event::OpenCodeInLeanterm {
                 source: code_source,
                 layout: *external_editor::EditorSettings::as_ref(ctx)
                     .open_file_layout
@@ -2474,7 +2485,7 @@ impl Input {
         ctx.emit_a11y_content(AccessibilityContent::new(
             accessibility_text,
             "Press shift-tab to select the next workflow argument",
-            WarpA11yRole::UserAction,
+            LeantermA11yRole::UserAction,
         ));
 
         // Only highlight an argument and show enum suggestions if history suggestions are not active
@@ -2676,7 +2687,7 @@ impl Input {
 
                 ctx.emit_a11y_content(AccessibilityContent::new_without_help(
                     format!("Executed: {command}"),
-                    WarpA11yRole::UserAction,
+                    LeantermA11yRole::UserAction,
                 ));
             }
             InputSuggestionsEvent::CloseSuggestion {
@@ -3508,7 +3519,8 @@ impl Input {
                             // the completions finish quickly, since that causes a jittery UX.
                             let _ = ctx.spawn(
                                 async move {
-                                    leanterm_ui::r#async::Timer::after(Duration::from_millis(750)).await;
+                                    leanterm_ui::r#async::Timer::after(Duration::from_millis(750))
+                                        .await;
                                     old_buffer_text_original
                                 },
                                 move |input, old_buffer_text_original, ctx| {
@@ -4113,7 +4125,7 @@ impl Input {
             resolve_completion_sources(
                 buffer_text.contains('\n'),
                 completions_trigger,
-                *input_settings.warp_completions_enabled,
+                *input_settings.leanterm_completions_enabled,
                 *input_settings.native_shell_completions_enabled,
             )
         };
@@ -4152,7 +4164,7 @@ impl Input {
             return;
         }
 
-        if comp_sources == CompletionSources::WarpThenNative {
+        if comp_sources == CompletionSources::LeantermThenNative {
             let completion_session = completion_context.session.clone();
             let abort_handle = ctx
                 .spawn_abortable(
@@ -4857,7 +4869,7 @@ impl Input {
             if let Some(a11y_text) = self.selected_workflow_a11y_text(ctx) {
                 ctx.emit_a11y_content(AccessibilityContent::new_without_help(
                     a11y_text,
-                    WarpA11yRole::UserAction,
+                    LeantermA11yRole::UserAction,
                 ));
             }
         } else {
@@ -4939,7 +4951,7 @@ impl Input {
             if trigger == CommandXRayTrigger::Keystroke {
                 ctx.emit_a11y_content(AccessibilityContent::new_without_help(
                     description.a11y_text(),
-                    WarpA11yRole::UserAction,
+                    LeantermA11yRole::UserAction,
                 ));
             }
             ctx.notify();
@@ -5828,7 +5840,7 @@ impl TypedActionView for Input {
                     INPUT_A11Y_LABEL,
                     // TODO (a11y) use bindings from user settings
                     INPUT_A11Y_HELPER,
-                    WarpA11yRole::TextareaRole,
+                    LeantermA11yRole::TextareaRole,
                 ))
             }
             _ => ActionAccessibilityContent::Empty,
@@ -5876,7 +5888,7 @@ impl View for Input {
             INPUT_A11Y_LABEL,
             // TODO (a11y) use bindings from user settings
             INPUT_A11Y_HELPER,
-            WarpA11yRole::TextareaRole,
+            LeantermA11yRole::TextareaRole,
         ))
     }
 

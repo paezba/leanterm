@@ -1,8 +1,8 @@
-use pathfinder_geometry::rect::RectF;
 use leanterm_ui::integration::TestStep;
 use leanterm_ui::platform::TerminationMode;
 use leanterm_ui::windowing::WindowManager;
 use leanterm_ui::{SingletonEntity, async_assert_eq};
+use pathfinder_geometry::rect::RectF;
 
 use crate::integration_testing::step::new_step_with_default_assertions;
 

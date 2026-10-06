@@ -11,11 +11,11 @@ use std::{
 };
 
 use chrono::{Local, SecondsFormat};
-#[cfg(test)]
-use parking_lot::Mutex;
 use leanterm_completer::completer::{CommandExitStatus, CommandOutput};
 #[cfg(not(target_family = "wasm"))]
 use leanterm_errors::report_error;
+#[cfg(test)]
+use parking_lot::Mutex;
 
 use super::ContextChipKind;
 use crate::terminal::shell::ShellType;

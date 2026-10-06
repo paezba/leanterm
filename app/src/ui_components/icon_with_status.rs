@@ -1,6 +1,6 @@
-use leanterm_core::ui::icons::Icon as WarpIcon;
+use leanterm_core::ui::icons::Icon as LeantermIcon;
 use leanterm_core::ui::theme::color::internal_colors;
-use leanterm_core::ui::theme::{Fill as WarpThemeFill, WarpTheme};
+use leanterm_core::ui::theme::{Fill as LeantermThemeFill, LeantermTheme};
 use leanterm_ui::elements::{ConstrainedBox, Container, CornerRadius, Element, Radius};
 
 /// The inner glyph occupies `NEUTRAL_GLYPH_RATIO * total_size`, matching the old sizing where a
@@ -11,8 +11,8 @@ const NEUTRAL_GLYPH_RATIO: f32 = 16.0 / 24.0;
 pub(crate) enum IconWithStatusVariant {
     /// A generic icon with a given color on an overlay background.
     Neutral {
-        icon: WarpIcon,
-        icon_color: WarpThemeFill,
+        icon: LeantermIcon,
+        icon_color: LeantermThemeFill,
     },
     /// A pre-built icon element on an overlay background.
     NeutralElement { icon_element: Box<dyn Element> },
@@ -22,11 +22,11 @@ pub(crate) enum IconWithStatusVariant {
 pub(crate) fn render_icon_with_status(
     variant: IconWithStatusVariant,
     total_size: f32,
-    theme: &WarpTheme,
+    theme: &LeantermTheme,
 ) -> Box<dyn Element> {
     let icon_element = match variant {
         IconWithStatusVariant::Neutral { icon, icon_color } => {
-            icon.to_warpui_icon(icon_color).finish()
+            icon.to_leanterm_ui_icon(icon_color).finish()
         }
         IconWithStatusVariant::NeutralElement { icon_element } => icon_element,
     };

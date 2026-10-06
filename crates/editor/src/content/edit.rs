@@ -7,13 +7,6 @@ use std::sync::Arc;
 
 use anyhow::{Result, anyhow};
 use itertools::Itertools;
-use markdown_parser::{Hyperlink, TableAlignment};
-use num_traits::SaturatingSub;
-use rangemap::RangeSet;
-use rayon::iter::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
-use string_offset::{ByteOffset, CharOffset};
-use urlocator::{UrlLocation, UrlLocator};
-use vec1::Vec1;
 use leanterm_core::ui::theme::Fill as ThemeFill;
 use leanterm_errors::report_error;
 use leanterm_ui_core::assets::asset_cache::{AssetCache, AssetSource, AssetState};
@@ -24,6 +17,13 @@ use leanterm_ui_core::text::point::Point;
 use leanterm_ui_core::text_layout::{StyleAndFont, TextAlignment};
 use leanterm_ui_core::units::{IntoPixels, Pixels};
 use leanterm_ui_core::{AppContext, SingletonEntity};
+use markdown_parser::{Hyperlink, TableAlignment};
+use num_traits::SaturatingSub;
+use rangemap::RangeSet;
+use rayon::iter::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
+use string_offset::{ByteOffset, CharOffset};
+use urlocator::{UrlLocation, UrlLocator};
+use vec1::Vec1;
 
 use super::buffer::{StyledBufferBlock, StyledBufferRun, StyledTextBlock};
 use super::mermaid_diagram::{mermaid_asset_source, mermaid_diagram_layout};

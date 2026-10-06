@@ -4,17 +4,15 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 pub use gutter_button::{AddAsContextButton, CommentButton, RevertHunkButton};
-use parking_lot::Mutex;
-use pathfinder_color::ColorU;
-use pathfinder_geometry::rect::RectF;
-use pathfinder_geometry::vector::{Vector2F, vec2f};
 use leanterm_core::features::FeatureFlag;
 use leanterm_core::ui::appearance::Appearance;
 use leanterm_core::ui::theme::Fill;
 use leanterm_core::ui::theme::color::internal_colors;
 use leanterm_editor::editor::EditorView;
 use leanterm_editor::render::element::lens_element::RichTextElementLens;
-use leanterm_editor::render::element::{RenderableBlock, RichTextElement, VerticalExpansionBehavior};
+use leanterm_editor::render::element::{
+    RenderableBlock, RichTextElement, VerticalExpansionBehavior,
+};
 use leanterm_editor::render::model::{
     BlockLocation, ExpansionType, LineCount, RenderState, gutter_expansion_button_types,
 };
@@ -32,6 +30,10 @@ use leanterm_ui::{
     AfterLayoutContext, AppContext, ClipBounds, Element, Event, EventContext, LayoutContext,
     ModelHandle, PaintContext, SingletonEntity, SizeConstraint,
 };
+use parking_lot::Mutex;
+use pathfinder_color::ColorU;
+use pathfinder_geometry::rect::RectF;
+use pathfinder_geometry::vector::{Vector2F, vec2f};
 
 use super::diff::{DiffHunkDisplay, DiffStatus};
 use super::model::DiffNavigationState;
@@ -991,7 +993,8 @@ impl<V: EditorView> EditorWrapper<V> {
 
             let container = Container::new(
                 ConstrainedBox::new(
-                    leanterm_ui::elements::Icon::new(gutter_button.icon().into(), icon_color).finish(),
+                    leanterm_ui::elements::Icon::new(gutter_button.icon().into(), icon_color)
+                        .finish(),
                 )
                 .with_width(icon_size)
                 .with_height(icon_size)

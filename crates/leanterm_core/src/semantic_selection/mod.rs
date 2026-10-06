@@ -2,13 +2,13 @@ use std::collections::HashSet;
 use std::ops::Range;
 
 use lazy_static::lazy_static;
+use leanterm_ui_core::elements::SmartSelectFn;
+use leanterm_ui_core::text::word_boundaries::WordBoundariesPolicy;
+use leanterm_ui_core::text::words::{DEFAULT_WORD_BOUNDARY_CHARS, is_default_word_boundary};
 use regex::Regex;
 use settings::macros::define_settings_group;
 use settings::{Setting, SupportedPlatforms};
 use string_offset::ByteOffset;
-use leanterm_ui_core::elements::SmartSelectFn;
-use leanterm_ui_core::text::word_boundaries::WordBoundariesPolicy;
-use leanterm_ui_core::text::words::{DEFAULT_WORD_BOUNDARY_CHARS, is_default_word_boundary};
 
 /// Upper limit for how many characters in either direction we'll search for patterns. Need to
 /// limit this to avoid running regex on absurdly long words

@@ -9,11 +9,11 @@ use std::time::Duration;
 use futures::future::ready;
 #[cfg(feature = "local_fs")]
 use ignore::gitignore::Gitignore;
-use leanterm_util::standardized_path::StandardizedPath;
 #[cfg(feature = "local_fs")]
 use leanterm_ui_core::SingletonEntity;
 use leanterm_ui_core::r#async::{BoxFuture, SpawnedFutureHandle};
 use leanterm_ui_core::{Entity, ModelContext, ModelHandle};
+use leanterm_util::standardized_path::StandardizedPath;
 
 #[cfg(feature = "local_fs")]
 use crate::watcher::DirectoryWatcher;
@@ -68,7 +68,7 @@ struct RepositorySubscription {
     subscriber: Box<dyn RepositorySubscriber>,
 }
 
-/// Model for tracking a code repository that Warp is aware of.
+/// Model for tracking a code repository that Leanterm is aware of.
 pub struct Repository {
     /// The root directory of the repository.
     root_dir: StandardizedPath,

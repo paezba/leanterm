@@ -5,8 +5,8 @@ use root_view::RootView;
 pub mod root_view;
 
 extern crate leanterm_ui;
-use rust_embed::RustEmbed;
 use leanterm_ui::{AssetProvider, platform};
+use rust_embed::RustEmbed;
 
 #[derive(Clone, Copy, RustEmbed)]
 #[folder = "examples/assets"]
@@ -28,7 +28,9 @@ fn main() -> Result<()> {
     let app_builder =
         platform::AppBuilder::new(platform::AppCallbacks::default(), Box::new(ASSETS), None);
     let _ = app_builder.run(move |ctx| {
-        ctx.add_window(leanterm_ui::AddWindowOptions::default(), |_| RootView::new());
+        ctx.add_window(leanterm_ui::AddWindowOptions::default(), |_| {
+            RootView::new()
+        });
     });
 
     Ok(())

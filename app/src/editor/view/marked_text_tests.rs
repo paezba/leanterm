@@ -1,7 +1,7 @@
-use vim::vim::VimMode;
 use leanterm_ui::App;
 use leanterm_ui::keymap::Keystroke;
 use leanterm_ui::platform::WindowStyle;
+use vim::vim::VimMode;
 
 use super::initialize_app;
 use crate::editor::{DisplayPoint, EditorOptions, EditorView};

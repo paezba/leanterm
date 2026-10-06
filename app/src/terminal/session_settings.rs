@@ -4,11 +4,11 @@ pub mod working_directory_config;
 
 use instant::Duration;
 use lazy_static::lazy_static;
+use leanterm_core::settings::SupportedPlatforms;
+use leanterm_core::settings::macros::define_settings_group;
 pub use new_session_shell::*;
 use serde::{Deserialize, Serialize};
 pub use startup_shell::*;
-use leanterm_core::settings::SupportedPlatforms;
-use leanterm_core::settings::macros::define_settings_group;
 pub use working_directory_config::*;
 
 use crate::context_chips::prompt::PromptSelection;
@@ -137,7 +137,7 @@ define_settings_group!(SessionSettings, settings: [
         surface: settings::SettingSurfaces::GUI,
         private: false,
         toml_path: "session.startup_shell_override",
-        description: "The shell to use when Warp starts up.",
+        description: "The shell to use when Leanterm starts up.",
     },
     new_session_shell_override: NewSessionShellOverride {
         type: Option<NewSessionShell>,
@@ -155,7 +155,7 @@ define_settings_group!(SessionSettings, settings: [
         surface: settings::SettingSurfaces::GUI,
         private: false,
         toml_path: "terminal.input.honor_ps1",
-        description: "Whether to use your shell's PS1 prompt instead of the Warp prompt.",
+        description: "Whether to use your shell's PS1 prompt instead of the Leanterm prompt.",
     },
     saved_prompt: SavedPrompt {
         type: PromptSelection,

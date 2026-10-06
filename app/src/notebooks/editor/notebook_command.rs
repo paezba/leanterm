@@ -6,14 +6,6 @@ use std::sync::Arc;
 use async_channel::Sender;
 use itertools::Itertools;
 use lazy_static::lazy_static;
-use markdown_parser::markdown_parser::CODE_BLOCK_DEFAULT_MARKDOWN_LANG;
-use pathfinder_color::ColorU;
-use string_offset::{ByteOffset, CharOffset};
-use syntect::easy::HighlightLines;
-use syntect::highlighting::{self, Theme, ThemeSet};
-use syntect::parsing::SyntaxSet;
-use syntect::util::LinesWithEndings;
-use ui_components::lightbox::{LightboxImage, LightboxImageSource};
 use leanterm_completer::signatures::CommandRegistry;
 use leanterm_core::r#async::debounce;
 use leanterm_editor::content::anchor::Anchor;
@@ -25,7 +17,6 @@ use leanterm_editor::content::text::{
     CodeBlockType,
 };
 use leanterm_editor::editor::RunnableCommandModel;
-use leanterm_util::user_input::UserInput;
 use leanterm_ui::r#async::SpawnedFutureHandle;
 use leanterm_ui::elements::{
     Align, Border, Container, CornerRadius, CrossAxisAlignment, Empty, Flex, MainAxisAlignment,
@@ -39,6 +30,15 @@ use leanterm_ui::{
     AppContext, AssetProvider as _, Element, Entity, ModelAsRef, ModelContext, ModelHandle,
     SingletonEntity, ViewHandle, WeakModelHandle, WindowId,
 };
+use leanterm_util::user_input::UserInput;
+use markdown_parser::markdown_parser::CODE_BLOCK_DEFAULT_MARKDOWN_LANG;
+use pathfinder_color::ColorU;
+use string_offset::{ByteOffset, CharOffset};
+use syntect::easy::HighlightLines;
+use syntect::highlighting::{self, Theme, ThemeSet};
+use syntect::parsing::SyntaxSet;
+use syntect::util::LinesWithEndings;
+use ui_components::lightbox::{LightboxImage, LightboxImageSource};
 
 use super::interaction_state_model::InteractionStateModel;
 use super::keys::{NotebookKeybindings, custom_action_to_display};

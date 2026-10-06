@@ -9,8 +9,7 @@ use itertools::Itertools;
 use leanterm_core::ui::builder::UiBuilder;
 use leanterm_core::ui::theme::color::internal_colors;
 use leanterm_editor::editor::NavigationKey;
-use warp_workflows::workflows as global_workflows;
-use leanterm_ui::accessibility::{AccessibilityContent, WarpA11yRole};
+use leanterm_ui::accessibility::{AccessibilityContent, LeantermA11yRole};
 use leanterm_ui::color::ColorU;
 use leanterm_ui::elements::{
     Align, ConstrainedBox, Container, CrossAxisAlignment, DispatchEventResult, Element,
@@ -25,13 +24,14 @@ use leanterm_ui::ui_components::components::{UiComponent, UiComponentStyles};
 use leanterm_ui::{
     AppContext, Entity, SingletonEntity, TypedActionView, View, ViewContext, WeakViewHandle,
 };
+use leanterm_workflows::workflows as global_workflows;
 
 use super::WorkflowSource;
 use super::workflow::Workflow;
 use crate::appearance::Appearance;
 use crate::editor::Event as EditorEvent;
-use crate::themes::theme::{self, Blend, WarpTheme};
-use crate::user_config::{WarpConfig, WarpConfigUpdateEvent};
+use crate::themes::theme::{self, Blend, LeantermTheme};
+use crate::user_config::{LeantermConfig, LeantermConfigUpdateEvent};
 use crate::util::bindings::CustomAction;
 use crate::voltron::{VoltronFeatureViewMeta, VoltronMetadata};
 use crate::workflows::WorkflowType;
@@ -164,7 +164,7 @@ impl WorkflowViewType {
             WorkflowViewType::Project => "Showing project workflows".into(),
         };
 
-        AccessibilityContent::new_without_help(a11y_content, WarpA11yRole::UserAction)
+        AccessibilityContent::new_without_help(a11y_content, LeantermA11yRole::UserAction)
     }
 }
 
@@ -329,7 +329,7 @@ impl SelectionState {
         }
     }
 
-    fn background_color(&self, theme: &WarpTheme) -> theme::Fill {
+    fn background_color(&self, theme: &LeantermTheme) -> theme::Fill {
         match self {
             SelectionState::Unselected => theme.surface_2(),
             SelectionState::Selected => theme.surface_2().blend(&theme.accent_overlay()),
@@ -365,7 +365,7 @@ impl CategoriesView {
             Self::categorize_workflows(
                 global_workflows()
                     .into_iter()
-                    .map(Workflow::from) // convert from the public-facing Workflow type to the warp-internal Workflow type
+                    .map(Workflow::from) // convert from the public-facing Workflow type to the leanterm-internal Workflow type
                     .map(WorkflowType::Local)
                     .map(Arc::new),
             ),
@@ -390,8 +390,8 @@ impl CategoriesView {
             ),
         );
 
-        ctx.subscribe_to_model(&WarpConfig::handle(ctx), |me, _, event, ctx| {
-            if let WarpConfigUpdateEvent::LocalUserWorkflows = event {
+        ctx.subscribe_to_model(&LeantermConfig::handle(ctx), |me, _, event, ctx| {
+            if let LeantermConfigUpdateEvent::LocalUserWorkflows = event {
                 me.update_workflows(ctx);
             }
         });
@@ -649,7 +649,7 @@ impl CategoriesView {
             );
             ctx.emit_a11y_content(AccessibilityContent::new_without_help(
                 a11y_content_text,
-                WarpA11yRole::MenuItemRole,
+                LeantermA11yRole::MenuItemRole,
             ));
         }
     }
@@ -1080,7 +1080,7 @@ impl CategoriesView {
     }
 
     fn update_workflows(&mut self, ctx: &mut ViewContext<Self>) {
-        let workflows = WarpConfig::as_ref(ctx)
+        let workflows = LeantermConfig::as_ref(ctx)
             .local_user_workflows()
             .iter()
             .map(Clone::clone)
@@ -1136,7 +1136,7 @@ impl View for CategoriesView {
         Some(AccessibilityContent::new(
             "Workflows",
             "Search or use arrow up and arrow down keys to navigate and find a workflow. Use enter to confirm the workflow and esc to quit.",
-            WarpA11yRole::MenuRole,
+            LeantermA11yRole::MenuRole,
         ))
     }
 

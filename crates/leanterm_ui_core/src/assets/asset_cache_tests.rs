@@ -9,7 +9,7 @@ use super::{AssetCache, AssetHandle, AssetSource, AssetStateInternal, LocalFileC
 fn unique_temp_path(name: &str) -> std::path::PathBuf {
     let mut path = std::env::temp_dir();
     path.push(format!(
-        "warp_asset_cache_test_{}_{name}",
+        "leanterm_asset_cache_test_{}_{name}",
         std::process::id()
     ));
     path

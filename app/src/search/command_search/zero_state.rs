@@ -6,7 +6,9 @@ use leanterm_ui::elements::{
     Container, CornerRadius, Flex, Hoverable, MouseStateHandle, ParentElement, Radius, Text, Wrap,
 };
 use leanterm_ui::platform::Cursor;
-use leanterm_ui::{AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext};
+use leanterm_ui::{
+    AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext,
+};
 
 use crate::appearance::Appearance;
 use crate::search::{FilterChipRenderer, QueryFilter};

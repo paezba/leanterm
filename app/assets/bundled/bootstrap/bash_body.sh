@@ -1,10 +1,10 @@
-# Note that WARP_SESSION_ID is expected to have been set when executing commands to
+# Note that LEANTERM_SESSION_ID is expected to have been set when executing commands to
 # emit the InitShell payload, which includes the session ID.
 #
 # Throughout, command -p is used to call external binaries. command -p resolves the
 # given command using the system default $PATH, which ensures the shells can locate
 # the corresponding binaries even if the user has a clobbered value of $PATH.
-if [ -z "$WARP_BOOTSTRAPPED" ]; then
+if [ -z "$LEANTERM_BOOTSTRAPPED" ]; then
     # Byte sequence used to signal the start of a DCS. ([0x1b, 0x50, 0x24] which
     # maps to <ESC>, P, $ in ASCII.)
     DCS_START="$(printf '\eP$')"
@@ -37,10 +37,10 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
 
     # Attempt to cd to the desired initial working directory, swallowing any
     # errors.  If this fails, the user will end up in their home directory.
-    if [[ ! -z "$WARP_INITIAL_WORKING_DIR" ]]; then
+    if [[ ! -z "$LEANTERM_INITIAL_WORKING_DIR" ]]; then
         # shellcheck disable=SC2164
-        cd "$WARP_INITIAL_WORKING_DIR" >/dev/null 2>&1
-        unset WARP_INITIAL_WORKING_DIR
+        cd "$LEANTERM_INITIAL_WORKING_DIR" >/dev/null 2>&1
+        unset LEANTERM_INITIAL_WORKING_DIR
     fi
 
     # We configure history to `ignorespace` to avoid leaking our bootstrap script
@@ -54,80 +54,80 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
 
     # The temporary files used to track generator PIDs.  We'll fill these in later,
     # if we execute any generator commands.
-    _WARP_GENERATOR_PIDS_STARTED_TMP_FILE=""
-    _WARP_GENERATOR_PIDS_COMPLETED_TMP_FILE=""
+    _LEANTERM_GENERATOR_PIDS_STARTED_TMP_FILE=""
+    _LEANTERM_GENERATOR_PIDS_COMPLETED_TMP_FILE=""
     # Make sure we delete generator PID files when the shell exits, if they exist.
-    __warp_generator_pid_file_cleanup() {
-      if [[ -f $_WARP_GENERATOR_PIDS_STARTED_TMP_FILE ]]; then
-        command -p rm $_WARP_GENERATOR_PIDS_STARTED_TMP_FILE
+    __leanterm_generator_pid_file_cleanup() {
+      if [[ -f $_LEANTERM_GENERATOR_PIDS_STARTED_TMP_FILE ]]; then
+        command -p rm $_LEANTERM_GENERATOR_PIDS_STARTED_TMP_FILE
       fi
-      if [[ -f $_WARP_GENERATOR_PIDS_COMPLETED_TMP_FILE ]]; then
-        command -p rm $_WARP_GENERATOR_PIDS_COMPLETED_TMP_FILE
+      if [[ -f $_LEANTERM_GENERATOR_PIDS_COMPLETED_TMP_FILE ]]; then
+        command -p rm $_LEANTERM_GENERATOR_PIDS_COMPLETED_TMP_FILE
       fi
     }
-    trap __warp_generator_pid_file_cleanup EXIT
+    trap __leanterm_generator_pid_file_cleanup EXIT
 
     # Writes a hex-encoded JSON message to the pty.
-    warp_send_json_message () {
+    leanterm_send_json_message () {
         # Sends a message to the controlling terminal as a DSC control sequence.
         # Note that because the JSON string may contain characters that we don't control (including
         # unicode), we encode it as hexadecimal string to avoid prematurely calling unhook if
         # one of the bytes in JSON is 9c (ST) or other (CAN, SUB, ESC).
-        encoded_message=$(warp_hex_encode_string "$1")
+        encoded_message=$(leanterm_hex_encode_string "$1")
         # We send the InitShell hook via OSCs when on WSL or MSYS2 or SSH from Windows and via DCSs otherwise.
-        # Note that $WARP_USING_WINDOWS_CON_PTY is set in the init shell script.
-        if [ "$WARP_USING_WINDOWS_CON_PTY" = true ]; then
+        # Note that $LEANTERM_USING_WINDOWS_CON_PTY is set in the init shell script.
+        if [ "$LEANTERM_USING_WINDOWS_CON_PTY" = true ]; then
           printf $OSC_START$DCS_JSON_MARKER$OSC_PARAM_SEPARATOR$encoded_message$OSC_END
         else
           printf $DCS_START$DCS_JSON_MARKER$encoded_message$DCS_END
         fi
     }
 
-    # Emit the ExitShell hook right before the remote shell exits so the Warp
+    # Emit the ExitShell hook right before the remote shell exits so the Leanterm
     # client can drop per-session resources (specifically the
     # `ssh … remote-server-proxy` child that holds a multiplexed channel on
     # the foreground ssh ControlMaster). This avoids a hang where the master
     # waits on orphaned slave channels when the user ends their interactive
     # session.
     #
-    # Only relevant for remote SSH shells. WARP_IS_SSH is exported to "1"
-    # by `warp_ssh_helper` on the remote side of a Warp-managed SSH session
+    # Only relevant for remote SSH shells. LEANTERM_IS_SSH is exported to "1"
+    # by `leanterm_ssh_helper` on the remote side of a Leanterm-managed SSH session
     # and is unset everywhere else (local shells, subshells, docker
     # sandboxes, etc.), so the hook only fires where a remote-server-proxy
     # actually needs tearing down.
     #
-    # Installed after warp_send_json_message is defined so the handler is
+    # Installed after leanterm_send_json_message is defined so the handler is
     # callable the moment the trap is registered.
-    if [[ "$WARP_IS_SSH" == "1" ]]; then
-        __warp_emit_exit_shell() {
-            if [[ -n "$WARP_SESSION_ID" ]]; then
-                warp_send_json_message \
-                    "{\"hook\": \"ExitShell\", \"value\": {\"session_id\": $WARP_SESSION_ID}}"
+    if [[ "$LEANTERM_IS_SSH" == "1" ]]; then
+        __leanterm_emit_exit_shell() {
+            if [[ -n "$LEANTERM_SESSION_ID" ]]; then
+                leanterm_send_json_message \
+                    "{\"hook\": \"ExitShell\", \"value\": {\"session_id\": $LEANTERM_SESSION_ID}}"
             fi
         }
         # Bash allows only one handler per signal, so compose with the
         # already-installed generator cleanup. Cover both normal exit (exit,
         # logout, Ctrl-D) and SIGHUP (connection drop).
-        __warp_on_exit() {
-            __warp_emit_exit_shell
-            __warp_generator_pid_file_cleanup
+        __leanterm_on_exit() {
+            __leanterm_emit_exit_shell
+            __leanterm_generator_pid_file_cleanup
         }
-        trap __warp_on_exit EXIT HUP
+        trap __leanterm_on_exit EXIT HUP
     fi
 
-    warp_maybe_send_reset_grid_osc () {
-        if [ "$WARP_USING_WINDOWS_CON_PTY" = true ]; then
+    leanterm_maybe_send_reset_grid_osc () {
+        if [ "$LEANTERM_USING_WINDOWS_CON_PTY" = true ]; then
             printf $RESET_GRID_OSC
         fi
     }
 
     # Expects the first argument to be the shell hook.
-    warp_send_hook_via_kv_pairs_start () {
+    leanterm_send_hook_via_kv_pairs_start () {
       printf "${OSC_START}k;A;%s\a" $1
     }
 
     # Expects the first argument to be the key and the second argument to be the value.
-    warp_send_hook_kv_pair_escaped () {
+    leanterm_send_hook_kv_pair_escaped () {
       # Note that we only escape the value.
       if [[ -n "$2" ]]; then
         printf "${OSC_START}k;B;%s;%q\a" "$1" "$2"
@@ -138,7 +138,7 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
     }
 
     # Expects the first argument to be the key and the second argument to be the value.
-    warp_send_hook_kv_pair () {
+    leanterm_send_hook_kv_pair () {
       # Note that we only escape the value.
       if [[ -n "$2" ]]; then
         printf "${OSC_START}k;B;%s;%s\a" "$1" "$2"
@@ -148,7 +148,7 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
       fi
     }
 
-    warp_send_hook_via_kv_pairs_end () {
+    leanterm_send_hook_via_kv_pairs_end () {
       printf "${OSC_START}k;C\a"
     }
 
@@ -157,20 +157,20 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
     #
     #
     # Usage:
-    #   warp_send_generator_output_osc $my_message
+    #   leanterm_send_generator_output_osc $my_message
     #
     # The payload of the OSC is "<content_length>;<hex-encoded content>".
-    warp_send_generator_output_osc () {
-        local hex_encoded_message=$(warp_hex_encode_string "$1")
-        warp_send_generator_output_osc_pre_hex_encoded "$hex_encoded_message"
+    leanterm_send_generator_output_osc () {
+        local hex_encoded_message=$(leanterm_hex_encode_string "$1")
+        leanterm_send_generator_output_osc_pre_hex_encoded "$hex_encoded_message"
     }
 
     # Note: If we're on windows, we send a reset grid to erase any cursor mutations caused by
     # the in-band command.
-    warp_send_generator_output_osc_pre_hex_encoded () {
+    leanterm_send_generator_output_osc_pre_hex_encoded () {
         local byte_count=$(LC_ALL="C"; printf "${#1}")
         printf "%b%i;%s%b" $OSC_START_GENERATOR_OUTPUT $byte_count $1 $OSC_END_GENERATOR_OUTPUT
-        warp_maybe_send_reset_grid_osc
+        leanterm_maybe_send_reset_grid_osc
     }
 
 
@@ -180,7 +180,7 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
     # where command_id is the ID given as the first argument to this function,
     # exit_code is the exit code of the executed command, and command_output is
     # the output itself.
-    _warp_execute_command() {
+    _leanterm_execute_command() {
       local command_id=$1
       # This is shorthand to slice the 2nd-nth arguments of this function (i.e.
       # the command array) into its own array. The first argument is the
@@ -200,38 +200,38 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
         eval "$command" 2>&1;
         echo -n ";$?";
       } | command -p od -An -v -tx1 | command -p tr -d ' \n')"
-      warp_send_generator_output_osc_pre_hex_encoded "$generator_output"
+      leanterm_send_generator_output_osc_pre_hex_encoded "$generator_output"
     }
 
     # Runs the given command in the background, records its PID in
-    # _WARP_GENERATOR_PIDS_STARTED_TMP_FILE, and adds its PID from the file when
+    # _LEANTERM_GENERATOR_PIDS_STARTED_TMP_FILE, and adds its PID from the file when
     # the job is completed.
-    _warp_run_generator_command_internal() {
+    _leanterm_run_generator_command_internal() {
       # $@ must be double-quoted to prevent word-splitting, which would cause the given command to
       # be split into a bash list on $IFS chars (spaces, tabs, newlines), which could invalidate
       # the syntactical correctness of the command.
-      _warp_execute_command "$@" &
+      _leanterm_execute_command "$@" &
       # $! contains the PID of the most recently backgrounded command.
       local pid=$!
-      echo $pid >> $_WARP_GENERATOR_PIDS_STARTED_TMP_FILE
+      echo $pid >> $_LEANTERM_GENERATOR_PIDS_STARTED_TMP_FILE
       wait $pid 2> /dev/null
 
-      # If the exit code of the backgrounded _warp_execute_command process is non-zero,
+      # If the exit code of the backgrounded _leanterm_execute_command process is non-zero,
       # the call to send the generator output failed (most likely because this is being
       # executed in an old bash version that doesn't support some syntax in
-      # _warp_execute_command function itself). In this case, send empty output with
+      # _leanterm_execute_command function itself). In this case, send empty output with
       # exit code 1 to indicate generator execution failed.
       if [[ $? -ne 0 ]]; then
-          warp_send_generator_output_osc "$1;;1"
+          leanterm_send_generator_output_osc "$1;;1"
       fi
 
 
       # Add the PID to the completed generators PID file.
       # 
       # The completed generator PIDs file may not exist if this generator was (by
-      # error) left running/not cancelled properly in warp_preexec.
-      if [[ -f $_WARP_GENERATOR_PIDS_COMPLETED_TMP_FILE ]]; then
-        echo $pid >> $_WARP_GENERATOR_PIDS_COMPLETED_TMP_FILE
+      # error) left running/not cancelled properly in leanterm_preexec.
+      if [[ -f $_LEANTERM_GENERATOR_PIDS_COMPLETED_TMP_FILE ]]; then
+        echo $pid >> $_LEANTERM_GENERATOR_PIDS_COMPLETED_TMP_FILE
       fi
     }
 
@@ -243,50 +243,50 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
     # not substituted until the command string is actually evaluated.
     #
     # Usage:
-    #   warp_run_generator_command <command_id> '<command> <arg1> ... <argn>'
-    warp_run_generator_command() {
-      # Setting this environment variable prevents warp_precmd from emitting the
+    #   leanterm_run_generator_command <command_id> '<command> <arg1> ... <argn>'
+    leanterm_run_generator_command() {
+      # Setting this environment variable prevents leanterm_precmd from emitting the
       # 'Block started' hook to the Rust app.
-      _WARP_GENERATOR_COMMAND=1
+      _LEANTERM_GENERATOR_COMMAND=1
 
       # Ensure the started and completed generator PID files exist.
-      if [[ -z $_WARP_GENERATOR_PIDS_STARTED_TMP_FILE || ! -f $_WARP_GENERATOR_PIDS_STARTED_TMP_FILE ]]; then
-        _WARP_GENERATOR_PIDS_STARTED_TMP_FILE="$(command -p mktemp)"
+      if [[ -z $_LEANTERM_GENERATOR_PIDS_STARTED_TMP_FILE || ! -f $_LEANTERM_GENERATOR_PIDS_STARTED_TMP_FILE ]]; then
+        _LEANTERM_GENERATOR_PIDS_STARTED_TMP_FILE="$(command -p mktemp)"
       fi
-      if [[ -z $_WARP_GENERATOR_PIDS_COMPLETED_TMP_FILE || ! -f $_WARP_GENERATOR_PIDS_COMPLETED_TMP_FILE ]]; then
-        _WARP_GENERATOR_PIDS_COMPLETED_TMP_FILE="$(command -p mktemp)"
+      if [[ -z $_LEANTERM_GENERATOR_PIDS_COMPLETED_TMP_FILE || ! -f $_LEANTERM_GENERATOR_PIDS_COMPLETED_TMP_FILE ]]; then
+        _LEANTERM_GENERATOR_PIDS_COMPLETED_TMP_FILE="$(command -p mktemp)"
       fi
 
       # To minimize latency and prevent the user from being blocked from entering a command,
-      # cache the user's precmd_functions and only register warp_precmd. In the warp_precmd
+      # cache the user's precmd_functions and only register leanterm_precmd. In the leanterm_precmd
       # execution following this generator command, the user's precmd_functions are restored.
       _USER_PRECMD_FUNCTIONS=("${precmd_functions[@]}")
-      precmd_functions=(warp_precmd)
+      precmd_functions=(leanterm_precmd)
 
       # $@ must be double-quoted to prevent word-splitting, which would cause the given command to
       # be split into a bash list on $IFS chars (spaces, tabs, newlines), which could invalidate
       # the syntactical correctness of the command.
-      (_warp_run_generator_command_internal "$@" &)
+      (_leanterm_run_generator_command_internal "$@" &)
     }
 
     # Computes native shell completions for the given (hex-encoded) command line and emits them over
     # the completions OSC protocol.
-    warp_run_generator_command_native_completions() {
-      _WARP_GENERATOR_COMMAND=1
+    leanterm_run_generator_command_native_completions() {
+      _LEANTERM_GENERATOR_COMMAND=1
       _USER_PRECMD_FUNCTIONS=("${precmd_functions[@]}")
-      precmd_functions=(warp_precmd)
+      precmd_functions=(leanterm_precmd)
 
       local line
-      line="$(warp_hex_decode_string "$1")"
+      line="$(leanterm_hex_decode_string "$1")"
 
       printf '\e]9280;A\a'
-      _warp_native_bash_completions "$line"
+      _leanterm_native_bash_completions "$line"
       printf '\e]9280;B\a'
     }
 
     # Populates COMPREPLY for the given line using bash's own completion machinery (resolved via
     # `complete -p`), then prints each entry via the completions OSC.
-    _warp_native_bash_completions() {
+    _leanterm_native_bash_completions() {
       local line="$1"
       # Force the default IFS; the session's may have been changed by a plugin or the user.
       local IFS=$' \t\n'
@@ -376,7 +376,7 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
         split_cobra_padding=1
       fi
 
-      local __warp_hex_match __warp_hex_dscr
+      local __leanterm_hex_match __leanterm_hex_dscr
       for reply in "${COMPREPLY[@]}"; do
         # COMPREPLY entries can carry a trailing space (bash appends one when a completion
         # is unambiguous); trim it so the client controls spacing.
@@ -389,11 +389,11 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
           reply="${BASH_REMATCH[1]}"
         fi
 
-        warp_completions_hex_encode_into __warp_hex_match "$reply"
-        printf '\e]9280;C;%s\a' "$__warp_hex_match"
+        leanterm_completions_hex_encode_into __leanterm_hex_match "$reply"
+        printf '\e]9280;C;%s\a' "$__leanterm_hex_match"
         if [[ -n "$reply_description" ]]; then
-          warp_completions_hex_encode_into __warp_hex_dscr "$reply_description"
-          printf '\e]9280;D?description;%s\a' "$__warp_hex_dscr"
+          leanterm_completions_hex_encode_into __leanterm_hex_dscr "$reply_description"
+          printf '\e]9280;D?description;%s\a' "$__leanterm_hex_dscr"
         fi
       done
     }
@@ -401,36 +401,36 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
 
     # Note that this is very performance sensitive code, so try not to
     # invoke any external commands in here.
-    warp_preexec () {
+    leanterm_preexec () {
         # Use the $BASH_COMMAND environment variable instead of $1, which is passed in by bash_preeexec.
         #
         # Bash_preexec intends to pass the command to preexec functions (as $1), but it utilizes session
         # history to do so. This means that $1 is not the correct command if the executed command is ignored
         # by history (e.g. via $HISTCONTROL or $HISTIGNORE); for example, all in-band generators are ignored
         # by history.
-        if [ "$WARP_IN_MSYS2" = true ]; then
-          warp_send_hook_via_kv_pairs_start "Preexec"
-          warp_send_hook_kv_pair "command" "$BASH_COMMAND"
-          warp_send_hook_kv_pair "session_id" "$WARP_SESSION_ID"
-          warp_send_hook_via_kv_pairs_end
+        if [ "$LEANTERM_IN_MSYS2" = true ]; then
+          leanterm_send_hook_via_kv_pairs_start "Preexec"
+          leanterm_send_hook_kv_pair "command" "$BASH_COMMAND"
+          leanterm_send_hook_kv_pair "session_id" "$LEANTERM_SESSION_ID"
+          leanterm_send_hook_via_kv_pairs_end
         else
-          local truncated_command=$(warp_escape_json "$BASH_COMMAND")
-          warp_send_json_message "{\"hook\": \"Preexec\", \"value\": {\"command\": \"$truncated_command\", \"session_id\": $WARP_SESSION_ID}}"
+          local truncated_command=$(leanterm_escape_json "$BASH_COMMAND")
+          leanterm_send_json_message "{\"hook\": \"Preexec\", \"value\": {\"command\": \"$truncated_command\", \"session_id\": $LEANTERM_SESSION_ID}}"
         fi
-        warp_maybe_send_reset_grid_osc
+        leanterm_maybe_send_reset_grid_osc
 
 
         # Since we did not early-return above, this hook is for a user-entered
         # command. Kill ongoing generator jobs so their output does not interfere
         # with the user command's output.
-        if [[ "$BASH_COMMAND" != warp_run_generator_command* ]] && [[ -f $_WARP_GENERATOR_PIDS_STARTED_TMP_FILE ]] && [[ -f $_WARP_GENERATOR_PIDS_COMPLETED_TMP_FILE ]]
+        if [[ "$BASH_COMMAND" != leanterm_run_generator_command* ]] && [[ -f $_LEANTERM_GENERATOR_PIDS_STARTED_TMP_FILE ]] && [[ -f $_LEANTERM_GENERATOR_PIDS_COMPLETED_TMP_FILE ]]
         then
           # Read PIDs from the started generators tmp file that are not present in
           # the completed generators tmp file into a bash array.
           #
           # The logic used to be the following:
           #
-          # pids=($(command -p comm -23 $_WARP_GENERATOR_PIDS_STARTED_TMP_FILE $_WARP_GENERATOR_PIDS_COMPLETED_TMP_FILE))
+          # pids=($(command -p comm -23 $_LEANTERM_GENERATOR_PIDS_STARTED_TMP_FILE $_LEANTERM_GENERATOR_PIDS_COMPLETED_TMP_FILE))
           #
           # However, that requires that the files are sorted, which we do not enforce (the OS can assign PIDs
           # in any order).  While we could sort the files and then compare them, the files are expected to be
@@ -439,7 +439,7 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
           completed_pids=()
           while IFS= read -r pid; do
             completed_pids+=("$pid")
-          done < $_WARP_GENERATOR_PIDS_COMPLETED_TMP_FILE
+          done < $_LEANTERM_GENERATOR_PIDS_COMPLETED_TMP_FILE
 
           pids=()
           while IFS= read -r pid; do
@@ -453,7 +453,7 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
             if (( found == 0 )); then
               pids+=("$pid")
             fi
-          done < $_WARP_GENERATOR_PIDS_STARTED_TMP_FILE
+          done < $_LEANTERM_GENERATOR_PIDS_STARTED_TMP_FILE
 
           # If the array is not empty, kill the ongoing pids.
           if (( ${#pids[@]} > 0 )); then
@@ -467,9 +467,9 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
 
     # Set terminal window and tab title to the same title value. Note that for values longer than 25
     # characters, we truncate the title and prepend "..".
-    # Usage warp_title "title"
-    # Users can disable the auto title if they chose to by setting WARP_DISABLE_AUTO_TITLE.
-    warp_title () {
+    # Usage leanterm_title "title"
+    # Users can disable the auto title if they chose to by setting LEANTERM_DISABLE_AUTO_TITLE.
+    leanterm_title () {
       # shellcheck disable=SC2034
       DISABLE_AUTO_TITLE="1"
 
@@ -488,9 +488,9 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
     }
 
     # Runs before executing the command
-    warp_set_title_idle_on_precmd () {
-      # If the user wants to set the title themselves, they can set the WARP_DISABLE_AUTO_TITLE flag.
-      if [ ! -z "$WARP_DISABLE_AUTO_TITLE" ]; then
+    leanterm_set_title_idle_on_precmd () {
+      # If the user wants to set the title themselves, they can set the LEANTERM_DISABLE_AUTO_TITLE flag.
+      if [ ! -z "$LEANTERM_DISABLE_AUTO_TITLE" ]; then
         return
       fi
 
@@ -503,29 +503,29 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
       new_home='~'
       bash_term_tab_title="${PWD/#$HOME/$new_home}"
 
-      if [[ $WARP_IS_LOCAL_SHELL_SESSION == "1" ]]; then
-        warp_title "$bash_term_tab_title"
+      if [[ $LEANTERM_IS_LOCAL_SHELL_SESSION == "1" ]]; then
+        leanterm_title "$bash_term_tab_title"
       else
         bash_term_tab_title_remote="${HOSTNAME%%.*}:$bash_term_tab_title"
-        warp_title "$bash_term_tab_title_remote"
+        leanterm_title "$bash_term_tab_title_remote"
       fi
     }
 
     # Runs before executing the command
-    warp_set_title_active_on_preexec () {
-      # If the user wants to set the title themselves, they can set the WARP_DISABLE_AUTO_TITLE flag.
-      if [ ! -z "$WARP_DISABLE_AUTO_TITLE" ]; then
+    leanterm_set_title_active_on_preexec () {
+      # If the user wants to set the title themselves, they can set the LEANTERM_DISABLE_AUTO_TITLE flag.
+      if [ ! -z "$LEANTERM_DISABLE_AUTO_TITLE" ]; then
         return
       fi
 
       # Generator commands (including native-completions requests) are never user-facing;
-      # without this, one briefly sets the tab title to "warp_run_generator_comma...".
-      if [[ "$1" == warp_run_generator_command* ]]; then
+      # without this, one briefly sets the tab title to "leanterm_run_generator_comma...".
+      if [[ "$1" == leanterm_run_generator_command* ]]; then
         return
       fi
 
       cmd="$1"
-      # warp_set_title_active_on_preexec is a preexec_function, which accepts 1 argument 
+      # leanterm_set_title_active_on_preexec is a preexec_function, which accepts 1 argument 
       #(currently invoked command)
       local this_command_spec
       read -r -a this_command_spec <<< "$1"
@@ -551,7 +551,7 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
         cmd="$fg_command_name"
       fi
 
-      warp_title "$cmd"
+      leanterm_title "$cmd"
     }
 
     # The git prompt's git commands are read-only and should not interfere with
@@ -561,49 +561,49 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
     #
     # We wrap in a local function instead of exporting the variable directly in
     # order to avoid interfering with manually-run git commands by the user.
-    warp_git () {
+    leanterm_git () {
       GIT_OPTIONAL_LOCKS=0 command git "$@"
     }
 
     # Note that this is very performance sensitive code, so try not to
     # invoke any external commands in here.
-    warp_precmd () {
+    leanterm_precmd () {
         # $? is relative to the process so we MUST check this first
         # or else the exit code will correspond to the commands
         # executed within this block instead of the actual last
         # command that was run.
         local exit_code=$?
-        local next_block_id="precmd-$WARP_SESSION_ID-$((block_id++))"
-        if [ "$WARP_IN_MSYS2" = true ]; then
-          warp_send_hook_via_kv_pairs_start "CommandFinished"
-          warp_send_hook_kv_pair "exit_code" "$exit_code"
-          warp_send_hook_kv_pair "next_block_id" "$next_block_id"
-          warp_send_hook_kv_pair "session_id" "$WARP_SESSION_ID"
-          warp_send_hook_via_kv_pairs_end
+        local next_block_id="precmd-$LEANTERM_SESSION_ID-$((block_id++))"
+        if [ "$LEANTERM_IN_MSYS2" = true ]; then
+          leanterm_send_hook_via_kv_pairs_start "CommandFinished"
+          leanterm_send_hook_kv_pair "exit_code" "$exit_code"
+          leanterm_send_hook_kv_pair "next_block_id" "$next_block_id"
+          leanterm_send_hook_kv_pair "session_id" "$LEANTERM_SESSION_ID"
+          leanterm_send_hook_via_kv_pairs_end
         else
-          warp_send_json_message "{\"hook\": \"CommandFinished\", \"value\": {\"exit_code\": $exit_code, \"next_block_id\": \"$next_block_id\", \"session_id\": $WARP_SESSION_ID}}"
+          leanterm_send_json_message "{\"hook\": \"CommandFinished\", \"value\": {\"exit_code\": $exit_code, \"next_block_id\": \"$next_block_id\", \"session_id\": $LEANTERM_SESSION_ID}}"
         fi
 
-        warp_maybe_send_reset_grid_osc
+        leanterm_maybe_send_reset_grid_osc
 
         if [[ $PS1 == "" ]]; then
-          # Use the saved PS1, if we've already unset it (due to active Warp prompt).
-          WARP_PS1="$SAVED_PS1"
+          # Use the saved PS1, if we've already unset it (due to active Leanterm prompt).
+          LEANTERM_PS1="$SAVED_PS1"
         else
           # If we haven't unset it yet, then we can use the current PS1 value.
-          WARP_PS1="$PS1"
+          LEANTERM_PS1="$PS1"
         fi
 
         # If this is being called for a generator command, short circuit and send an unpopulated
         # precmd payload (except for pwd), since we don't re-render the prompt after generator commands
         # are run.
-        if [ ! -z  $_WARP_GENERATOR_COMMAND ]; then
+        if [ ! -z  $_LEANTERM_GENERATOR_COMMAND ]; then
             # Restore the user's precmd_functions, since they were un-registered prior to executing
             # the generator.
             precmd_functions=("${_USER_PRECMD_FUNCTIONS[@]}")
 
-            unset _WARP_GENERATOR_COMMAND
-            warp_send_json_message "{\"hook\": \"Precmd\", \"value\": {
+            unset _LEANTERM_GENERATOR_COMMAND
+            leanterm_send_json_message "{\"hook\": \"Precmd\", \"value\": {
             \"exit_code\": $exit_code,
             \"next_block_id\": \"$next_block_id\",
             \"pwd\": \"\",
@@ -613,38 +613,38 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
             \"virtual_env\": \"\",
             \"conda_env\": \"\",
             \"node_version\": \"\",
-            \"session_id\": $WARP_SESSION_ID,
+            \"session_id\": $LEANTERM_SESSION_ID,
             \"is_after_in_band_command\": true
             }}"
             return 0
         fi
 
         # If the files for tracking generator PIDs exist, clear them.
-        if [[ -n $_WARP_GENERATOR_PIDS_STARTED_TMP_FILE && -f $_WARP_GENERATOR_PIDS_STARTED_TMP_FILE ]]; then
-          echo "" > $_WARP_GENERATOR_PIDS_STARTED_TMP_FILE
+        if [[ -n $_LEANTERM_GENERATOR_PIDS_STARTED_TMP_FILE && -f $_LEANTERM_GENERATOR_PIDS_STARTED_TMP_FILE ]]; then
+          echo "" > $_LEANTERM_GENERATOR_PIDS_STARTED_TMP_FILE
         fi
-        if [[ -n $_WARP_GENERATOR_PIDS_COMPLETED_TMP_FILE && -f $_WARP_GENERATOR_PIDS_COMPLETED_TMP_FILE ]]; then
-          echo "" > $_WARP_GENERATOR_PIDS_COMPLETED_TMP_FILE
+        if [[ -n $_LEANTERM_GENERATOR_PIDS_COMPLETED_TMP_FILE && -f $_LEANTERM_GENERATOR_PIDS_COMPLETED_TMP_FILE ]]; then
+          echo "" > $_LEANTERM_GENERATOR_PIDS_COMPLETED_TMP_FILE
         fi
 
-        if [[ -z $WARP_INPUT_REPORTING_SUPPORTED ]]; then
-          WARP_INPUT_REPORTING_SUPPORTED=$(warp_input_reporting_supported)
+        if [[ -z $LEANTERM_INPUT_REPORTING_SUPPORTED ]]; then
+          LEANTERM_INPUT_REPORTING_SUPPORTED=$(leanterm_input_reporting_supported)
         fi
 
         local honor_ps1
         local deref_ps1=""
         local escaped_ps1=""
-        if [[ "$WARP_HONOR_PS1" == "1" ]]; then
+        if [[ "$LEANTERM_HONOR_PS1" == "1" ]]; then
           honor_ps1="true"
         else
           honor_ps1="false"
 
           # If we haven't already, cache information about supported features.
-          if [[ -z $WARP_PS1_EXPANSION_SUPPORTED ]]; then
-            WARP_PS1_EXPANSION_SUPPORTED=$(warp_ps1_expanding_supported)
+          if [[ -z $LEANTERM_PS1_EXPANSION_SUPPORTED ]]; then
+            LEANTERM_PS1_EXPANSION_SUPPORTED=$(leanterm_ps1_expanding_supported)
           fi
 
-          if [[ $WARP_PS1_EXPANSION_SUPPORTED  == "1" ]]; then
+          if [[ $LEANTERM_PS1_EXPANSION_SUPPORTED  == "1" ]]; then
             # When evaluating the PS1, we want to ensure that it's aware of the last exit code.
             # Since we captured it already and executed multiple other commands, the actual
             # last exit code has changed. So before the evaluation, we want to trick the shell
@@ -653,53 +653,53 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
               return $1
             }
             exit_code_hack $exit_code
-            deref_ps1=${WARP_PS1@P}
+            deref_ps1=${LEANTERM_PS1@P}
           else
             # Tricking the shell into rendering the prompt
             # Note that in more modern versions of bash we could use ${PS1@P} to achieve the same,
             # but MacOS comes by default with a much older version of bash, and we want to be compatible.
-            deref_ps1=$(echo -e "\n" | PS1="$WARP_PS1" BASH_SILENCE_DEPRECATION_WARNING=1 "$BASH" --norc -i 2>&1 | command -p head -2 | command -p tail -1)
+            deref_ps1=$(echo -e "\n" | PS1="$LEANTERM_PS1" BASH_SILENCE_DEPRECATION_WARNING=1 "$BASH" --norc -i 2>&1 | command -p head -2 | command -p tail -1)
           fi
 
-          if [ "$WARP_IN_MSYS2" = false ]; then
-            escaped_ps1=$(warp_escape_ps1 "$(echo "$deref_ps1")")
+          if [ "$LEANTERM_IN_MSYS2" = false ]; then
+            escaped_ps1=$(leanterm_escape_ps1 "$(echo "$deref_ps1")")
           fi
         fi
 
         # Flush history
         history -a
 
-        # Reset the custom kill-whole-line binding as the user's bashrc (which is sourced after bashrc_warp)
+        # Reset the custom kill-whole-line binding as the user's bashrc (which is sourced after bashrc_leanterm)
         # could have added another bind. This won't have any user-impact because these shortcuts are only run
-        # in the context of the bash editor, which isn't displayed in Warp.
+        # in the context of the bash editor, which isn't displayed in Leanterm.
         bind -r '"\C-p"'
         bind "\C-p":kill-whole-line
 
         # Reset the report-input binding in case the user's bashrc modified it.
         # This is arbitrarily bound to ESC-i in all supported shells ("i" for input).
-        if [[ $WARP_INPUT_REPORTING_SUPPORTED == "1" ]]; then
+        if [[ $LEANTERM_INPUT_REPORTING_SUPPORTED == "1" ]]; then
           bind -r '"\ei"'
-          bind -x '"\ei":"warp_report_input"'
+          bind -x '"\ei":"leanterm_report_input"'
         fi
         
         # We need to register bindkeys to enable intra-session switching of the prompt 
-        # (these bindkeys are used by Warp to communicate the prompt mode switch to bash).
+        # (these bindkeys are used by Leanterm to communicate the prompt mode switch to bash).
         # We remove any existing bindkey for ESC-P ("p" for prompt/PS1) and register the bindkey
         # to our custom function. Note that this specific keybinding is arbitrary.
         bind -r '"\ep"'
-        bind -x '"\ep":"warp_change_prompt_modes_to_ps1"'
-        # We remove any existing bindkey for ESC-P ("w" for Warp prompt) and register the bindkey
+        bind -x '"\ep":"leanterm_change_prompt_modes_to_ps1"'
+        # We remove any existing bindkey for ESC-P ("w" for Leanterm prompt) and register the bindkey
         # to our custom function. Note that this specific keybinding is arbitrary.
         bind -r '"\ew"'
-        bind -x '"\ew":"warp_change_prompt_modes_to_warp_prompt"'
+        bind -x '"\ew":"leanterm_change_prompt_modes_to_leanterm_prompt"'
 
         local escaped_pwd
-        if [ "$WARP_IN_MSYS2" = false ]; then
+        if [ "$LEANTERM_IN_MSYS2" = false ]; then
           if [ -n "$WSL_DISTRO_NAME" ]; then
             # In WSL, avoid symlinks b/c on Windows `std::fs` is unable to resolve symlink inside WSL containers.
-            escaped_pwd=$(warp_escape_json "$(pwd -P)")
+            escaped_pwd=$(leanterm_escape_json "$(pwd -P)")
           else
-            escaped_pwd=$(warp_escape_json "$PWD")
+            escaped_pwd=$(leanterm_escape_json "$PWD")
           fi
         fi
 
@@ -715,20 +715,20 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
         # blocks created during the bootstrap process don't have visible
         # prompts, and we don't want to invoke `git` before we've sourced the
         # user's rcfiles and have a fully-populated PATH.
-        if [[ -n "$WARP_BOOTSTRAPPED" ]]; then
-          if [[ -n "$VIRTUAL_ENV" ]] && [ "$WARP_IN_MSYS2" = false ]; then
-              escaped_virtual_env=$(warp_escape_json "$VIRTUAL_ENV")
+        if [[ -n "$LEANTERM_BOOTSTRAPPED" ]]; then
+          if [[ -n "$VIRTUAL_ENV" ]] && [ "$LEANTERM_IN_MSYS2" = false ]; then
+              escaped_virtual_env=$(leanterm_escape_json "$VIRTUAL_ENV")
           fi
 
-          if [[ -n "$CONDA_DEFAULT_ENV" ]] && [ "$WARP_IN_MSYS2" = false ]; then
-              escaped_conda_env=$(warp_escape_json "$CONDA_DEFAULT_ENV")
+          if [[ -n "$CONDA_DEFAULT_ENV" ]] && [ "$LEANTERM_IN_MSYS2" = false ]; then
+              escaped_conda_env=$(leanterm_escape_json "$CONDA_DEFAULT_ENV")
           fi
 
           # Get the Node.js version, but only when the Node.js Version chip is enabled.
-          # Warp sets WARP_PROMPT_NODE_VERSION_ENABLED to "0" when the chip is not in the
+          # Leanterm sets LEANTERM_PROMPT_NODE_VERSION_ENABLED to "0" when the chip is not in the
           # prompt (defaulting to enabled when unset), so we avoid spawning `node` on
           # every prompt when the chip is not shown.
-          if [[ "$WARP_PROMPT_NODE_VERSION_ENABLED" != "0" ]] && command -v node > /dev/null 2>&1 && [ "$WARP_IN_MSYS2" = false ]; then
+          if [[ "$LEANTERM_PROMPT_NODE_VERSION_ENABLED" != "0" ]] && command -v node > /dev/null 2>&1 && [ "$LEANTERM_IN_MSYS2" = false ]; then
               # Check for package.json in current directory and parent directories
               local current_dir="$PWD"
               local found_package_json=false
@@ -765,15 +765,15 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
                       # on `nvm use`). The cache vars are global (no `local`) so they
                       # persist across precmd invocations.
                       local node_cache_key="$PWD:$PATH"
-                      if [[ "$node_cache_key" == "$_WARP_NODE_VERSION_CACHE_KEY" ]]; then
-                          escaped_node_version="$_WARP_NODE_VERSION_CACHE_VALUE"
+                      if [[ "$node_cache_key" == "$_LEANTERM_NODE_VERSION_CACHE_KEY" ]]; then
+                          escaped_node_version="$_LEANTERM_NODE_VERSION_CACHE_VALUE"
                       else
                           local node_version=$(node --version 2>/dev/null)
                           if [[ -n "$node_version" ]]; then
-                              escaped_node_version=$(warp_escape_json "$node_version")
+                              escaped_node_version=$(leanterm_escape_json "$node_version")
                           fi
-                          _WARP_NODE_VERSION_CACHE_KEY="$node_cache_key"
-                          _WARP_NODE_VERSION_CACHE_VALUE="$escaped_node_version"
+                          _LEANTERM_NODE_VERSION_CACHE_KEY="$node_cache_key"
+                          _LEANTERM_NODE_VERSION_CACHE_VALUE="$escaped_node_version"
                       fi
                   fi
               fi
@@ -785,13 +785,13 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
           # available to their session, it is unlikely they will be looking for git branch
           # information from the prompt.
           if command -v git >/dev/null 2>&1; then
-            git_branch=$(warp_git symbolic-ref --short HEAD 2> /dev/null)
+            git_branch=$(leanterm_git symbolic-ref --short HEAD 2> /dev/null)
             # The git branch the user is on, or the git commit hash if they're not on a branch.
-            git_head="${git_branch:-$(warp_git rev-parse --short HEAD 2> /dev/null)}"
+            git_head="${git_branch:-$(leanterm_git rev-parse --short HEAD 2> /dev/null)}"
           fi
-          if [ "$WARP_IN_MSYS2" = false ]; then
-            escaped_git_head=$(warp_escape_json "$git_head")
-            escaped_git_branch=$(warp_escape_json "$git_branch")
+          if [ "$LEANTERM_IN_MSYS2" = false ]; then
+            escaped_git_head=$(leanterm_escape_json "$git_head")
+            escaped_git_branch=$(leanterm_escape_json "$git_branch")
           fi
         fi
 
@@ -803,25 +803,25 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
         # as JS string literals of the form \uHEX, and will include
         # ctrl characters (like ESC) in the json, which will cause a JSON
         # parse error.
-        # Note WARP_SESSION_ID doesn't need to be escaped since it's a number
-        # We also pass the shell's notion of `honor_ps1` to ensure it's synced correctly on the Warp-side for prompt handling.
+        # Note LEANTERM_SESSION_ID doesn't need to be escaped since it's a number
+        # We also pass the shell's notion of `honor_ps1` to ensure it's synced correctly on the Leanterm-side for prompt handling.
         # This is passed as a "real boolean" via the JSON payload (string interpolated into JSON string below).
-        # We send the escaped PS1, if we are in active Warp prompt mode, for prompt preview rendering (note the shell's PS1 is unset in this case).
-        if [ "$WARP_IN_MSYS2" = true ]; then
-          warp_send_hook_via_kv_pairs_start "Precmd"
-          warp_send_hook_kv_pair "exit_code" "$exit_code"
-          warp_send_hook_kv_pair "next_block_id" "$next_block_id"
-          warp_send_hook_kv_pair "pwd" "$PWD"
-          warp_send_hook_kv_pair_escaped "ps1" "$deref_ps1"
-          warp_send_hook_kv_pair "ps1_is_encoded" "false"
-          warp_send_hook_kv_pair "honor_ps1" "$honor_ps1"
-          warp_send_hook_kv_pair "git_head" "$git_head"
-          warp_send_hook_kv_pair "git_branch" "$git_branch"
-          warp_send_hook_kv_pair "virtual_env" "$VIRTUAL_ENV"
-          warp_send_hook_kv_pair "conda_env" "$CONDA_DEFAULT_ENV"
-          warp_send_hook_kv_pair "node_version" "$node_version"
-          warp_send_hook_kv_pair "session_id" "$WARP_SESSION_ID"
-          warp_send_hook_via_kv_pairs_end
+        # We send the escaped PS1, if we are in active Leanterm prompt mode, for prompt preview rendering (note the shell's PS1 is unset in this case).
+        if [ "$LEANTERM_IN_MSYS2" = true ]; then
+          leanterm_send_hook_via_kv_pairs_start "Precmd"
+          leanterm_send_hook_kv_pair "exit_code" "$exit_code"
+          leanterm_send_hook_kv_pair "next_block_id" "$next_block_id"
+          leanterm_send_hook_kv_pair "pwd" "$PWD"
+          leanterm_send_hook_kv_pair_escaped "ps1" "$deref_ps1"
+          leanterm_send_hook_kv_pair "ps1_is_encoded" "false"
+          leanterm_send_hook_kv_pair "honor_ps1" "$honor_ps1"
+          leanterm_send_hook_kv_pair "git_head" "$git_head"
+          leanterm_send_hook_kv_pair "git_branch" "$git_branch"
+          leanterm_send_hook_kv_pair "virtual_env" "$VIRTUAL_ENV"
+          leanterm_send_hook_kv_pair "conda_env" "$CONDA_DEFAULT_ENV"
+          leanterm_send_hook_kv_pair "node_version" "$node_version"
+          leanterm_send_hook_kv_pair "session_id" "$LEANTERM_SESSION_ID"
+          leanterm_send_hook_via_kv_pairs_end
         else
           local escaped_json="{\"hook\": \"Precmd\", \"value\": {
           \"exit_code\": $exit_code,
@@ -835,18 +835,18 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
           \"virtual_env\": \"$escaped_virtual_env\",
           \"conda_env\": \"$escaped_conda_env\",
           \"node_version\": \"$escaped_node_version\",
-          \"session_id\": $WARP_SESSION_ID
+          \"session_id\": $LEANTERM_SESSION_ID
           }}"
-          warp_send_json_message "$escaped_json"
+          leanterm_send_json_message "$escaped_json"
         fi
     }
 
-    warp_clear_on_next_block () {
-        warp_send_json_message '{"hook": "ClearOnNextBlock"}'
+    leanterm_clear_on_next_block () {
+        leanterm_send_json_message '{"hook": "ClearOnNextBlock"}'
     }
 
     # Format a string value according to JSON syntax.
-    warp_escape_json () {
+    leanterm_escape_json () {
         # Explanation of the sed replacements (each command is separated by a `;`):
         # s/(["\\])/\\\1/g - Replace all double-quote (") and backslash (\) characters with the escaped versions (\" and \\)
         # s/\b/\\b/g - Replace all backspace characters with \b
@@ -873,47 +873,47 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
     # and, well, the prompt itself). What is more, prompt can also include emojis - unicode characters
     # that sometimes contain special bytes (ie. ST, CAN or SUB) that are otherwise used as unhook
     # triggers for the precmd. Instead of escaping those and extracting the value of the prompt itself,
-    # we simply convert the entire data structure into a single line hex string, which Warp
+    # we simply convert the entire data structure into a single line hex string, which Leanterm
     # later decodes and sends to the grid to show the prompt.
     # Note: before converting the prompt to a hex string, we remove the multi-line newlines and replace
     # them with a single space (to avoid prompts that span multiple empty lines).
-    warp_escape_ps1 () {
+    leanterm_escape_ps1 () {
        command -p tr '\n\n' ' ' <<< "$*" | command -p od -An -v -tx1 | command -p tr -d ' \n'
     }
 
-    # warp_hex_encode_string encodes the entire DCS string (JSON) with od making it essentially
+    # leanterm_hex_encode_string encodes the entire DCS string (JSON) with od making it essentially
     # a very long hexadecimal string.
     # Afterwards it's decoded in rust and parsed as usual.
     # Accepts one argument: DCS JSON string
-    warp_hex_encode_string () {
+    leanterm_hex_encode_string () {
       printf '%s' "$1" | command -p od -An -v -tx1 | command -p tr -d ' \n'
     }
 
-    warp_completions_hex_encode_into () {
+    leanterm_completions_hex_encode_into () {
       # `LC_ALL=C` keeps indexing byte-wise, so it stays correct for UTF-8 text.
       local LC_ALL=C
-      local __warp_hex_var="$1"
-      local __warp_hex_in="$2"
+      local __leanterm_hex_var="$1"
+      local __leanterm_hex_in="$2"
       # This branch is faster for longer values.
-      if (( ${#__warp_hex_in} > 256 )); then
-        printf -v "$__warp_hex_var" '%s' \
-          "$(printf '%s' "$__warp_hex_in" | command -p od -An -v -tx1 | command -p tr -d ' \n')"
+      if (( ${#__leanterm_hex_in} > 256 )); then
+        printf -v "$__leanterm_hex_var" '%s' \
+          "$(printf '%s' "$__leanterm_hex_in" | command -p od -An -v -tx1 | command -p tr -d ' \n')"
         return
       fi
       # This branch is faster for shorter values. The "for" loop is O(n²) which is fine for short
       # values, bad for long values. The case above avoids that at the cost of using piping into
       # subprocesses instead.
-      local __warp_hex_i __warp_hex_byte __warp_hex_acc=""
-      for (( __warp_hex_i = 0; __warp_hex_i < ${#__warp_hex_in}; __warp_hex_i++ )); do
-        printf -v __warp_hex_byte '%02x' "'${__warp_hex_in:__warp_hex_i:1}"
+      local __leanterm_hex_i __leanterm_hex_byte __leanterm_hex_acc=""
+      for (( __leanterm_hex_i = 0; __leanterm_hex_i < ${#__leanterm_hex_in}; __leanterm_hex_i++ )); do
+        printf -v __leanterm_hex_byte '%02x' "'${__leanterm_hex_in:__leanterm_hex_i:1}"
         # Keep only the low byte. bash 3.2, which macOS still ships, reads a character code above
         # 0x7f as a negative number, and `%02x` then sign-extends it to sixteen digits.
-        __warp_hex_acc+="${__warp_hex_byte: -2}"
+        __leanterm_hex_acc+="${__leanterm_hex_byte: -2}"
       done
-      printf -v "$__warp_hex_var" '%s' "$__warp_hex_acc"
+      printf -v "$__leanterm_hex_var" '%s' "$__leanterm_hex_acc"
     }
 
-    warp_hex_decode_string () {
+    leanterm_hex_decode_string () {
       if command -pv xxd >/dev/null 2>&1; then
         printf '%s' "$1" | command -p xxd -p -r
       else
@@ -929,13 +929,13 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
     # Accepts one argument: shell [bash, zsh, fish (future)]
     init_shell_hook () {
       init_shell="{\"hook\": \"InitShell\", \"value\": {\"shell\": \"$1\"}}"
-      echo "$(warp_hex_encode_string "$init_shell")"
+      echo "$(leanterm_hex_encode_string "$init_shell")"
     }
 
     # Checks whether the current version of bash is at least as high as the expected ($1) one.
     # To match rest of our codebase, it returns "1" if the bash version is higher or equal, and 
     # 0 otherwise.
-    warp_at_least_bash_version () {
+    leanterm_at_least_bash_version () {
       if [[ "$(printf '%s\n%s\n' "$BASH_VERSION" "$1" | command -p sort -rVC ; echo $?)" -eq 0 ]]; then
         echo "1"
       else 
@@ -945,36 +945,36 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
 
     # @P substitution was introduced in 4.4 bash version, so it returns "1" if the current bash
     # version is 4.4 or higher.
-    warp_ps1_expanding_supported () {
-      warp_at_least_bash_version "4.4"
+    leanterm_ps1_expanding_supported () {
+      leanterm_at_least_bash_version "4.4"
     }
 
     # The $READLINE_LINE variable in `bind -x` sequences was introduced in bash 4.0,
     # so we can only report the input buffer if the bash version is 4.0 or higher.
-    warp_input_reporting_supported () {
-        warp_at_least_bash_version "4.0"
+    leanterm_input_reporting_supported () {
+        leanterm_at_least_bash_version "4.0"
     }
 
-    # Report the current input buffer contents to Warp. This only works correctly
-    # if `warp_input_reporting_supported` returns "1".
-    warp_report_input () {
-        if [ "$WARP_IN_MSYS2" = true ]; then
-            warp_send_hook_via_kv_pairs_start "InputBuffer"
-            warp_send_hook_kv_pair "buffer" "$READLINE_LINE"
-            warp_send_hook_kv_pair "session_id" "$WARP_SESSION_ID"
-            warp_send_hook_via_kv_pairs_end
+    # Report the current input buffer contents to Leanterm. This only works correctly
+    # if `leanterm_input_reporting_supported` returns "1".
+    leanterm_report_input () {
+        if [ "$LEANTERM_IN_MSYS2" = true ]; then
+            leanterm_send_hook_via_kv_pairs_start "InputBuffer"
+            leanterm_send_hook_kv_pair "buffer" "$READLINE_LINE"
+            leanterm_send_hook_kv_pair "session_id" "$LEANTERM_SESSION_ID"
+            leanterm_send_hook_via_kv_pairs_end
         else
-            local escaped_input="$(warp_escape_json "$READLINE_LINE")"
-            warp_send_json_message "{ \"hook\": \"InputBuffer\", \"value\": { \"buffer\": \"$escaped_input\", \"session_id\": $WARP_SESSION_ID } }"
+            local escaped_input="$(leanterm_escape_json "$READLINE_LINE")"
+            leanterm_send_json_message "{ \"hook\": \"InputBuffer\", \"value\": { \"buffer\": \"$escaped_input\", \"session_id\": $LEANTERM_SESSION_ID } }"
         fi
         # This prevents bash from re-printing typeahead after we've removed it.
         READLINE_LINE=""
     }
 
     # Runs the shell's ctrl-r history widget as a foreground command.
-    warp_run_external_ctrl_r_widget () {
+    leanterm_run_external_ctrl_r_widget () {
         local result=""
-        case "$_WARP_EXTERNAL_CTRL_R_WIDGET" in
+        case "$_LEANTERM_EXTERNAL_CTRL_R_WIDGET" in
           __fzf_history__)
             result="$(__fzf_history__)"
             ;;
@@ -990,31 +990,31 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
             result="${result#__atuin_accept__:}"
             ;;
         esac
-        local warp_escaped_selection="$(warp_escape_json "$result")"
-        warp_send_json_message "{ \"hook\": \"ExternalShellWidgetSelection\", \"value\": { \"buffer\": \"$warp_escaped_selection\", \"session_id\": $WARP_SESSION_ID } }"
+        local leanterm_escaped_selection="$(leanterm_escape_json "$result")"
+        leanterm_send_json_message "{ \"hook\": \"ExternalShellWidgetSelection\", \"value\": { \"buffer\": \"$leanterm_escaped_selection\", \"session_id\": $LEANTERM_SESSION_ID } }"
     }
 
     # Runs fzf's ctrl-t file-search widget as a foreground command.
-    warp_run_external_ctrl_t_widget () {
+    leanterm_run_external_ctrl_t_widget () {
         local result="$(__fzf_select__)"
-        local warp_escaped_selection="$(warp_escape_json "$result")"
-        warp_send_json_message "{ \"hook\": \"ExternalShellWidgetSelection\", \"value\": { \"buffer\": \"$warp_escaped_selection\", \"session_id\": $WARP_SESSION_ID } }"
+        local leanterm_escaped_selection="$(leanterm_escape_json "$result")"
+        leanterm_send_json_message "{ \"hook\": \"ExternalShellWidgetSelection\", \"value\": { \"buffer\": \"$leanterm_escaped_selection\", \"session_id\": $LEANTERM_SESSION_ID } }"
     }
 
-    warp_run_external_alt_c_widget () {
+    leanterm_run_external_alt_c_widget () {
         eval "$(__fzf_cd__)"
     }
 
     # Check whether the prompt-related variables have OSC prompt marker sequences,
     # and if not, wrap them with the appropriate markers so that we can direct the
     # prompt bytes to the appropriate grids.
-    function warp_update_prompt_vars() {
+    function leanterm_update_prompt_vars() {
       # 133;A and 133;B are standard prompt marker OSCs.
       # See https://learn.microsoft.com/en-us/windows/terminal/tutorials/shell-integration and
       # https://gitlab.freedesktop.org/terminal-wg/specifications/-/merge_requests/6/diffs for details.
       local prompt_prefix=$'\e]133;A\a'
       local prompt_suffix=$'\e]133;B\a'
-      if [[ "$WARP_HONOR_PS1" != "1" ]] && [ "$WARP_USING_WINDOWS_CON_PTY" = true ]; then
+      if [[ "$LEANTERM_HONOR_PS1" != "1" ]] && [ "$LEANTERM_USING_WINDOWS_CON_PTY" = true ]; then
         local suffix="$prompt_suffix$RESET_GRID_OSC"
       else
         local suffix="$prompt_suffix"
@@ -1026,20 +1026,20 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
       local prompt_prefix_with_cursor_marker_surrounded="\[$prompt_prefix\]"
       local suffix_with_cursor_marker_surrounded="\[$suffix\]"
 
-      # Clear the user-defined prompt again, if using Warp's built-in prompt, before the command 
+      # Clear the user-defined prompt again, if using Leanterm's built-in prompt, before the command 
       # is rendered as it could have been reset by the user's bashrc or by setting 
       # the variable on the command line. This is used for same-line prompt and leads to the temporary
-      # product behavior of Warp prompt switches only taking effect in new sessions.
+      # product behavior of Leanterm prompt switches only taking effect in new sessions.
       # Certain prompt plugins can reset the prompt to a non-empty value, after we've initially unset it.
-      # Confirm that it is unset, if using built-in Warp prompt (update prompt vars is forced to run as the last precmd fn).
-      if [[ "$WARP_HONOR_PS1" != "1" ]]; then
+      # Confirm that it is unset, if using built-in Leanterm prompt (update prompt vars is forced to run as the last precmd fn).
+      if [[ "$LEANTERM_HONOR_PS1" != "1" ]]; then
         if [[ "$PS1" != "" ]]; then
           # If the PS1 has its original value, then we save it in SAVED_PS1 so we can restore to this value, if we were to unset it for
-          # the Warp prompt case, but the user wants to switch back to PS1 later.
+          # the Leanterm prompt case, but the user wants to switch back to PS1 later.
           SAVED_PS1=$PS1
         fi
         # Note that we DO NOT unset the PS1 here, since we want to pass it along as a "hidden left prompt" for 
-        # prompt preview purposes, if the Warp prompt is being used. Specifically, we want to show this prompt preview
+        # prompt preview purposes, if the Leanterm prompt is being used. Specifically, we want to show this prompt preview
         # for the Edit Prompt modal and onboarding prompt block.
       fi
 
@@ -1062,8 +1062,8 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
         PS1="$prompt_prefix$PS1$suffix"
       fi
 
-      # Unset the PS1, if we are using the Warp prompt.
-      if [[ "$WARP_HONOR_PS1" != "1" ]]; then
+      # Unset the PS1, if we are using the Leanterm prompt.
+      if [[ "$LEANTERM_HONOR_PS1" != "1" ]]; then
         PS1=""
       # Otherwise, if we are using the PS1, we use the normal prompt markers.
       else
@@ -1077,7 +1077,7 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
       # Ensure that this is always the last precmd hook. This prevents any other precmd hook, which might
       # modify $PS1, from interfering with our prompt-escaping logic.
       #
-      # Remove warp_update_prompt_vars from the precmd_functions list and then re-append it to ensure it's
+      # Remove leanterm_update_prompt_vars from the precmd_functions list and then re-append it to ensure it's
       # ordered last.
 
       # Initialize an empty array to hold the filtered functions.
@@ -1085,8 +1085,8 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
 
       # Loop through each function in the original precmd_functions array.
       for func in "${precmd_functions[@]}"; do
-        # Add the function to the filtered array if it's not warp_update_prompt_vars
-        if [[ "$func" != "warp_update_prompt_vars" ]]; then
+        # Add the function to the filtered array if it's not leanterm_update_prompt_vars
+        if [[ "$func" != "leanterm_update_prompt_vars" ]]; then
           filtered_precmd_functions+=("$func")
         fi
       done
@@ -1094,62 +1094,62 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
       # Assign the filtered array back to precmd_functions.
       precmd_functions=("${filtered_precmd_functions[@]}")
 
-      # Append warp_update_prompt_vars to the end of the precmd_functions array.
-      precmd_functions+=("warp_update_prompt_vars")
+      # Append leanterm_update_prompt_vars to the end of the precmd_functions array.
+      precmd_functions+=("leanterm_update_prompt_vars")
     }
     
-    # Changes the WARP_HONOR_PS1 variable to 1, to indicate we want to use the PS1. Restores
-    # the original PS1 value (which we unset for Warp prompt) and calls warp_update_prompt_vars
+    # Changes the LEANTERM_HONOR_PS1 variable to 1, to indicate we want to use the PS1. Restores
+    # the original PS1 value (which we unset for Leanterm prompt) and calls leanterm_update_prompt_vars
     # to refresh the prompt. Note that we use an "empty block" workaround to achieve instant
     # prompt switching in bash, since there is no built-in methods to repaint the prompt, unlike
     # Zsh/fish.
-    function warp_change_prompt_modes_to_ps1() {
+    function leanterm_change_prompt_modes_to_ps1() {
       PS1="$SAVED_PS1"
-      WARP_HONOR_PS1="1"
+      LEANTERM_HONOR_PS1="1"
 
-      warp_update_prompt_vars
+      leanterm_update_prompt_vars
     }
 
-    # Changes the WARP_HONOR_PS1 variable to 0, to indicate we want to use the Warp prompt. Calls 
-    # warp_update_prompt_vars to refresh the prompt (note the PS1 will be unset in this logic). 
+    # Changes the LEANTERM_HONOR_PS1 variable to 0, to indicate we want to use the Leanterm prompt. Calls 
+    # leanterm_update_prompt_vars to refresh the prompt (note the PS1 will be unset in this logic). 
     # Note that we use an "empty block" workaround to achieve instant prompt switching in bash, 
     # since there is no built-in methods to repaint the prompt, unlike Zsh/fish.
-    function warp_change_prompt_modes_to_warp_prompt() {
-      WARP_HONOR_PS1="0"
+    function leanterm_change_prompt_modes_to_leanterm_prompt() {
+      LEANTERM_HONOR_PS1="0"
 
-      warp_update_prompt_vars
+      leanterm_update_prompt_vars
     }
 
     function clear() {
-        if [ "$WARP_IN_MSYS2" = true ]; then
-            warp_send_hook_via_kv_pairs_start "Clear"
-            warp_send_hook_kv_pair "session_id" "$WARP_SESSION_ID"
-            warp_send_hook_via_kv_pairs_end
+        if [ "$LEANTERM_IN_MSYS2" = true ]; then
+            leanterm_send_hook_via_kv_pairs_start "Clear"
+            leanterm_send_hook_kv_pair "session_id" "$LEANTERM_SESSION_ID"
+            leanterm_send_hook_via_kv_pairs_end
         else
-            warp_send_json_message "{\"hook\": \"Clear\", \"value\": {\"session_id\": $WARP_SESSION_ID}}"
+            leanterm_send_json_message "{\"hook\": \"Clear\", \"value\": {\"session_id\": $LEANTERM_SESSION_ID}}"
         fi
     }
 
-    function warp_finish_update {
+    function leanterm_finish_update {
       local update_id="$1"
-      if [ "$WARP_IN_MSYS2" = true ]; then
-        warp_send_hook_via_kv_pairs_start "FinishUpdate"
-        warp_send_hook_kv_pair "update_id" "$update_id"
-        warp_send_hook_kv_pair "session_id" "$WARP_SESSION_ID"
-        warp_send_hook_via_kv_pairs_end
+      if [ "$LEANTERM_IN_MSYS2" = true ]; then
+        leanterm_send_hook_via_kv_pairs_start "FinishUpdate"
+        leanterm_send_hook_kv_pair "update_id" "$update_id"
+        leanterm_send_hook_kv_pair "session_id" "$LEANTERM_SESSION_ID"
+        leanterm_send_hook_via_kv_pairs_end
       else
-        warp_send_json_message "{ \"hook\": \"FinishUpdate\", \"value\": { \"update_id\": \"$update_id\", \"session_id\": $WARP_SESSION_ID} }"
+        leanterm_send_json_message "{ \"hook\": \"FinishUpdate\", \"value\": { \"update_id\": \"$update_id\", \"session_id\": $LEANTERM_SESSION_ID} }"
       fi
     }
 
-    # Check if the warp apt source file has been renamed to `warpdotdev.list.distUpgrade` due to an ubuntu version update.
+    # Check if the leanterm apt source file has been renamed to `warpdotdev.list.distUpgrade` due to an ubuntu version update.
     # If this occurred, we want to rename the source file back to `warpdotdev.list` to ensure updates can proceed.
     # We purposefully skip this if either the `warpdotdev.list` file already exists (indicating that the user has already
     # done this themselves) _or_ if a `warpdotdev.sources` file exists (which is the new Deb822 format for source files).
     # The `.sources` file could only exist if a user manually created it; Ubuntu doesn't create one automatically for the
-    # warp source file due to a bug in its update flow where it considers our source file to be "invalid" because it
+    # leanterm source file due to a bug in its update flow where it considers our source file to be "invalid" because it
     # contains a `signed-by` key.
-    function warp_handle_dist_upgrade {
+    function leanterm_handle_dist_upgrade {
       local source_file_name="$1"
 
       eval "$(command apt-config shell APT_SOURCESDIR 'Dir::Etc::sourceparts/d')"
@@ -1168,7 +1168,7 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
 
     # The SSH logic only applies to local sessions, because we don't yet have support for bootstrapping
     # recursive SSH sessions.
-    if [[ $WARP_IS_LOCAL_SHELL_SESSION == "1" ]]; then
+    if [[ $LEANTERM_IS_LOCAL_SHELL_SESSION == "1" ]]; then
         # This helper function determines whether the user's ssh arguments imply
         # creation of a non-interactive session or otherwise would conflict with
         # our SSH wrapper.  Returns 0 for an interactive session; >0 otherwise.
@@ -1206,7 +1206,7 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
             fi
         }
 
-        function warp_ssh_helper() {
+        function leanterm_ssh_helper() {
             # shellcheck disable=SC2034
             init_shell_bash=$(init_shell_hook "bash")
             # shellcheck disable=SC2034
@@ -1221,7 +1221,7 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
             # If the user's SSH config sets a RemoteCommand for this destination,
             # OpenSSH refuses to also run our bootstrap as a command-line remote
             # command, aborting with "Cannot execute command-line and remote
-            # command." Warpification is structurally impossible there, so fall
+            # command." Leantermification is structurally impossible there, so fall
             # back to plain SSH. `ssh -G` prints `remotecommand none` when unset.
             local user_remote_command=$(command ssh -G "${@:1}" 2>/dev/null | command -p sed -n 's/^remotecommand //p')
             if [[ -n "$user_remote_command" && "$user_remote_command" != "none" ]]; then
@@ -1232,19 +1232,19 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
             # Hex-encode the ZSH environment script we use to bootstrap remote zsh b/c it contains control characters
             # We decode on the SSH server using xxd if its available, otherwise fall back to a for-loop over each byte
             # and use printf to convert back to plaintext
-            local zsh_env_script=$(printf '%s' 'unsetopt ZLE RCS GLOBAL_RCS; WARP_SESSION_ID='$remote_session_id'; WARP_USING_WINDOWS_CON_PTY=@@USING_CON_PTY_BOOLEAN@@; WARP_HONOR_PS1='$WARP_HONOR_PS1'; _hostname=$(command -pv hostname >/dev/null 2>&1 && command -p hostname 2>/dev/null || command -p uname -n); _user=$(command -pv whoami >/dev/null 2>&1 && command -p whoami 2>/dev/null || echo $USER); _msg=$(printf "{\"hook\": \"InitShell\", \"value\": {\"session_id\": $WARP_SESSION_ID, \"shell\": \"zsh\", \"user\": \"%s\", \"hostname\": \"%s\"}}" "$_user" "$_hostname" | command -p od -An -v -tx1 | command -p tr -d '"'"' \n'"'"'); printf '"'"'\e]9278;d;%s\x07'"'"' $_msg; unset _hostname _user _msg' | command -p od -An -v -tx1 | command -p tr -d ' \n')
+            local zsh_env_script=$(printf '%s' 'unsetopt ZLE RCS GLOBAL_RCS; LEANTERM_SESSION_ID='$remote_session_id'; LEANTERM_USING_WINDOWS_CON_PTY=@@USING_CON_PTY_BOOLEAN@@; LEANTERM_HONOR_PS1='$LEANTERM_HONOR_PS1'; _hostname=$(command -pv hostname >/dev/null 2>&1 && command -p hostname 2>/dev/null || command -p uname -n); _user=$(command -pv whoami >/dev/null 2>&1 && command -p whoami 2>/dev/null || echo $USER); _msg=$(printf "{\"hook\": \"InitShell\", \"value\": {\"session_id\": $LEANTERM_SESSION_ID, \"shell\": \"zsh\", \"user\": \"%s\", \"hostname\": \"%s\"}}" "$_user" "$_hostname" | command -p od -An -v -tx1 | command -p tr -d '"'"' \n'"'"'); printf '"'"'\e]9278;d;%s\x07'"'"' $_msg; unset _hostname _user _msg' | command -p od -An -v -tx1 | command -p tr -d ' \n')
 
             # Optionally attach to an existing ControlMaster the user already
             # runs for this destination instead of creating our own. Resolve
             # the user's configured ControlPath with `ssh -G` (which expands
             # tokens like %h/%p/%r/%C into a literal path), then verify the
             # master is alive with `ssh -O check`. Both probes are local-only
-            # commands. On any failure we fall back to creating a Warp-owned
+            # commands. On any failure we fall back to creating a Leanterm-owned
             # master, preserving the existing behavior.
-            local control_path="$SSH_SOCKET_DIR/$WARP_SESSION_ID"
+            local control_path="$SSH_SOCKET_DIR/$LEANTERM_SESSION_ID"
             local control_master_mode="yes"
             local external_control_master="false"
-            if [[ "$WARP_SSH_REUSE_CONTROL_MASTER" == "1" ]]; then
+            if [[ "$LEANTERM_SSH_REUSE_CONTROL_MASTER" == "1" ]]; then
                 local user_control_path=$(command ssh -G "${@:1}" 2>/dev/null | command -p sed -n 's/^controlpath //p')
                 case "$user_control_path" in
                     "" | none)
@@ -1254,12 +1254,12 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
                         # The resolved path contains characters we cannot safely
                         # embed in the SSH hook JSON below (e.g. an unexpanded %
                         # token, quotes, or whitespace); fall back to a
-                        # Warp-owned master.
+                        # Leanterm-owned master.
                         ;;
                     *)
                         if command ssh -O check -o ControlPath="$user_control_path" "${@:1}" >/dev/null 2>&1; then
                             # A live master exists: multiplex through it and let
-                            # the client know Warp does not own it.
+                            # the client know Leanterm does not own it.
                             control_path="$user_control_path"
                             control_master_mode="no"
                             external_control_master="true"
@@ -1278,20 +1278,20 @@ if [ -z "$WARP_BOOTSTRAPPED" ]; then
             command ssh -o ControlMaster=$control_master_mode -o ControlPath="$control_path" \
             -t "${@:1}" \
 "
-export TERM_PROGRAM='WarpTerminal'
-# Mark the remote side of a Warp-managed SSH session so the bootstrap
+export TERM_PROGRAM='Leanterm'
+# Mark the remote side of a Leanterm-managed SSH session so the bootstrap
 # body can distinguish it from local shells. Used to gate the ExitShell
 # hook which tears down the remote-server-proxy subprocess.
-export WARP_IS_SSH='1'
-test -n '$WARP_CLIENT_VERSION' && export WARP_CLIENT_VERSION='$WARP_CLIENT_VERSION'
+export LEANTERM_IS_SSH='1'
+test -n '$LEANTERM_CLIENT_VERSION' && export LEANTERM_CLIENT_VERSION='$LEANTERM_CLIENT_VERSION'
 # Only forward the protocol version if it was set locally (i.e. the HOANotifications feature flag is on).
-test -n '$WARP_CLI_AGENT_PROTOCOL_VERSION' && export WARP_CLI_AGENT_PROTOCOL_VERSION='$WARP_CLI_AGENT_PROTOCOL_VERSION'
+test -n '$LEANTERM_CLI_AGENT_PROTOCOL_VERSION' && export LEANTERM_CLI_AGENT_PROTOCOL_VERSION='$LEANTERM_CLI_AGENT_PROTOCOL_VERSION'
 
-hook="'$(printf "{\"hook\": \"SSH\", \"value\": {\"socket_path\": \"'$control_path'\", \"remote_shell\": \"%s\", \"session_id\": '"$WARP_SESSION_ID"', \"remote_session_id\": '"$remote_session_id"', \"external_control_master\": '"$external_control_master"'}}" "${SHELL##*/}" | command -p od -An -v -tx1 | command -p tr -d " \n")'"
+hook="'$(printf "{\"hook\": \"SSH\", \"value\": {\"socket_path\": \"'$control_path'\", \"remote_shell\": \"%s\", \"session_id\": '"$LEANTERM_SESSION_ID"', \"remote_session_id\": '"$remote_session_id"', \"external_control_master\": '"$external_control_master"'}}" "${SHELL##*/}" | command -p od -An -v -tx1 | command -p tr -d " \n")'"
 printf '$OSC_START$DCS_JSON_MARKER$OSC_PARAM_SEPARATOR%s$OSC_END' "'$hook'"
 
 if test "'"${SHELL##*/}" != "bash" -a "${SHELL##*/}" != "zsh"'"; then
-  # Emulate the SSHD logic to print the MotD. Because the Warp SSH wrapper passes
+  # Emulate the SSHD logic to print the MotD. Because the Leanterm SSH wrapper passes
   # a command to run, SSHD does a quiet login, updating utmp and other login
   # state, but not printing the MotD. For bash and zsh, this is instead handled
   # by our bootstrap script.
@@ -1322,30 +1322,30 @@ case "'${SHELL##*/}'" in
       command -p stty raw
       HISTCONTROL=ignorespace
       HISTIGNORE=" *"
-      WARP_SESSION_ID='$remote_session_id'
-      WARP_HONOR_PS1="'$WARP_HONOR_PS1'"
+      LEANTERM_SESSION_ID='$remote_session_id'
+      LEANTERM_HONOR_PS1="'$LEANTERM_HONOR_PS1'"
       _hostname=$(command -pv hostname >/dev/null 2>&1 && command -p hostname 2>/dev/null || command -p uname -n)
       _user=$(command -v whoami >/dev/null 2>&1 && command whoami 2>/dev/null || echo $USER)
-      _msg=$(printf "{\"hook\": \"InitShell\", \"value\": {\"session_id\": $WARP_SESSION_ID, \"shell\": \"bash\", \"user\": \"%s\", \"hostname\": \"%s\"}}" "$_user" "$_hostname" | command -p od -An -v -tx1 | command -p tr -d " \n")'"
-      WARP_USING_WINDOWS_CON_PTY=@@USING_CON_PTY_BOOLEAN@@
-      if [[ "'$OS'" == Windows_NT ]]; then WARP_IN_MSYS2=true; else WARP_IN_MSYS2=false; fi
+      _msg=$(printf "{\"hook\": \"InitShell\", \"value\": {\"session_id\": $LEANTERM_SESSION_ID, \"shell\": \"bash\", \"user\": \"%s\", \"hostname\": \"%s\"}}" "$_user" "$_hostname" | command -p od -An -v -tx1 | command -p tr -d " \n")'"
+      LEANTERM_USING_WINDOWS_CON_PTY=@@USING_CON_PTY_BOOLEAN@@
+      if [[ "'$OS'" == Windows_NT ]]; then LEANTERM_IN_MSYS2=true; else LEANTERM_IN_MSYS2=false; fi
       printf '\''"'\e]9278;d;%s\x07'"'\'' \""'$_msg'"\"')
       unset _hostname _user _msg
       ;;
-  zsh) WARP_TMP_DIR="'$(command -p mktemp -d warptmp.XXXXXX)'"
+  zsh) LEANTERM_TMP_DIR="'$(command -p mktemp -d leantermtmp.XXXXXX)'"
 local ZSH_ENV_SCRIPT='$zsh_env_script'
 if [[ "'$?'" == 0 ]]; then
   if command -pv xxd >/dev/null 2>&1; then
-    echo "'$ZSH_ENV_SCRIPT'" | command -p xxd -p -r > "'$WARP_TMP_DIR'"/.zshenv
+    echo "'$ZSH_ENV_SCRIPT'" | command -p xxd -p -r > "'$LEANTERM_TMP_DIR'"/.zshenv
   else
     for i in {0..\$((\${#ZSH_ENV_SCRIPT} - 1))..2}; do
       builtin printf "'"\x${ZSH_ENV_SCRIPT:$i:2}"'"
-    done > "'$WARP_TMP_DIR'"/.zshenv
+    done > "'$LEANTERM_TMP_DIR'"/.zshenv
   fi
 else
-  echo \"Failed to bootstrap warp. Continuing with a non-bootstrapped shell.\"
+  echo \"Failed to bootstrap leanterm. Continuing with a non-bootstrapped shell.\"
 fi
-TMPPREFIX="'$HOME/.zshtmp-'" WARP_SSH_RCFILES="'${ZDOTDIR:-$HOME}'" ZDOTDIR="'$WARP_TMP_DIR'" exec -l zsh -g $TRACE_FLAG_IF_WARP_SHELL_DEBUG_MODE
+TMPPREFIX="'$HOME/.zshtmp-'" LEANTERM_SSH_RCFILES="'${ZDOTDIR:-$HOME}'" ZDOTDIR="'$LEANTERM_TMP_DIR'" exec -l zsh -g $TRACE_FLAG_IF_LEANTERM_SHELL_DEBUG_MODE
       ;;
 esac
 "
@@ -1353,15 +1353,15 @@ esac
 
         function ssh() {
             if is_interactive_ssh_session "$@"; then
-                warp_send_json_message "{\"hook\": \"PreInteractiveSSHSession\", \"value\": {\"session_id\": $WARP_SESSION_ID}}"
+                leanterm_send_json_message "{\"hook\": \"PreInteractiveSSHSession\", \"value\": {\"session_id\": $LEANTERM_SESSION_ID}}"
 
                 # If the SSH wrapper is not enabled for this session, don't use it.
-                if [ "$WARP_USE_SSH_WRAPPER" = "1" ]; then
-                    local TRACE_FLAG_IF_WARP_SHELL_DEBUG_MODE=""
-                    if [[ "$WARP_SHELL_DEBUG_MODE" == "1" ]]; then
-                        TRACE_FLAG_IF_WARP_SHELL_DEBUG_MODE="-x"
+                if [ "$LEANTERM_USE_SSH_WRAPPER" = "1" ]; then
+                    local TRACE_FLAG_IF_LEANTERM_SHELL_DEBUG_MODE=""
+                    if [[ "$LEANTERM_SHELL_DEBUG_MODE" == "1" ]]; then
+                        TRACE_FLAG_IF_LEANTERM_SHELL_DEBUG_MODE="-x"
                     fi
-                    warp_ssh_helper "$@"
+                    leanterm_ssh_helper "$@"
                 else
                     command ssh "$@"
                 fi
@@ -1372,14 +1372,14 @@ esac
     fi
 
 
-    # Send a precmd message to the terminal to differentiate between the warp
+    # Send a precmd message to the terminal to differentiate between the leanterm
     # bootstrap logic pasted into the PTY and the output of shell startup files.
-    warp_precmd
+    leanterm_precmd
 
     # Before calling rcfiles, print the MotD.
     # In general, login(1) or pam_motd(8) is supposed to do this. However, we don't
-    # go through the normal login flow when bootstrapping a Warp session. In
-    # addition, Warp bash shells are _not_ login shells, because bash does not
+    # go through the normal login flow when bootstrapping a Leanterm session. In
+    # addition, Leanterm bash shells are _not_ login shells, because bash does not
     # support custom rcfiles in login shells.
     if [[ ! -e "$HOME/.hushlogin" ]]; then
       for motd_file in /etc/motd /run/motd /run/motd.dynamic /usr/lib/motd /usr/lib/motd.dynamic; do
@@ -1392,10 +1392,10 @@ esac
 
 
     # This reflects the bootstrap sequence in a login shell. We want to
-    # Do other shell startup first so we can ensure Warp goes last.
+    # Do other shell startup first so we can ensure Leanterm goes last.
     #
     # If this is a subshell, the user and system RC files have already been sourced.
-    if [[ -z $WARP_IS_SUBSHELL ]]; then
+    if [[ -z $LEANTERM_IS_SUBSHELL ]]; then
         # Make sure we force the locale used for number formatting to "C", to avoid
         # issues in locales that use a comma as the decimal separator.
         rcfiles_start_time="$(LC_ALL="C"; echo $EPOCHREALTIME)"
@@ -1431,14 +1431,14 @@ esac
     # set initial values.
     #
     # For more context, see: https://github.com/warpdotdev/Warp/issues/1262
-    if [[ $HISTFILESIZE == "$WARP_INITIAL_HISTFILESIZE" ]]; then
+    if [[ $HISTFILESIZE == "$LEANTERM_INITIAL_HISTFILESIZE" ]]; then
         unset HISTFILESIZE
     fi
-    unset WARP_INITIAL_HISTFILESIZE
-    if [[ $HISTSIZE == "$WARP_INITIAL_HISTSIZE" ]]; then
+    unset LEANTERM_INITIAL_HISTFILESIZE
+    if [[ $HISTSIZE == "$LEANTERM_INITIAL_HISTSIZE" ]]; then
         unset HISTSIZE
     fi
-    unset WARP_INITIAL_HISTSIZE
+    unset LEANTERM_INITIAL_HISTSIZE
 
     # Save the value of HISTCONTROL as it existed just after reading the user's
     # rcfiles.
@@ -1448,9 +1448,9 @@ esac
     # HISTIGNORE value which may been set in an RC file sourced above. It is important to
     # ensure that this happens _after_ the user's RC files have been sourced.
     if [[ ! -z $HISTIGNORE ]]; then
-        HISTIGNORE="*warp_run_generator_command*:*warp_run_external_ctrl_r_widget*:*warp_run_external_ctrl_t_widget*:*warp_run_external_alt_c_widget*:$HISTIGNORE"
+        HISTIGNORE="*leanterm_run_generator_command*:*leanterm_run_external_ctrl_r_widget*:*leanterm_run_external_ctrl_t_widget*:*leanterm_run_external_alt_c_widget*:$HISTIGNORE"
     else
-        HISTIGNORE="*warp_run_generator_command*:*warp_run_external_ctrl_r_widget*:*warp_run_external_ctrl_t_widget*:*warp_run_external_alt_c_widget*"
+        HISTIGNORE="*leanterm_run_generator_command*:*leanterm_run_external_ctrl_r_widget*:*leanterm_run_external_ctrl_t_widget*:*leanterm_run_external_alt_c_widget*"
     fi
 
     # If the user has PROMPT_COMMAND set in their bootstrap scripts,
@@ -1482,7 +1482,7 @@ esac
     # If the user's rc files turned PROMPT_COMMAND into an array, we must undo that.
     # Since Bash 5.1, the PROMPT_COMMAND variable can be an array, see:
     #   https://tiswww.case.edu/php/chet/bash/NEWS
-    # Unfortunately, doing so will break Warp because of the way it interacts with bash-preexec.
+    # Unfortunately, doing so will break Leanterm because of the way it interacts with bash-preexec.
     # When PROMPT_COMMAND is an array, the DEBUG signal fires for each array element, and since
     # bash-preexec uses a DEBUG trap to trigger the preexec functions, it will run our preexec
     # functions before the command at PROMPT_COMMAND[1], PROMPT_COMMAND[2], etc. This means our
@@ -1509,13 +1509,13 @@ esac
         # receive the command in preexec).
         __bp_adjust_histcontrol
     fi
-## ----- Warp initialization -----
+## ----- Leanterm initialization -----
     
-    # Append additional PATH entries if provided via WARP_PATH_APPEND. This is after the user's RC
+    # Append additional PATH entries if provided via LEANTERM_PATH_APPEND. This is after the user's RC
     # files are sourced in case they reset PATH (/etc/profile on Debian does this, for example).
-    if [[ ! -z "$WARP_PATH_APPEND" ]]; then
-        export PATH="$PATH:$WARP_PATH_APPEND"
-        unset WARP_PATH_APPEND
+    if [[ ! -z "$LEANTERM_PATH_APPEND" ]]; then
+        export PATH="$PATH:$LEANTERM_PATH_APPEND"
+        unset LEANTERM_PATH_APPEND
     fi
 
     # Read through shell options to determine if the user has enabled vi mode.
@@ -1546,19 +1546,19 @@ esac
     fi
   fi
 
-    precmd_functions+=(warp_precmd)
-    preexec_functions+=(warp_preexec)
+    precmd_functions+=(leanterm_precmd)
+    preexec_functions+=(leanterm_preexec)
 
-    precmd_functions+=(warp_set_title_idle_on_precmd)
-    preexec_functions+=(warp_set_title_active_on_preexec)
+    precmd_functions+=(leanterm_set_title_idle_on_precmd)
+    preexec_functions+=(leanterm_set_title_active_on_preexec)
 
     if declare -F user_prompt_command >/dev/null; then
         precmd_functions+=(user_prompt_command)
     fi
 
-    WARP_BOOTSTRAPPED=1
+    LEANTERM_BOOTSTRAPPED=1
 
-    warp_update_prompt_vars
+    leanterm_update_prompt_vars
 
     # Set the history file to append
     shopt -s histappend
@@ -1566,24 +1566,24 @@ esac
     shell_plugins=()
 
     # Detect whether ctrl-r has been rebound to fzf's or atuin's bash history widget.
-    _WARP_EXTERNAL_CTRL_R_WIDGET=""
-    if [ "$WARP_IN_MSYS2" = false ]; then
-      warp_ctrl_r_binding="$(bind -X 2>/dev/null | command -p sed -n 's/^"\\C-r"[ :] *"\(.*\)"$/\1/p')"
-      if [ -z "$warp_ctrl_r_binding" ] && declare -F __fzf_history__ >/dev/null; then
-        warp_ctrl_r_macro="$(bind -s 2>/dev/null | command -p sed -n 's/^"\\C-r"[ :] *"\(.*\)"$/\1/p')"
-        case "$warp_ctrl_r_macro" in
+    _LEANTERM_EXTERNAL_CTRL_R_WIDGET=""
+    if [ "$LEANTERM_IN_MSYS2" = false ]; then
+      leanterm_ctrl_r_binding="$(bind -X 2>/dev/null | command -p sed -n 's/^"\\C-r"[ :] *"\(.*\)"$/\1/p')"
+      if [ -z "$leanterm_ctrl_r_binding" ] && declare -F __fzf_history__ >/dev/null; then
+        leanterm_ctrl_r_macro="$(bind -s 2>/dev/null | command -p sed -n 's/^"\\C-r"[ :] *"\(.*\)"$/\1/p')"
+        case "$leanterm_ctrl_r_macro" in
           *'`__fzf_history__`'*)
-            warp_ctrl_r_binding="__fzf_history__"
+            leanterm_ctrl_r_binding="__fzf_history__"
             ;;
         esac
       fi
-      case "$warp_ctrl_r_binding" in
+      case "$leanterm_ctrl_r_binding" in
         __fzf_history__)
-          _WARP_EXTERNAL_CTRL_R_WIDGET="$warp_ctrl_r_binding"
+          _LEANTERM_EXTERNAL_CTRL_R_WIDGET="$leanterm_ctrl_r_binding"
           shell_plugins+=(fzf)
           ;;
         __atuin_history)
-          _WARP_EXTERNAL_CTRL_R_WIDGET="$warp_ctrl_r_binding"
+          _LEANTERM_EXTERNAL_CTRL_R_WIDGET="$leanterm_ctrl_r_binding"
           shell_plugins+=(atuin)
           ;;
       esac
@@ -1591,28 +1591,28 @@ esac
       # `bind -x`. Instead use atuin's own init-time flag ($__atuin_bind_ctrl_r) plus
         # __atuin_history being defined.
       # shellcheck disable=SC2154
-      if [ -z "$_WARP_EXTERNAL_CTRL_R_WIDGET" ] && [ "$__atuin_bind_ctrl_r" = true ] &&
+      if [ -z "$_LEANTERM_EXTERNAL_CTRL_R_WIDGET" ] && [ "$__atuin_bind_ctrl_r" = true ] &&
         declare -F __atuin_history >/dev/null; then
-        _WARP_EXTERNAL_CTRL_R_WIDGET="__atuin_history"
+        _LEANTERM_EXTERNAL_CTRL_R_WIDGET="__atuin_history"
         shell_plugins+=(atuin)
       fi
     fi
 
-    function warp_bootstrapped () {
+    function leanterm_bootstrapped () {
         local aliases="`alias`"
         local env_var_names="`compgen -e`"
         local function_names="`compgen -A function`"
         local builtins="`compgen -b`"
         local keywords="`compgen -k`"
-        if [ "$WARP_IN_MSYS2" = false ]; then
+        if [ "$LEANTERM_IN_MSYS2" = false ]; then
           # Note that for now we don't support dynamically changing HISTFILE within a session.
-          local escaped_histfile="$(warp_escape_json "$HISTFILE")"
+          local escaped_histfile="$(leanterm_escape_json "$HISTFILE")"
           local escaped_abbrs=""
-          local escaped_aliases="$(warp_escape_json "$aliases")"
-          local escaped_env_var_names="$(warp_escape_json "$env_var_names")"
-          local escaped_function_names="$(warp_escape_json "$function_names")"
-          local escaped_builtins="$(warp_escape_json "$builtins")"
-          local escaped_keywords="$(warp_escape_json "$keywords")"
+          local escaped_aliases="$(leanterm_escape_json "$aliases")"
+          local escaped_env_var_names="$(leanterm_escape_json "$env_var_names")"
+          local escaped_function_names="$(leanterm_escape_json "$function_names")"
+          local escaped_builtins="$(leanterm_escape_json "$builtins")"
+          local escaped_keywords="$(leanterm_escape_json "$keywords")"
         fi
 
         local shell_options="`shopt -s | command -p cut -f 1`"
@@ -1631,48 +1631,48 @@ esac
 
         local shell_plugins_list="$(printf '%s\n' "${shell_plugins[@]}")"
 
-        if [ "$WARP_IN_MSYS2" = false ]; then
-          local escaped_shell_plugins=$(warp_escape_json "$shell_plugins_list")
-          local escaped_path="$(warp_escape_json "$PATH")"
-          local escaped_shell_options=$(warp_escape_json "$shell_options")
+        if [ "$LEANTERM_IN_MSYS2" = false ]; then
+          local escaped_shell_plugins=$(leanterm_escape_json "$shell_plugins_list")
+          local escaped_path="$(leanterm_escape_json "$PATH")"
+          local escaped_shell_options=$(leanterm_escape_json "$shell_options")
         fi
 
         local _user=$(command -pv whoami >/dev/null 2>&1 && command -p whoami 2>/dev/null || echo $USER)
         local _hostname=$(command -pv hostname >/dev/null 2>&1 && command -p hostname 2>/dev/null || command -p uname -n)
-        if [ "$WARP_IN_MSYS2" = true ]; then
-          warp_send_hook_via_kv_pairs_start "Bootstrapped"
-          warp_send_hook_kv_pair "histfile" "$HISTFILE"
-          warp_send_hook_kv_pair "session_id" "$WARP_SESSION_ID"
-          warp_send_hook_kv_pair "shell" "bash"
-          warp_send_hook_kv_pair "home_dir" "$HOME"
-          warp_send_hook_kv_pair "user" "$_user"
-          warp_send_hook_kv_pair "hostname" "$_hostname"
-          warp_send_hook_kv_pair "path" "$PATH"
-          warp_send_hook_kv_pair "cdpath" "$CDPATH"
-          warp_send_hook_kv_pair_escaped "env_var_names" "$env_var_names"
-          warp_send_hook_kv_pair "abbreviations" ""
-          warp_send_hook_kv_pair_escaped "aliases" "$aliases"
-          warp_send_hook_kv_pair_escaped "function_names" "$function_names"
-          warp_send_hook_kv_pair_escaped "builtins" "$builtins"
-          warp_send_hook_kv_pair_escaped "keywords" "$keywords"
-          warp_send_hook_kv_pair_escaped "shell_plugins" "$shell_plugins_list"
-          warp_send_hook_kv_pair "shell_version" "$BASH_VERSION"
-          warp_send_hook_kv_pair "shell_options" "$shell_options"
-          warp_send_hook_kv_pair "rcfiles_start_time" "$rcfiles_start_time"
-          warp_send_hook_kv_pair "rcfiles_end_time" "$rcfiles_end_time"
-          warp_send_hook_kv_pair "vi_mode_enabled" "$vi_mode_enabled"
-          warp_send_hook_kv_pair "os_category" "$os_category"
-          warp_send_hook_kv_pair "linux_distribution" "$linux_distribution"
-          warp_send_hook_kv_pair "wsl_name" "$WSL_DISTRO_NAME"
-          warp_send_hook_kv_pair "shell_path" "$BASH"
-          warp_send_hook_via_kv_pairs_end
+        if [ "$LEANTERM_IN_MSYS2" = true ]; then
+          leanterm_send_hook_via_kv_pairs_start "Bootstrapped"
+          leanterm_send_hook_kv_pair "histfile" "$HISTFILE"
+          leanterm_send_hook_kv_pair "session_id" "$LEANTERM_SESSION_ID"
+          leanterm_send_hook_kv_pair "shell" "bash"
+          leanterm_send_hook_kv_pair "home_dir" "$HOME"
+          leanterm_send_hook_kv_pair "user" "$_user"
+          leanterm_send_hook_kv_pair "hostname" "$_hostname"
+          leanterm_send_hook_kv_pair "path" "$PATH"
+          leanterm_send_hook_kv_pair "cdpath" "$CDPATH"
+          leanterm_send_hook_kv_pair_escaped "env_var_names" "$env_var_names"
+          leanterm_send_hook_kv_pair "abbreviations" ""
+          leanterm_send_hook_kv_pair_escaped "aliases" "$aliases"
+          leanterm_send_hook_kv_pair_escaped "function_names" "$function_names"
+          leanterm_send_hook_kv_pair_escaped "builtins" "$builtins"
+          leanterm_send_hook_kv_pair_escaped "keywords" "$keywords"
+          leanterm_send_hook_kv_pair_escaped "shell_plugins" "$shell_plugins_list"
+          leanterm_send_hook_kv_pair "shell_version" "$BASH_VERSION"
+          leanterm_send_hook_kv_pair "shell_options" "$shell_options"
+          leanterm_send_hook_kv_pair "rcfiles_start_time" "$rcfiles_start_time"
+          leanterm_send_hook_kv_pair "rcfiles_end_time" "$rcfiles_end_time"
+          leanterm_send_hook_kv_pair "vi_mode_enabled" "$vi_mode_enabled"
+          leanterm_send_hook_kv_pair "os_category" "$os_category"
+          leanterm_send_hook_kv_pair "linux_distribution" "$linux_distribution"
+          leanterm_send_hook_kv_pair "wsl_name" "$WSL_DISTRO_NAME"
+          leanterm_send_hook_kv_pair "shell_path" "$BASH"
+          leanterm_send_hook_via_kv_pairs_end
         else
-          local escaped_editor="$(warp_escape_json "$EDITOR")"
-          local escaped_shell_path="$(warp_escape_json "$BASH")"
-          local escaped_cdpath="$(warp_escape_json "$CDPATH")"
-          local escaped_json="{\"hook\": \"Bootstrapped\", \"value\": {\"histfile\": \"$escaped_histfile\", \"session_id\": $WARP_SESSION_ID, \"shell\": \"bash\",  \"home_dir\": \"$HOME\", \"user\":\"$_user\", \"host\":\"$_hostname\", \"path\": \"$escaped_path\", \"cdpath\": \"$escaped_cdpath\", \"editor\": \"$escaped_editor\", \"env_var_names\": \"$escaped_env_var_names\", \"abbreviations\": \"$escaped_abbrs\", \"aliases\": \"$escaped_aliases\", \"function_names\": \"$escaped_function_names\", \"builtins\": \"$escaped_builtins\", \"keywords\": \"$escaped_keywords\", \"shell_version\": \"$BASH_VERSION\", \"shell_options\": \"$escaped_shell_options\", \"rcfiles_start_time\": \"$rcfiles_start_time\", \"rcfiles_end_time\": \"$rcfiles_end_time\", \"shell_plugins\": \"$escaped_shell_plugins\", \"vi_mode_enabled\": \"$vi_mode_enabled\", \"os_category\": \"$os_category\", \"linux_distribution\": \"$linux_distribution\", \"wsl_name\": \"$WSL_DISTRO_NAME\", \"shell_path\": \"$escaped_shell_path\"}}"
-          warp_send_json_message "$escaped_json"
+          local escaped_editor="$(leanterm_escape_json "$EDITOR")"
+          local escaped_shell_path="$(leanterm_escape_json "$BASH")"
+          local escaped_cdpath="$(leanterm_escape_json "$CDPATH")"
+          local escaped_json="{\"hook\": \"Bootstrapped\", \"value\": {\"histfile\": \"$escaped_histfile\", \"session_id\": $LEANTERM_SESSION_ID, \"shell\": \"bash\",  \"home_dir\": \"$HOME\", \"user\":\"$_user\", \"host\":\"$_hostname\", \"path\": \"$escaped_path\", \"cdpath\": \"$escaped_cdpath\", \"editor\": \"$escaped_editor\", \"env_var_names\": \"$escaped_env_var_names\", \"abbreviations\": \"$escaped_abbrs\", \"aliases\": \"$escaped_aliases\", \"function_names\": \"$escaped_function_names\", \"builtins\": \"$escaped_builtins\", \"keywords\": \"$escaped_keywords\", \"shell_version\": \"$BASH_VERSION\", \"shell_options\": \"$escaped_shell_options\", \"rcfiles_start_time\": \"$rcfiles_start_time\", \"rcfiles_end_time\": \"$rcfiles_end_time\", \"shell_plugins\": \"$escaped_shell_plugins\", \"vi_mode_enabled\": \"$vi_mode_enabled\", \"os_category\": \"$os_category\", \"linux_distribution\": \"$linux_distribution\", \"wsl_name\": \"$WSL_DISTRO_NAME\", \"shell_path\": \"$escaped_shell_path\"}}"
+          leanterm_send_json_message "$escaped_json"
         fi
     }
-    warp_bootstrapped
+    leanterm_bootstrapped
 fi

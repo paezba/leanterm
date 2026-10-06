@@ -13,7 +13,7 @@
 
 static void *NSAppThemeChangeContext = &NSAppThemeChangeContext;
 
-NSMutableDictionary<NSNumber *, WarpHotKey *> *_hotKeys;
+NSMutableDictionary<NSNumber *, LeantermHotKey *> *_hotKeys;
 UInt32 _nextHotKeyID;
 
 OSStatus HotkeyPressedHandler(EventHandlerCallRef _inCaller __unused, EventRef inEvent,
@@ -28,9 +28,9 @@ OSStatus HotkeyPressedHandler(EventHandlerCallRef _inCaller __unused, EventRef i
         return eventNotHandledErr;
     }
 
-    WarpHotKey *hotkey = _hotKeys[@(hotKeyID.id)];
+    LeantermHotKey *hotkey = _hotKeys[@(hotKeyID.id)];
     if (hotkey) {
-        warp_app_send_global_keybinding((NSApplication *)inUserData, hotkey->_modifierKeys,
+        leanterm_app_send_global_keybinding((NSApplication *)inUserData, hotkey->_modifierKeys,
                                         hotkey->_keyCode);
         return noErr;
     }
@@ -62,7 +62,7 @@ void *registerGlobalHotkey(NSUInteger key, NSUInteger modifiers) {
                             &hotKeyRef)) {
         return nil;
     };
-    [_hotKeys setObject:[[[WarpHotKey alloc] initWithEventHotKey:hotKeyRef
+    [_hotKeys setObject:[[[LeantermHotKey alloc] initWithEventHotKey:hotKeyRef
                                                          keyCode:key
                                                     modifierKeys:modifiers] autorelease]
                  forKey:@(hotKeyID.id)];
@@ -97,13 +97,13 @@ NSUInteger activeScreenId() {
         unsignedIntegerValue];
 }
 
-@interface WarpMenuItemDelegate : NSObject <NSMenuDelegate> {
+@interface LeantermMenuItemDelegate : NSObject <NSMenuDelegate> {
     // Rust expects an ivar with this name.
     void *rustWrapper;
 }
 @end
 
-@implementation WarpDelegate {
+@implementation LeantermDelegate {
     // Rust expects an ivar with this name.
     void *rustWrapper;
 
@@ -214,7 +214,7 @@ NSUInteger activeScreenId() {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     [defaults setBool:NO forKey:@"NSAutoFillHeuristicControllerEnabled"];
 
-    if (rustWrapper) warp_app_will_finish_launching(note.object);
+    if (rustWrapper) leanterm_app_will_finish_launching(note.object);
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)note {
@@ -229,7 +229,7 @@ NSUInteger activeScreenId() {
                         change:(NSDictionary *)change
                        context:(void *)context {
     if (context == NSAppThemeChangeContext) {
-        if (rustWrapper) warp_app_os_appearance_changed(self);
+        if (rustWrapper) leanterm_app_os_appearance_changed(self);
     } else {
         // Any unrecognized context must belong to super
         [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
@@ -237,7 +237,7 @@ NSUInteger activeScreenId() {
 }
 
 - (void)applicationDidBecomeActive:(NSNotification *)note {
-    if (rustWrapper) warp_app_did_become_active(note.object);
+    if (rustWrapper) leanterm_app_did_become_active(note.object);
 }
 
 - (void)setForceTermination {
@@ -288,14 +288,14 @@ static BOOL isSystemInitiatedTermination(void) {
     if (!forceTermination) {
         // Make sure the rust app doesn't have any reasons to interrupt quit, e.g. needs to relaunch
         // for autoupdate, but launching the new process failed.
-        okToTerminate = warp_app_should_terminate_app(application, systemInitiated);
+        okToTerminate = leanterm_app_should_terminate_app(application, systemInitiated);
     }
 
     if (okToTerminate) {
         if (systemInitiated) {
             // Comply immediately when the system asked us to quit. Anything but
             // `NSTerminateNow` here (including the hide-then-reterminate dance
-            // below, which returns `NSTerminateCancel`) makes macOS treat Warp
+            // below, which returns `NSTerminateCancel`) makes macOS treat Leanterm
             // as blocking the logout/shutdown, which can abort a scheduled OS
             // update and leave the app in a stuck-looking state (#12441).
             return NSTerminateNow;
@@ -334,26 +334,26 @@ static BOOL isSystemInitiatedTermination(void) {
 }
 
 - (void)applicationDidResignActive:(NSNotification *)note {
-    if (rustWrapper) warp_app_did_resign_active(note.object);
+    if (rustWrapper) leanterm_app_did_resign_active(note.object);
 }
 
 - (void)applicationWillTerminate:(NSNotification *)note {
-    if (rustWrapper) warp_app_will_terminate(note.object);
+    if (rustWrapper) leanterm_app_will_terminate(note.object);
 }
 
 - (void)application:(NSApplication *)sender openFiles:(NSArray<NSString *> *)filenames {
-    if (rustWrapper) warp_app_open_files(sender, filenames);
+    if (rustWrapper) leanterm_app_open_files(sender, filenames);
 }
 
 - (void)application:(NSApplication *)application openURLs:(NSArray<NSURL *> *)urls {
-    if (rustWrapper) warp_app_open_urls(application, urls);
+    if (rustWrapper) leanterm_app_open_urls(application, urls);
 }
 
 // This is called when clicking on the app in the Dock or from Finder.
 // If there's no visible windows, we will open one.
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)app hasVisibleWindows:(BOOL)flag {
     if (rustWrapper && !flag) {
-        warp_app_new_window(app);
+        leanterm_app_new_window(app);
         return NO;  // do nothing
     }
     return YES;
@@ -363,13 +363,13 @@ static BOOL isSystemInitiatedTermination(void) {
     // We use an async dispatch here for two reasons:
     //  1. When the active window changes, this will be called twice (once for resign, once for
     //     activated). We can coalesce these calls.
-    //  2. When a new window is created, warp will activate it; if we recursively call back into
-    //     warp then we will cause the app to be mutably borrowed while already borrowed.
+    //  2. When a new window is created, leanterm will activate it; if we recursively call back into
+    //     leanterm then we will cause the app to be mutably borrowed while already borrowed.
     if (!hasPendingActiveWindowChange) {
         hasPendingActiveWindowChange = YES;
         dispatch_async(dispatch_get_main_queue(), ^{
           self->hasPendingActiveWindowChange = NO;
-          if (self->rustWrapper) warp_app_active_window_changed(self);
+          if (self->rustWrapper) leanterm_app_active_window_changed(self);
         });
     }
 }
@@ -381,19 +381,19 @@ static BOOL isSystemInitiatedTermination(void) {
     // callback gets triggered after the window notification. Thus using the async dispatch
     // here ensures we always save the most up-to-date value within the database.
     dispatch_async(dispatch_get_main_queue(), ^{
-      if (self->rustWrapper) warp_app_window_did_move(self);
+      if (self->rustWrapper) leanterm_app_window_did_move(self);
     });
 }
 
 - (void)windowResized:(NSNotification *)note {
     dispatch_async(dispatch_get_main_queue(), ^{
-      if (self->rustWrapper) warp_app_window_did_resize(self);
+      if (self->rustWrapper) leanterm_app_window_did_resize(self);
     });
 }
 
 - (void)screenChanged:(NSNotification *)note {
     dispatch_async(dispatch_get_main_queue(), ^{
-      if (self->rustWrapper) warp_app_screen_did_change(self);
+      if (self->rustWrapper) leanterm_app_screen_did_change(self);
     });
 }
 
@@ -410,12 +410,12 @@ static BOOL isSystemInitiatedTermination(void) {
 }
 
 - (void)menuNeedsUpdate:(NSMenu *)menu {
-    // Trigger warp_menu_item_needs_update for every item with our class set as its represented
+    // Trigger leanterm_menu_item_needs_update for every item with our class set as its represented
     // object.
-    Class warpHandlerClass = [WarpCustomMenuItemHandler class];
+    Class leantermHandlerClass = [LeantermCustomMenuItemHandler class];
     for (NSMenuItem *item in menu.itemArray) {
         id obj = item.representedObject;
-        if ([obj isKindOfClass:warpHandlerClass]) {
+        if ([obj isKindOfClass:leantermHandlerClass]) {
             [obj itemNeedsUpdate:item];
         }
     }
@@ -430,7 +430,7 @@ static BOOL isSystemInitiatedTermination(void) {
       dispatch_async(dispatch_get_main_queue(), ^{
         if (self->isReachable == nil || [self->isReachable intValue] == 0) {
             self->isReachable = [NSNumber numberWithBool:YES];
-            if (self->rustWrapper) warp_app_internet_reachability_changed(self, YES);
+            if (self->rustWrapper) leanterm_app_internet_reachability_changed(self, YES);
         }
       });
     };
@@ -441,7 +441,7 @@ static BOOL isSystemInitiatedTermination(void) {
       dispatch_async(dispatch_get_main_queue(), ^{
         if (self->isReachable == nil || [self->isReachable intValue] > 0) {
             self->isReachable = [NSNumber numberWithBool:NO];
-            if (self->rustWrapper) warp_app_internet_reachability_changed(self, NO);
+            if (self->rustWrapper) leanterm_app_internet_reachability_changed(self, NO);
         }
       });
     };
@@ -454,7 +454,7 @@ static BOOL isSystemInitiatedTermination(void) {
         if (self->isReachable == nil) {
             self->isReachable = [NSNumber numberWithBool:internetIsReachable];
             if (self->rustWrapper)
-                warp_app_internet_reachability_changed(self, internetIsReachable);
+                leanterm_app_internet_reachability_changed(self, internetIsReachable);
         }
       });
     });
@@ -475,14 +475,14 @@ static BOOL isSystemInitiatedTermination(void) {
 - (void)userNotificationCenter:(UNUserNotificationCenter *)center
     didReceiveNotificationResponse:(UNNotificationResponse *)response
              withCompletionHandler:(void (^)(void))completionHandler {
-    // Handle what happens when the user clicks the notification. Warp doesn't support any actions
+    // Handle what happens when the user clicks the notification. Leanterm doesn't support any actions
     // other than the default action currently.
     if ([response.actionIdentifier isEqualToString:UNNotificationDefaultActionIdentifier]) {
         NSDictionary *userInfo = response.notification.request.content.userInfo;
         NSString *data = userInfo[@"DATA"];
 
         if (rustWrapper) {
-            warp_app_notification_clicked(self, response.notification.date.timeIntervalSince1970,
+            leanterm_app_notification_clicked(self, response.notification.date.timeIntervalSince1970,
                                           data);
         }
     }
@@ -490,13 +490,13 @@ static BOOL isSystemInitiatedTermination(void) {
 
 @end
 
-@implementation WarpApplication {
+@implementation LeantermApplication {
     // Rust expects an ivar with this name.
     void *rustWrapper;
 }
 
 - (void)setForceTermination {
-    WarpDelegate *delegate = (WarpDelegate *)self.delegate;
+    LeantermDelegate *delegate = (LeantermDelegate *)self.delegate;
     [delegate setForceTermination];
 }
 
@@ -507,24 +507,24 @@ static BOOL isSystemInitiatedTermination(void) {
       BOOL disable_modal = alert.suppressionButton.state == NSControlStateValueOn;
       // Subtracting `NSAlertFirstButtonReturn` from `response` yields the 0-based index of the
       // button that was actually clicked.
-      warp_app_process_modal_response(self, modalId, response - NSAlertFirstButtonReturn,
+      leanterm_app_process_modal_response(self, modalId, response - NSAlertFirstButtonReturn,
                                       disable_modal);
     });
 }
 
 @end
 
-WarpApplication *get_warp_app() {
+LeantermApplication *get_leanterm_app() {
     // Set up the delegate (once).
     // The delegate is deliberately leaked.
-    WarpApplication *app = [WarpApplication sharedApplication];
+    LeantermApplication *app = [LeantermApplication sharedApplication];
     static dispatch_once_t once;
     static id sharedDelegate;
     dispatch_once(&once, ^{
-      sharedDelegate = [[WarpDelegate alloc] init];
+      sharedDelegate = [[LeantermDelegate alloc] init];
       [app setDelegate:sharedDelegate];
 
-      // Hack to work around the fact that warp is frequently tested as a
+      // Hack to work around the fact that leanterm is frequently tested as a
       // standalone (unbundled) binary.
       app.activationPolicy = NSApplicationActivationPolicyRegular;
     });
@@ -535,7 +535,7 @@ WarpApplication *get_warp_app() {
 // The result is autoreleased.
 NSMenu *make_delegated_menu(NSString *title) {
     NSMenu *result = [[[NSMenu alloc] initWithTitle:title] autorelease];
-    result.delegate = (WarpDelegate *)[[WarpApplication sharedApplication] delegate];
+    result.delegate = (LeantermDelegate *)[[LeantermApplication sharedApplication] delegate];
     return result;
 }
 
@@ -554,11 +554,11 @@ NSMenuItem *make_services_menu_item() {
 }
 
 // \return a new menu item that wraps the given context pointer.
-// The pointer will be provided back to Warp in the callbacks (see menus.h).
+// The pointer will be provided back to Leanterm in the callbacks (see menus.h).
 // The result is autoreleased.
-NSMenuItem *make_warp_custom_menu_item(void *context) {
-    WarpCustomMenuItemHandler *handler =
-        [[[WarpCustomMenuItemHandler alloc] initWithContext:context] autorelease];
+NSMenuItem *make_leanterm_custom_menu_item(void *context) {
+    LeantermCustomMenuItemHandler *handler =
+        [[[LeantermCustomMenuItemHandler alloc] initWithContext:context] autorelease];
 
     // Sets action to NULL if menu item has submenu, so the menu doesn't close when item is clicked
     NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:@""

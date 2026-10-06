@@ -1,11 +1,11 @@
-use objc2::rc::Retained;
-use objc2::runtime::ProtocolObject;
-use objc2_app_kit::{NSView, NSWindow};
-use objc2_metal::MTLDevice;
 use leanterm_ui_core::rendering::{
     GPUBackend, GPUDeviceInfo, GPUDeviceType, GPUPowerPreference, OnGPUDeviceSelected,
 };
 use leanterm_ui_core::{Scene, fonts};
+use objc2::rc::Retained;
+use objc2::runtime::ProtocolObject;
+use objc2_app_kit::{NSView, NSWindow};
+use objc2_metal::MTLDevice;
 
 use crate::platform::mac::rendering::is_integrated_gpu;
 use crate::platform::mac::window::WindowState;

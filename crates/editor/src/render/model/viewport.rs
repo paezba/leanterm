@@ -1,10 +1,10 @@
 use float_cmp::ApproxEq;
-use string_offset::CharOffset;
-use sum_tree::{SeekBias, SumTree};
 use leanterm_ui_core::SizeConstraint;
 use leanterm_ui_core::geometry::rect::RectF;
 use leanterm_ui_core::geometry::vector::{Vector2F, vec2f};
 use leanterm_ui_core::units::{IntoPixels, Pixels};
+use string_offset::CharOffset;
+use sum_tree::{SeekBias, SumTree};
 
 use super::positioned::PositionedCursor;
 use super::{

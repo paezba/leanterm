@@ -1,14 +1,14 @@
-//! Repository metadata utilities for Warp.
+//! Repository metadata utilities for Leanterm.
 //!
 //! This crate provides utilities for managing repository metadata, including file trees,
 //! gitignore processing, and filesystem watching capabilities.s
 use std::borrow::Borrow;
 use std::path::{Path, PathBuf};
 
-use thiserror::Error;
-use leanterm_util::standardized_path::StandardizedPath;
 #[cfg(not(target_family = "wasm"))]
 use leanterm_ui_core::SingletonEntity;
+use leanterm_util::standardized_path::StandardizedPath;
+use thiserror::Error;
 
 /// Errors that can occur when working with repository metadata.
 #[derive(Error, Debug)]

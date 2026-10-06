@@ -5,11 +5,11 @@ use std::sync::{Arc, Mutex};
 use anyhow::{Result, anyhow};
 use futures::channel::oneshot;
 use futures::lock::Mutex as AsyncMutex;
+use leanterm_errors::report_error;
+use leanterm_ui_core::r#async::executor::Background;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use serde_json::value::RawValue;
-use leanterm_errors::report_error;
-use leanterm_ui_core::r#async::executor::Background;
 
 use crate::transport::Transport;
 

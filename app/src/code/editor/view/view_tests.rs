@@ -1,10 +1,10 @@
 use leanterm_core::ui::appearance::Appearance;
 use leanterm_editor::render::element::VerticalExpansionBehavior;
-use leanterm_util::user_input::UserInput;
 use leanterm_ui::elements::ScrollbarWidth;
 use leanterm_ui::elements::new_scrollable::ScrollableAppearance;
 use leanterm_ui::platform::WindowStyle;
 use leanterm_ui::{App, TypedActionView, ViewHandle, WindowId};
+use leanterm_util::user_input::UserInput;
 
 use super::{CodeEditorRenderOptions, CodeEditorView, CodeEditorViewAction};
 use crate::editor::InteractionState;

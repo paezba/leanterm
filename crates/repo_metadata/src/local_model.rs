@@ -2,7 +2,7 @@
 //! Repository metadata model singleton.
 //!
 //! This module provides a singleton model that manages repository metadata across
-//! all repositories tracked by Warp.
+//! all repositories tracked by Leanterm.
 
 use std::cell::Cell;
 use std::collections::HashMap;
@@ -15,9 +15,9 @@ use std::sync::Arc;
 use futures::channel::oneshot;
 use futures::future::{self, BoxFuture, FutureExt as _};
 use leanterm_core::safe_warn;
-use leanterm_util::sync::Condition;
 use leanterm_ui_core::ModelHandle;
 use leanterm_ui_core::r#async::{FutureId, SpawnedFutureHandle};
+use leanterm_util::sync::Condition;
 
 /// Represents either a file or directory in a repository.
 #[derive(Debug, Clone)]

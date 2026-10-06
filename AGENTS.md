@@ -40,11 +40,11 @@ Run the full presubmit only when the user, task, or approved spec explicitly req
 
 ## Architecture Overview
 
-This is a Rust-based terminal emulator with a custom UI framework called **WarpUI**.
+This is a Rust-based terminal emulator with a custom UI framework called **LeantermUi**.
 
 ### Front-end
 
-The `app/` crate is a GUI desktop app on the WarpUI pixel/GPU framework (`leanterm_ui`, `crates/leanterm_ui_core`): `Element`/`View` layout, GPU/WGSL rendering, mouse input, `.app` bundles. Run with `cargo run` / `./script/run`; verify visually or with the real-display integration framework (`crates/integration`).
+The `app/` crate is a GUI desktop app on the LeantermUi pixel/GPU framework (`leanterm_ui`, `crates/leanterm_ui_core`): `Element`/`View` layout, GPU/WGSL rendering, mouse input, `.app` bundles. Run with `cargo run` / `./script/run`; verify visually or with the real-display integration framework (`crates/integration`).
 
 ### Key Components
 
@@ -52,7 +52,7 @@ The `app/` crate is a GUI desktop app on the WarpUI pixel/GPU framework (`leante
 - Entity-Component-Handle pattern: a global `App` object owns all views/models (entities); views hold `ViewHandle<T>` references to other views; `AppContext` provides temporary access to handles during render/events.
 - Actions system for event handling.
 
-**Rendering** (WarpUI elements):
+**Rendering** (LeantermUi elements):
 - `Element`s describe visual layout (Flutter-inspired), rendered on the GPU (WGSL).
 - Mouse input uses `MouseStateHandle`: create it once during construction and reference/clone it wherever mouse input is tracked. An inline `MouseStateHandle::default()` while rendering means no mouse interactions work.
 
@@ -60,7 +60,7 @@ The `app/` crate is a GUI desktop app on the WarpUI pixel/GPU framework (`leante
 - Terminal emulation and shell management (`terminal/`)
 - Code editor and code review (`code/`, `code_review/`)
 - Local notebooks and workflows (`notebooks/`, `workflows/`)
-- Local control / `warpctrl` (`local_control/`)
+- Local control / `leantermctl` (`local_control/`)
 - Settings and preferences (`settings/`)
 - Workspace and session management (`workspace/`)
 
@@ -172,7 +172,7 @@ for itself.
 
 ### Feature Flags
 
-Warp uses compile-time feature flags with a small runtime plumbing layer.
+Leanterm uses compile-time feature flags with a small runtime plumbing layer.
 
 How to add a feature flag:
 - Add a new variant to `leanterm_core/src/features.rs` in the `FeatureFlag` enum

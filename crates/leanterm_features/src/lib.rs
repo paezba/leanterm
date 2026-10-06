@@ -28,7 +28,7 @@ pub enum FeatureFlag {
     /// lib will use the user's history as a last-ditch effort to find a reasonable correction.
     CommandCorrectionsHistoryRule,
 
-    /// Used to gate an experiment we're doing on WarpDev ONLY
+    /// Used to gate an experiment we're doing on LeantermDev ONLY
     /// to get a sense of PTY throughput over time.
     RecordPtyThroughput,
 
@@ -75,7 +75,7 @@ pub enum FeatureFlag {
     EditableMarkdownMermaid,
 
     /// Renders `.ipynb` (Jupyter) files as a formatted, read-only notebook in
-    /// Warp's notebook viewer instead of showing the raw JSON in the code editor.
+    /// Leanterm's notebook viewer instead of showing the raw JSON in the code editor.
     JupyterNotebookRendering,
 
     /// Enables embedded code review comments.
@@ -85,8 +85,8 @@ pub enum FeatureFlag {
     /// content changes via auto-reload.
     CodeReviewScrollPreservation,
 
-    /// Enables Warp local control through the standalone warpctrl CLI.
-    WarpControlCli,
+    /// Enables Leanterm local control through the standalone leantermctl CLI.
+    LeantermControlCli,
 
     /// Renders supported solid box-drawing characters (`U+2500..=U+257F`)
     /// procedurally as cell-filling rectangles instead of from the font,
@@ -110,7 +110,7 @@ static FEATURES_INITIALIZED: AtomicBool = AtomicBool::new(false);
 
 /// Features used in debugging.
 pub const DEBUG_FLAGS: &[FeatureFlag] = &[FeatureFlag::DebugMode, FeatureFlag::RuntimeFeatureFlags];
-/// Features enabled only for the WarpLocal developer build.
+/// Features enabled only for the LeantermLocal developer build.
 pub const LOCAL_FLAGS: &[FeatureFlag] = &[];
 
 /// Features enabled for the development team.  The expectation is that, over
@@ -124,21 +124,21 @@ pub const DOGFOOD_FLAGS: &[FeatureFlag] = &[
     FeatureFlag::ContextLineReviewComments,
     FeatureFlag::RunGeneratorsWithCmdExe,
     FeatureFlag::FileAndDiffSetComments,
-    // These are enabled via 100% experiment on prod warp-server,
+    // These are enabled via 100% experiment on prod leanterm-server,
     // but we need to enable here for dogfood builds.
     // End manually enabled Code features.
     FeatureFlag::EditableMarkdownMermaid,
     FeatureFlag::CodeReviewScrollPreservation,
-    FeatureFlag::WarpControlCli,
+    FeatureFlag::LeantermControlCli,
     FeatureFlag::JupyterNotebookRendering,
     FeatureFlag::BoxDrawingGlyphs,
 ];
 
-/// Features enabled for feature preview build users (e.g.: Friends of Warp).
-/// All PREVIEW_FLAGS are also automatically added to dogfood builds (WarpDev).
+/// Features enabled for feature preview build users (e.g.: Friends of Leanterm).
+/// All PREVIEW_FLAGS are also automatically added to dogfood builds (LeantermDev).
 pub const PREVIEW_FLAGS: &[FeatureFlag] = &[];
 
-/// Features enabled for all release builds (i.e.: everything but WarpLocal).
+/// Features enabled for all release builds (i.e.: everything but LeantermLocal).
 /// NOTE: if you are promoting a feature from Preview to launch, you'll likely
 /// want to enable the feature by default in app/Cargo.toml, rather than add it to RELEASE_FLAGS.
 pub const RELEASE_FLAGS: &[FeatureFlag] = &[

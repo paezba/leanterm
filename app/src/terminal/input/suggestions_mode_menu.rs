@@ -27,7 +27,7 @@ use crate::input_suggestions::{
     DETAILS_PANEL_MARGIN, DETAILS_PANEL_PADDING, HISTORY_DETAILS_PANEL_WIDTH,
     LABEL_PADDING as InputSuggestionsLabelPadding,
 };
-use crate::themes::theme::WarpTheme;
+use crate::themes::theme::LeantermTheme;
 
 enum SuggestionsResizeConfig {
     WidthAndHeight,
@@ -189,7 +189,7 @@ impl Input {
         &self,
         margin: f32,
         corner_radius: CornerRadius,
-        theme: &WarpTheme,
+        theme: &LeantermTheme,
         resize_config: SuggestionsResizeConfig,
         menu_positioning: MenuPositioning,
         content: Box<dyn Element>,

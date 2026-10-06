@@ -3,7 +3,7 @@ name = "leanterm_util"
 authors = ["Leanterm contributors"]
 version = "0.1.0"
 edition = "2024"
-description = "General utilities and helpers used across warp crates"
+description = "General utilities and helpers used across leanterm crates"
 publish.workspace = true
 license.workspace = true
 

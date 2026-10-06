@@ -8,10 +8,10 @@ mod windows;
 
 use std::path::PathBuf;
 
+use leanterm_ui::{AppContext, SingletonEntity};
+use leanterm_util::path::LineAndColumnArg;
 use serde::{Deserialize, Serialize};
 use settings::EditorChoice;
-use leanterm_util::path::LineAndColumnArg;
-use leanterm_ui::{AppContext, SingletonEntity};
 
 pub use self::settings::{EditorLayout, EditorSettings};
 

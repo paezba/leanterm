@@ -116,32 +116,32 @@ where
         .finish()
 }
 
-/// Returns whether "Open in Warp" should be offered for the given file path.
+/// Returns whether "Open in Leanterm" should be offered for the given file path.
 ///
 /// This checks:
-/// - Whether Warp is already the default editor (skip if so)
-/// - Whether this file is openable in Warp (skips binary files and directories)
-/// - Whether the file renders in Warp's notebook viewer, which is reached via a
+/// - Whether Leanterm is already the default editor (skip if so)
+/// - Whether this file is openable in Leanterm (skips binary files and directories)
+/// - Whether the file renders in Leanterm's notebook viewer, which is reached via a
 ///   different affordance (skips Markdown and, when enabled, Jupyter notebooks)
 #[cfg(feature = "local_fs")]
-pub fn should_show_open_in_warp_link(path: &Path, app: &AppContext) -> bool {
+pub fn should_show_open_in_leanterm_link(path: &Path, app: &AppContext) -> bool {
     use leanterm_ui::SingletonEntity;
 
     use crate::code::view::is_binary_file;
-    use crate::notebooks::file::renders_in_warp_notebook_viewer;
+    use crate::notebooks::file::renders_in_leanterm_notebook_viewer;
     use crate::util::file::external_editor::EditorSettings;
     use crate::util::file::external_editor::settings::EditorChoice;
 
     let settings = EditorSettings::as_ref(app);
 
-    if matches!(*settings.open_file_editor, EditorChoice::Warp) {
+    if matches!(*settings.open_file_editor, EditorChoice::Leanterm) {
         return false;
     }
 
-    !renders_in_warp_notebook_viewer(path) && !is_binary_file(path) && !path.is_dir()
+    !renders_in_leanterm_notebook_viewer(path) && !is_binary_file(path) && !path.is_dir()
 }
 
 #[cfg(not(feature = "local_fs"))]
-pub fn should_show_open_in_warp_link(_path: &std::path::Path, _app: &AppContext) -> bool {
+pub fn should_show_open_in_leanterm_link(_path: &std::path::Path, _app: &AppContext) -> bool {
     false
 }

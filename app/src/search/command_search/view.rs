@@ -5,10 +5,8 @@ use std::time::Duration;
 use async_channel::Sender;
 use itertools::Itertools;
 use lazy_static::lazy_static;
-use pathfinder_color::ColorU;
-use pathfinder_geometry::vector::Vector2F;
 use leanterm_errors::report_error;
-use leanterm_ui::accessibility::{AccessibilityContent, WarpA11yRole};
+use leanterm_ui::accessibility::{AccessibilityContent, LeantermA11yRole};
 use leanterm_ui::elements::{
     Align, AnchorPair, Border, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment,
     Dismiss, Fill, Flex, MouseStateHandle, OffsetPositioning, OffsetType, ParentElement,
@@ -23,6 +21,8 @@ use leanterm_ui::{
     AppContext, Element, Entity, FocusContext, ModelHandle, SingletonEntity, TypedActionView, View,
     ViewContext, ViewHandle, WeakViewHandle,
 };
+use pathfinder_color::ColorU;
+use pathfinder_geometry::vector::Vector2F;
 
 use super::history::history_data_source_for_session;
 use super::zero_state::{CommandSearchZeroStateEvent, CommandSearchZeroStateView};
@@ -381,7 +381,7 @@ impl CommandSearchView {
             ctx.emit_a11y_content(AccessibilityContent::new(
                 a11y_content,
                 a11y_help_content,
-                WarpA11yRole::UserAction,
+                LeantermA11yRole::UserAction,
             ));
 
             // Recompute the result index - the incoming index is the index in the
@@ -707,7 +707,7 @@ impl View for CommandSearchView {
         Some(AccessibilityContent::new(
             "Command Search".to_owned(),
             "Search your history, workflows, and more.  Use the Up and Down arrows to browse search results after typing.  Press Enter to accept a selected result, inserting it into the terminal input.  Press Escape to close.".to_owned(),
-            WarpA11yRole::MenuRole,
+            LeantermA11yRole::MenuRole,
         ))
     }
 
@@ -828,8 +828,8 @@ impl CommandSearchView {
 
 pub mod styles {
     use lazy_static::lazy_static;
-    use pathfinder_color::ColorU;
     use leanterm_ui::elements::{Border, DropShadow, ScrollbarWidth};
+    use pathfinder_color::ColorU;
 
     use crate::appearance::Appearance;
     use crate::themes::theme::Fill;

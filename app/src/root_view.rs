@@ -4,11 +4,6 @@ use std::sync::Arc;
 use std::sync::mpsc::SyncSender;
 
 use lazy_static::lazy_static;
-use parking_lot::Mutex;
-use pathfinder_geometry::rect::RectF;
-use pathfinder_geometry::vector::{Vector2F, vec2f};
-use serde::{Deserialize, Serialize};
-use settings::Setting as _;
 use leanterm_core::context_flag::ContextFlag;
 use leanterm_errors::report_error;
 use leanterm_ui::keymap::{EditableBinding, FixedBinding};
@@ -21,6 +16,11 @@ use leanterm_ui::{
     NextNewWindowsHasThisWindowsBoundsUponClose, SingletonEntity, TypedActionView, View,
     ViewContext, ViewHandle, WindowId, id,
 };
+use parking_lot::Mutex;
+use pathfinder_geometry::rect::RectF;
+use pathfinder_geometry::vector::{Vector2F, vec2f};
+use serde::{Deserialize, Serialize};
+use settings::Setting as _;
 
 use crate::app_state::{AppState, PaneUuid, WindowSnapshot};
 use crate::appearance::Appearance;
@@ -46,7 +46,7 @@ use crate::{
     ChannelState, GlobalResourceHandles, GlobalResourceHandlesProvider, UpdateQuakeModeEventArg,
 };
 
-const WINDOW_TITLE: &str = "Warp";
+const WINDOW_TITLE: &str = "Leanterm";
 
 lazy_static! {
     static ref FALLBACK_WINDOW_SIZE: Vector2F = vec2f(800.0, 600.0);
@@ -482,7 +482,7 @@ fn open_from_restored(arg: &OpenFromRestoredArg, ctx: &mut AppContext) {
                         AddWindowOptions {
                             window_style: WindowStyle::Pin,
                             window_bounds: WindowBounds::ExactPosition(frame_args.window_bounds),
-                            title: Some("Warp".to_owned()),
+                            title: Some("Leanterm".to_owned()),
                             fullscreen_state: window.fullscreen_state,
                             background_blur_radius_pixels,
                             background_backdrop,
@@ -525,7 +525,7 @@ fn open_from_restored(arg: &OpenFromRestoredArg, ctx: &mut AppContext) {
                         ctx.add_window(
                             AddWindowOptions {
                                 window_bounds: WindowBounds::new(window.bounds),
-                                title: Some("Warp".to_owned()),
+                                title: Some("Leanterm".to_owned()),
                                 fullscreen_state: window.fullscreen_state,
                                 background_blur_radius_pixels,
                                 background_backdrop,
@@ -577,7 +577,7 @@ fn open_from_restored(arg: &OpenFromRestoredArg, ctx: &mut AppContext) {
                 ctx.add_window(
                     AddWindowOptions {
                         window_bounds: WindowBounds::new(window.bounds),
-                        title: Some("Warp".to_owned()),
+                        title: Some("Leanterm".to_owned()),
                         fullscreen_state: window.fullscreen_state,
                         background_blur_radius_pixels,
                         background_backdrop,
@@ -609,7 +609,7 @@ fn path_if_directory(path: &Path) -> Option<&Path> {
 /// Opens a new window with the workspace configured according to `source`. Returns the
 /// newly-opened window ID and a handle to the root view in that window.
 ///
-/// This is the canonical way to open a new Warp window - all other entrypoints should delegate to
+/// This is the canonical way to open a new Leanterm window - all other entrypoints should delegate to
 /// it if possible.
 pub(crate) fn open_new_with_workspace_source(
     source: NewWorkspaceSource,
@@ -653,7 +653,7 @@ fn open_settings_page_in_new_window(section: &SettingsSection, ctx: &mut AppCont
     });
 }
 
-/// Maps a `warp://settings` deeplink to the workspace action that opens it.
+/// Maps a `leanterm://settings` deeplink to the workspace action that opens it.
 fn workspace_action_for_open_settings(args: &OpenSettingsArgs) -> WorkspaceAction {
     match args {
         OpenSettingsArgs::Default => WorkspaceAction::ShowSettings,
@@ -756,7 +756,7 @@ fn default_window_options(window_settings: &WindowSettings, ctx: &AppContext) ->
     AddWindowOptions {
         window_style,
         window_bounds: next_bounds,
-        title: Some("Warp".to_owned()),
+        title: Some("Leanterm".to_owned()),
         background_blur_radius_pixels: Some(*window_settings.background_blur_radius),
         background_backdrop: *window_settings.background_backdrop,
         on_gpu_driver_selected: on_gpu_driver_selected_callback(),
@@ -939,7 +939,7 @@ fn toggle_quake_mode_window(global_resource_handles: &GlobalResourceHandles, ctx
                 AddWindowOptions {
                     window_style: WindowStyle::Pin,
                     window_bounds: WindowBounds::ExactPosition(config.window_bounds),
-                    title: Some("Warp".to_owned()),
+                    title: Some("Leanterm".to_owned()),
                     background_blur_radius_pixels: Some(*window_settings.background_blur_radius),
                     background_backdrop: *window_settings.background_backdrop,
                     // Ignore the quake window for positioning the next window
@@ -1009,11 +1009,11 @@ fn toggle_quake_mode_window(global_resource_handles: &GlobalResourceHandles, ctx
     };
 }
 
-/// This action will show or hide all of Warp's windows except the quake window
+/// This action will show or hide all of Leanterm's windows except the quake window
 ///
-/// - If Warp is active and has any windows, hide those windows.
-/// - If Warp is hidden, show all windows.
-/// - If Warp is active but has 0 normal windows, create a new window with a new session.
+/// - If Leanterm is active and has any windows, hide those windows.
+/// - If Leanterm is hidden, show all windows.
+/// - If Leanterm is active but has 0 normal windows, create a new window with a new session.
 fn show_or_hide_non_quake_mode_windows(_: &(), ctx: &mut AppContext) {
     let quake_window_id = get_quake_mode_state(ctx).map(|state| state.window_id);
     let non_quake_mode_window_ids = ctx
@@ -1024,7 +1024,7 @@ fn show_or_hide_non_quake_mode_windows(_: &(), ctx: &mut AppContext) {
         open_new(&(), ctx);
     }
     let windowing_model = ctx.windows();
-    // Now there is at least one window. If a Warp window is active, hide the app.
+    // Now there is at least one window. If a Leanterm window is active, hide the app.
     // Otherwise, show activate the app to show it in front.
     let active_window_id = windowing_model.active_window();
     match active_window_id {
@@ -1241,7 +1241,7 @@ impl RootView {
     }
 
     /// Insert a command that should create a subshell. If we support bootstrapping AKA
-    /// "warpifying" its [`ShellType`], set a flag to automatically bootstrap it when the command's
+    /// "leantermifying" its [`ShellType`], set a flag to automatically bootstrap it when the command's
     /// block receives the [`AfterBlockStarted`] event.
     pub fn insert_subshell_command_and_bootstrap_if_supported(
         &mut self,

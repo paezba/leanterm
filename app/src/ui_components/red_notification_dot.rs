@@ -1,10 +1,10 @@
-use pathfinder_geometry::vector::vec2f;
 use leanterm_ui::Element;
 use leanterm_ui::elements::{
     ChildAnchor, ConstrainedBox, Container, Empty, OffsetPositioning, ParentAnchor,
     ParentElement as _, ParentOffsetBounds, Stack,
 };
 use leanterm_ui::ui_components::components::UiComponentStyles;
+use pathfinder_geometry::vector::vec2f;
 
 pub struct RedNotificationDot {}
 

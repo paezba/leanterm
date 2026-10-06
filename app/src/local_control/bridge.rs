@@ -1,4 +1,4 @@
-//! Bridge between protocol-level control requests and Warp application models.
+//! Bridge between protocol-level control requests and Leanterm application models.
 //!
 //! The bridge validates protocol version, selectors, credentials, and settings
 //! before routing each supported action to an app-side handler.
@@ -17,7 +17,7 @@ use crate::local_control::permissions::{
 };
 use crate::local_control::resolver::{validate_action_params, validate_action_target};
 
-/// WarpUI model that executes already-authenticated local-control actions.
+/// LeantermUi model that executes already-authenticated local-control actions.
 pub struct LocalControlBridge {
     instance_id: Option<InstanceId>,
 }

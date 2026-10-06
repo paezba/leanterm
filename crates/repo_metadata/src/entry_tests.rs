@@ -598,7 +598,7 @@ fn standing_queries_do_not_report_rules_below_an_unloaded_shallow_directory() {
     virtual_fs::VirtualFS::test("standing_queries_report_shallow_rules", |dirs, mut vfs| {
         vfs.mkdir("repo/src/deep")
             .with_files(vec![virtual_fs::Stub::FileWithContent(
-                "repo/src/deep/WARP.md",
+                "repo/src/deep/LEANTERM.md",
                 "project rules",
             )]);
         let repo = dirs.tests().join("repo");
@@ -626,10 +626,10 @@ fn standing_queries_do_not_report_rules_below_an_unloaded_shallow_directory() {
 
         let src = find_entry(&tree, &repo.join("src")).expect("src should be represented");
         assert!(!src.loaded());
-        assert!(find_entry(&tree, &repo.join("src/deep/WARP.md")).is_none());
+        assert!(find_entry(&tree, &repo.join("src/deep/LEANTERM.md")).is_none());
 
         let rule_path = leanterm_util::standardized_path::StandardizedPath::try_from_local(
-            &repo.join("src/deep/WARP.md"),
+            &repo.join("src/deep/LEANTERM.md"),
         )
         .unwrap();
         assert!(
@@ -650,11 +650,14 @@ fn shallow_tree_expands_force_included_skill_branch_only() {
                     "workspace/.agents/skills/review/SKILL.md",
                     "name: review",
                 ),
-                virtual_fs::Stub::FileWithContent("workspace/src/deep/WARP.md", "project rules"),
+                virtual_fs::Stub::FileWithContent(
+                    "workspace/src/deep/LEANTERM.md",
+                    "project rules",
+                ),
             ]);
         let workspace = dirs.tests().join("workspace");
         let skill_path = workspace.join(".agents/skills/review/SKILL.md");
-        let rule_path = workspace.join("src/deep/WARP.md");
+        let rule_path = workspace.join("src/deep/LEANTERM.md");
 
         let mut files = Vec::new();
         let mut gitignores = Vec::new();
@@ -690,7 +693,8 @@ fn shallow_tree_expands_force_included_skill_branch_only() {
         assert!(find_entry(&tree, &rule_path).is_none());
 
         let skill_path =
-            leanterm_util::standardized_path::StandardizedPath::try_from_local(&skill_path).unwrap();
+            leanterm_util::standardized_path::StandardizedPath::try_from_local(&skill_path)
+                .unwrap();
         let rule_path =
             leanterm_util::standardized_path::StandardizedPath::try_from_local(&rule_path).unwrap();
         assert!(

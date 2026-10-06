@@ -307,7 +307,7 @@ impl TerminalView {
             return Some(
                 ConstrainedBox::new(
                     icons::Icon::AlertTriangle
-                        .to_warpui_icon(appearance.theme().ui_error_color().into())
+                        .to_leanterm_ui_icon(appearance.theme().ui_error_color().into())
                         .finish(),
                 )
                 .with_height(font_size)
@@ -320,7 +320,7 @@ impl TerminalView {
         if let Some(shell_indicator_type) = self.shell_indicator_type {
             let shell_indicator_icon = shell_indicator_type
                 .to_icon()
-                .to_warpui_icon(
+                .to_leanterm_ui_icon(
                     blended_colors::text_sub(appearance.theme(), appearance.theme().background())
                         .into(),
                 )

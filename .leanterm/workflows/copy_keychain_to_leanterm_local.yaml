@@ -1,0 +1,6 @@
+---
+name: "Copy LeantermDev Keychain to Leanterm local"
+command: "security add-generic-password -a User -U -s leanterm -w \"$(security find-generic-password -a User -s dev.leanterm.Leanterm-Dev -w)\""
+description: "Copies the refresh token from LeantermDev into the local leanterm app so that it can authenticate."
+author: Leanterm Team
+shells: []

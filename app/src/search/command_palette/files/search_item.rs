@@ -2,11 +2,11 @@ use std::fmt::Debug;
 use std::path::PathBuf;
 
 use fuzzy_match::FuzzyMatchResult;
-use ordered_float::OrderedFloat;
-use leanterm_util::path::LineAndColumnArg;
 use leanterm_ui::elements::{Align, ConstrainedBox, Container, Flex, Icon, ParentElement, Text};
 use leanterm_ui::fonts::{Properties, Weight};
 use leanterm_ui::{AppContext, Element, SingletonEntity};
+use leanterm_util::path::LineAndColumnArg;
+use ordered_float::OrderedFloat;
 
 use crate::appearance::Appearance;
 use crate::search::command_palette::mixer::CommandPaletteItemAction;

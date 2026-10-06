@@ -5,11 +5,11 @@ use std::sync::Arc;
 
 use itertools::Itertools;
 use lazy_static::lazy_static;
+use leanterm_core::safe_warn;
+use leanterm_errors::report_error;
 use parking_lot::Mutex;
 use regex_dfas::RegexDFAs;
 use string_offset::StringRange;
-use leanterm_core::safe_warn;
-use leanterm_errors::report_error;
 
 /// The character used to replace each redacted character of a detected secret.
 pub const SECRET_REDACTION_REPLACEMENT_CHARACTER: &str = "*";
@@ -370,9 +370,6 @@ pub mod regexes {
     /// We know those sections are JSON and should begin with '{"'.
     pub const JWT: &str = r"\b(ey[a-zA-z0-9_\-=]{10,}\.){2}[a-zA-z0-9_\-=]{10,}\b";
 
-    /// Identifies a Warp API Key. Format: wk- followed by a version number and any combination of hex digits, hyphens, or periods.
-    pub const WARP_API_KEY: &str = r"\bwk-[0-9]+\.[A-Fa-f0-9.\-]+\b";
-
     /// Returns a slice of regex strings that can be used to identify secrets.
     // NOTE: All regexes added here must also be added server-side in logic/ai/util.go.
     pub const DEFAULT_REGEXES_WITH_NAMES: &[DefaultRegex] = &[
@@ -451,10 +448,6 @@ pub mod regexes {
         DefaultRegex {
             pattern: FIREWORKS_API_KEY,
             name: "Fireworks API Key",
-        },
-        DefaultRegex {
-            pattern: WARP_API_KEY,
-            name: "Warp API Key",
         },
     ];
 }

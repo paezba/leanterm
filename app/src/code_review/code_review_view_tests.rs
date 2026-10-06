@@ -2,8 +2,6 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use chrono::Local;
-use lsp::LspManagerModel;
-use repo_metadata::repositories::DetectedRepositories;
 use leanterm_core::ui::appearance::Appearance;
 use leanterm_editor::content::buffer::InitialBufferState;
 use leanterm_editor::render::element::VerticalExpansionBehavior;
@@ -11,6 +9,8 @@ use leanterm_editor::render::model::LineCount;
 use leanterm_ui::elements::{Empty, MouseStateHandle};
 use leanterm_ui::platform::WindowStyle;
 use leanterm_ui::{App, ViewHandle};
+use lsp::LspManagerModel;
+use repo_metadata::repositories::DetectedRepositories;
 
 use super::*;
 use crate::NotebookKeybindings;

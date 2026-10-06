@@ -5,19 +5,8 @@ use std::sync::Arc;
 
 use editing::sort_entries_for_file_tree;
 use itertools::Itertools;
-use pathfinder_geometry::rect::RectF;
-use pathfinder_geometry::vector::Vector2F;
-use render::RenderState;
-use repo_metadata::file_tree_store::{
-    FileTreeDirectoryEntryState, FileTreeEntryState, FileTreeFileMetadata,
-};
-use repo_metadata::local_model::IndexedRepoState;
-use repo_metadata::repositories::DetectedRepositories;
-use repo_metadata::{FileTreeEntry, RepoMetadataModel};
 use leanterm_core::ui::theme::Fill;
 use leanterm_core::ui::theme::color::internal_colors;
-use leanterm_util::path::LineAndColumnArg;
-use leanterm_util::standardized_path::StandardizedPath;
 use leanterm_ui::clipboard::ClipboardContent;
 use leanterm_ui::elements::{
     AcceptedByDropTarget, Align, ChildAnchor, ChildView, Clipped, ConstrainedBox, Container,
@@ -35,6 +24,17 @@ use leanterm_ui::{
     AppContext, BlurContext, Element, Entity, EventContext, ModelHandle, SingletonEntity as _,
     TypedActionView, View, ViewContext, ViewHandle, WeakViewHandle, id,
 };
+use leanterm_util::path::LineAndColumnArg;
+use leanterm_util::standardized_path::StandardizedPath;
+use pathfinder_geometry::rect::RectF;
+use pathfinder_geometry::vector::Vector2F;
+use render::RenderState;
+use repo_metadata::file_tree_store::{
+    FileTreeDirectoryEntryState, FileTreeEntryState, FileTreeFileMetadata,
+};
+use repo_metadata::local_model::IndexedRepoState;
+use repo_metadata::repositories::DetectedRepositories;
+use repo_metadata::{FileTreeEntry, RepoMetadataModel};
 
 use crate::appearance::Appearance;
 use crate::code::active_file::{ActiveFileEvent, ActiveFileModel};
@@ -50,7 +50,7 @@ use crate::util::file::external_editor::EditorSettings;
 use crate::util::openable_file_type::{EditorLayout, FileTarget, is_file_content_binary};
 #[cfg(feature = "local_fs")]
 use crate::util::openable_file_type::{
-    resolve_file_target_to_open_in_warp, resolve_file_target_with_editor_choice,
+    resolve_file_target_to_open_in_leanterm, resolve_file_target_with_editor_choice,
 };
 
 mod editing;
@@ -1470,7 +1470,7 @@ impl FileTreeView {
         let expand_icon = match expand_icon {
             Some(icon) => {
                 let chevron_icon_color = item_highlight_state.text_and_icon_color(appearance);
-                icon.to_warpui_icon(chevron_icon_color.into()).finish()
+                icon.to_leanterm_ui_icon(chevron_icon_color.into()).finish()
             }
             None => Empty::new().finish(),
         };
@@ -1489,7 +1489,7 @@ impl FileTreeView {
         // Add the icon for the item.
         let icon_color = item_highlight_state.text_and_icon_color(appearance);
         let icon = match render_state.icon {
-            ImageOrIcon::Icon(icon) => icon.to_warpui_icon(icon_color.into()).finish(),
+            ImageOrIcon::Icon(icon) => icon.to_leanterm_ui_icon(icon_color.into()).finish(),
             ImageOrIcon::Image(image) => image,
         };
         header_row.add_child(
@@ -1835,7 +1835,7 @@ impl FileTreeView {
     ) {
         let settings = EditorSettings::as_ref(ctx);
         let target = if editor_layout.is_some() {
-            resolve_file_target_to_open_in_warp(path, settings, editor_layout)
+            resolve_file_target_to_open_in_leanterm(path, settings, editor_layout)
         } else {
             resolve_file_target_with_editor_choice(
                 path,
@@ -2278,7 +2278,7 @@ impl FileTreeView {
                 Container::new(
                     ConstrainedBox::new(
                         Icon::AlertTriangle
-                            .to_warpui_icon(Fill::Solid(internal_colors::neutral_6(theme)))
+                            .to_leanterm_ui_icon(Fill::Solid(internal_colors::neutral_6(theme)))
                             .finish(),
                     )
                     .with_width(24.)
@@ -2343,7 +2343,7 @@ impl FileTreeView {
 
         // Create loading icon
         let loading_icon = Icon::Loading
-            .to_warpui_icon(leanterm_core::ui::theme::Fill::Solid(
+            .to_leanterm_ui_icon(leanterm_core::ui::theme::Fill::Solid(
                 internal_colors::neutral_6(theme),
             ))
             .finish();
@@ -2365,7 +2365,7 @@ impl FileTreeView {
         header_row.add_child(loading_icon);
 
         let folder_icon = Icon::Folder
-            .to_warpui_icon(leanterm_core::ui::theme::Fill::Solid(
+            .to_leanterm_ui_icon(leanterm_core::ui::theme::Fill::Solid(
                 internal_colors::neutral_6(theme),
             ))
             .finish();

@@ -1,15 +1,15 @@
-use pathfinder_color::ColorU;
 use leanterm_core::ui::theme::Fill;
 use leanterm_core::ui::theme::color::internal_colors;
 use leanterm_ui::Element;
 use leanterm_ui::elements::{CornerRadius, MouseState, Radius};
+use pathfinder_color::ColorU;
 
 use crate::appearance::Appearance;
 use crate::ui_components::blended_colors;
 use crate::ui_components::icons::Icon;
 
 /// Shared item highlight state for left-panel style lists (file tree, global search results,
-/// warp drive rows, etc.).
+/// leanterm drive rows, etc.).
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub(crate) enum ItemHighlightState {
     None,

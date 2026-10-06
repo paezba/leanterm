@@ -1,4 +1,3 @@
-use pathfinder_color::ColorU;
 use leanterm_ui::elements::{Align, ConstrainedBox, ParentElement, Rect, Stack, Text};
 use leanterm_ui::fonts::FamilyId;
 use leanterm_ui::keymap::FixedBinding;
@@ -7,6 +6,7 @@ use leanterm_ui::{
     AppContext, Element, Entity, SingletonEntity as _, TypedActionView, View, ViewContext,
     ViewHandle,
 };
+use pathfinder_color::ColorU;
 
 // We could initiate global action and bindings here.
 pub fn init(ctx: &mut AppContext) {

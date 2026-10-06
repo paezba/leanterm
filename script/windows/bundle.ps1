@@ -18,9 +18,9 @@ Param (
     [String]$RELEASE_TAG = '',
     [String]$FEATURES = 'release_bundle,crash_reporting,gui',
 
-    # Builds only the Warp binary, skips the installer.
+    # Builds only the Leanterm binary, skips the installer.
     [Switch]$SKIP_BUILD_INSTALLER = $False,
-    # Builds only the installer, skips the Warp binary. Use this if the Warp
+    # Builds only the installer, skips the Leanterm binary. Use this if the Leanterm
     # binary has already been built.
     [Switch]$SKIP_BUILD_BINARY = $False,
 
@@ -55,7 +55,7 @@ if ($ARCH -eq 'arm64') {
     $FILE_ENDING = 'Setup-arm64'
     $PLATFORM_TARGET = 'aarch64-pc-windows-msvc'
 } else {
-    # If x64, then we just use the filename "WarpSetup.exe" for example
+    # If x64, then we just use the filename "LeantermSetup.exe" for example
     $FILE_ENDING = 'Setup'
     $PLATFORM_TARGET = 'x86_64-pc-windows-msvc'
 }
@@ -127,35 +127,35 @@ if ($CARGO_PROFILE -eq 'dev') {
 } else {
     $CARGO_TARGET_OUTPUT_DIR = "$CARGO_TARGET_DIR" + '\' + $PLATFORM_TARGET + '\' + "$CARGO_PROFILE"
 }
-$BUNDLE_ID = "dev.warp.$app_name"
+$BUNDLE_ID = "dev.leanterm.$app_name"
 
 # Update parameters based on the target release channel.
 #
 # APP_NAME here must match the value used in Rust as the
 # application name; see app/src/channel.rs.
 #
-# WARP_BIN is the name of the binary produced by cargo;
+# LEANTERM_BIN is the name of the binary produced by cargo;
 # BINARY_NAME is the desired name of the binary in the final package.
 if ("$CHANNEL" -eq 'local') {
-    $WARP_BIN = 'warp'
-    $BINARY_NAME = 'warp.exe'
-    $APP_NAME = 'WarpLocal'
+    $LEANTERM_BIN = 'leanterm'
+    $BINARY_NAME = 'leanterm.exe'
+    $APP_NAME = 'LeantermLocal'
 } elseif ("$CHANNEL" -eq 'dev') {
-    $WARP_BIN = 'dev'
+    $LEANTERM_BIN = 'dev'
     $BINARY_NAME = 'dev.exe'
-    $APP_NAME = 'WarpDev'
+    $APP_NAME = 'LeantermDev'
     $FEATURES = "$FEATURES,agent_mode_debug"
 } elseif ("$CHANNEL" -eq 'preview') {
-    $WARP_BIN = 'preview'
+    $LEANTERM_BIN = 'preview'
     $BINARY_NAME = 'preview.exe'
-    $APP_NAME = 'WarpPreview'
+    $APP_NAME = 'LeantermPreview'
     $FEATURES = "$FEATURES,preview_channel"
 } elseif ("$CHANNEL" -eq 'stable') {
-    $WARP_BIN = 'stable'
-    $BINARY_NAME = 'warp.exe'
-    $APP_NAME = 'Warp'
+    $LEANTERM_BIN = 'stable'
+    $BINARY_NAME = 'leanterm.exe'
+    $APP_NAME = 'Leanterm'
 } elseif ("$CHANNEL" -eq 'oss') {
-    $WARP_BIN = 'leanterm'
+    $LEANTERM_BIN = 'leanterm'
     $BINARY_NAME = 'leanterm.exe'
     $APP_NAME = 'Leanterm'
     # The OSS channel does not ship Sentry, so drop the crash_reporting feature
@@ -164,24 +164,24 @@ if ("$CHANNEL" -eq 'local') {
 }
 
 if ($IS_TUI) {
-    $WARP_BIN = switch ($CHANNEL) {
-        'local' { 'warp-tui' }
-        'oss' { 'warp-tui-oss' }
-        Default { "warp-tui-$CHANNEL" }
+    $LEANTERM_BIN = switch ($CHANNEL) {
+        'local' { 'leanterm-tui' }
+        'oss' { 'leanterm-tui-oss' }
+        Default { "leanterm-tui-$CHANNEL" }
     }
-    $BINARY_NAME = "$WARP_BIN.exe"
+    $BINARY_NAME = "$LEANTERM_BIN.exe"
     $APP_NAME = switch ($CHANNEL) {
-        'local' { 'WarpAgentCLI' }
-        'dev' { 'WarpAgentCLIDev' }
-        'preview' { 'WarpAgentCLIPreview' }
-        'stable' { 'WarpAgentCLI' }
-        'oss' { 'WarpAgentCLIOss' }
+        'local' { 'LeantermAgentCLI' }
+        'dev' { 'LeantermAgentCLIDev' }
+        'preview' { 'LeantermAgentCLIPreview' }
+        'stable' { 'LeantermAgentCLI' }
+        'oss' { 'LeantermAgentCLIOss' }
     }
     $CLI_NAME = switch ($CHANNEL) {
-        'local' { 'warp' }
-        'dev' { 'warp-dev' }
-        'preview' { 'warp-preview' }
-        'stable' { 'warp' }
+        'local' { 'leanterm' }
+        'dev' { 'leanterm-dev' }
+        'preview' { 'leanterm-preview' }
+        'stable' { 'leanterm' }
         'oss' { 'leanterm' }
     }
     $INSTALL_DIR_NAME = switch ($CHANNEL) {
@@ -197,12 +197,12 @@ if ($IS_TUI) {
     }
 } elseif ($IS_CLI) {
     # The CLI ships the same channel binary target as the app (no separate bin), so keep
-    # $WARP_BIN and the channel-scoped $FEATURES set above (crash_reporting, preview_channel,
+    # $LEANTERM_BIN and the channel-scoped $FEATURES set above (crash_reporting, preview_channel,
     # agent_mode_debug, etc.) but swap the app's `gui` feature for `standalone`, mirroring the
     # macOS and Linux `--artifact cli` builds. Filtering (rather than overwriting) $FEATURES is
     # required so per-channel additions above -- e.g. preview_channel, required by the `preview`
     # cargo target -- survive into the CLI build.
-    $BINARY_NAME = "$WARP_BIN.exe"
+    $BINARY_NAME = "$LEANTERM_BIN.exe"
     $FEATURES = (($FEATURES -split ',') | Where-Object { $_ -ne 'gui' }) -join ','
     $FEATURES = "$FEATURES,standalone"
 } else {
@@ -211,7 +211,7 @@ if ($IS_TUI) {
 }
 
 $BINARY_PATH = "$CARGO_TARGET_OUTPUT_DIR\$BINARY_NAME"
-$BUNDLE_ID = "dev.warp.$APP_NAME"
+$BUNDLE_ID = "dev.leanterm.$APP_NAME"
 $INSTALLER_OUTPUT_DIR = "$WINDOWS_INSTALLER_DIR\Output"
 $INSTALLER_NAME = "$($APP_NAME)$($FILE_ENDING)"
 $INSTALLER_PATH = "$($INSTALLER_OUTPUT_DIR)\$($INSTALLER_NAME).exe"
@@ -219,12 +219,12 @@ $PDB_BASENAME = if ($IS_TUI) {
     # rustc normalizes hyphens to underscores in crate names, and MSVC uses
     # that normalized crate name for the PDB even though Cargo exposes the
     # executable under its original hyphenated target name.
-    $WARP_BIN.Replace('-', '_')
+    $LEANTERM_BIN.Replace('-', '_')
 } else {
-    $WARP_BIN
+    $LEANTERM_BIN
 }
 $PDB_PATH = "$CARGO_TARGET_OUTPUT_DIR\$PDB_BASENAME.pdb"
-$CARGO_PACKAGE = if ($IS_TUI) { 'warp_tui' } else { 'warp' }
+$CARGO_PACKAGE = if ($IS_TUI) { 'leanterm_tui' } else { 'leanterm' }
 $INSTALLER_SCRIPT = if ($IS_TUI) {
     "$WINDOWS_INSTALLER_DIR\tui-installer.iss"
 } else {
@@ -243,28 +243,28 @@ if ($DEBUG_BUILD) {
 # then exit.  We use this script to invoke `cargo check` to ensure that we are
 # using the same feature flags and profile that we would be using in production.
 if ($CHECK_ONLY) {
-    cargo check -p $CARGO_PACKAGE --profile "$CARGO_PROFILE" --bin "$WARP_BIN" --features "$FEATURES" --target $PLATFORM_TARGET
+    cargo check -p $CARGO_PACKAGE --profile "$CARGO_PROFILE" --bin "$LEANTERM_BIN" --features "$FEATURES" --target $PLATFORM_TARGET
     if (-Not $?) {
-        Write-Error "Failed to verify Warp $WARP_BIN compilation with profile $CARGO_PROFILE"
+        Write-Error "Failed to verify Leanterm $LEANTERM_BIN compilation with profile $CARGO_PROFILE"
         exit 1
     }
     exit 0
 }
 
 if (-Not $SKIP_BUILD_BINARY) {
-    Write-Output "Building Warp for channel $CHANNEL and bundle id $BUNDLE_ID"
+    Write-Output "Building Leanterm for channel $CHANNEL and bundle id $BUNDLE_ID"
     $env:CARGO_BIN_NAME = $CHANNEL
-    $env:WARP_APP_NAME = $APP_NAME
-    cargo build -p $CARGO_PACKAGE --profile "$CARGO_PROFILE" --bin "$WARP_BIN" --features "$FEATURES" --target $PLATFORM_TARGET
+    $env:LEANTERM_APP_NAME = $APP_NAME
+    cargo build -p $CARGO_PACKAGE --profile "$CARGO_PROFILE" --bin "$LEANTERM_BIN" --features "$FEATURES" --target $PLATFORM_TARGET
     if (-Not $?) {
-        Write-Error "Failed to build Warp $WARP_BIN binary with profile $CARGO_PROFILE"
+        Write-Error "Failed to build Leanterm $LEANTERM_BIN binary with profile $CARGO_PROFILE"
         exit 1
     }
 
     # If we desire an executable name different from the cargo bin, rename it.
-    if ("$WARP_BIN.exe" -ne $BINARY_NAME) {
-        $binarySource = "$CARGO_TARGET_OUTPUT_DIR\$WARP_BIN.exe"
-        Write-Output "Renaming executable $WARP_BIN.exe to $BINARY_NAME"
+    if ("$LEANTERM_BIN.exe" -ne $BINARY_NAME) {
+        $binarySource = "$CARGO_TARGET_OUTPUT_DIR\$LEANTERM_BIN.exe"
+        Write-Output "Renaming executable $LEANTERM_BIN.exe to $BINARY_NAME"
         Move-Item -Path "$binarySource" -Destination "$BINARY_PATH" -Force
     }
 }
@@ -322,7 +322,7 @@ if ($IS_TUI -or $IS_CLI) {
     )
     foreach ($requiredFile in $requiredPayloadFiles) {
         if (-not (Test-Path -LiteralPath $requiredFile -PathType Leaf)) {
-            throw "Required Warp Agent CLI payload file does not exist: $requiredFile"
+            throw "Required Leanterm Agent CLI payload file does not exist: $requiredFile"
         }
         if ($REQUIRE_SIGNATURES) {
             Assert-ValidSignature -Path $requiredFile
@@ -343,7 +343,7 @@ if ($IS_CLI) {
     exit 0
 }
 
-Write-Output 'Building Warp installer'
+Write-Output 'Building Leanterm installer'
 $ISCC_ARGS = @(
     "$INSTALLER_SCRIPT",
     "/DReleaseChannel=$CHANNEL",

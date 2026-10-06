@@ -7,11 +7,11 @@ use integration::Builder;
 use integration::test::*;
 use leanterm_cli::WorkerCommand;
 use leanterm_core::AppId;
-use leanterm_core::channel::{Channel, ChannelConfig, ChannelState, WarpServerConfig};
+use leanterm_core::channel::{Channel, ChannelConfig, ChannelState, LeantermServerConfig};
 
-/// The Warp integration test runner.
+/// The Leanterm integration test runner.
 #[derive(Debug, Default, Parser, Clone)]
-#[command(name = "warp-integration-test")]
+#[command(name = "leanterm-integration-test")]
 #[clap(args_conflicts_with_subcommands = true)]
 pub struct Args {
     #[command(subcommand)]
@@ -29,15 +29,15 @@ pub fn main() -> Result<()> {
         ChannelConfig {
             app_id: AppId::new(
                 "dev",
-                "warp",
+                "leanterm",
                 if cfg!(target_os = "macos") {
-                    "Warp-Integration"
+                    "Leanterm-Integration"
                 } else {
-                    "WarpIntegration"
+                    "LeantermIntegration"
                 },
             ),
-            logfile_name: "warp_integration.log".into(),
-            server_config: WarpServerConfig {
+            logfile_name: "leanterm_integration.log".into(),
+            server_config: LeantermServerConfig {
                 // Use an IP in the IANA testing range, with the TCP discard port, to
                 // black-hole server traffic.
                 server_root_url: "http://192.0.2.0:9".into(),
@@ -186,9 +186,9 @@ fn register_tests() -> HashMap<&'static str, BoxedBuilderFn> {
     register_test!(test_bash_honor_ps1_expands_dynamic_prompt_once);
     register_test!(test_completions_with_autocd);
     register_test!(test_auto_title);
-    register_test!(test_warp_auto_title_disabled);
-    register_test!(test_warp_honors_user_title_bash);
-    register_test!(test_warp_honors_user_title_zsh);
+    register_test!(test_leanterm_auto_title_disabled);
+    register_test!(test_leanterm_honors_user_title_bash);
+    register_test!(test_leanterm_honors_user_title_zsh);
     register_test!(test_osc7_updates_current_working_directory);
     register_test!(test_input_focused_after_executing_command);
     register_test!(test_new_session_focuses_input);
@@ -218,13 +218,13 @@ fn register_tests() -> HashMap<&'static str, BoxedBuilderFn> {
     register_test!(test_accepting_completion_inserts_space);
     register_test!(test_create_session_with_split_pane_while_bootstrapping);
     register_test!(test_create_session_with_new_tab_while_bootstrapping);
-    register_test!(test_add_theme_to_warp_config);
+    register_test!(test_add_theme_to_leanterm_config);
     register_test!(test_palette_opens_when_theme_chooser_is_open);
     #[cfg(target_os = "macos")]
     register_test!(test_preview_config_dir_migration);
-    register_test!(test_launch_warp_with_theme_in_warp_config);
-    register_test!(test_add_launch_config_to_warp_config);
-    register_test!(test_add_workflows_to_warp_config);
+    register_test!(test_launch_leanterm_with_theme_in_leanterm_config);
+    register_test!(test_add_launch_config_to_leanterm_config);
+    register_test!(test_add_workflows_to_leanterm_config);
     register_test!(test_loading_project_workflows);
     register_test!(test_cmd_enter);
     register_test!(test_alias_expansion_has_limit);
@@ -265,7 +265,7 @@ fn register_tests() -> HashMap<&'static str, BoxedBuilderFn> {
     register_test!(test_copy_block_command_and_output_honor_ps1_disabled);
     register_test!(test_copy_block_command_and_output_honor_ps1_enabled);
     register_test!(test_copy_prompt_from_input_honor_ps1_disabled);
-    register_test!(test_warp_prompt_unsets_zsh_rprompt);
+    register_test!(test_leanterm_prompt_unsets_zsh_rprompt);
     register_test!(test_copy_prompt_from_input_honor_ps1_enabled);
     register_test!(test_copy_rprompt_from_input_honor_ps1_enabled);
     register_test!(test_rprompt_doesnt_show_when_not_enough_space);
@@ -395,7 +395,7 @@ fn register_tests() -> HashMap<&'static str, BoxedBuilderFn> {
     register_test!(test_undo_close_stack_timeout_cleanup);
 
     // File tree tests
-    register_test!(test_file_tree_opens_files_in_warp);
+    register_test!(test_file_tree_opens_files_in_leanterm);
     register_test!(test_file_tree_open_in_new_pane);
     register_test!(test_file_tree_open_in_new_tab);
     register_test!(test_file_tree_keyboard_navigation);

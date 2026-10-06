@@ -12,13 +12,13 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use chrono::Utc;
+use leanterm_errors::report_error;
+use leanterm_ui_core::r#async::Timer;
+use leanterm_ui_core::r#async::executor::Background;
 use log::LevelFilter;
 use lsp::supported_servers::LSPServerType;
 use lsp::{LspServerConfig, LspService, LspServiceInitializationResult, spawn_lsp_service};
 use lsp_types::Position;
-use leanterm_errors::report_error;
-use leanterm_ui_core::r#async::Timer;
-use leanterm_ui_core::r#async::executor::Background;
 
 fn init_logging() {
     let mut base_logger = env_logger::builder();
@@ -123,7 +123,7 @@ async fn async_main(executor: Arc<Background>, workspace_root: PathBuf) -> anyho
         LSPServerType::RustAnalyzer,
         workspace_root,
         None,
-        "warp-dev-example".to_string(),
+        "leanterm-dev-example".to_string(),
         Arc::new(http_client::Client::new()),
     );
 

@@ -5,7 +5,6 @@
 //! Modal consumers wrap those sections in a title, cancel/save buttons, and blur
 //! overlay, while settings consumers can render the sections inline.
 
-use pathfinder_geometry::vector::vec2f;
 use leanterm_core::ui::theme::Fill;
 use leanterm_ui::elements::{
     Align, Border, ChildAnchor, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment,
@@ -16,6 +15,7 @@ use leanterm_ui::platform::Cursor;
 use leanterm_ui::ui_components::button::ButtonVariant;
 use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
 use leanterm_ui::{Action, Element};
+use pathfinder_geometry::vector::vec2f;
 
 use super::{ChipConfigurator, ChipConfiguratorAction};
 use crate::Appearance;

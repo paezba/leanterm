@@ -6,6 +6,14 @@ use std::sync::Arc;
 
 use enum_iterator::all;
 use itertools::{Either, Itertools};
+use leanterm_core::platform::SessionPlatform;
+use leanterm_core::safe_error;
+use leanterm_ui_core::elements::ListIndentLevel;
+use leanterm_ui_core::fonts::Weight;
+use leanterm_ui_core::text::point::Point;
+use leanterm_ui_core::text::{TextBuffer, char_slice};
+use leanterm_ui_core::{AppContext, Entity, EntityId, ModelContext, ModelHandle};
+use leanterm_util::content_version::ContentVersion;
 use line_ending::LineEnding;
 use markdown_parser::{
     CodeBlockText, FormattedIndentTextInline, FormattedTable, FormattedTaskList, FormattedText,
@@ -20,14 +28,6 @@ use serde_yaml::Mapping;
 use string_offset::{ByteOffset, CharOffset};
 use sum_tree::{SeekBias, SumTree};
 use vec1::{Vec1, vec1};
-use leanterm_core::platform::SessionPlatform;
-use leanterm_core::safe_error;
-use leanterm_util::content_version::ContentVersion;
-use leanterm_ui_core::elements::ListIndentLevel;
-use leanterm_ui_core::fonts::Weight;
-use leanterm_ui_core::text::point::Point;
-use leanterm_ui_core::text::{TextBuffer, char_slice};
-use leanterm_ui_core::{AppContext, Entity, EntityId, ModelContext, ModelHandle};
 
 use super::anchor::{Anchor, AnchorSide, Anchors};
 use super::cursor::BufferCursor;

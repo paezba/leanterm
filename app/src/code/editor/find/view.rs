@@ -1,11 +1,10 @@
 #![cfg_attr(target_family = "wasm", allow(dead_code, unused_imports))]
 // Adding this file level gate as some of the code around editability is not used in WASM yet.
 
-use pathfinder_color::ColorU;
 use leanterm_editor::editor::NavigationKey;
 use leanterm_editor::search::{SearchEvent, Searcher};
 pub use leanterm_ui::AppContext;
-pub use leanterm_ui::accessibility::{AccessibilityContent, WarpA11yRole};
+pub use leanterm_ui::accessibility::{AccessibilityContent, LeantermA11yRole};
 use leanterm_ui::elements::{
     Align, Border, ChildAnchor, Clipped, ConstrainedBox, Container, CornerRadius,
     CrossAxisAlignment, DropShadow, Element, Flex, Hoverable, MainAxisAlignment, MouseStateHandle,
@@ -21,6 +20,7 @@ use leanterm_ui::{
     Entity, FocusContext, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle,
 };
+use pathfinder_color::ColorU;
 
 use crate::appearance::Appearance;
 use crate::editor::{
@@ -391,10 +391,10 @@ impl CodeEditorFind {
                     self.searcher.as_ref(ctx).match_count()
                 ),
                 "Use enter and shift-enter to navigate between matches. Escape to quit.",
-                WarpA11yRole::UserAction,
+                LeantermA11yRole::UserAction,
             )
         } else {
-            AccessibilityContent::new_without_help("No results.", WarpA11yRole::UserAction)
+            AccessibilityContent::new_without_help("No results.", LeantermA11yRole::UserAction)
         };
         ctx.emit_a11y_content(content);
     }
@@ -409,12 +409,12 @@ impl CodeEditorFind {
                     "Successfully replaced match. Selected match is {match_index} of {remaining_matches}"
                 ),
                 "Continue pressing Enter to replace more matches, or use up/down arrows to navigate.",
-                WarpA11yRole::UserAction,
+                LeantermA11yRole::UserAction,
             )
         } else {
             AccessibilityContent::new_without_help(
                 "Successfully replaced the last match.",
-                WarpA11yRole::UserAction,
+                LeantermA11yRole::UserAction,
             )
         };
         ctx.emit_a11y_content(content);
@@ -489,7 +489,7 @@ impl CodeEditorFind {
             };
             let icon = Container::new(
                 ConstrainedBox::new(
-                    icon.to_warpui_icon(appearance.theme().active_ui_text_color())
+                    icon.to_leanterm_ui_icon(appearance.theme().active_ui_text_color())
                         .finish(),
                 )
                 .with_height(size)
@@ -553,7 +553,7 @@ impl CodeEditorFind {
             appearance.theme().active_ui_text_color()
         };
         Container::new(
-            ConstrainedBox::new(match_icon.to_warpui_icon(icon_color).finish())
+            ConstrainedBox::new(match_icon.to_leanterm_ui_icon(icon_color).finish())
                 .with_height(height)
                 .with_width(height)
                 .finish(),
@@ -580,7 +580,7 @@ impl CodeEditorFind {
             appearance.theme().active_ui_text_color()
         };
         Container::new(
-            ConstrainedBox::new(Icon::Search.to_warpui_icon(icon_color).finish())
+            ConstrainedBox::new(Icon::Search.to_leanterm_ui_icon(icon_color).finish())
                 .with_height(height)
                 .with_width(height)
                 .finish(),
@@ -607,7 +607,7 @@ impl CodeEditorFind {
         };
         Container::new(
             ConstrainedBox::new(
-                icon.to_warpui_icon(appearance.theme().active_ui_text_color())
+                icon.to_leanterm_ui_icon(appearance.theme().active_ui_text_color())
                     .finish(),
             )
             .with_height(height)
@@ -971,7 +971,7 @@ impl View for CodeEditorFind {
         Some(AccessibilityContent::new(
             description,
             help_text,
-            WarpA11yRole::TextareaRole,
+            LeantermA11yRole::TextareaRole,
         ))
     }
 

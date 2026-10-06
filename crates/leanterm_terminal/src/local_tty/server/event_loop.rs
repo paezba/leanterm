@@ -4,11 +4,11 @@ use std::process::Child;
 use std::sync::Arc;
 
 use itertools::Itertools;
+use leanterm_cli::TerminalServerArgs;
+use leanterm_errors::report_error;
 use mio::Interest;
 use parking_lot::Mutex;
 use signal_hook_mio::v1_0::Signals;
-use leanterm_cli::TerminalServerArgs;
-use leanterm_errors::report_error;
 
 use super::{RECV_SOCKET_FILENO, SEND_SOCKET_FILENO, api, logging, protocol};
 use crate::local_tty::server::protocol::NonblockingSocketFd;
@@ -214,7 +214,7 @@ impl EventLoop {
             }
 
             // If we've been reparented to a different process, stop running -
-            // the original host Warp process died and we're now an orphan.
+            // the original host Leanterm process died and we're now an orphan.
             if nix::unistd::Pid::parent() != self.original_parent_pid {
                 log::info!("Detected a change in parent process; shutting down terminal server.");
                 break 'event_loop;

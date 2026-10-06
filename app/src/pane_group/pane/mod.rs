@@ -20,14 +20,14 @@ use std::any::Any;
 use std::fmt::Display;
 use std::path::PathBuf;
 
-use serde::{Deserialize, Serialize};
-use url::Url;
 use leanterm_ui::elements::{DispatchEventResult, EventHandler, MouseInBehavior};
 use leanterm_ui::presenter::ChildView;
 use leanterm_ui::{
     Action, AppContext, Element, Entity, EntityId, ModelContext, ModelHandle, SingletonEntity,
     View, ViewContext, ViewHandle, WeakModelHandle,
 };
+use serde::{Deserialize, Serialize};
+use url::Url;
 
 pub use self::view::{PaneHeaderAction, PaneHeaderCustomAction, PaneView, PaneViewEvent};
 use super::{ActivationReason, LeafContents, PaneGroup, PaneGroupAction};

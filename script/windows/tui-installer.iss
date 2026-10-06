@@ -3,19 +3,19 @@
 #define MyAppPublisher "Denver Technologies, Inc."
 #define MyAppURL "https://www.warp.dev/"
 #ifndef MyAppName
-  #define MyAppName "WarpAgentCLIDev"
+  #define MyAppName "LeantermAgentCLIDev"
 #endif
 #ifndef MyAppVersion
   #define MyAppVersion "0.1.0"
 #endif
 #ifndef MyAppExeName
-  #define MyAppExeName "warp-tui-dev.exe"
+  #define MyAppExeName "leanterm-tui-dev.exe"
 #endif
 #ifndef ReleaseChannel
   #define ReleaseChannel "dev"
 #endif
 #ifndef CLIName
-  #define CLIName "warp-dev"
+  #define CLIName "leanterm-dev"
 #endif
 #ifndef InstallDirName
   #define InstallDirName "tui-dev"
@@ -27,10 +27,10 @@
   #define WindowsAssetsDir "..\..\app\assets\windows\x64"
 #endif
 
-#define ProductRegistryKey "SOFTWARE\Warp.dev\WarpAgentCLI\" + ReleaseChannel
+#define ProductRegistryKey "SOFTWARE\Leanterm.dev\LeantermAgentCLI\" + ReleaseChannel
 
 [Setup]
-AppId=warp-agent-cli-{#ReleaseChannel}
+AppId=leanterm-agent-cli-{#ReleaseChannel}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppVerName={#MyAppName} {#MyAppVersion}
@@ -54,12 +54,12 @@ OutputBaseFilename={#OutputName}
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
-WizardSmallImageFile="installer-images\warp-logo.bmp"
-WizardImageFile="installer-images\warp-banner.bmp"
+WizardSmallImageFile="installer-images\leanterm-logo.bmp"
+WizardImageFile="installer-images\leanterm-banner.bmp"
 SetupIconFile="..\..\app\channels\{#ReleaseChannel}\icon\no-padding\icon.ico"
 CloseApplications=no
 RestartApplications=no
-SetupMutex=Local\WarpAgentCLI{#ReleaseChannel}Setup
+SetupMutex=Local\LeantermAgentCLI{#ReleaseChannel}Setup
 MinVersion=10.0.18362
 ChangesEnvironment=true
 RedirectionGuard=no
@@ -119,17 +119,17 @@ end;
 function GetDefaultInstallDir(Param: string): string;
 begin
   if IsAdminInstallMode then
-    Result := ExpandConstant('{commonappdata}\Warp\{#InstallDirName}')
+    Result := ExpandConstant('{commonappdata}\Leanterm\{#InstallDirName}')
   else
-    Result := ExpandConstant('{localappdata}\Warp\{#InstallDirName}');
+    Result := ExpandConstant('{localappdata}\Leanterm\{#InstallDirName}');
 end;
 
 function GetDefaultBinDir(): string;
 begin
   if IsAdminInstallMode then
-    Result := ExpandConstant('{commonappdata}\Warp\bin')
+    Result := ExpandConstant('{commonappdata}\Leanterm\bin')
   else
-    Result := ExpandConstant('{localappdata}\Warp\bin');
+    Result := ExpandConstant('{localappdata}\Leanterm\bin');
 end;
 function GetRegisteredBinDir(var BinDir: string): Boolean;
 begin
@@ -145,7 +145,7 @@ function GetBinDir(Param: string): string;
 var
   RequestedBinDir: string;
 begin
-  RequestedBinDir := ExpandConstant('{param:warp_bin_dir|}');
+  RequestedBinDir := ExpandConstant('{param:leanterm_bin_dir|}');
   if RequestedBinDir <> '' then
   begin
     Result := RequestedBinDir;
@@ -267,9 +267,9 @@ begin
   LauncherContents :=
     '@echo off' + #13#10 +
     'setlocal' + #13#10 +
-    'set "WARP_TUI_MANAGED_ROOT=' + ManagedRoot + '"' + #13#10 +
-    'set /p WARP_TUI_ACTIVE_VERSION=<"%WARP_TUI_MANAGED_ROOT%\current"' + #13#10 +
-    '"%WARP_TUI_MANAGED_ROOT%\versions\%WARP_TUI_ACTIVE_VERSION%\{#MyAppExeName}" %*' + #13#10;
+    'set "LEANTERM_TUI_MANAGED_ROOT=' + ManagedRoot + '"' + #13#10 +
+    'set /p LEANTERM_TUI_ACTIVE_VERSION=<"%LEANTERM_TUI_MANAGED_ROOT%\current"' + #13#10 +
+    '"%LEANTERM_TUI_MANAGED_ROOT%\versions\%LEANTERM_TUI_ACTIVE_VERSION%\{#MyAppExeName}" %*' + #13#10;
   WriteAtomicTextFile(LauncherPath, LauncherContents);
 end;
 
@@ -295,7 +295,7 @@ begin
     not AllowDowngrade() then
   begin
     Result :=
-      'Warp Agent CLI ' + CurrentVersion +
+      'Leanterm Agent CLI ' + CurrentVersion +
       ' is newer than {#MyAppVersion}. Pass /allow_downgrade=1 to install an older version.';
     exit;
   end;
@@ -322,7 +322,7 @@ begin
     exit;
 
   if not IsCompleteVersionDir(VersionDir(ExpandConstant('{app}'), '{#MyAppVersion}')) then
-    RaiseException('The installed Warp Agent CLI payload is incomplete');
+    RaiseException('The installed Leanterm Agent CLI payload is incomplete');
 
   BinDir := GetBinDir('');
   if (PreviousBinDir <> '') and

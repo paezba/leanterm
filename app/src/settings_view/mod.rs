@@ -6,22 +6,12 @@ use code_editor_review_page::{EditorAndCodeReviewPageAction, EditorAndCodeReview
 use features_page::{FeaturesPageView, FeaturesSettingsPageEvent};
 use itertools::Itertools as _;
 use keybindings::KeybindingsView;
-use nav::SettingsNavItem;
-use pathfinder_geometry::vector::Vector2F;
-use privacy_page::{PrivacyPageView, PrivacyPageViewEvent};
-use scripting_page::ScriptingSettingsPageView;
-use settings_file_footer::{SettingsFooterKind, SettingsFooterMouseStates, render_footer};
-use settings_page::{
-    HEADER_PADDING, MatchData, SettingsPage, SettingsPageEvent, SettingsPageMeta,
-    SettingsPageViewHandle,
-};
 use leanterm_core::channel::ChannelState;
 use leanterm_core::context_flag::ContextFlag;
 use leanterm_core::features::FeatureFlag;
 use leanterm_core::settings::ToggleableSetting as _;
 use leanterm_core::ui::theme::color::internal_colors;
 use leanterm_editor::editor::NavigationKey;
-use warpify_page::{WarpifyPageAction, WarpifyPageView};
 use leanterm_ui::elements::{
     Align, Border, ChildAnchor, ChildView, Clipped, ClippedScrollStateHandle, ClippedScrollable,
     ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, DispatchEventResult, Empty,
@@ -34,6 +24,16 @@ use leanterm_ui::keymap::{ContextPredicate, EnabledPredicate, FixedBinding};
 use leanterm_ui::{
     Action, AppContext, Element, Entity, ModelHandle, SingletonEntity, TypedActionView,
     UpdateView as _, View, ViewContext, ViewHandle, id,
+};
+use leantermify_page::{LeantermifyPageAction, LeantermifyPageView};
+use nav::SettingsNavItem;
+use pathfinder_geometry::vector::Vector2F;
+use privacy_page::{PrivacyPageView, PrivacyPageViewEvent};
+use scripting_page::ScriptingSettingsPageView;
+use settings_file_footer::{SettingsFooterKind, SettingsFooterMouseStates, render_footer};
+use settings_page::{
+    HEADER_PADDING, MatchData, SettingsPage, SettingsPageEvent, SettingsPageMeta,
+    SettingsPageViewHandle,
 };
 
 use crate::GlobalResourceHandlesProvider;
@@ -61,6 +61,7 @@ mod directory_color_add_picker;
 mod features;
 mod features_page;
 pub mod keybindings;
+mod leantermify_page;
 mod nav;
 pub mod pane_manager;
 mod privacy;
@@ -68,7 +69,6 @@ mod privacy_page;
 mod scripting_page;
 mod settings_file_footer;
 pub(crate) mod settings_page;
-mod warpify_page;
 
 pub use features_page::FeaturesPageAction;
 pub use privacy_page::PrivacyPageAction;
@@ -80,7 +80,7 @@ pub use settings_page::{
 /// Sidebar width. Sized to
 /// match Figma's settings nav rail (223px alert + 12px horizontal padding
 /// on each side + 1px right border), giving the error-alert footer enough
-/// room to render its "Open file" and "Fix with Warp Agent" buttons side-by-side
+/// room to render its "Open file" and "Fix with Leanterm Agent" buttons side-by-side
 /// with the designed 24px indent and 8px internal padding.
 const SIDEBAR_WIDTH_WITH_FOOTER: f32 = 248.;
 
@@ -144,7 +144,7 @@ pub enum SettingsSection {
     Keybindings,
     Privacy,
     Scripting,
-    Warpify,
+    Leantermify,
     EditorAndCodeReview,
 }
 
@@ -166,7 +166,7 @@ impl Display for SettingsSection {
 impl SettingsSection {
     /// Stable identifier for this section, used everywhere the section leaves
     /// the process: the SQLite session-restore key and the
-    /// `surface.settings.open --page` warpctrl vocabulary.
+    /// `surface.settings.open --page` leantermctl vocabulary.
     ///
     /// These strings are a compatibility contract — changing one breaks
     /// session restore for existing users and a public CLI argument. They were
@@ -174,7 +174,7 @@ impl SettingsSection {
     /// migration is needed. [`Display`] is now purely the user-facing sidebar
     /// label and is free to change without touching anything here.
     ///
-    /// Deeplinks are deliberately *not* on this vocabulary: `warp://settings`
+    /// Deeplinks are deliberately *not* on this vocabulary: `leanterm://settings`
     /// uses its own snake_cased allowlist (see
     /// `settings_section_for_simple_subpage`).
     pub fn slug(self) -> &'static str {
@@ -185,13 +185,13 @@ impl SettingsSection {
             Self::Keybindings => "Keyboard shortcuts",
             Self::Privacy => "Privacy",
             Self::Scripting => "Scripting",
-            Self::Warpify => "Warpify",
+            Self::Leantermify => "Leantermify",
             Self::EditorAndCodeReview => "Editor and Code Review",
         }
     }
 
     /// Parses a [`Self::slug`], also accepting the legacy spellings that
-    /// persisted sessions and existing warpctrl callers may still be using.
+    /// persisted sessions and existing leantermctl callers may still be using.
     ///
     /// Legacy names for pages that no longer exist under that name resolve
     /// here, at the boundary, rather than becoming sections of their own. That
@@ -205,7 +205,7 @@ impl SettingsSection {
             "Keyboard shortcuts" => Self::Keybindings,
             "Privacy" => Self::Privacy,
             "Scripting" => Self::Scripting,
-            "Warpify" => Self::Warpify,
+            "Leantermify" => Self::Leantermify,
             // "Code" named the combined page before indexing settings were removed.
             "Editor and Code Review" | "EditorAndCodeReview" | "Code" => Self::EditorAndCodeReview,
             _ => return None,
@@ -215,7 +215,7 @@ impl SettingsSection {
 }
 
 /// Resolves a stable, friendly deeplink slug (used by
-/// `warp://settings?widget=<slug>`) to the settings page and `&'static str`
+/// `leanterm://settings?widget=<slug>`) to the settings page and `&'static str`
 /// widget id it should scroll to.
 ///
 /// Only allowlisted widgets are linkable, so the public URL contract stays
@@ -267,7 +267,7 @@ pub mod flags {
     pub const SCROLL_REPORTING_CONTEXT_FLAG: &str = "Scroll_Reporting";
     pub const FOCUS_REPORTING_CONTEXT_FLAG: &str = "Focus_Reporting";
     pub const SSH_REUSE_CONTROL_MASTER_CONTEXT_FLAG: &str = "SSH_Reuse_Control_Master";
-    pub const SSH_WARPIFICATION_CONTEXT_FLAG: &str = "SSH_Warpification";
+    pub const SSH_LEANTERMIFICATION_CONTEXT_FLAG: &str = "SSH_Leantermification";
     pub const NOTIFICATIONS_CONTEXT_FLAG: &str = "Notifications_Enabled";
     pub const LONG_RUNNING_NOTIFICATIONS_FLAG: &str = "Long_Running_Notifications";
     pub const AGENT_TASK_COMPLETED_NOTIFICATIONS_FLAG: &str = "Agent_Task_Completed_Notifications";
@@ -284,7 +284,7 @@ pub mod flags {
         "Jump_To_Bottom_Of_Block_Button_Enabled";
     pub const RESPECT_SYSTEM_THEME_CONTEXT_FLAG: &str = "Respect_System_Theme";
     pub const COMPLETIONS_OPEN_WHILE_TYPING_CONTEXT_FLAG: &str = "Completions_Open_While_Typing";
-    pub const WARP_COMPLETIONS_CONTEXT_FLAG: &str = "Warp_Completions";
+    pub const LEANTERM_COMPLETIONS_CONTEXT_FLAG: &str = "Leanterm_Completions";
     pub const NATIVE_SHELL_COMPLETIONS_CONTEXT_FLAG: &str = "Native_Shell_Completions";
     pub const COMMAND_CORRECTIONS_CONTEXT_FLAG: &str = "Command_Corrections";
     pub const ERROR_UNDERLINING_FLAG: &str = "error_underlining";
@@ -356,7 +356,7 @@ pub mod flags {
     pub const IN_BAND_COMMAND_BLOCKS_FLAG: &str = "In_Band_Command_Blocks_Visible";
     pub const RECORDING_MODE_FLAG: &str = "Recording_Mode_Enabled";
     pub const IN_BAND_GENERATORS_FLAG: &str = "In_Band_Generators_Enabled";
-    pub const WARP_SAME_LINE_PROMPT_FLAG: &str = "Warp_Same_Line_Prompt_Enabled";
+    pub const LEANTERM_SAME_LINE_PROMPT_FLAG: &str = "Leanterm_Same_Line_Prompt_Enabled";
     pub const DEBUG_NETWORK_ONLINE_FLAG: &str = "Network_Status_Online";
     pub const AI_INPUT_AUTODETECTION_FLAG: &str = "AI_Input_Autodetection";
     pub const NLD_IN_TERMINAL_FLAG: &str = "NLD_In_Terminal";
@@ -371,9 +371,9 @@ pub mod flags {
         "Auto_Approve_Bypasses_Command_Denylist";
     pub const AI_RULES_FLAG: &str = "AI_Rules";
     pub const SUGGESTED_RULES_FLAG: &str = "Suggested_Rules";
-    pub const WARP_DRIVE_CONTEXT_FLAG: &str = "Warp_Drive_Context";
+    pub const LEANTERM_DRIVE_CONTEXT_FLAG: &str = "Leanterm_Drive_Context";
     pub const FILE_BASED_MCP_FLAG: &str = "File_Based_MCP";
-    pub const WARP_CREDIT_FALLBACK_FLAG: &str = "Warp_Credit_Fallback";
+    pub const LEANTERM_CREDIT_FALLBACK_FLAG: &str = "Leanterm_Credit_Fallback";
     pub const SHOW_BASE_MODEL_PICKER_IN_PROMPT_FLAG: &str = "Show_Base_Model_Picker_In_Prompt";
     pub const DEBUG_SHOW_MEMORY_STATS_FLAG: &str = "Debug_Memory_Statistics";
     pub const ALLOW_NATIVE_WAYLAND: &str = "Allow_Native_Wayland";
@@ -382,11 +382,11 @@ pub mod flags {
     pub const IS_BLOCK_AI_SUMMARIES_ENABLED: &str = "IsBlockAISummariesEnabled";
     pub const LIGATURE_RENDERING_CONTEXT_FLAG: &str = "Ligature_Rendering_Enabled";
     pub const HAS_SETTINGS_TO_IMPORT_FLAG: &str = "HasSettingsToImport";
-    /// The user's setting enabled UDI, but we may show a classic input (e.g. ssh/subshell warpification)
+    /// The user's setting enabled UDI, but we may show a classic input (e.g. ssh/subshell leantermification)
     pub const UNIVERSAL_DEVELOPER_INPUT_ENABLED: &str = "UniversalDeveloperInputEnabled";
     pub const AGENT_MODE_INPUT: &str = "InputAgentMode";
     pub const TERMINAL_MODE_INPUT: &str = "InputTerminalMode";
-    pub const WARP_IS_DEFAULT_TERMINAL: &str = "WarpIsDefaultTerminal";
+    pub const LEANTERM_IS_DEFAULT_TERMINAL: &str = "LeantermIsDefaultTerminal";
     pub const PASSIVE_CODE_DIFF_KEYBINDINGS_ENABLED: &str = "PassiveCodeDiffKeybindingsEnabled";
     /// When set, ctrl-enter should accept a prompt suggestion rather than insert a newline.
     /// This flag is set by the terminal Input when there's a pending passive code diff.
@@ -425,7 +425,7 @@ pub fn init_actions_from_parent_view<T: Action + Clone>(
 ) {
     appearance_page::init_actions_from_parent_view(app, context, builder);
     features_page::init_actions_from_parent_view(app, context, builder);
-    warpify_page::init_actions_from_parent_view(app, context, builder);
+    leantermify_page::init_actions_from_parent_view(app, context, builder);
     privacy_page::init_actions_from_parent_view(app, context, builder);
     code_editor_review_page::init_actions_from_parent_view(app, context, builder);
 
@@ -723,7 +723,7 @@ pub enum SettingsAction {
     FeaturesPageToggle(FeaturesPageAction),
     PrivacyPageToggle(PrivacyPageAction),
     EditorAndCodeReview(EditorAndCodeReviewPageAction),
-    WarpifyPageToggle(WarpifyPageAction),
+    LeantermifyPageToggle(LeantermifyPageAction),
     Tab,
     Split(Direction),
     ToggleMaximizePane,
@@ -866,7 +866,7 @@ macro_rules! update_page {
             SettingsPageViewHandle::Appearance(handle) => $ctx.update_view(handle, $update),
             SettingsPageViewHandle::Features(handle) => $ctx.update_view(handle, $update),
             SettingsPageViewHandle::Keybindings(handle) => $ctx.update_view(handle, $update),
-            SettingsPageViewHandle::Warpify(handle) => $ctx.update_view(handle, $update),
+            SettingsPageViewHandle::Leantermify(handle) => $ctx.update_view(handle, $update),
             SettingsPageViewHandle::Privacy(handle) => $ctx.update_view(handle, $update),
             SettingsPageViewHandle::Scripting(handle) => $ctx.update_view(handle, $update),
             SettingsPageViewHandle::About(handle) => $ctx.update_view(handle, $update),
@@ -898,7 +898,7 @@ pub struct SettingsView {
     /// Mirrored from `Workspace` via [`set_settings_error_state`].
     settings_error_banner_dismissed: bool,
     /// Mouse state handles for the nav-rail footer buttons. Constructed once
-    /// per `SettingsView` per `WARP.md`'s guidance that inline
+    /// per `SettingsView` per `LEANTERM.md`'s guidance that inline
     /// `MouseStateHandle::default()` breaks hover/click tracking.
     footer_mouse_states: SettingsFooterMouseStates,
 }
@@ -931,9 +931,9 @@ impl SettingsView {
 
         let editor_review_page_handle = ctx.add_typed_action_view(EditorAndCodeReviewPageView::new);
 
-        let warpify_page_handle = ctx.add_typed_action_view(WarpifyPageView::new);
-        ctx.subscribe_to_view(&warpify_page_handle, |me, _, event, ctx| {
-            me.handle_warpify_page_event(event, ctx);
+        let leantermify_page_handle = ctx.add_typed_action_view(LeantermifyPageView::new);
+        ctx.subscribe_to_view(&leantermify_page_handle, |me, _, event, ctx| {
+            me.handle_leantermify_page_event(event, ctx);
         });
 
         // Render the privacy page only if telemetry opt-out is enabled.
@@ -942,7 +942,7 @@ impl SettingsView {
             me.handle_privacy_page_event(event, ctx);
         });
 
-        let scripting_page_handle = if FeatureFlag::WarpControlCli.is_enabled() {
+        let scripting_page_handle = if FeatureFlag::LeantermControlCli.is_enabled() {
             Some(ctx.add_typed_action_view(ScriptingSettingsPageView::new))
         } else {
             None
@@ -981,7 +981,7 @@ impl SettingsView {
             SettingsPage::new(appearance_page_handle),
             SettingsPage::new(features_page_handle),
             SettingsPage::new(keybindings_handle),
-            SettingsPage::new(warpify_page_handle),
+            SettingsPage::new(leantermify_page_handle),
         ];
 
         if let Some(scripting_page_handle) = scripting_page_handle {
@@ -1000,12 +1000,12 @@ impl SettingsView {
             SettingsNavItem::Page(SettingsSection::Appearance),
             SettingsNavItem::Page(SettingsSection::Features),
             SettingsNavItem::Page(SettingsSection::Keybindings),
-            SettingsNavItem::Page(SettingsSection::Warpify),
+            SettingsNavItem::Page(SettingsSection::Leantermify),
             SettingsNavItem::Page(SettingsSection::Privacy),
             SettingsNavItem::Page(SettingsSection::About),
         ];
 
-        if FeatureFlag::WarpControlCli.is_enabled() {
+        if FeatureFlag::LeantermControlCli.is_enabled() {
             let privacy_index = nav_items
                 .iter()
                 .position(|item| matches!(item, SettingsNavItem::Page(SettingsSection::Privacy)))
@@ -1017,7 +1017,7 @@ impl SettingsView {
         }
 
         let initial_page = match page {
-            Some(SettingsSection::Scripting) if !FeatureFlag::WarpControlCli.is_enabled() => {
+            Some(SettingsSection::Scripting) if !FeatureFlag::LeantermControlCli.is_enabled() => {
                 SettingsSection::Appearance
             }
             other => other.unwrap_or_default(),
@@ -1321,7 +1321,7 @@ impl SettingsView {
         }
     }
 
-    fn handle_warpify_page_event(
+    fn handle_leantermify_page_event(
         &mut self,
         event: &SettingsPageEvent,
         ctx: &mut ViewContext<Self>,
@@ -1464,7 +1464,7 @@ impl SettingsView {
             SettingsPageViewHandle::Appearance(v) => v.as_ref(app).should_render(app),
             SettingsPageViewHandle::About(v) => v.as_ref(app).should_render(app),
             SettingsPageViewHandle::Privacy(v) => v.as_ref(app).should_render(app),
-            SettingsPageViewHandle::Warpify(v) => v.as_ref(app).should_render(app),
+            SettingsPageViewHandle::Leantermify(v) => v.as_ref(app).should_render(app),
             SettingsPageViewHandle::Scripting(v) => v.as_ref(app).should_render(app),
             SettingsPageViewHandle::EditorAndCodeReview(v) => v.as_ref(app).should_render(app),
         }
@@ -1646,7 +1646,7 @@ impl SettingsView {
                         Container::new(
                             ConstrainedBox::new(
                                 icons::Icon::SearchSmall
-                                    .to_warpui_icon(appearance.theme().active_ui_text_color())
+                                    .to_leanterm_ui_icon(appearance.theme().active_ui_text_color())
                                     .finish(),
                             )
                             .with_width(16.)
@@ -2007,12 +2007,12 @@ impl TypedActionView for SettingsView {
                     })
                 }
             }
-            SettingsAction::WarpifyPageToggle(warpify_action) => {
-                if let Some(warpify_page) = self.settings_page(SettingsSection::Warpify)
-                    && let SettingsPageViewHandle::Warpify(view) = &warpify_page.view_handle
+            SettingsAction::LeantermifyPageToggle(leantermify_action) => {
+                if let Some(leantermify_page) = self.settings_page(SettingsSection::Leantermify)
+                    && let SettingsPageViewHandle::Leantermify(view) = &leantermify_page.view_handle
                 {
                     view.update(ctx, |view, ctx| {
-                        view.handle_action(warpify_action, ctx);
+                        view.handle_action(leantermify_action, ctx);
                     })
                 }
             }

@@ -1,11 +1,11 @@
 use std::ops::Not;
 
+use leanterm_ui::AppContext;
+use leanterm_ui::clipboard::ClipboardContent;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use settings::macros::define_settings_group;
 use settings::{Setting, SupportedPlatforms};
-use leanterm_ui::AppContext;
-use leanterm_ui::clipboard::ClipboardContent;
 
 #[derive(
     Debug,

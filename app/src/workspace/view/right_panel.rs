@@ -1,10 +1,8 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use pathfinder_color::ColorU;
 use leanterm_core::ui::Icon;
 use leanterm_errors::report_error;
-use leanterm_util::path::LineAndColumnArg;
 use leanterm_ui::elements::{
     ChildAnchor, ChildView, Clipped, ConstrainedBox, Container, CrossAxisAlignment, DragBarSide,
     Element, Empty, Flex, MainAxisAlignment, MainAxisSize, MouseStateHandle, ParentElement,
@@ -19,6 +17,8 @@ use leanterm_ui::{
     AppContext, Entity, EntityId, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle, WeakViewHandle,
 };
+use leanterm_util::path::LineAndColumnArg;
+use pathfinder_color::ColorU;
 
 use super::left_panel::{MAX_SIDEBAR_WIDTH_RATIO, MIN_SIDEBAR_WIDTH};
 use crate::appearance::{Appearance, AppearanceEvent};

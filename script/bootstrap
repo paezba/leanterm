@@ -2,8 +2,8 @@
 set -eo pipefail
 
 # Bootstrap dispatches to the platform-specific install scripts. Each step
-# that needs root sources `script/warp_sudo` and asks for confirmation
-# before running. Pass -y / --yes (or set WARP_SKIP_SUDO_PROMPT=1) to skip
+# that needs root sources `script/leanterm_sudo` and asks for confirmation
+# before running. Pass -y / --yes (or set LEANTERM_SKIP_SUDO_PROMPT=1) to skip
 # the prompts in unattended environments.
 
 OS_TYPE="$(uname -s)"
@@ -16,14 +16,14 @@ usage() {
   cat <<EOF
 Usage: ./script/bootstrap [options]
 
-Prepare this checkout for Warp development by running the platform-specific bootstrap steps.
+Prepare this checkout for Leanterm development by running the platform-specific bootstrap steps.
 
 Options:
   -h, --help               Show this help message.
   --skip-gcloud-auth       Skip the gcloud authentication check.
 
 Environment:
-  WARP_SKIP_GCLOUD_AUTH=1
+  LEANTERM_SKIP_GCLOUD_AUTH=1
       Skip the gcloud authentication check.
 EOF
 }
@@ -31,7 +31,7 @@ EOF
 print_bootstrap_preview() {
   local platform="$1"
 
-  echo "Warp bootstrap is starting for ${platform}."
+  echo "Leanterm bootstrap is starting for ${platform}."
   echo "It will:"
 
   if [[ "${platform}" = "macOS" ]]; then
@@ -40,11 +40,11 @@ print_bootstrap_preview() {
     echo "  - Add the aarch64-apple-darwin Rust target."
   elif [[ "${platform}" = "Linux" ]]; then
     echo "  - Update apt package metadata."
-    echo "  - Install dependencies needed to build, run, and test Warp."
+    echo "  - Install dependencies needed to build, run, and test Leanterm."
     echo "  - Install linuxdeploy and check gcloud authentication."
   fi
 
-  if [[ "${WARP_SKIP_GCLOUD_AUTH:-0}" = "1" ]]; then
+  if [[ "${LEANTERM_SKIP_GCLOUD_AUTH:-0}" = "1" ]]; then
     echo "  - Skip gcloud authentication because --skip-gcloud-auth was provided."
   else
     echo "  - Check gcloud authentication (or prompt to log in)."
@@ -62,13 +62,13 @@ for arg in "$@"; do
       exit 0
       ;;
     -y|--yes)
-      export WARP_SKIP_SUDO_PROMPT=1
+      export LEANTERM_SKIP_SUDO_PROMPT=1
       if [[ ! "$OS_TYPE" =~ ^(MINGW64_NT|MSYS_NT) ]]; then
         PLATFORM_ARGS+=("${arg}")
       fi
       ;;
     --skip-gcloud-auth)
-      export WARP_SKIP_GCLOUD_AUTH=1
+      export LEANTERM_SKIP_GCLOUD_AUTH=1
       ;;
     *)
       echo "error: unknown argument '${arg}'" >&2

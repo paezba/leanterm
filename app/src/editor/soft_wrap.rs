@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use anyhow::anyhow;
-use parking_lot::Mutex;
 use leanterm_ui::text_layout;
+use parking_lot::Mutex;
 
 use crate::editor::Point;
 use crate::editor::view::DisplayPoint;

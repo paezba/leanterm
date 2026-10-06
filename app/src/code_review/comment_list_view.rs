@@ -2,10 +2,6 @@ use std::borrow::Cow;
 use std::path::PathBuf;
 
 use indexmap::IndexMap;
-use pathfinder_color::ColorU;
-use pathfinder_geometry::vector::vec2f;
-use string_offset::CharOffset;
-use vec1::vec1;
 use leanterm_core::ui::color::blend::Blend;
 use leanterm_core::ui::theme::Fill;
 use leanterm_core::ui::theme::color::internal_colors::{
@@ -14,7 +10,9 @@ use leanterm_core::ui::theme::color::internal_colors::{
 };
 use leanterm_editor::model::CoreEditorModel;
 use leanterm_ui::clipboard::ClipboardContent;
-use leanterm_ui::elements::new_scrollable::{NewScrollable, ScrollableAppearance, SingleAxisConfig};
+use leanterm_ui::elements::new_scrollable::{
+    NewScrollable, ScrollableAppearance, SingleAxisConfig,
+};
 use leanterm_ui::elements::resizable::{
     DragBarSide, Resizable, ResizableStateHandle, resizable_state_handle,
 };
@@ -34,6 +32,10 @@ use leanterm_ui::{
     AppContext, Entity, EntityId, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle, WeakViewHandle,
 };
+use pathfinder_color::ColorU;
+use pathfinder_geometry::vector::vec2f;
+use string_offset::CharOffset;
+use vec1::vec1;
 
 use crate::appearance::Appearance;
 use crate::code::editor::comment_editor::DEFAULT_COMMENT_MAX_WIDTH;
@@ -607,7 +609,7 @@ impl CommentListView {
                 };
 
                 let icon_element = icon
-                    .to_warpui_icon(leanterm_core::ui::theme::Fill::Solid(text_sub(
+                    .to_leanterm_ui_icon(leanterm_core::ui::theme::Fill::Solid(text_sub(
                         theme,
                         neutral_1(theme),
                     )))
@@ -751,7 +753,7 @@ impl CommentListView {
                 };
 
                 let icon_element = icon
-                    .to_warpui_icon(leanterm_core::ui::theme::Fill::Solid(text_sub(
+                    .to_leanterm_ui_icon(leanterm_core::ui::theme::Fill::Solid(text_sub(
                         theme,
                         neutral_3(theme),
                     )))

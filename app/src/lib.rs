@@ -28,6 +28,7 @@ mod font_fallback;
 mod global_resource_handles;
 mod gpu_state;
 mod interval_timer;
+mod leanterm_managed_paths_watcher;
 #[cfg(feature = "local_fs")]
 mod local_control;
 #[cfg(any(target_os = "macos", target_os = "windows"))]
@@ -69,12 +70,11 @@ pub mod util;
 mod view_components;
 mod vim_registers;
 mod voltron;
-mod warp_managed_paths_watcher;
 mod window_settings;
 
 // PLEASE DO NOT ADD MORE PUBLIC MODULES!
 //
-// Any modules which we make public outside of the `warp` crate lose dead code
+// Any modules which we make public outside of the `leanterm` crate lose dead code
 // checking support, as the compiler cannot make any assumptions about whether
 // or not the function/type is used by another crate that pulls in this one as
 // a dependency.
@@ -172,6 +172,9 @@ use crate::default_terminal::DefaultTerminal;
 use crate::event_sources::PaletteSource;
 pub use crate::global_resource_handles::{GlobalResourceHandles, GlobalResourceHandlesProvider};
 use crate::gpu_state::GPUState;
+use crate::leanterm_managed_paths_watcher::{
+    LeantermManagedPathsWatcher, ensure_leanterm_watch_roots_exist,
+};
 use crate::network::NetworkStatus;
 use crate::notebooks::editor::keys::NotebookKeybindings;
 use crate::notification::NotificationContext;
@@ -192,17 +195,16 @@ use crate::terminal::keys::TerminalKeybindings;
 use crate::terminal::resizable_data::ResizableData;
 use crate::terminal::{AudibleBell, CustomSecretRegexUpdater, History};
 use crate::undo_close::UndoCloseStack;
-use crate::user_config::WarpConfig;
+use crate::user_config::LeantermConfig;
 use crate::util::bindings::is_binding_cross_platform;
 use crate::vim_registers::VimRegisters;
-use crate::warp_managed_paths_watcher::{WarpManagedPathsWatcher, ensure_warp_watch_roots_exist};
 use crate::workflows::local_workflows::LocalWorkflows;
 use crate::workspace::{ActiveSession, PaneViewLocator, ToastStack, Workspace, WorkspaceAction};
 
 /// Our embedded application assets.
 pub static ASSETS: leanterm_assets::Assets = leanterm_assets::Assets;
 
-/// Launch mode for how to start up Warp.
+/// Launch mode for how to start up Leanterm.
 #[allow(clippy::large_enum_variant)]
 pub(crate) enum LaunchMode {
     /// Run the regular GUI application.
@@ -275,14 +277,14 @@ impl LaunchMode {
         }
     }
 
-    /// Returns `true` if Warp renders to native GUI windows on the platform app backend.
+    /// Returns `true` if Leanterm renders to native GUI windows on the platform app backend.
     fn is_gui(&self) -> bool {
         match self {
             LaunchMode::App { .. } | LaunchMode::Test { .. } => true,
         }
     }
 
-    /// Returns `true` if Warp runs with no user interface at all. The TUI is not headless:
+    /// Returns `true` if Leanterm runs with no user interface at all. The TUI is not headless:
     /// it has no GUI window, but it renders to the terminal.
     fn is_headless(&self) -> bool {
         match self {
@@ -371,10 +373,10 @@ fn apply_scroll_multiplier(event: &mut Event, app: &AppContext) {
     }
 }
 
-/// Runs the shared Warp executable as the app or as one of its command-line modes.
+/// Runs the shared Leanterm executable as the app or as one of its command-line modes.
 ///
-/// The bundled Warp Control wrapper injects `--warpctrl`, which is dispatched
-/// before the normal Warp/Oz parser. Oz subcommands are part of that normal
+/// The bundled Leanterm Control wrapper injects `--leantermctl`, which is dispatched
+/// before the normal Leanterm/Oz parser. Oz subcommands are part of that normal
 /// parser and therefore do not require a separate mode flag.
 #[::tracing::instrument(skip_all, fields(tags.cloud_agent = true))]
 pub fn run() -> Result<()> {
@@ -417,7 +419,7 @@ pub fn run() -> Result<()> {
     // instead of launching the GUI app.
     let is_cli_binary = cfg!(feature = "standalone")
         || leanterm_cli::binary_name().is_some_and(|name| name.starts_with("oz"))
-        || std::env::var_os("WARP_CLI_MODE").is_some();
+        || std::env::var_os("LEANTERM_CLI_MODE").is_some();
     if is_cli_binary {
         leanterm_cli::Args::clap_command().print_help()?;
         return Ok(());
@@ -428,7 +430,7 @@ pub fn run() -> Result<()> {
     })
 }
 
-/// Runs a parsed Warp worker command.
+/// Runs a parsed Leanterm worker command.
 fn run_worker_command(worker: &leanterm_cli::WorkerCommand) -> Result<()> {
     match worker {
         #[cfg(all(feature = "local_tty", unix))]
@@ -465,7 +467,7 @@ fn run_worker_command(worker: &leanterm_cli::WorkerCommand) -> Result<()> {
 
 /// Runs an integration test using the provided test driver.
 pub fn run_integration_test(driver: TestDriver) -> Result<()> {
-    let is_integration_test = std::env::var("WARP_INTEGRATION").is_ok();
+    let is_integration_test = std::env::var("LEANTERM_INTEGRATION").is_ok();
     let launch = LaunchMode::Test {
         driver: Box::new(Some(driver)),
         is_integration_test,
@@ -549,6 +551,15 @@ fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
             Err(err) => log::warn!("{err:#}"),
         }
     }
+    #[cfg(not(target_family = "wasm"))]
+    if launch_mode.is_gui() {
+        let settings_file = settings::user_preferences_toml_file_path();
+        match settings::migrate_legacy_setting_keys(&settings_file) {
+            Ok(true) => log::info!("Renamed legacy keys in {}", settings_file.display()),
+            Ok(false) => {}
+            Err(err) => log::warn!("Failed to rename legacy settings keys: {err:#}"),
+        }
+    }
 
     // Claim a background-only process type before anything else can reach
     // AppKit, so a windowless launch never acquires a Dock tile. See APP-2946.
@@ -598,9 +609,9 @@ fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
             launch_mode.args().as_ref(),
         ) {
             // If we were able to contact an existing application instance, quit -
-            // we only want to run a single instance of Warp at a time.
+            // we only want to run a single instance of Leanterm at a time.
             Ok(_) => std::process::exit(0),
-            // If Warp isn't already running, we're good to go.
+            // If Leanterm isn't already running, we're good to go.
             Err(app_services::linux::StartupArgsForwardingError::NoExistingInstance) => {}
             // If we just finished an auto-update, we should continue running.
             Err(app_services::linux::StartupArgsForwardingError::IgnoredAfterAutoUpdate) => {}
@@ -609,7 +620,7 @@ fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
             ) => {}
             // If we were unable to perform the forwarding for an unknown reason,
             // it's better to run a second instance than potentially end up in a
-            // state where Warp refuses to run even a first instance.
+            // state where Leanterm refuses to run even a first instance.
             Err(err) => {
                 let err = anyhow::Error::from(err).context("Failed to forward startup args");
                 report_error!(&err);
@@ -624,9 +635,9 @@ fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
             launch_mode.args().as_ref(),
         ) {
             // If we were able to contact an existing application instance, quit -
-            // we only want to run a single instance of Warp at a time.
+            // we only want to run a single instance of Leanterm at a time.
             Ok(_) => std::process::exit(0),
-            // If Warp isn't already running, we're good to go.
+            // If Leanterm isn't already running, we're good to go.
             Err(app_services::windows::StartupArgsForwardingError::NoExistingInstance) => {}
             // If we just finished an auto-update, we should continue running.
             Err(app_services::windows::StartupArgsForwardingError::IgnoredAfterAutoUpdate) => {}
@@ -635,7 +646,7 @@ fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
             ) => {}
             // If we were unable to perform the forwarding for an unknown reason,
             // it's better to run a second instance than potentially end up in a
-            // state where Warp refuses to run even a first instance.
+            // state where Leanterm refuses to run even a first instance.
             Err(err) => {
                 let err = anyhow::Error::from(err).context("Failed to forward startup args");
                 report_error!(&err);
@@ -644,7 +655,7 @@ fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
         }
     }
 
-    // Sets up a Job Object that we associate with the Warp process to handle
+    // Sets up a Job Object that we associate with the Leanterm process to handle
     // shared fate with its child processes. This should be called before we
     // start spawning any child processes.
     #[cfg(windows)]
@@ -717,7 +728,7 @@ fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
         use leanterm_ui::platform::mac::AppExt;
 
         let activate_on_launch = !launch_mode.is_integration_test()
-            || std::env::var("WARPUI_USE_REAL_DISPLAY_IN_INTEGRATION_TESTS").is_ok();
+            || std::env::var("LEANTERM_UI_USE_REAL_DISPLAY_IN_INTEGRATION_TESTS").is_ok();
         app_builder.set_activate_on_launch(activate_on_launch);
 
         let dev_icon = ASSETS.get("bundled/png/local.png")?;
@@ -742,7 +753,7 @@ fn run_internal(mut launch_mode: LaunchMode) -> Result<()> {
 
         let force_x11 = ForceX11::read_from_preferences(prefs_for_public_settings)
             .unwrap_or(ForceX11::default_value());
-        // Force use of wayland if the user has passed the `WARP_ENABLE_WAYLAND` env var.
+        // Force use of wayland if the user has passed the `LEANTERM_ENABLE_WAYLAND` env var.
         let allow_wayland = linux::is_wayland_env_var_set() || !force_x11;
         app_builder.force_x11(!allow_wayland);
     }
@@ -859,15 +870,15 @@ pub(crate) fn initialize_app(
     }
 
     // One-time migration: give Preview its own config directory by
-    // symlinking contents from the shared ~/.warp location. Must run
-    // before ensure_warp_watch_roots_exist() creates the new directory.
+    // symlinking contents from the shared ~/.leanterm location. Must run
+    // before ensure_leanterm_watch_roots_exist() creates the new directory.
     #[cfg(target_os = "macos")]
     preview_config_migration::migrate_preview_config_dir_if_needed();
 
-    ensure_warp_watch_roots_exist();
-    ctx.add_singleton_model(WarpManagedPathsWatcher::new);
+    ensure_leanterm_watch_roots_exist();
+    ctx.add_singleton_model(LeantermManagedPathsWatcher::new);
 
-    ctx.add_singleton_model(WarpConfig::new);
+    ctx.add_singleton_model(LeantermConfig::new);
     ctx.add_singleton_model(|_ctx| SettingsManager::default());
 
     let user_defaults_on_startup = settings::init(startup_toml_parse_error, ctx);
@@ -972,7 +983,7 @@ pub(crate) fn initialize_app(
     ctx.add_singleton_model(|_ctx| SyncedInputState::new());
 
     log::info!(
-        "Starting warp with channel state {} and version {:?}",
+        "Starting leanterm with channel state {} and version {:?}",
         ChannelState::debug_str(),
         ChannelState::app_version()
     );
@@ -984,7 +995,7 @@ pub(crate) fn initialize_app(
         apply_scroll_multiplier(event, ctx);
     });
 
-    // Rewrite recognized Warp web URLs (sessions, Drive, settings, home) into local
+    // Rewrite recognized Leanterm web URLs (sessions, Drive, settings, home) into local
     // intent URLs when possible so they open directly in the desktop app.
     ctx.set_before_open_url(|url_str, _ctx| {
         if let Ok(url) = Url::parse(url_str)
@@ -1142,7 +1153,7 @@ pub(crate) fn initialize_app(
     if matches!(
         launch_mode,
         LaunchMode::App { .. } | LaunchMode::Test { .. }
-    ) && FeatureFlag::WarpControlCli.is_enabled()
+    ) && FeatureFlag::LeantermControlCli.is_enabled()
     {
         ctx.add_singleton_model(local_control::LocalControlBridge::new);
         ctx.add_singleton_model(local_control::LocalControlServer::new);
@@ -1275,10 +1286,10 @@ pub(crate) fn app_callbacks(
         on_should_terminate_app: Some(Box::new(move |source, ctx| {
             // Never interrupt a system-initiated termination (logout / restart /
             // scheduled OS update): both cancel paths below return
-            // `ApproveTerminateResult::Cancel`, which macOS interprets as Warp
+            // `ApproveTerminateResult::Cancel`, which macOS interprets as Leanterm
             // refusing to quit. That can abort a scheduled OS update while the
             // quit-warning modal has no visible window to attach to, leaving
-            // Warp waiting on a prompt nobody can see (#12441). Skipping
+            // Leanterm waiting on a prompt nobody can see (#12441). Skipping
             // `apply_pending_update` here doesn't lose the update: the next
             // update check re-detects it (autoupdate state isn't persisted
             // across restarts, so the artifact may be re-downloaded).

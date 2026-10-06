@@ -1,6 +1,6 @@
+use leanterm_ui::platform::linux;
 use settings::SupportedPlatforms;
 use settings::macros::define_settings_group;
-use leanterm_ui::platform::linux;
 
 define_settings_group!(LinuxAppConfiguration,
     settings: [

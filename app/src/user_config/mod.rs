@@ -13,17 +13,17 @@ pub(crate) use imp::load_tab_configs;
 pub use imp::load_workflows;
 pub use imp::{load_launch_configs, load_theme_configs};
 use lazy_static::lazy_static;
-use leanterm_core::ui::theme::WarpTheme;
+use leanterm_core::ui::theme::LeantermTheme;
 use leanterm_ui::{Entity, ModelContext, SingletonEntity};
 
 use crate::launch_configs::launch_config::LaunchConfig;
 use crate::tab_configs::{TabConfig, TabConfigError};
-use crate::themes::theme::{ThemeKind, WarpThemeConfig};
+use crate::themes::theme::{LeantermThemeConfig, ThemeKind};
 use crate::workflows::workflow::Workflow;
 
 lazy_static! {
     pub static ref LAUNCH_CONFIG_COMMENT: String = format!(
-        "# Warp Launch Configuration
+        "# Leanterm Launch Configuration
 #
 #
 # Use this to start a certain configuration of windows, tabs, and panes.
@@ -42,7 +42,7 @@ lazy_static! {
 # windows:
 #  - tabs:
 #      - layout:
-#          cwd: /Users/warp-user/project
+#          cwd: /Users/leanterm-user/project
 #          commands:
 #            - exec: code .
 ",
@@ -51,7 +51,7 @@ lazy_static! {
 }
 
 #[derive(Clone)]
-pub enum WarpConfigUpdateEvent {
+pub enum LeantermConfigUpdateEvent {
     Themes,
     #[cfg_attr(not(feature = "local_fs"), expect(dead_code))]
     LocalUserWorkflows,
@@ -80,24 +80,24 @@ pub enum WarpConfigUpdateEvent {
 /// tab configs, etc.) and, on platforms where it differs, `config_local_dir()`
 /// (`settings.toml`, `keybindings.yaml`, `user_preferences.json`).
 #[derive(Default)]
-pub struct WarpConfig {
+pub struct LeantermConfig {
     launch_configs: Vec<LaunchConfig>,
     tab_configs: Vec<TabConfig>,
     #[cfg_attr(target_family = "wasm", allow(dead_code))]
     tab_config_errors: Vec<TabConfigError>,
-    theme_config: WarpThemeConfig,
+    theme_config: LeantermThemeConfig,
     local_user_workflows: Vec<Workflow>,
 }
 
-/// Platform-independent parts of WarpConfig.
+/// Platform-independent parts of LeantermConfig.
 ///
 /// Additional platform-dependent functionality can be found in impl blocks
 /// in native.rs and wasm.rs.
-impl WarpConfig {
+impl LeantermConfig {
     #[cfg(any(test, feature = "test-util"))]
     pub fn mock(_ctx: &mut ModelContext<Self>) -> Self {
         Self {
-            theme_config: WarpThemeConfig::new(),
+            theme_config: LeantermThemeConfig::new(),
             ..Default::default()
         }
     }
@@ -110,7 +110,7 @@ impl WarpConfig {
         &self.tab_configs
     }
 
-    pub fn theme_config(&self) -> &WarpThemeConfig {
+    pub fn theme_config(&self) -> &LeantermThemeConfig {
         &self.theme_config
     }
 
@@ -118,7 +118,7 @@ impl WarpConfig {
         &self.local_user_workflows
     }
 
-    /// Saving the newly created launch configuration to the WarpConfig that we currently
+    /// Saving the newly created launch configuration to the LeantermConfig that we currently
     /// have.
     pub fn append_launch_config(
         &mut self,
@@ -127,27 +127,27 @@ impl WarpConfig {
     ) {
         if !self.launch_configs.contains(launch_config) {
             self.launch_configs.push(launch_config.to_owned());
-            ctx.emit(WarpConfigUpdateEvent::LaunchConfigs);
+            ctx.emit(LeantermConfigUpdateEvent::LaunchConfigs);
         }
     }
 
     pub fn update_theme_config(
         &mut self,
-        theme_config: WarpThemeConfig,
+        theme_config: LeantermThemeConfig,
         ctx: &mut ModelContext<Self>,
     ) {
         self.theme_config = theme_config;
-        ctx.emit(WarpConfigUpdateEvent::Themes);
+        ctx.emit(LeantermConfigUpdateEvent::Themes);
     }
 
     pub fn add_new_theme_to_config(
         &mut self,
         theme_name: ThemeKind,
-        theme: WarpTheme,
+        theme: LeantermTheme,
         ctx: &mut ModelContext<Self>,
     ) {
         self.theme_config.add_new_theme(theme_name, theme);
-        ctx.emit(WarpConfigUpdateEvent::Themes);
+        ctx.emit(LeantermConfigUpdateEvent::Themes);
     }
 
     /// Eagerly removes a tab config by its source path and emits a `TabConfigs` event.
@@ -159,7 +159,7 @@ impl WarpConfig {
         self.tab_configs
             .retain(|c| c.source_path.as_deref() != Some(path));
         if self.tab_configs.len() != before {
-            ctx.emit(WarpConfigUpdateEvent::TabConfigs);
+            ctx.emit(LeantermConfigUpdateEvent::TabConfigs);
         }
     }
 }
@@ -192,13 +192,13 @@ pub fn tab_configs_dir() -> PathBuf {
 }
 
 /// Returns the path to the directory containing the built-in default tab configs.
-/// These are shipped with Warp and user-editable (Warp does not overwrite modifications).
+/// These are shipped with Leanterm and user-editable (Leanterm does not overwrite modifications).
 #[cfg_attr(target_family = "wasm", expect(dead_code))]
 pub fn default_tab_configs_dir() -> PathBuf {
     base_dir().join("default_tab_configs")
 }
 
-/// Ensures `~/.warp/default_tab_configs/worktree.toml` exists, creating it
+/// Ensures `~/.leanterm/default_tab_configs/worktree.toml` exists, creating it
 /// from the embedded template if missing. Returns the path to the file.
 #[cfg(feature = "local_fs")]
 pub(crate) fn ensure_default_worktree_config() -> PathBuf {
@@ -373,11 +373,11 @@ pub(crate) fn find_unused_worktree_config_path(dir: &Path, branch_name: &str) ->
     }
 }
 
-impl Entity for WarpConfig {
-    type Event = WarpConfigUpdateEvent;
+impl Entity for LeantermConfig {
+    type Event = LeantermConfigUpdateEvent;
 }
 
-impl SingletonEntity for WarpConfig {}
+impl SingletonEntity for LeantermConfig {}
 
 #[cfg(test)]
 #[path = "mod_tests.rs"]

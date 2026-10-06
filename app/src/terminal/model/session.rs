@@ -17,28 +17,28 @@ pub use command_executor::*;
 use futures::FutureExt;
 use futures::future::{BoxFuture, Shared};
 use instant::Instant;
+use leanterm_completer::completer::{
+    CommandExitStatus, CommandOutput, PathSeparators, TopLevelCommandCaseSensitivity,
+};
+use leanterm_errors::{ErrorExt, register_error};
+use leanterm_ui::platform::OperatingSystem;
+use leanterm_ui::{Entity, ModelContext, SingletonEntity};
+use leanterm_util::path::{
+    ShellFamily, convert_msys2_to_windows_native_path, convert_wsl_to_windows_host_path,
+    msys2_exe_to_root,
+};
 use once_cell::sync::OnceCell;
 use parking_lot::{Mutex, RwLock};
 use smol_str::SmolStr;
 use typed_path::{TypedPath, TypedPathBuf, WindowsPath};
 use version_compare::Version;
-use leanterm_completer::completer::{
-    CommandExitStatus, CommandOutput, PathSeparators, TopLevelCommandCaseSensitivity,
-};
-use leanterm_errors::{ErrorExt, register_error};
-use leanterm_util::path::{
-    ShellFamily, convert_msys2_to_windows_native_path, convert_wsl_to_windows_host_path,
-    msys2_exe_to_root,
-};
-use leanterm_ui::platform::OperatingSystem;
-use leanterm_ui::{Entity, ModelContext, SingletonEntity};
 
 use super::ansi::{BootstrappedValue, InitShellValue, SSHValue};
 use super::terminal_model::{HistoryEntry, SubshellInitializationInfo};
 #[cfg(feature = "local_tty")]
 use crate::terminal::event::ExecutedExecutorCommandEvent;
+use crate::terminal::leantermify::SubshellSource;
 use crate::terminal::shell::{Shell, ShellType};
-use crate::terminal::warpify::SubshellSource;
 use crate::terminal::{History, ShellHost, ShellLaunchData};
 
 #[derive(thiserror::Error, Debug)]
@@ -394,7 +394,7 @@ impl Sessions {
 impl From<SessionType> for command_corrections::SessionType {
     fn from(session_type: SessionType) -> Self {
         match session_type {
-            SessionType::WarpifiedRemote { .. } => command_corrections::SessionType::Remote,
+            SessionType::LeantermifiedRemote { .. } => command_corrections::SessionType::Remote,
             SessionType::Local => command_corrections::SessionType::Local,
         }
     }
@@ -403,20 +403,20 @@ impl From<SessionType> for command_corrections::SessionType {
 impl From<&SessionType> for command_corrections::SessionType {
     fn from(session_type: &SessionType) -> Self {
         match session_type {
-            SessionType::WarpifiedRemote { .. } => command_corrections::SessionType::Remote,
+            SessionType::LeantermifiedRemote { .. } => command_corrections::SessionType::Remote,
             SessionType::Local => command_corrections::SessionType::Local,
         }
     }
 }
 
-/// Whether a session was established by Warp's in-band SSH wrapper — the shell function our
+/// Whether a session was established by Leanterm's in-band SSH wrapper — the shell function our
 /// bootstrap injects that intercepts `ssh`, sets up a ControlMaster connection, and bootstraps
-/// the remote shell. This applies to all SSH warpification today: the remote-server SSH
+/// the remote shell. This applies to all SSH leantermification today: the remote-server SSH
 /// extension also runs on top of a wrapper session (reusing the ControlMaster socket for its
 /// proxy and for the `RemoteCommandExecutor` fallback).
 ///
-/// `No` covers local sessions, subshells, and remote sessions warpified *without* the wrapper
-/// (e.g. via the auto-warpify RC snippet inside an unwrapped `ssh` session), which carry no
+/// `No` covers local sessions, subshells, and remote sessions leantermified *without* the wrapper
+/// (e.g. via the auto-leantermify RC snippet inside an unwrapped `ssh` session), which carry no
 /// ControlMaster socket.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IsSSHWrapperSession {
@@ -426,7 +426,7 @@ pub enum IsSSHWrapperSession {
         socket_path: PathBuf,
         /// `true` when `socket_path` points at a ControlMaster the user
         /// already had running (the SSH wrapper attached to it instead of
-        /// creating a Warp-owned one). Warp must not tear down such a
+        /// creating a Leanterm-owned one). Leanterm must not tear down such a
         /// master on session exit.
         external_control_master: bool,
     },
@@ -527,13 +527,14 @@ impl SessionInfo {
             matches!(&is_ssh_wrapper_session, IsSSHWrapperSession::Yes { .. }),
         );
 
-        let spawning_session_id = if matches!(session_type, BootstrapSessionType::WarpifiedRemote)
-            || subshell_info.is_some()
-        {
-            active_block_session_id
-        } else {
-            None
-        };
+        let spawning_session_id =
+            if matches!(session_type, BootstrapSessionType::LeantermifiedRemote)
+                || subshell_info.is_some()
+            {
+                active_block_session_id
+            } else {
+                None
+            };
 
         SessionInfo {
             session_id: init_shell_value.session_id,
@@ -575,7 +576,7 @@ impl SessionInfo {
                 {
                     BootstrapSessionType::Local
                 } else {
-                    BootstrapSessionType::WarpifiedRemote
+                    BootstrapSessionType::LeantermifiedRemote
                 }
             }
             Err(e) => {
@@ -591,7 +592,7 @@ impl SessionInfo {
         _is_ssh_session: bool,
     ) -> BootstrapSessionType {
         // When the `remote_tty` feature is enabled--the session is always considered remote.
-        BootstrapSessionType::WarpifiedRemote
+        BootstrapSessionType::LeantermifiedRemote
     }
 
     /// Returns a fully populated [`SessionInfo`] containing data derived from the given
@@ -738,28 +739,28 @@ impl SessionInfo {
 /// which happens *after* the session is bootstrapped.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum BootstrapSessionType {
-    /// The session host is the same host where Warp is running.
+    /// The session host is the same host where Leanterm is running.
     Local,
 
-    /// The session host is a different host from where Warp is running.
-    WarpifiedRemote,
+    /// The session host is a different host from where Leanterm is running.
+    LeantermifiedRemote,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SessionType {
-    /// The session host is the same host where Warp is running.
+    /// The session host is the same host where Leanterm is running.
     Local,
 
-    /// The session host is a different host from where Warp is running.
-    /// Note that we only know this for sure when we Warpify a block.
-    WarpifiedRemote,
+    /// The session host is a different host from where Leanterm is running.
+    /// Note that we only know this for sure when we Leantermify a block.
+    LeantermifiedRemote,
 }
 
 impl From<BootstrapSessionType> for SessionType {
     fn from(bst: BootstrapSessionType) -> Self {
         match bst {
             BootstrapSessionType::Local => SessionType::Local,
-            BootstrapSessionType::WarpifiedRemote => SessionType::WarpifiedRemote,
+            BootstrapSessionType::LeantermifiedRemote => SessionType::LeantermifiedRemote,
         }
     }
 }
@@ -879,9 +880,9 @@ impl Session {
         self.info.host_info.clone()
     }
 
-    /// Returns whether this session was established by Warp's in-band SSH wrapper (see
-    /// [`IsSSHWrapperSession`]). Note this stays `false` for remote sessions warpified via
-    /// the auto-warpify RC snippet inside an unwrapped `ssh` session.
+    /// Returns whether this session was established by Leanterm's in-band SSH wrapper (see
+    /// [`IsSSHWrapperSession`]). Note this stays `false` for remote sessions leantermified via
+    /// the auto-leantermify RC snippet inside an unwrapped `ssh` session.
     pub fn is_ssh_wrapper_session(&self) -> bool {
         matches!(
             self.info.is_ssh_wrapper_session,
@@ -890,7 +891,7 @@ impl Session {
     }
 
     pub fn is_subshell_or_ssh(&self) -> bool {
-        matches!(self.session_type(), SessionType::WarpifiedRemote { .. })
+        matches!(self.session_type(), SessionType::LeantermifiedRemote { .. })
             || self.is_ssh_wrapper_session()
             || self.subshell_info().is_some()
     }
@@ -1401,7 +1402,9 @@ impl Session {
                 self.read_history_for_local_session(is_kaspersky_running)
                     .await
             }
-            BootstrapSessionType::WarpifiedRemote => self.read_history_for_remote_session().await,
+            BootstrapSessionType::LeantermifiedRemote => {
+                self.read_history_for_remote_session().await
+            }
         }
     }
 
@@ -1497,22 +1500,22 @@ impl Session {
     /// Converts the given directory into a [`typed_path::TypedPathBuf`].
     pub fn convert_directory_to_typed_path_buf(&self, pwd: String) -> TypedPathBuf {
         // We need to determine whether this session requires windows file paths
-        // or unix file paths. This needs to be resilient to warpified ssh. Some examples:
+        // or unix file paths. This needs to be resilient to leantermified ssh. Some examples:
         // - bash on mac ---> unix
         // - powershell on linux ---> unix
         // - powershell on windows ---> windows
         // - wsl on windows ---> unix
-        // - warpified zsh --> unix
+        // - leantermified zsh --> unix
 
         // If the host architecture is unix, we can infer unix file paths. This would break
-        // if we supported warpifying a powershell-on-windows SSH session.
+        // if we supported leantermifying a powershell-on-windows SSH session.
         if cfg!(unix) {
             return TypedPathBuf::from_unix(pwd);
         }
 
         // We assume that we're on Windows.
         match self.shell_family() {
-            // Cases: WSL, MSYS2, warpified bash
+            // Cases: WSL, MSYS2, leantermified bash
             ShellFamily::Posix => TypedPathBuf::from_unix(pwd),
             // Cases: powershell sessions
             ShellFamily::PowerShell => TypedPathBuf::from_windows(pwd),
@@ -1639,7 +1642,7 @@ pub mod testing {
 
         pub fn with_ssh_socket_path(mut self, socket_path: PathBuf) -> Self {
             if let BootstrapSessionType::Local = self.session_type {
-                self.session_type = BootstrapSessionType::WarpifiedRemote;
+                self.session_type = BootstrapSessionType::LeantermifiedRemote;
             }
             self.is_ssh_wrapper_session = IsSSHWrapperSession::Yes {
                 socket_path,
@@ -1720,7 +1723,7 @@ pub mod testing {
 
         pub fn test_remote() -> Self {
             let info = SessionInfo::new_for_test()
-                .with_session_type(BootstrapSessionType::WarpifiedRemote)
+                .with_session_type(BootstrapSessionType::LeantermifiedRemote)
                 .with_shell_type(ShellType::Bash); // We only support UNIX-based remote sessions.
             let session_type = SessionType::from(info.session_type.clone());
             Self {

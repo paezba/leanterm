@@ -9,15 +9,15 @@ use std::thread::JoinHandle;
 
 use anyhow::Context as _;
 use async_broadcast::InactiveReceiver;
+use leanterm_core::SessionId;
+use leanterm_errors::report_error;
+use leanterm_ui::r#async::executor::Background;
+use leanterm_ui::{AppContext, Entity, ModelContext, ModelHandle, SingletonEntity, ViewHandle};
 #[cfg(unix)]
 use nix::sys::termios::LocalFlags;
 use parking_lot::{FairMutex, Mutex};
 use pathfinder_geometry::vector::Vector2F;
 use settings::Setting as _;
-use leanterm_core::SessionId;
-use leanterm_errors::report_error;
-use leanterm_ui::r#async::executor::Background;
-use leanterm_ui::{AppContext, Entity, ModelContext, ModelHandle, SingletonEntity, ViewHandle};
 
 use super::event_loop::EventLoop;
 use super::shell::{ShellStarter, ShellStarterSource};
@@ -33,6 +33,7 @@ use crate::settings::{DebugSettings, SshSettings};
 use crate::terminal::available_shells::{AvailableShell, AvailableShells};
 use crate::terminal::color::List as ColorList;
 use crate::terminal::event_listener::ChannelEventListener;
+use crate::terminal::leantermify::settings::LeantermifySettings;
 #[cfg(unix)]
 use crate::terminal::local_tty::terminal_attributes::Event as TerminalAttributesPollerEvent;
 use crate::terminal::local_tty::{Pty, PtyOptions};
@@ -47,7 +48,6 @@ use crate::terminal::model_events::ModelEventDispatcher;
 use crate::terminal::session_settings::SessionSettings;
 use crate::terminal::shell::ShellName;
 use crate::terminal::terminal_manager::BlockSpacing;
-use crate::terminal::warpify::settings::WarpifySettings;
 use crate::terminal::writeable_pty::pty_controller::{EventLoopSendError, EventLoopSender};
 use crate::terminal::writeable_pty::terminal_manager_util::{
     init_pty_controller_model, wire_up_pty_controller_with_surface,
@@ -272,7 +272,7 @@ impl<S> TerminalManager<S> {
         let colors = model.colors();
         let model = Arc::new(FairMutex::new(model));
 
-        // This is purely for measuring throughput on WarpDev.
+        // This is purely for measuring throughput on LeantermDev.
         if FeatureFlag::RecordPtyThroughput.is_enabled() {
             recorder::record_pty_throughput(
                 inactive_pty_reads_rx.clone().activate(),
@@ -610,12 +610,12 @@ impl<S> TerminalManager<S> {
         });
     }
 
-    /// Sends bindkey to notify shell process to switch to Warp prompt logic for prompt
+    /// Sends bindkey to notify shell process to switch to Leanterm prompt logic for prompt
     /// with the combined prompt/command grid (we unset the PS1, but save the value for potential
     /// future restoration).
-    pub fn send_switch_to_warp_prompt_bindkey(&self, app_ctx: &mut AppContext) {
+    pub fn send_switch_to_leanterm_prompt_bindkey(&self, app_ctx: &mut AppContext) {
         self.pty_controller.update(app_ctx, |pty_controller, ctx| {
-            pty_controller.send_switch_to_warp_prompt_bindkey(ctx);
+            pty_controller.send_switch_to_leanterm_prompt_bindkey(ctx);
         });
     }
 
@@ -662,12 +662,12 @@ impl<S> TerminalManager<S> {
                 .chip_kinds()
                 .contains(&ContextChipKind::NodeVersion);
 
-        // `enable_ssh_warpification` is the single source of truth for whether the SSH
-        // wrapper is active. The bootstrap scripts check `WARP_USE_SSH_WRAPPER` (derived
-        // from this value) before invoking `warp_ssh_helper`, which spawns the ControlMaster
+        // `enable_ssh_leantermification` is the single source of truth for whether the SSH
+        // wrapper is active. The bootstrap scripts check `LEANTERM_USE_SSH_WRAPPER` (derived
+        // from this value) before invoking `leanterm_ssh_helper`, which spawns the ControlMaster
         // and opens agent-protocol channels.
-        let enable_ssh_wrapper = *WarpifySettings::as_ref(ctx)
-            .enable_ssh_warpification
+        let enable_ssh_wrapper = *LeantermifySettings::as_ref(ctx)
+            .enable_ssh_leantermification
             .value();
 
         // Only meaningful when the legacy ControlMaster wrapper is active.

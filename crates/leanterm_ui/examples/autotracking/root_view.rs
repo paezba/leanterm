@@ -1,4 +1,3 @@
-use pathfinder_color::ColorU;
 use leanterm_ui::elements::{
     Align, Border, ChildView, Container, CornerRadius, DispatchEventResult, EventHandler, Flex,
     ParentElement, Radius, Rect, Stack, Text,
@@ -8,6 +7,7 @@ use leanterm_ui::{
     AppContext, Element, Entity, ModelHandle, SingletonEntity, Tracked, TypedActionView, View,
     ViewContext, ViewHandle,
 };
+use pathfinder_color::ColorU;
 
 pub fn init(ctx: &mut AppContext) {
     ctx.add_singleton_model(|_| Settings {

@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
-use serde::{Deserialize, Serialize};
-use leanterm_util::path::ShellFamily;
 use leanterm_ui::platform::OperatingSystem;
+use leanterm_util::path::ShellFamily;
+use serde::{Deserialize, Serialize};
 
 #[derive(
     Debug,

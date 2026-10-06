@@ -4,7 +4,7 @@ use std::ops::{Index, IndexMut};
 use leanterm_ui::color::ColorU;
 
 use crate::terminal::model::ansi::color_index;
-use crate::themes::theme::{AnsiColors, WarpTheme};
+use crate::themes::theme::{AnsiColors, LeantermTheme};
 
 pub const COUNT: usize = 269;
 
@@ -43,8 +43,8 @@ impl Colors {
     }
 }
 
-impl From<WarpTheme> for Colors {
-    fn from(theme: WarpTheme) -> Self {
+impl From<LeantermTheme> for Colors {
+    fn from(theme: LeantermTheme) -> Self {
         let colors = theme.terminal_colors();
         Colors::new(
             PrimaryColors::new(

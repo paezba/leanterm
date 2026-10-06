@@ -2,11 +2,13 @@ use std::path::Path;
 
 use code_diff::workspace::WorkspaceMetadata;
 use fuzzy_match::FuzzyMatchResult;
-use ordered_float::OrderedFloat;
 use leanterm_core::ui::theme::Fill;
-use leanterm_ui::elements::{Align, ConstrainedBox, Flex, Highlight, ParentElement, Shrinkable, Text};
+use leanterm_ui::elements::{
+    Align, ConstrainedBox, Flex, Highlight, ParentElement, Shrinkable, Text,
+};
 use leanterm_ui::fonts::{Properties, Weight};
 use leanterm_ui::{AppContext, Element, SingletonEntity};
+use ordered_float::OrderedFloat;
 
 use crate::appearance::Appearance;
 use crate::search::action::search_item::styles;

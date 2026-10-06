@@ -2,10 +2,10 @@ use std::slice;
 
 use cocoa::base::{BOOL, id};
 use cocoa::foundation::NSUInteger;
-use objc2::rc::Retained;
-use objc2_foundation::{NSArray, NSNumber, NSString};
 use leanterm_ui_core::keymap::Keystroke;
 use leanterm_ui_core::platform::keyboard::{KeyCode, NativeKeyCode, PhysicalKey};
+use objc2::rc::Retained;
+use objc2_foundation::{NSArray, NSNumber, NSString};
 
 // Modifier key mask values for the Carbon API.
 pub const CMD_KEY: u16 = 256;

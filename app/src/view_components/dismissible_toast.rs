@@ -1,12 +1,11 @@
 use std::rc::Rc;
 use std::time::Duration;
 
-use pathfinder_color::ColorU;
-use pathfinder_geometry::vector::vec2f;
-use uuid::Uuid;
 use leanterm_core::ui::builder::UiBuilder;
 use leanterm_core::ui::theme::color::internal_colors;
-use leanterm_ui::accessibility::{AccessibilityContent, ActionAccessibilityContent, WarpA11yRole};
+use leanterm_ui::accessibility::{
+    AccessibilityContent, ActionAccessibilityContent, LeantermA11yRole,
+};
 use leanterm_ui::r#async::{SpawnedFutureHandle, Timer};
 use leanterm_ui::elements::{
     Border, ChildAnchor, ChildView, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment,
@@ -22,6 +21,9 @@ use leanterm_ui::{
     Action, AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle,
 };
+use pathfinder_color::ColorU;
+use pathfinder_geometry::vector::vec2f;
+use uuid::Uuid;
 
 use super::action_button::ActionButton;
 use crate::appearance::Appearance;
@@ -305,7 +307,7 @@ impl<A: Action + Clone> TypedActionView for DismissibleToastStack<A> {
                 );
                 Some(AccessibilityContent::new_without_help(
                     label,
-                    WarpA11yRole::ButtonRole,
+                    LeantermA11yRole::ButtonRole,
                 ))
                 .into()
             }
@@ -606,9 +608,9 @@ impl<A: Action + Clone> DismissibleToast<A> {
                 .with_vertical_padding(VERTICAL_PADDING)
                 .with_horizontal_padding(HORIZONTAL_PADDING)
                 .with_background(self.flavor.bg_color(appearance))
-                .with_corner_radius(leanterm_ui::elements::CornerRadius::with_all(Radius::Pixels(
-                    TOAST_CORNER_RADIUS,
-                )))
+                .with_corner_radius(leanterm_ui::elements::CornerRadius::with_all(
+                    Radius::Pixels(TOAST_CORNER_RADIUS),
+                ))
                 .with_border(Border::all(1.).with_border_fill(self.flavor.border_color(appearance)))
                 .finish();
 

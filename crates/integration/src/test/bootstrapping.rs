@@ -1,7 +1,5 @@
 //! Integration tests for bootstrapping logic.
 
-use settings::Setting as _;
-use version_compare::Cmp;
 use leanterm::cmd_or_ctrl_shift;
 use leanterm::integration_testing::input::{
     input_contains_string, input_editor_is_focused, input_editor_is_not_focused, input_is_empty,
@@ -26,6 +24,8 @@ use leanterm::workspace::Workspace;
 use leanterm_ui_core::clipboard::ClipboardContent;
 use leanterm_ui_core::integration::{AssertionCallback, TestStep};
 use leanterm_ui_core::{ViewHandle, async_assert, async_assert_eq};
+use settings::Setting as _;
+use version_compare::Cmp;
 
 use super::{Builder, new_builder};
 use crate::util::{ShellRcType, write_all_rc_files_for_test, write_rc_files_for_test};
@@ -102,7 +102,7 @@ pub fn test_paste_and_type_characters_before_bootstrap() -> Builder {
                 .add_named_assertion("Validate block contents", assert_active_block_command_for_single_terminal_in_tab("Enter some user input: ", 0))
         )
         .with_step(
-            TestStep::new("Warp input should not start focused, since .rc file is reading user input")
+            TestStep::new("Leanterm input should not start focused, since .rc file is reading user input")
                 .add_assertion(input_editor_is_not_focused(0))
         )
         .with_step(
@@ -126,7 +126,7 @@ pub fn test_paste_and_type_characters_before_bootstrap() -> Builder {
                 .add_assertion(input_editor_is_not_focused(0)),
         )
         .with_step(
-            TestStep::new("Pasted text go into the pty and not warp input")
+            TestStep::new("Pasted text go into the pty and not leanterm input")
                 .with_keystrokes(&[cmd_or_ctrl_shift("v")])
                 .add_named_assertion("Input should be empty", input_is_empty(0))
                 .add_named_assertion("Pasted text should go to pty", |app, window_id| {
@@ -144,7 +144,7 @@ pub fn test_paste_and_type_characters_before_bootstrap() -> Builder {
                 .add_named_assertion("Input should not be focused", input_editor_is_not_focused(0)),
         )
         .with_step(
-            TestStep::new("Typed characters should go to the pty and not warp input")
+            TestStep::new("Typed characters should go to the pty and not leanterm input")
                 .with_typed_characters(&["these are some typed characters"])
                 .add_named_assertion("Input should be empty", input_is_empty(0))
                 .add_named_assertion("Typed characters should go to pty", |app, window_id| {
@@ -198,7 +198,7 @@ pub fn test_paste_and_type_characters_before_bootstrap() -> Builder {
         )
         .with_step(wait_until_bootstrapped_single_pane_for_tab(0))
         .with_step(
-            new_step_with_default_assertions("Warp input should be focused and keep buffered text")
+            new_step_with_default_assertions("Leanterm input should be focused and keep buffered text")
                 .add_assertion(input_editor_is_focused(0))
                 .add_assertion(input_contains_string(0, "this is the pasted textthese are some typed characters".to_owned()))
         )
@@ -403,7 +403,7 @@ zle -N zle-line-init
         .with_step(wait_until_bootstrapped_single_pane_for_tab(0))
         .with_step(clear_blocklist_to_remove_bootstrapped_blocks())
         // Leaves "LEFTOVER_RESIDUE" pending in the line editor's buffer for the *next* prompt,
-        // simulating genuine leftover bootstrap-paste bytes Warp has no visibility into.
+        // simulating genuine leftover bootstrap-paste bytes Leanterm has no visibility into.
         .with_step(execute_command_for_single_terminal_in_tab(
             0,
             "print -z LEFTOVER_RESIDUE".to_string(),

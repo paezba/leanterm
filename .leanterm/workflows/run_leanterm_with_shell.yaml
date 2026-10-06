@@ -1,0 +1,9 @@
+---
+name: "Run Leanterm locally with shell"
+command: "LEANTERM_SHELL_PATH={{shell}} cargo run"
+description: "Runs leanterm with the particular shell so devs don't need to change their login shell to test a different shell locally"
+arguments:
+  - name: shell
+    description: path of shell to use
+author: Leanterm Team
+shells: []

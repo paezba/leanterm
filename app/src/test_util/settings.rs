@@ -39,20 +39,20 @@ pub fn initialize_settings_for_tests_with_mode(
     use crate::terminal::BlockListSettings;
     use crate::terminal::general_settings::GeneralSettings;
     use crate::terminal::keys_settings::KeysSettings;
+    use crate::terminal::leantermify::settings::LeantermifySettings;
     use crate::terminal::ligature_settings::LigatureSettings;
     use crate::terminal::safe_mode_settings::SafeModeSettings;
     use crate::terminal::session_settings::SessionSettings;
     use crate::terminal::settings::TerminalSettings;
-    use crate::terminal::warpify::settings::WarpifySettings;
     use crate::undo_close::UndoCloseSettings;
-    use crate::user_config::WarpConfig;
+    use crate::user_config::LeantermConfig;
     use crate::window_settings::WindowSettings;
     use crate::workspace::tab_settings::TabSettings;
     app.add_singleton_model(|ctx| AppExecutionMode::new(mode, is_sandboxed, ctx));
 
     app.update(init_and_register_user_preferences);
     app.add_singleton_model(|_ctx| SettingsManager::default());
-    app.add_singleton_model(WarpConfig::mock);
+    app.add_singleton_model(LeantermConfig::mock);
     app.update(|ctx| {
         // Register a no-op secure storage provider for testing.
         leanterm_ui_extras::secure_storage::register_noop("test", ctx);
@@ -80,7 +80,7 @@ pub fn initialize_settings_for_tests_with_mode(
     InputSettings::register(app);
     KeysSettings::register(app);
     LigatureSettings::register(app);
-    if leanterm_core::features::FeatureFlag::WarpControlCli.is_enabled() {
+    if leanterm_core::features::FeatureFlag::LeantermControlCli.is_enabled() {
         LocalControlSettings::register(app);
     }
 
@@ -96,7 +96,7 @@ pub fn initialize_settings_for_tests_with_mode(
     ScrollSettings::register(app);
     SelectionSettings::register(app);
     app.update(|ctx| {
-        WarpifySettings::register(ctx);
+        LeantermifySettings::register(ctx);
     });
     SessionSettings::register(app);
     SshSettings::register(app);

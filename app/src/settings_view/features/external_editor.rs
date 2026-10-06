@@ -1,9 +1,11 @@
-use settings::Setting;
 use leanterm_errors::report_if_error;
 use leanterm_ui::elements::{Flex, MouseStateHandle, ParentElement};
 use leanterm_ui::ui_components::components::UiComponent;
 use leanterm_ui::ui_components::switch::SwitchStateHandle;
-use leanterm_ui::{Element, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle};
+use leanterm_ui::{
+    Element, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
+};
+use settings::Setting;
 
 use crate::appearance::Appearance;
 use crate::settings_view::settings_page::{
@@ -140,7 +142,10 @@ impl ExternalEditorView {
 
         let mut items = vec![default_app];
 
-        items.push(DropdownItem::new("Warp", make_action(EditorChoice::Warp)));
+        items.push(DropdownItem::new(
+            "Leanterm",
+            make_action(EditorChoice::Leanterm),
+        ));
         items.push(DropdownItem::new(
             "$EDITOR",
             make_action(EditorChoice::EnvEditor),
@@ -160,7 +165,7 @@ impl ExternalEditorView {
             EditorChoice::ExternalEditor(editor) => {
                 dropdown.set_selected_by_name(format!("{editor}"), ctx)
             }
-            EditorChoice::Warp => dropdown.set_selected_by_name("Warp", ctx),
+            EditorChoice::Leanterm => dropdown.set_selected_by_name("Leanterm", ctx),
             EditorChoice::EnvEditor => dropdown.set_selected_by_name("$EDITOR", ctx),
             EditorChoice::SystemDefault => dropdown.set_selected_by_name(default_option_text, ctx),
         };
@@ -230,7 +235,7 @@ impl View for ExternalEditorView {
 
         let default_layout = render_dropdown_item(
             appearance,
-            "Choose a layout to open files in Warp",
+            "Choose a layout to open files in Leanterm",
             None,
             None,
             None,
@@ -264,7 +269,7 @@ impl View for ExternalEditorView {
         ));
 
         column.add_child(render_body_item::<ExternalEditorAction>(
-            "Open Markdown files in Warp's Markdown Viewer by default".to_string(),
+            "Open Markdown files in Leanterm's Markdown Viewer by default".to_string(),
             Some(AdditionalInfo {
                 mouse_state: self.markdown_viewer_mouse_state.clone(),
                 on_click_action: Some(ExternalEditorAction::OpenUrl(

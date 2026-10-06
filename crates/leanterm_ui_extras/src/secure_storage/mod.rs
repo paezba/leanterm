@@ -50,7 +50,7 @@ pub type Model = Box<dyn SecureStorage>;
 ///
 /// The service name is used as a namespace for the application's secrets.  It
 /// is recommended that this be a unique identifier for the application; one
-/// common scheme is reverse-DNS notation (e.g.: "dev.warp.Warp").
+/// common scheme is reverse-DNS notation (e.g.: "dev.leanterm.Leanterm").
 #[cfg(not(target_os = "windows"))]
 pub fn register(service_name: &str, ctx: &mut leanterm_ui_core::AppContext) {
     ctx.add_singleton_model(|_| -> Model { Box::new(imp::SecureStorage::new(service_name)) });

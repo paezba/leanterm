@@ -9,11 +9,11 @@ use std::hash::{Hash, Hasher};
 use alias::{AliasExpansionResult, expand_command_aliases};
 use async_recursion::async_recursion;
 use itertools::Itertools;
+use leanterm_command_signatures::IconType;
+use leanterm_core::ui::theme::AnsiColorIdentifier;
 use legacy::*;
 pub use priority::Priority;
 use smol_str::SmolStr;
-use warp_command_signatures::IconType;
-use leanterm_core::ui::theme::AnsiColorIdentifier;
 
 use super::EngineFileType;
 use super::coalesce::coalesce_completion_results;
@@ -193,7 +193,7 @@ impl MatchedSuggestion {
 pub enum MatchRequirement {
     /// For an option to be recognized, its whole name must be spelled out.
     EntireName,
-    /// This variant signifies [`warp_command_signatures::ParserDirectives::flags_match_unique_prefix`]
+    /// This variant signifies [`leanterm_command_signatures::ParserDirectives::flags_match_unique_prefix`]
     /// being `true`. Only a prefix which is long enough to make the intended option unambiguous is
     /// needed.
     UniquePrefixOnly,
@@ -617,7 +617,7 @@ impl Default for CompleterOptions {
     }
 }
 
-/// This is the public API for using Warp's completion engine. Note that
+/// This is the public API for using Leanterm's completion engine. Note that
 /// the completion engines could end up performing I/O (e.g. calling generators,
 /// interacting with the file system, etc.), so you should ensure that you
 /// are on a background thread when using this API.

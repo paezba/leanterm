@@ -1,9 +1,9 @@
 use std::cmp::max;
 
+use leanterm_ui_core::units::{IntoPixels, Pixels};
 use ordered_float::Float;
 use pathfinder_geometry::vector::{Vector2F, vec2f};
 use serde::{Deserialize, Serialize};
-use leanterm_ui_core::units::{IntoPixels, Pixels};
 
 use crate::model::Side;
 
@@ -98,7 +98,7 @@ impl SizeInfo {
     }
 
     /// Create SizeInfo for a [`TerminalModel`] instance that doesn't have font metrics,
-    /// which comes from either a headless Warp instance or tests.
+    /// which comes from either a headless Leanterm instance or tests.
     pub fn new_without_font_metrics(rows: usize, cols: usize) -> Self {
         let width = cols as f32;
         let height = rows as f32;

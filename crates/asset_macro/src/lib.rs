@@ -1,4 +1,4 @@
-//! This module defines a set of macros used to reference assets in Warp.
+//! This module defines a set of macros used to reference assets in Leanterm.
 //!
 //! The three types of assets are:
 //! - Bundled: These are always included in the app bundle. These files are located in `app/assets/bundled`.
@@ -25,12 +25,12 @@ extern crate proc_macro;
 use std::env;
 use std::path::{Path, PathBuf};
 
+use leanterm_util::assets::{ASSETS_DIR, ASYNC_ASSETS_DIR, BUNDLED_ASSETS_DIR, REMOTE_ASSETS_DIR};
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use sha2::Digest;
 use syn::parse::Parse;
 use syn::{LitStr, Token, parse_macro_input};
-use leanterm_util::assets::{ASSETS_DIR, ASYNC_ASSETS_DIR, BUNDLED_ASSETS_DIR, REMOTE_ASSETS_DIR};
 
 struct MacroArgs {
     /// The name of the asset. E.g. `jpg/jellyfish_bg.jpg`

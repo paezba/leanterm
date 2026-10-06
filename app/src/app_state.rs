@@ -2,10 +2,10 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use pathfinder_geometry::rect::RectF;
-use serde::{Deserialize, Serialize};
 use leanterm_ui::platform::FullscreenState;
 use leanterm_ui::{AppContext, SingletonEntity as _};
+use pathfinder_geometry::rect::RectF;
+use serde::{Deserialize, Serialize};
 
 use crate::code::editor_management::CodeSource;
 use crate::root_view::quake_mode_window_id;
@@ -37,7 +37,7 @@ pub struct WindowSnapshot {
     pub quake_mode: bool,
     pub universal_search_width: Option<f32>,
     pub voltron_width: Option<f32>,
-    pub warp_drive_index_width: Option<f32>,
+    pub leanterm_drive_index_width: Option<f32>,
     pub left_panel_open: bool,
     pub vertical_tabs_panel_open: bool,
     pub left_panel_width: Option<f32>,
@@ -209,7 +209,7 @@ pub enum CodeReviewPaneSnapshot {
 pub enum LeftPanelDisplayedTab {
     FileTree,
     GlobalSearch,
-    WarpDrive,
+    LeantermDrive,
 }
 
 impl From<ToolPanelView> for LeftPanelDisplayedTab {

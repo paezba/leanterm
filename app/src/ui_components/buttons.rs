@@ -5,7 +5,7 @@ use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentSty
 use super::icons::{ICON_DIMENSIONS, Icon};
 use super::{BORDER_RADIUS, blended_colors};
 use crate::appearance::Appearance;
-use crate::themes::theme::{Fill, WarpTheme};
+use crate::themes::theme::{Fill, LeantermTheme};
 
 const ICON_BUTTON_PADDING: f32 = 4.;
 
@@ -32,39 +32,49 @@ pub struct AllButtonStyles {
     disabled_styles: Option<UiComponentStyles>,
 }
 
-fn all_icon_button_styles(warp_theme: &WarpTheme, mode: ButtonMode) -> AllButtonStyles {
+fn all_icon_button_styles(leanterm_theme: &LeantermTheme, mode: ButtonMode) -> AllButtonStyles {
     AllButtonStyles {
-        default_styles: icon_button_styles(warp_theme, mode, ButtonState::Default),
-        hovered_styles: Some(icon_button_styles(warp_theme, mode, ButtonState::Hover)),
-        clicked_styles: Some(icon_button_styles(warp_theme, mode, ButtonState::Pressed)),
-        disabled_styles: Some(icon_button_styles(warp_theme, mode, ButtonState::Disabled)),
+        default_styles: icon_button_styles(leanterm_theme, mode, ButtonState::Default),
+        hovered_styles: Some(icon_button_styles(leanterm_theme, mode, ButtonState::Hover)),
+        clicked_styles: Some(icon_button_styles(
+            leanterm_theme,
+            mode,
+            ButtonState::Pressed,
+        )),
+        disabled_styles: Some(icon_button_styles(
+            leanterm_theme,
+            mode,
+            ButtonState::Disabled,
+        )),
     }
 }
 
 fn icon_button_styles(
-    warp_theme: &WarpTheme,
+    leanterm_theme: &LeantermTheme,
     mode: ButtonMode,
     state: ButtonState,
 ) -> UiComponentStyles {
-    let icon_color = icon_color(warp_theme, mode);
+    let icon_color = icon_color(leanterm_theme, mode);
 
     let (background_color, border_color): (Option<Fill>, Option<Fill>) = match (mode, state) {
         (ButtonMode::Base, ButtonState::Default) => (None, None),
-        (ButtonMode::Base, ButtonState::Hover) => {
-            (Some(warp_theme.surface_2()), Some(warp_theme.surface_3()))
-        }
-        (ButtonMode::Base, ButtonState::Pressed) | (ButtonMode::Base, ButtonState::Disabled) => {
-            (Some(warp_theme.background()), Some(warp_theme.surface_3()))
-        }
+        (ButtonMode::Base, ButtonState::Hover) => (
+            Some(leanterm_theme.surface_2()),
+            Some(leanterm_theme.surface_3()),
+        ),
+        (ButtonMode::Base, ButtonState::Pressed) | (ButtonMode::Base, ButtonState::Disabled) => (
+            Some(leanterm_theme.background()),
+            Some(leanterm_theme.surface_3()),
+        ),
         (ButtonMode::Accent, ButtonState::Default) => (None, None),
         (ButtonMode::Accent, ButtonState::Hover) => (
-            Some(warp_theme.surface_3()),
-            Some(blended_colors::accent(warp_theme)),
+            Some(leanterm_theme.surface_3()),
+            Some(blended_colors::accent(leanterm_theme)),
         ),
         (ButtonMode::Accent, ButtonState::Pressed)
         | (ButtonMode::Accent, ButtonState::Disabled) => (
-            Some(warp_theme.background()),
-            Some(blended_colors::accent_pressed(warp_theme)),
+            Some(leanterm_theme.background()),
+            Some(blended_colors::accent_pressed(leanterm_theme)),
         ),
     };
 
@@ -85,12 +95,15 @@ fn icon_button_styles(
     styles
 }
 
-fn combo_inner_button_styles(warp_theme: &WarpTheme, state: ButtonState) -> UiComponentStyles {
+fn combo_inner_button_styles(
+    leanterm_theme: &LeantermTheme,
+    state: ButtonState,
+) -> UiComponentStyles {
     let background = match state {
         ButtonState::Default => None,
-        ButtonState::Hover => Some(blended_colors::neutral_2(warp_theme)),
-        ButtonState::Pressed => Some(blended_colors::neutral_4(warp_theme)),
-        ButtonState::Disabled => Some(warp_theme.background().into()),
+        ButtonState::Hover => Some(blended_colors::neutral_2(leanterm_theme)),
+        ButtonState::Pressed => Some(blended_colors::neutral_4(leanterm_theme)),
+        ButtonState::Disabled => Some(leanterm_theme.background().into()),
     };
 
     UiComponentStyles {
@@ -99,7 +112,7 @@ fn combo_inner_button_styles(warp_theme: &WarpTheme, state: ButtonState) -> UiCo
         border_width: None,
         padding: Some(Coords::uniform(ICON_BUTTON_PADDING - 1.)),
         border_radius: None,
-        font_color: Some(warp_theme.foreground().into()),
+        font_color: Some(leanterm_theme.foreground().into()),
         border_color: None,
         background: background.map(Into::into),
         ..Default::default()
@@ -129,7 +142,7 @@ pub fn combo_inner_button(
         Some(combo_inner_button_styles(theme, ButtonState::Pressed)),
         Some(combo_inner_button_styles(theme, ButtonState::Disabled)),
     )
-    .with_icon_label(icon.to_warpui_icon(theme.foreground()));
+    .with_icon_label(icon.to_leanterm_ui_icon(theme.foreground()));
 
     if active {
         return button.active();
@@ -137,10 +150,10 @@ pub fn combo_inner_button(
     button
 }
 
-fn icon_color(warp_theme: &WarpTheme, mode: ButtonMode) -> Fill {
+fn icon_color(leanterm_theme: &LeantermTheme, mode: ButtonMode) -> Fill {
     match mode {
-        ButtonMode::Base => warp_theme.foreground(),
-        ButtonMode::Accent => blended_colors::accent(warp_theme),
+        ButtonMode::Base => leanterm_theme.foreground(),
+        ButtonMode::Accent => blended_colors::accent(leanterm_theme),
     }
 }
 
@@ -162,7 +175,7 @@ fn icon_button_internal(
         button_styles.clicked_styles,
         button_styles.disabled_styles,
     )
-    .with_icon_label(icon.to_warpui_icon(color.unwrap_or(icon_color(theme, mode))));
+    .with_icon_label(icon.to_leanterm_ui_icon(color.unwrap_or(icon_color(theme, mode))));
 
     if let Some(color) = color.take() {
         // We also need to set the font color here to get the button to be colored correctly.

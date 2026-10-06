@@ -5,13 +5,13 @@ use std::any::Any;
 use std::cell::Ref;
 use std::ops::Range;
 
+use leanterm_ui_core::elements::Border;
+use leanterm_ui_core::text_layout::PaintStyleOverride;
+use leanterm_ui_core::{Action, AppContext, Element, TypedActionView, View};
 use num_traits::SaturatingSub;
 use pathfinder_color::ColorU;
 use rangemap::{RangeMap, RangeSet};
 use string_offset::CharOffset;
-use leanterm_ui_core::elements::Border;
-use leanterm_ui_core::text_layout::PaintStyleOverride;
-use leanterm_ui_core::{Action, AppContext, Element, TypedActionView, View};
 
 use crate::content::version::BufferVersion;
 use crate::render::element::RichTextAction;

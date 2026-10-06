@@ -591,7 +591,7 @@ impl DisplayChipMenu {
                     updated_text.add_child(
                         Container::new(
                             ConstrainedBox::new(
-                                icon.to_warpui_icon(Fill::Solid(text_color)).finish(),
+                                icon.to_leanterm_ui_icon(Fill::Solid(text_color)).finish(),
                             )
                             .with_height(icon_size)
                             .with_width(icon_size)
@@ -728,7 +728,7 @@ impl DisplayChipMenu {
                             left_side.add_child(
                                 Container::new(
                                     ConstrainedBox::new(
-                                        icon.to_warpui_icon(Fill::Solid(main_text)).finish(),
+                                        icon.to_leanterm_ui_icon(Fill::Solid(main_text)).finish(),
                                     )
                                     .with_height(icon_size)
                                     .with_width(icon_size)

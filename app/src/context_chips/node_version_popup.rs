@@ -1,4 +1,3 @@
-use pathfinder_color::ColorU;
 use leanterm_core::ui::appearance::Appearance;
 use leanterm_core::ui::theme::Fill;
 use leanterm_ui::elements::{
@@ -12,6 +11,7 @@ use leanterm_ui::{
     AppContext, Element, Entity, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle,
 };
+use pathfinder_color::ColorU;
 
 use crate::menu::{self, Event as MenuEvent, Menu, MenuItemFields};
 use crate::terminal::model_events::{ModelEvent, ModelEventDispatcher};
@@ -153,7 +153,7 @@ impl NodeVersionPopupView {
             Container::new(
                 ConstrainedBox::new(
                     icons::Icon::NodeJS
-                        .to_warpui_icon(styles.tertiary_text_color.into())
+                        .to_leanterm_ui_icon(styles.tertiary_text_color.into())
                         .finish(),
                 )
                 .with_width(24.)
@@ -211,7 +211,7 @@ impl NodeVersionPopupView {
             Container::new(
                 ConstrainedBox::new(
                     icons::Icon::NodeJS
-                        .to_warpui_icon(styles.tertiary_text_color.into())
+                        .to_leanterm_ui_icon(styles.tertiary_text_color.into())
                         .finish(),
                 )
                 .with_width(24.)

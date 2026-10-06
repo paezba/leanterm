@@ -15,7 +15,6 @@
 
 use std::sync::OnceLock;
 
-use parking_lot::Mutex;
 use leanterm::cmd_or_ctrl_shift;
 use leanterm::integration_testing::step::new_step_with_default_assertions;
 use leanterm::integration_testing::terminal::util::{ExactLine, ExpectedExitStatus};
@@ -28,6 +27,7 @@ use leanterm::terminal::model::index::Point;
 use leanterm::terminal::model::terminal_model::{WithinBlock, WithinModel};
 use leanterm::terminal::view::{GridHighlightedLink, TerminalAction};
 use leanterm_ui_core::async_assert;
+use parking_lot::Mutex;
 
 use super::new_builder;
 use crate::Builder;

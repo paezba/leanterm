@@ -1,4 +1,4 @@
-//! Context chips built into Warp
+//! Context chips built into Leanterm
 
 use chrono::Local;
 use leanterm_util::path::user_friendly_path;
@@ -91,7 +91,7 @@ pub fn ssh_session(ctx: &GeneratorContext) -> Option<ChipValue> {
     if session.is_ssh_wrapper_session()
         || matches!(
             session.session_type(),
-            crate::terminal::model::session::SessionType::WarpifiedRemote { .. }
+            crate::terminal::model::session::SessionType::LeantermifiedRemote { .. }
         )
     {
         let user = session.user();

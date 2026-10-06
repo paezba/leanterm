@@ -1,7 +1,7 @@
 use chrono::{DateTime, Local, TimeZone as _};
+use leanterm_core::command::ExitCode;
 use serde::{Deserialize, Serialize};
 use serde_bytes_repr::{ByteFmtDeserializer, ByteFmtSerializer};
-use leanterm_core::command::ExitCode;
 
 use crate::terminal::ShellHost;
 use crate::terminal::model::BlockId;
@@ -61,7 +61,7 @@ pub struct SerializedBlock {
 
     pub shell_host: Option<ShellHost>,
 
-    /// JSON-serialized representation of the Warp prompt snapshot (Context Chips). Note that this
+    /// JSON-serialized representation of the Leanterm prompt snapshot (Context Chips). Note that this
     /// is different from PS1 and RPROMPT1
     pub prompt_snapshot: Option<String>,
 

@@ -1,7 +1,5 @@
-use pathfinder_color::ColorU;
-use serde::Serialize;
 pub use leanterm_ui::AppContext;
-pub use leanterm_ui::accessibility::{AccessibilityContent, WarpA11yRole};
+pub use leanterm_ui::accessibility::{AccessibilityContent, LeantermA11yRole};
 use leanterm_ui::elements::{
     Align, Border, ChildAnchor, Clipped, ConstrainedBox, Container, CornerRadius,
     CrossAxisAlignment, DropShadow, Element, Flex, Hoverable, MouseStateHandle, OffsetPositioning,
@@ -16,6 +14,8 @@ use leanterm_ui::{
     Entity, FocusContext, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle,
 };
+use pathfinder_color::ColorU;
+use serde::Serialize;
 
 use crate::appearance::Appearance;
 use crate::editor::{
@@ -260,10 +260,10 @@ impl<T: FindModel + Entity<Event = FindEvent> + 'static> Find<T> {
                     self.model.as_ref(ctx).match_count()
                 ),
                 "Use enter and shift-enter to navigate between matches. Escape to quit.",
-                WarpA11yRole::UserAction,
+                LeantermA11yRole::UserAction,
             )
         } else {
-            AccessibilityContent::new_without_help("No results.", WarpA11yRole::UserAction)
+            AccessibilityContent::new_without_help("No results.", LeantermA11yRole::UserAction)
         };
         ctx.emit_a11y_content(content);
     }
@@ -358,7 +358,7 @@ impl<T: FindModel + Entity<Event = FindEvent> + 'static> Find<T> {
             };
             let icon = Container::new(
                 ConstrainedBox::new(
-                    icon.to_warpui_icon(appearance.theme().active_ui_text_color())
+                    icon.to_leanterm_ui_icon(appearance.theme().active_ui_text_color())
                         .finish(),
                 )
                 .with_height(size)
@@ -422,7 +422,7 @@ impl<T: FindModel + Entity<Event = FindEvent> + 'static> Find<T> {
             appearance.theme().active_ui_text_color()
         };
         Container::new(
-            ConstrainedBox::new(match_icon.to_warpui_icon(icon_color).finish())
+            ConstrainedBox::new(match_icon.to_leanterm_ui_icon(icon_color).finish())
                 .with_height(height)
                 .with_width(height)
                 .finish(),
@@ -449,7 +449,7 @@ impl<T: FindModel + Entity<Event = FindEvent> + 'static> Find<T> {
         Container::new(
             ConstrainedBox::new(
                 Icon::X
-                    .to_warpui_icon(appearance.theme().active_ui_text_color())
+                    .to_leanterm_ui_icon(appearance.theme().active_ui_text_color())
                     .finish(),
             )
             .with_height(height)
@@ -499,7 +499,7 @@ impl<T: FindModel + Entity<Event = FindEvent> + 'static> View for Find<T> {
         Some(AccessibilityContent::new(
             "Type searched phrase.",
             "Press escape to quit, use enter and shift-enter to navigate between matches",
-            WarpA11yRole::TextareaRole,
+            LeantermA11yRole::TextareaRole,
         ))
     }
 

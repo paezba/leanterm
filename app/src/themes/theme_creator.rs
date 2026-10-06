@@ -3,9 +3,9 @@ use std::path::PathBuf;
 use anyhow::{Result, anyhow};
 use deltae::*;
 use kmeans_colors::{Calculate, CentroidData, Sort, get_kmeans_hamerly};
+use leanterm_errors::report_error;
 use palette::{FromColor, IntoColor, Lab, Pixel, Srgb, Srgba};
 use pathfinder_color::ColorU;
-use leanterm_errors::report_error;
 
 use crate::util::color::hex_color::coloru_from_hex_string;
 

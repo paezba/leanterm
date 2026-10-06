@@ -3,7 +3,7 @@ name = "leanterm_completer"
 authors = ["Leanterm contributors"]
 version = "0.1.0"
 edition = "2024"
-description = "Warp completions engine"
+description = "Leanterm completions engine"
 publish.workspace = true
 license.workspace = true
 
@@ -34,11 +34,11 @@ typed-path.workspace = true
 
 [target.'cfg(target_family = "wasm")'.dependencies]
 # For wasm, we don't use the feature "embed-signatures".
-warp-command-signatures = {workspace = true}
+leanterm_command_signatures = { workspace = true}
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 command = { path = "../command" }
-warp-command-signatures = {workspace = true, features = ["embed-signatures"]}
+leanterm_command_signatures = { workspace = true, features = ["embed-signatures"]}
 
 [target.'cfg(not(target_family = "wasm"))'.dev-dependencies]
 command = { path = "../command", features = ["test-util"] }

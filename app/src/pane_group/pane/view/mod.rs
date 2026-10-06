@@ -7,7 +7,6 @@ pub use header::PaneHeaderAction::CustomAction as PaneHeaderCustomAction;
 pub use header_content::{
     HeaderContent, HeaderRenderContext, StandardHeader, StandardHeaderOptions,
 };
-use pathfinder_geometry::rect::RectF;
 use leanterm_ui::elements::{
     Border, ConstrainedBox, Container, DropTarget, DropTargetData, Flex, MainAxisSize,
     ParentElement, SavePosition, Shrinkable,
@@ -17,6 +16,7 @@ use leanterm_ui::{
     AppContext, Element, Entity, EntityId, ModelHandle, SingletonEntity, TypedActionView, View,
     ViewContext, ViewHandle,
 };
+use pathfinder_geometry::rect::RectF;
 
 use super::{
     BackingView, PaneConfiguration, PaneConfigurationEvent, PaneId, PaneStack, PaneStackEvent,

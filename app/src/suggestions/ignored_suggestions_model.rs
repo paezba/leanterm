@@ -1,8 +1,8 @@
 use std::collections::HashSet;
 
-use serde::{Deserialize, Serialize};
 use leanterm_errors::report_error;
 use leanterm_ui::{Entity, ModelContext, SingletonEntity};
+use serde::{Deserialize, Serialize};
 
 use crate::GlobalResourceHandlesProvider;
 use crate::persistence::ModelEvent;

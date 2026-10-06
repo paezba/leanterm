@@ -1,10 +1,10 @@
 use std::mem;
 use std::sync::{Arc, Mutex, MutexGuard};
 
+use leanterm_errors::report_error;
 use pathfinder_color::ColorU;
 use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::{Vector2F, vec2f};
-use leanterm_errors::report_error;
 
 use super::{Fill, Point, ZIndex};
 use crate::event::DispatchedEvent;

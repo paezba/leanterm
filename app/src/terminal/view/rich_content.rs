@@ -3,10 +3,10 @@ use leanterm_ui::{Element, EntityId, View, ViewContext, ViewHandle};
 
 use crate::terminal::TerminalView;
 use crate::terminal::block_list_viewport::ScrollPositionUpdate;
+use crate::terminal::leantermify::success_block::LeantermifySuccessBlock;
 use crate::terminal::model::blocks::{RemovableBlocklistItem, RichContentItem};
 use crate::terminal::model::rich_content::RichContentType;
 use crate::terminal::model::terminal_model::BlockIndex;
-use crate::terminal::warpify::success_block::WarpifySuccessBlock;
 
 /// Specifies where to insert rich content in the blocklist.
 #[derive(Clone, Copy, Debug)]
@@ -89,8 +89,8 @@ impl RichContent {
 /// `RichContent` view-specific metadata required for rendering in the `BlocklistElement`.
 #[derive(Clone, Debug)]
 pub enum RichContentMetadata {
-    WarpifySuccessBlock {
-        bootstrap_success_block_handle: ViewHandle<WarpifySuccessBlock>,
+    LeantermifySuccessBlock {
+        bootstrap_success_block_handle: ViewHandle<LeantermifySuccessBlock>,
     },
 }
 

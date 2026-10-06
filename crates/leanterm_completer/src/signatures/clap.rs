@@ -1,5 +1,5 @@
 use clap::{Arg, Command as ClapCommand};
-use warp_command_signatures::{
+use leanterm_command_signatures::{
     Argument, IsArgumentOptional, Opt, ParserDirectives, Priority, Signature,
 };
 

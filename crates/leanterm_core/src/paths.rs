@@ -22,18 +22,15 @@ use directories::BaseDirs;
 use crate::AppId;
 use crate::channel::{Channel, ChannelState};
 
-/// The name of the directory in which to put non-global Warp-specific files.
+/// The name of the directory in which to put non-global Leanterm-specific files.
 ///
 /// This should be used, for example, as the base directory under which
-/// repository workflows would be stored (in "./.warp/workflows").
-pub const WARP_CONFIG_DIR: &str = ".warp";
+/// repository workflows would be stored (in "./.leanterm/workflows").
+pub const LEANTERM_CONFIG_DIR: &str = ".leanterm";
 
-/// The name of the folder that stores Warp execution logs and network logs.
+/// The name of the folder that stores Leanterm execution logs and network logs.
 /// This is currently only used on Windows to maintain backwards compatibility.
-pub const WARP_LOGS_DIR: &str = "logs";
-
-/// The home-relative config directory name for Leanterm, the app built by the OSS channel.
-const LEANTERM_CONFIG_DIR: &str = ".leanterm";
+pub const LEANTERM_LOGS_DIR: &str = "logs";
 
 /// The app ID Leanterm used before it was renamed from WarpOss.
 const LEGACY_OSS_APP_ID: (&str, &str, &str) = ("dev", "warp", "WarpOss");
@@ -41,24 +38,24 @@ const LEGACY_OSS_APP_ID: (&str, &str, &str) = ("dev", "warp", "WarpOss");
 /// The home-relative config directory name Leanterm used before it was renamed from WarpOss.
 const LEGACY_OSS_CONFIG_DIR: &str = ".warp-oss";
 
-fn base_warp_config_dir_name() -> String {
+fn base_leanterm_config_dir_name() -> String {
     match ChannelState::channel() {
         // Preview shares the same directory as Stable for backward
-        // compatibility — existing users already have config in `.warp`.
-        Channel::Stable | Channel::Preview => WARP_CONFIG_DIR.to_owned(),
+        // compatibility — existing users already have config in `.leanterm`.
+        Channel::Stable | Channel::Preview => LEANTERM_CONFIG_DIR.to_owned(),
         Channel::Oss => LEANTERM_CONFIG_DIR.to_owned(),
-        Channel::Dev => format!("{WARP_CONFIG_DIR}-dev"),
-        Channel::Integration => format!("{WARP_CONFIG_DIR}-integration"),
-        Channel::Local => format!("{WARP_CONFIG_DIR}-local"),
+        Channel::Dev => format!("{LEANTERM_CONFIG_DIR}-dev"),
+        Channel::Integration => format!("{LEANTERM_CONFIG_DIR}-integration"),
+        Channel::Local => format!("{LEANTERM_CONFIG_DIR}-local"),
     }
 }
 
-/// Returns the home-relative Warp config directory name for the current channel and data profile.
+/// Returns the home-relative Leanterm config directory name for the current channel and data profile.
 ///
-/// This preserves the historical `.warp*` directory shape while still isolating dev, local,
+/// This preserves the historical `.leanterm*` directory shape while still isolating dev, local,
 /// integration, oss, and optional development profiles.
-pub fn warp_home_config_dir_name() -> String {
-    let base_dir_name = base_warp_config_dir_name();
+pub fn leanterm_home_config_dir_name() -> String {
+    let base_dir_name = base_leanterm_config_dir_name();
 
     if let Some(data_profile) = ChannelState::data_profile() {
         format!("{base_dir_name}-{data_profile}")
@@ -67,28 +64,28 @@ pub fn warp_home_config_dir_name() -> String {
     }
 }
 
-/// Returns the home-relative Warp config directory for the current channel and data profile.
+/// Returns the home-relative Leanterm config directory for the current channel and data profile.
 ///
 /// Unlike [`data_dir`] and [`config_local_dir`] on non-macOS platforms, this intentionally keeps
-/// Warp-authored, user-facing config under a `.warp*` directory in the home directory instead of
+/// Leanterm-authored, user-facing config under a `.leanterm*` directory in the home directory instead of
 /// using the platform XDG/AppData project directories.
-pub fn warp_home_config_dir() -> Option<PathBuf> {
-    dirs::home_dir().map(|home_dir| home_dir.join(warp_home_config_dir_name()))
+pub fn leanterm_home_config_dir() -> Option<PathBuf> {
+    dirs::home_dir().map(|home_dir| home_dir.join(leanterm_home_config_dir_name()))
 }
 
-pub fn warp_home_skills_dir() -> Option<PathBuf> {
-    warp_home_config_dir().map(|warp_config_dir| warp_config_dir.join("skills"))
+pub fn leanterm_home_skills_dir() -> Option<PathBuf> {
+    leanterm_home_config_dir().map(|leanterm_config_dir| leanterm_config_dir.join("skills"))
 }
 
-pub fn warp_home_mcp_config_file_path() -> Option<PathBuf> {
-    warp_home_config_dir().map(|warp_config_dir| warp_config_dir.join(".mcp.json"))
+pub fn leanterm_home_mcp_config_file_path() -> Option<PathBuf> {
+    leanterm_home_config_dir().map(|leanterm_config_dir| leanterm_config_dir.join(".mcp.json"))
 }
 
 /// Returns the macOS config directory name for the current channel and data
 /// profile.
 ///
-/// Stable uses `.warp`, while other channels include a channel suffix
-/// (e.g., `.warp-dev`, `.warp-local`).
+/// Stable uses `.leanterm`, while other channels include a channel suffix
+/// (e.g., `.leanterm-dev`, `.leanterm-local`).
 ///
 /// Development data profiles append a further `-{profile}` suffix. Without it,
 /// every profile of a channel would share this directory — and with it the
@@ -108,12 +105,12 @@ fn macos_config_dir_name() -> String {
 #[cfg(target_os = "macos")]
 fn macos_config_dir_name_for(channel: Channel, data_profile: Option<&str>) -> String {
     let base_dir_name = match channel {
-        Channel::Stable => WARP_CONFIG_DIR.to_owned(),
-        Channel::Preview => format!("{WARP_CONFIG_DIR}-preview"),
+        Channel::Stable => LEANTERM_CONFIG_DIR.to_owned(),
+        Channel::Preview => format!("{LEANTERM_CONFIG_DIR}-preview"),
         Channel::Oss => LEANTERM_CONFIG_DIR.to_owned(),
-        Channel::Dev => format!("{WARP_CONFIG_DIR}-dev"),
-        Channel::Integration => format!("{WARP_CONFIG_DIR}-integration"),
-        Channel::Local => format!("{WARP_CONFIG_DIR}-local"),
+        Channel::Dev => format!("{LEANTERM_CONFIG_DIR}-dev"),
+        Channel::Integration => format!("{LEANTERM_CONFIG_DIR}-integration"),
+        Channel::Local => format!("{LEANTERM_CONFIG_DIR}-local"),
     };
     match data_profile {
         Some(profile) => format!("{base_dir_name}-{profile}"),
@@ -140,7 +137,7 @@ pub fn data_dir() -> PathBuf {
 /// Returns the GUI application ID for the current channel.
 ///
 /// Most TUI channel binaries use the same application ID as the GUI. The OSS
-/// TUI is the exception: it uses `WarpTui`, while the corresponding GUI uses
+/// TUI is the exception: it uses `LeantermTui`, while the corresponding GUI uses
 /// `Leanterm`.
 #[cfg(any(not(target_os = "macos"), test))]
 fn gui_app_id_for_channel(channel: Channel, current_app_id: AppId) -> AppId {
@@ -180,7 +177,7 @@ pub fn config_local_dir() -> PathBuf {
 /// This differs from [`config_local_dir`] when the active process uses a
 /// frontend-specific application ID, as the OSS TUI does on Linux and Windows.
 /// On macOS, development data profiles do not have an unambiguous corresponding
-/// GUI `.warp*` directory, so this fails closed instead of selecting a source
+/// GUI `.leanterm*` directory, so this fails closed instead of selecting a source
 /// profile implicitly.
 pub fn gui_config_local_dir() -> Option<PathBuf> {
     cfg_if! {
@@ -209,7 +206,7 @@ pub fn gui_mcp_config_file_path() -> Option<PathBuf> {
         return None;
     }
 
-    warp_home_mcp_config_file_path()
+    leanterm_home_mcp_config_file_path()
 }
 
 /// Returns the base directory for general config files. Useful for accessing the config files for
@@ -225,7 +222,7 @@ pub fn base_config_dir() -> PathBuf {
 ///
 /// This is the appropriate home for files like our sqlite database, which
 /// contains durable but non-critical and non-portable data like what windows
-/// the user had open and cached state of known Warp Drive objects.
+/// the user had open and cached state of known Leanterm Drive objects.
 pub fn state_dir() -> PathBuf {
     let Some(project_dirs) = project_dirs() else {
         return PathBuf::new();
@@ -251,7 +248,7 @@ pub fn secure_state_dir() -> Option<PathBuf> {
 
     #[cfg(target_os = "macos")]
     if let Some(app_group_root) = app_group_container_path() {
-        // The macOS project_path is the bundle ID (i.e. `dev.warp.Warp-Stable`).
+        // The macOS project_path is the bundle ID (i.e. `dev.leanterm.Leanterm-Stable`).
         let project_dirs = project_dirs()?;
         return Some(
             app_group_root
@@ -324,11 +321,11 @@ fn project_dirs_for_app_id(
     cfg_if::cfg_if! {
         if #[cfg(any(target_os = "linux", target_os = "freebsd"))] {
             // Adjust the base application name so that we end up with
-            // directories like "warp-terminal" and "warp-terminal-dev", to
+            // directories like "leanterm" and "leanterm-dev", to
             // match our Linux package name.
             let base_app_name = match app_id.application_name() {
-                "Warp" => "Warp-Terminal".to_owned(),
-                other if other.starts_with("Warp") => other.replace("Warp", "Warp-Terminal-"),
+                "Leanterm" => "Leanterm".to_owned(),
+                other if other.starts_with("Leanterm") => other.replace("Leanterm", "Leanterm-"),
                 _ => app_id.application_name().to_owned(),
             };
         } else {
@@ -359,7 +356,7 @@ pub fn app_group_container_path() -> Option<PathBuf> {
 
         let fm = NSFileManager::defaultManager();
         // Keep in sync with Entitlements.plist
-        let group_id = format!("{}.dev.warp", crate::macos::APPLE_TEAM_ID);
+        let group_id = format!("{}.dev.leanterm", crate::macos::APPLE_TEAM_ID);
         let group_id = NSString::from_str(&group_id);
         // containerURLForSecurityApplicationGroupIdentifier always returns a value on macOS (unlike iOS).
         // We have to double-check that the path points to a directory we can actually use. In addition to
@@ -379,25 +376,25 @@ pub fn app_group_container_path() -> Option<PathBuf> {
     LazyLock::force(&CONTAINER_PATH).clone()
 }
 
-/// Returns the path to resources included in the Warp distribution.
+/// Returns the path to resources included in the Leanterm distribution.
 ///
 /// Unlike [`leanterm_ui_core::AssetProvider`] assets, which are generally embedded in the binary, these are
-/// stored on the filesystem alongside the rest of Warp.
+/// stored on the filesystem alongside the rest of Leanterm.
 ///
 /// ## macOS
 /// For the `.app` bundle, the resources directory is `$APP_DIR/Contents/Resources`
-/// (e.g. `/Applications/Warp.app/Contents/Resources`). For the standalone CLI build
+/// (e.g. `/Applications/Leanterm.app/Contents/Resources`). For the standalone CLI build
 /// (compiled with the `standalone` feature) the binary is not inside a `.app` bundle,
 /// and its resources live in a sibling `resources` directory next to the binary
 /// (e.g. `$INSTALL_DIR/resources`), matching the Linux/Windows layout.
 ///
 /// ## Linux
 /// The resources directory is `$INSTALL_DIR/resources`, where `$INSTALL_DIR` depends on the
-/// specific package manager. For example, on Ubuntu this might be `/opt/warpdotdev/warp-terminal/resources`.
+/// specific package manager. For example, on Ubuntu this might be `/opt/leanterm/leanterm/resources`.
 ///
 /// ## Windows
 /// The resources directory is `$INSTALL_DIR/resources`, where `$INSTALL_DIR` is the directory
-/// containing the Warp executable (e.g. `C:\Program Files\WarpDev\resources`).
+/// containing the Leanterm executable (e.g. `C:\Program Files\LeantermDev\resources`).
 pub fn bundled_resources_dir() -> Option<PathBuf> {
     cfg_if::cfg_if! {
         if #[cfg(target_os = "macos")] {

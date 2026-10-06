@@ -25,9 +25,9 @@ use std::ops::Range;
 
 use cfg_if::cfg_if;
 use get_size::GetSize;
+use leanterm_errors::report_error;
 use string_offset::ByteOffset;
 use thiserror::Error;
-use leanterm_errors::report_error;
 
 use super::grapheme::Grapheme;
 use crate::model::Point;

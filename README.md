@@ -48,7 +48,7 @@ In total the fork removes about 1.2 million lines.
 
 ### What remains
 
-The terminal (blocks, completions, tabs and panes, vertical tabs by default, Warpify), the code editor with LSP and code review, local Markdown notebooks, local YAML workflows, local control (`warpctrl`), themes and settings. macOS, Linux and Windows code is kept; the WASM/web target is not maintained.
+The terminal (blocks, completions, tabs and panes, vertical tabs by default, shell integration for SSH and subshells), the code editor with LSP and code review, local Markdown notebooks, local YAML workflows, local control (`leantermctl`), themes and settings. macOS, Linux and Windows code is kept; the WASM/web target is not maintained.
 
 ### Building
 

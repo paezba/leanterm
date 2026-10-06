@@ -1,7 +1,7 @@
 use itertools::Itertools;
-use unindent::Unindent;
 use leanterm_ui::platform::WindowStyle;
 use leanterm_ui::{App, EntityIdSet, ViewHandle};
+use unindent::Unindent;
 
 use super::*;
 use crate::editor::EditorView;
@@ -2091,7 +2091,7 @@ fn test_vim_delete_word_dge() {
     App::test((), |mut app| async move {
         initialize_app(&mut app);
 
-        let editor = add_editor_vim_normal_mode("echo hello-hi warp-dev", &mut app);
+        let editor = add_editor_vim_normal_mode("echo hello-hi leap-dev", &mut app);
 
         editor.update(&mut app, |view, view_ctx| {
             view.select_ranges(
@@ -2103,7 +2103,7 @@ fn test_vim_delete_word_dge() {
         });
 
         editor.read(&app, |view, app_ctx| {
-            assert_eq!(view.buffer_text(app_ctx), "echo hello-hi warpev");
+            assert_eq!(view.buffer_text(app_ctx), "echo hello-hi leapev");
             assert_eq!(
                 view.selected_ranges(app_ctx),
                 vec![DisplayPoint::new(0, 18)..DisplayPoint::new(0, 18)]
@@ -3082,7 +3082,7 @@ fn test_vim_change_word_cge() {
     App::test((), |mut app| async move {
         initialize_app(&mut app);
 
-        let editor = add_editor_vim_normal_mode("echo hello-hi warp-dev", &mut app);
+        let editor = add_editor_vim_normal_mode("echo hello-hi leap-dev", &mut app);
 
         editor.update(&mut app, |view, view_ctx| {
             view.select_ranges(
@@ -3094,7 +3094,7 @@ fn test_vim_change_word_cge() {
         });
 
         editor.read(&app, |view, app_ctx| {
-            assert_eq!(view.buffer_text(app_ctx), "echo hello-hi warpev");
+            assert_eq!(view.buffer_text(app_ctx), "echo hello-hi leapev");
             assert_eq!(
                 view.selected_ranges(app_ctx),
                 vec![DisplayPoint::new(0, 18)..DisplayPoint::new(0, 18)]

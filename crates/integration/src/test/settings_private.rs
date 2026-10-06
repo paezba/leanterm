@@ -5,12 +5,12 @@
 
 use std::collections::HashMap;
 
-use settings::Setting as _;
 use leanterm::integration_testing::step::new_step_with_default_assertions;
 use leanterm::integration_testing::terminal::wait_until_bootstrapped_single_pane_for_tab;
 use leanterm::settings::{CodeSettings, DebugSettings, FontSettings};
 use leanterm_ui_core::integration::TestStep;
 use leanterm_ui_core::{SingletonEntity, async_assert, async_assert_eq};
+use settings::Setting as _;
 
 use super::{Builder, new_builder};
 
@@ -107,7 +107,7 @@ pub fn test_private_public_settings_routing_with_flag_enabled() -> Builder {
                 .add_named_assertion("CodeAsDefaultEditor in TOML", |_, _| {
                     let toml = read_toml_file();
                     async_assert!(
-                        toml.contains("use_warp_as_default_editor"),
+                        toml.contains("use_leanterm_as_default_editor"),
                         "TOML should contain CodeAsDefaultEditor"
                     )
                 })

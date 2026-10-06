@@ -1,6 +1,6 @@
+use leanterm_ui::{AppContext, SingletonEntity};
 use settings::macros::define_settings_group;
 use settings::{Setting, SupportedPlatforms};
-use leanterm_ui::{AppContext, SingletonEntity};
 
 use crate::terminal::model::ObfuscateSecrets;
 

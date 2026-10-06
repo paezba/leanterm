@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use std::path::Path;
 
+use leanterm_core::ui::theme::AnsiColorIdentifier;
 use settings::SupportedPlatforms;
 use settings::macros::define_settings_group;
-use leanterm_core::ui::theme::AnsiColorIdentifier;
 
 #[derive(
     Default,

@@ -3,13 +3,6 @@ use std::ops::Range;
 
 use futures::prelude::*;
 use itertools::Itertools;
-use markdown_parser::markdown_parser::RUNNABLE_BLOCK_MARKDOWN_LANG;
-use markdown_parser::{
-    CodeBlockText, FormattedText, FormattedTextFragment, FormattedTextLine, parse_markdown,
-};
-use pathfinder_geometry::vector::Vector2F;
-use string_offset::CharOffset;
-use vec1::vec1;
 use leanterm_core::features::FeatureFlag;
 use leanterm_editor::content::buffer::{AutoScrollBehavior, BufferSelectAction, SelectionOffsets};
 use leanterm_editor::content::text::{BlockType, BufferBlockStyle, CodeBlockType, TextStyles};
@@ -26,6 +19,13 @@ use leanterm_ui::{
     AddSingletonModel, App, AppContext, Element, Entity, ModelHandle, SingletonEntity,
     TypedActionView, View, ViewHandle,
 };
+use markdown_parser::markdown_parser::RUNNABLE_BLOCK_MARKDOWN_LANG;
+use markdown_parser::{
+    CodeBlockText, FormattedText, FormattedTextFragment, FormattedTextLine, parse_markdown,
+};
+use pathfinder_geometry::vector::Vector2F;
+use string_offset::CharOffset;
+use vec1::vec1;
 
 use super::super::rich_text_styles;
 use super::NotebooksEditorModel;
@@ -87,7 +87,10 @@ fn model_from_markdown(
 
 /// Register the singletons and host window that a [`NotebooksEditorModel`] depends on, returning
 /// the window a model should bind to.
-fn setup_editor_window(app: &mut App, should_initialize_cloud_model: bool) -> leanterm_ui::WindowId {
+fn setup_editor_window(
+    app: &mut App,
+    should_initialize_cloud_model: bool,
+) -> leanterm_ui::WindowId {
     let global_resources = GlobalResourceHandles::mock(app);
     app.add_singleton_model(|_| GlobalResourceHandlesProvider::new(global_resources));
     app.add_singleton_model(|_| ActiveSession::default());
@@ -381,13 +384,13 @@ fn test_inline_markdown() {
         editor.update(&mut app, |editor, ctx| {
             editor.cursor_at(CharOffset::from(6), ctx);
             editor.active_text_style = TextStyles::default();
-            editor.user_insert("[abc](https://warp.dev", ctx);
+            editor.user_insert("[abc](https://lean.dev", ctx);
         });
 
         editor.read(&app, |editor, ctx| {
             assert_eq!(
                 editor.content.as_ref(ctx).debug(),
-                "<text>First[abc](https://warp.dev <b_s>bold<b_e>"
+                "<text>First[abc](https://lean.dev <b_s>bold<b_e>"
             );
         });
 
@@ -399,7 +402,7 @@ fn test_inline_markdown() {
             assert_eq!(editor.active_text_style, TextStyles::default());
             assert_eq!(
                 editor.content.as_ref(ctx).debug(),
-                "<text>First<a_https://warp.dev>abc<a> <b_s>bold<b_e>"
+                "<text>First<a_https://lean.dev>abc<a> <b_s>bold<b_e>"
             );
         });
 
@@ -413,7 +416,7 @@ fn test_inline_markdown() {
 
             assert_eq!(
                 editor.content.as_ref(ctx).debug(),
-                "<text>First<a_https://warp.dev>abc<a> <b_s>bold`abc<b_e>"
+                "<text>First<a_https://lean.dev>abc<a> <b_s>bold`abc<b_e>"
             );
 
             editor.user_insert("`", ctx);
@@ -423,7 +426,7 @@ fn test_inline_markdown() {
             assert_eq!(editor.active_text_style, TextStyles::default().bold());
             assert_eq!(
                 editor.content.as_ref(ctx).debug(),
-                "<text>First<a_https://warp.dev>abc<a> <b_s>bold<b_e><c_s>abc<c_e>"
+                "<text>First<a_https://lean.dev>abc<a> <b_s>bold<b_e><c_s>abc<c_e>"
             );
         });
     })
@@ -769,7 +772,7 @@ fn test_pasting_link_on_selected_text() {
     App::test((), |mut app| async move {
         initialize_deps(&mut app);
         let editor = model_from_markdown("First text\nSecond line", &mut app, true);
-        let clipboard_content = "https://warp.dev";
+        let clipboard_content = "https://lean.dev";
 
         layout_model(&mut app, &editor).await;
 
@@ -784,7 +787,7 @@ fn test_pasting_link_on_selected_text() {
 
             assert_eq!(
                 editor.debug_buffer(ctx),
-                "<text><a_https://warp.dev>First text<a>\\nSecond line"
+                "<text><a_https://lean.dev>First text<a>\\nSecond line"
             );
         });
     });
@@ -2451,7 +2454,7 @@ fn test_cut_code_block() {
             assert_eq!(clipboard.plain_text, "command");
             assert_eq!(
                 clipboard.html.unwrap(),
-                r#"<pre><code class="language-warp-runnable-command">command</code></pre>"#
+                r#"<pre><code class="language-leanterm-runnable-command">command</code></pre>"#
             );
         })
     });
@@ -2828,7 +2831,7 @@ fn test_multiselect_pasting() {
         });
 
         // Pasting a URL for multiple selections should paste as text.
-        let url_clipboard_content = "https://warp.dev";
+        let url_clipboard_content = "https://lean.dev";
 
         editor.update(&mut app, |editor, ctx| {
             editor.cursor_at(CharOffset::from(1), ctx);
@@ -2842,7 +2845,7 @@ fn test_multiselect_pasting() {
             editor.insert_formatted_from_paste(markdown, url_clipboard_content, ctx);
             assert_eq!(
                 editor.debug_buffer(ctx),
-                "<text><a_https://warp.dev>https://warp.dev<a>\\nSecond line\\n<a_https://warp.dev>https://warp.dev<a><code:Shell><c_#b4fa72>code<c><text>"
+                "<text><a_https://lean.dev>https://lean.dev<a>\\nSecond line\\n<a_https://lean.dev>https://lean.dev<a><code:Shell><c_#b4fa72>code<c><text>"
             );
         });
 
@@ -2859,7 +2862,7 @@ fn test_multiselect_pasting() {
             editor.insert_formatted_from_paste(markdown, "echo test", ctx);
             assert_eq!(
                 editor.debug_buffer(ctx),
-                "<text>echo test<a_https://warp.dev>https://warp.dev<a>\\nSecond line\\n<a_https://warp.dev>https://warp.dev<a><code:Shell><c_#b4fa72>coecho testde<c><text>"
+                "<text>echo test<a_https://lean.dev>https://lean.dev<a>\\nSecond line\\n<a_https://lean.dev>https://lean.dev<a><code:Shell><c_#b4fa72>coecho testde<c><text>"
             );
         });
     });

@@ -1,4 +1,4 @@
-use warp_command_signatures::IconType;
+use leanterm_command_signatures::IconType;
 
 use super::*;
 use crate::completer::testing::MockPathCompletionContext;
@@ -21,11 +21,11 @@ use unix_constants::*;
 
 #[test]
 fn test_split_path() {
-    let path = TypedPathBuf::from_unix("/Users/warpuser");
+    let path = TypedPathBuf::from_unix("/Users/leantermuser");
     let split_path = SplitPath::new(
         path.to_path(),
-        "~/Warp.app",
-        Some("/Users/warpuser"),
+        "~/Leanterm.app",
+        Some("/Users/leantermuser"),
         &['/'],
     );
 
@@ -34,37 +34,39 @@ fn test_split_path() {
         SplitPath {
             directory_absolute_path: path.clone(),
             directory_relative_path_name: "~/".to_owned(),
-            file_name: "Warp.app".to_owned()
+            file_name: "Leanterm.app".to_owned()
         }
     );
 
     let split_path = SplitPath::new(
         path.to_path(),
-        "Warp.app/Contents",
-        Some("/Users/warpuser"),
+        "Leanterm.app/Contents",
+        Some("/Users/leantermuser"),
         &['/'],
     );
     assert_eq!(
         split_path,
         SplitPath {
-            directory_absolute_path: TypedPathBuf::from("/Users/warpuser/Warp.app/"),
-            directory_relative_path_name: "Warp.app/".to_owned(),
+            directory_absolute_path: TypedPathBuf::from("/Users/leantermuser/Leanterm.app/"),
+            directory_relative_path_name: "Leanterm.app/".to_owned(),
             file_name: "Contents".to_owned()
         }
     );
 
     let split_path = SplitPath::new(
         path.to_path(),
-        "Warp.app/macOS/bin/warp.o",
-        Some("/Users/warpuser"),
+        "Leanterm.app/macOS/bin/leanterm.o",
+        Some("/Users/leantermuser"),
         &['/'],
     );
     assert_eq!(
         split_path,
         SplitPath {
-            directory_absolute_path: TypedPathBuf::from("/Users/warpuser/Warp.app/macOS/bin/"),
-            directory_relative_path_name: "Warp.app/macOS/bin/".to_owned(),
-            file_name: "warp.o".to_owned()
+            directory_absolute_path: TypedPathBuf::from(
+                "/Users/leantermuser/Leanterm.app/macOS/bin/"
+            ),
+            directory_relative_path_name: "Leanterm.app/macOS/bin/".to_owned(),
+            file_name: "leanterm.o".to_owned()
         }
     );
 }

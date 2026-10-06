@@ -3,9 +3,6 @@ use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::Arc;
 
-use pathfinder_geometry::vector::{Vector2F, vec2f};
-use serde_yaml::Mapping;
-use uuid::Uuid;
 use leanterm_editor::content::markdown::MarkdownStyle;
 use leanterm_editor::editor::EmbeddedItemModel;
 use leanterm_editor::render::element::{RenderContext, RenderableBlock};
@@ -19,6 +16,9 @@ use leanterm_errors::report_error;
 use leanterm_ui::event::DispatchedEvent;
 use leanterm_ui::units::Pixels;
 use leanterm_ui::{AppContext, EntityId, EventContext, LayoutContext, ViewHandle, WindowId};
+use pathfinder_geometry::vector::{Vector2F, vec2f};
+use serde_yaml::Mapping;
+use uuid::Uuid;
 
 use crate::code::editor::comment_editor::CommentEditor;
 use crate::code_review::comments::CommentId;

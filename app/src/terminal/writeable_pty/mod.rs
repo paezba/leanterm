@@ -6,6 +6,6 @@ pub mod pty_controller;
 pub mod terminal_manager_util;
 pub(crate) mod terminal_surface;
 
+pub use leanterm_terminal::writeable_pty::Message;
 pub use pty_controller::{PtyController, PtyControllerEvent};
 pub use terminal_surface::{PtyIntent, PtyIntentEvent, TerminalSurface};
-pub use leanterm_terminal::writeable_pty::Message;

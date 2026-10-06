@@ -1,10 +1,10 @@
-use settings::macros::define_settings_group;
-use settings::{Setting, SupportedPlatforms};
 use leanterm_core::ui::builder::MIN_FONT_SIZE;
 use leanterm_ui::elements::DEFAULT_UI_LINE_HEIGHT_RATIO;
 use leanterm_ui::fonts::Weight;
 use leanterm_ui::rendering::ThinStrokes;
 use leanterm_ui::{AppContext, SingletonEntity};
+use settings::macros::define_settings_group;
+use settings::{Setting, SupportedPlatforms};
 
 use super::EnforceMinimumContrast as EnforceMinimumContrastEnum;
 

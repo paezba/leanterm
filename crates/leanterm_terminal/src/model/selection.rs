@@ -10,11 +10,11 @@ use std::mem;
 use std::ops::RangeInclusive;
 pub use std::ops::{Range, RangeBounds};
 
-use pathfinder_geometry::vector::Vector2F;
-use vec1::Vec1;
 use leanterm_core::semantic_selection::SemanticSelection;
 use leanterm_ui_core::text::SelectionType;
 use leanterm_ui_core::units::Lines;
+use pathfinder_geometry::vector::Vector2F;
+use vec1::Vec1;
 
 use super::index::{Direction, VisibleRow};
 use crate::model::GridStorage;

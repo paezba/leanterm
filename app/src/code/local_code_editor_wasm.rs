@@ -7,11 +7,11 @@ use code_diff::diff_validation::DiffType;
 use leanterm_core::ui::appearance::Appearance;
 use leanterm_editor::content::buffer::InitialBufferState;
 use leanterm_editor::render::model::LineCount;
-use leanterm_util::file::{FileLoadError, FileSaveError};
 use leanterm_ui::elements::MouseStateHandle;
 use leanterm_ui::{
     AppContext, Element, Entity, TypedActionView, View, ViewContext, ViewHandle, WindowId,
 };
+use leanterm_util::file::{FileLoadError, FileSaveError};
 
 use super::ImmediateSaveError;
 pub use super::diff_viewer::DisplayMode;

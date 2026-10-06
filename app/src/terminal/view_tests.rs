@@ -1,8 +1,8 @@
 use std::any::Any;
 use std::sync::Arc;
 
-use parking_lot::FairMutex;
 use leanterm_ui::App;
+use parking_lot::FairMutex;
 
 use super::*;
 use crate::pane_group::focus_state::PaneGroupFocusState;
@@ -95,7 +95,7 @@ fn test_banner_for_incompatible_plugins() {
 
 /// Regression test for #9011: the slow-bootstrap banner used to persist
 /// indefinitely when shell integration never sent the bootstrap signal
-/// (e.g. the user's shell `exec`s into `expect` before Warp's integration
+/// (e.g. the user's shell `exec`s into `expect` before Leanterm's integration
 /// runs). The auto-dismiss timer scheduled when the banner opens must
 /// eventually close it.
 #[test]
@@ -157,7 +157,7 @@ fn test_bash_vim_banner_already_shown() {
                 .set_value(BannerState::Dismissed, ctx);
         });
 
-        // Ensure Warp's vim keybindings are off.
+        // Ensure Leanterm's vim keybindings are off.
         AppEditorSettings::handle(&app).update(&mut app, |editor_settings, ctx| {
             let _ = editor_settings.vim_mode.set_value(false, ctx);
         });

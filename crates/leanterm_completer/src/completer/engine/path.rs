@@ -6,10 +6,10 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use itertools::Itertools;
 use lazy_static::lazy_static;
+use leanterm_command_signatures::{IconType, PathSuggestionType};
+use leanterm_util::path::{HOME_DIR_ENV_VAR_PREFIX, ShellFamily, expand_session_home};
 use serde::{Deserialize, Serialize};
 use typed_path::{TypedPath, TypedPathBuf};
-use warp_command_signatures::{IconType, PathSuggestionType};
-use leanterm_util::path::{HOME_DIR_ENV_VAR_PREFIX, ShellFamily, expand_session_home};
 
 use crate::completer::context::{PathCompletionContext, PathSeparators};
 use crate::completer::matchers::MatchStrategy;

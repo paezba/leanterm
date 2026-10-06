@@ -1,9 +1,7 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use pathfinder_color::ColorU;
-use pathfinder_geometry::vector::vec2f;
-use leanterm_core::ui::theme::{Fill, WarpTheme};
+use leanterm_core::ui::theme::{Fill, LeantermTheme};
 use leanterm_ui::elements::{
     Border, ChildAnchor, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Expanded,
     Flex, Hoverable, MainAxisAlignment, MainAxisSize, MouseStateHandle, OffsetPositioning,
@@ -14,6 +12,8 @@ use leanterm_ui::geometry::vector::Vector2F;
 use leanterm_ui::platform::Cursor;
 use leanterm_ui::ui_components::components::UiComponent;
 use leanterm_ui::{Element, EventContext};
+use pathfinder_color::ColorU;
+use pathfinder_geometry::vector::vec2f;
 
 use crate::appearance::Appearance;
 use crate::tab_configs::session_config::SessionType;
@@ -29,7 +29,7 @@ const PILL_GAP: f32 = 8.;
 fn session_type_item_color(
     is_selected: bool,
     on_accent_bg: bool,
-    theme: &WarpTheme,
+    theme: &LeantermTheme,
     bg_fill: Fill,
 ) -> ColorU {
     if on_accent_bg {
@@ -106,7 +106,7 @@ where
         let icon = ConstrainedBox::new(
             session_type
                 .icon()
-                .to_warpui_icon(item_color.into())
+                .to_leanterm_ui_icon(item_color.into())
                 .finish(),
         )
         .with_width(14.)
@@ -237,9 +237,11 @@ where
 
     let home_dir = dirs::home_dir();
     let raw_path = selected_directory.to_string_lossy();
-    let dir_display =
-        leanterm_util::path::user_friendly_path(&raw_path, home_dir.as_ref().and_then(|h| h.to_str()))
-            .into_owned();
+    let dir_display = leanterm_util::path::user_friendly_path(
+        &raw_path,
+        home_dir.as_ref().and_then(|h| h.to_str()),
+    )
+    .into_owned();
 
     let dir_text = Text::new_inline(dir_display, appearance.ui_font_family(), 14.)
         .with_color(if on_accent_bg {

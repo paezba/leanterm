@@ -1,10 +1,10 @@
 use async_io::block_on;
+use leanterm_core::ui::theme::{Fill, LeantermTheme};
+use leanterm_ui::fonts::FontInfo;
+use leanterm_ui::keymap::Keystroke;
 use pathfinder_color::ColorU;
 use plist::{Dictionary, Value};
 use virtual_fs::{Stub, VirtualFS};
-use leanterm_core::ui::theme::{Fill, WarpTheme};
-use leanterm_ui::fonts::FontInfo;
-use leanterm_ui::keymap::Keystroke;
 
 use super::{ITermTheme, ITermThemeType, color_dictionary_to_coloru};
 use crate::settings::import::config::{
@@ -107,10 +107,10 @@ fn test_color_dictionary_to_coloru() {
 }
 
 #[test]
-fn test_into_warp_theme_valid() {
-    let theme: WarpTheme = solarized_dark_theme()
-        .into_warp_theme("", &default_dark_theme())
-        .expect("Should be able to convert into WarpTheme");
+fn test_into_leanterm_theme_valid() {
+    let theme: LeantermTheme = solarized_dark_theme()
+        .into_leanterm_theme("", &default_dark_theme())
+        .expect("Should be able to convert into LeantermTheme");
     assert_eq!(
         theme.accent(),
         Fill::Solid(ColorU {
@@ -141,9 +141,9 @@ fn test_into_warp_theme_valid() {
 }
 
 #[test]
-fn test_into_warp_theme_invalid() {
+fn test_into_leanterm_theme_invalid() {
     default_dark_theme()
-        .into_warp_theme("", &default_dark_theme())
+        .into_leanterm_theme("", &default_dark_theme())
         .expect_err("Should return an error if the theme is not sufficiently configured.");
 }
 
@@ -173,14 +173,14 @@ fn test_import_from_file() {
 
         let config = profile.parse(&[]);
 
-        let ThemeType::Single(warp_theme) =
+        let ThemeType::Single(leanterm_theme) =
             config.theme.value().as_ref().expect("Should import theme!")
         else {
             panic!("Should have read a single theme!")
         };
 
         assert_eq!(
-            warp_theme.accent(),
+            leanterm_theme.accent(),
             Fill::Solid(ColorU {
                 r: 255,
                 g: 165,
@@ -189,7 +189,7 @@ fn test_import_from_file() {
             })
         );
         assert_eq!(
-            warp_theme.background(),
+            leanterm_theme.background(),
             Fill::Solid(ColorU {
                 r: 0,
                 g: 0,
@@ -198,7 +198,7 @@ fn test_import_from_file() {
             })
         );
         assert_eq!(
-            warp_theme.foreground(),
+            leanterm_theme.foreground(),
             Fill::Solid(ColorU {
                 r: 187,
                 g: 187,
@@ -294,14 +294,14 @@ fn test_parse_font_without_size() {
 
 #[test]
 fn test_parse_font_with_default_size() {
-    let warp_default_profile = ITermProfile {
+    let leanterm_default_profile = ITermProfile {
         font_name: Some("CourierNewPSMT".to_string()),
         font_size: Some("13".to_string()),
         ..Default::default()
     };
     let fonts = courier_new();
     assert_eq!(
-        *warp_default_profile
+        *leanterm_default_profile
             .remove_default_values()
             .parse(&fonts)
             .font
@@ -333,7 +333,7 @@ fn test_parse_font_with_default_size() {
 
 #[test]
 fn test_parse_font_with_default_font() {
-    let warp_default_profile = ITermProfile {
+    let leanterm_default_profile = ITermProfile {
         font_name: Some("Hack".to_string()),
         font_size: Some("16".to_string()),
         ..Default::default()
@@ -344,7 +344,7 @@ fn test_parse_font_with_default_font() {
         is_monospace: false,
     }];
     assert_eq!(
-        *warp_default_profile
+        *leanterm_default_profile
             .remove_default_values()
             .parse(&fonts)
             .font

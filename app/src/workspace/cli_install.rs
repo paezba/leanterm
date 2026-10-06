@@ -7,20 +7,20 @@ use command::blocking::Command;
 use leanterm_core::channel::ChannelState;
 use leanterm_util::path::ShellFamily;
 
-/// Compute the target path where the Warp Control symlink should be installed, based on channel
-fn warpctrl_install_target_path() -> PathBuf {
-    PathBuf::from("/usr/local/bin").join(ChannelState::channel().warpctrl_command_name())
+/// Compute the target path where the Leanterm Control symlink should be installed, based on channel
+fn leantermctl_install_target_path() -> PathBuf {
+    PathBuf::from("/usr/local/bin").join(ChannelState::channel().leantermctl_command_name())
 }
 
-/// Compute the source path of the warpctrl wrapper inside the current app bundle.
+/// Compute the source path of the leantermctl wrapper inside the current app bundle.
 ///
 /// Oz commands are part of the shared executable's normal argument parser, so
-/// Oz can symlink directly to the current executable. Warp Control has a
-/// separate parser selected by the hidden `--warpctrl` flag, so its installed
+/// Oz can symlink directly to the current executable. Leanterm Control has a
+/// separate parser selected by the hidden `--leantermctl` flag, so its installed
 /// symlink must target the bundled wrapper that injects that flag. Without it,
-/// Warp Control subcommands such as `tab` would reach the normal parser and be
+/// Leanterm Control subcommands such as `tab` would reach the normal parser and be
 /// rejected as unknown.
-fn warpctrl_bundle_source_path() -> Result<PathBuf> {
+fn leantermctl_bundle_source_path() -> Result<PathBuf> {
     let current_binary =
         std::env::current_exe().context("Failed to get current executable path")?;
     let bundle_root = current_binary
@@ -30,7 +30,7 @@ fn warpctrl_bundle_source_path() -> Result<PathBuf> {
         .ok_or_else(|| anyhow!("Current executable is not inside a bundled app"))?;
     Ok(bundle_root
         .join("Contents/Resources/bin")
-        .join(ChannelState::channel().warpctrl_command_name()))
+        .join(ChannelState::channel().leantermctl_command_name()))
 }
 fn path_resolves_to(path: &Path, expected_path: &Path) -> bool {
     let Ok(path) = path.canonicalize() else {
@@ -42,12 +42,12 @@ fn path_resolves_to(path: &Path, expected_path: &Path) -> bool {
     path == expected_path
 }
 
-/// Whether the installed Warp Control command resolves to this app bundle's wrapper.
-pub fn is_warpctrl_installed() -> bool {
-    let Ok(source) = warpctrl_bundle_source_path() else {
+/// Whether the installed Leanterm Control command resolves to this app bundle's wrapper.
+pub fn is_leantermctl_installed() -> bool {
+    let Ok(source) = leantermctl_bundle_source_path() else {
         return false;
     };
-    path_resolves_to(&warpctrl_install_target_path(), &source)
+    path_resolves_to(&leantermctl_install_target_path(), &source)
 }
 
 /// Create a symlink with elevated privileges using osascript
@@ -67,7 +67,7 @@ fn create_symlink_with_admin(source: &Path, target: &Path) -> Result<()> {
 
     // Use osascript to run the ln command with admin privileges, with a custom prompt
     let script = format!(
-        "do shell script \"ln -sf {escaped_source} {escaped_target}\" with prompt \"Warp needs administrator privileges to install the command in /usr/local/bin.\" with administrator privileges"
+        "do shell script \"ln -sf {escaped_source} {escaped_target}\" with prompt \"Leanterm needs administrator privileges to install the command in /usr/local/bin.\" with administrator privileges"
     );
 
     log::debug!("Creating symlink with admin privileges");
@@ -103,7 +103,7 @@ fn remove_file_with_admin(target: &Path) -> Result<()> {
     let escaped_target = ShellFamily::Posix.shell_escape(target_str);
 
     let script = format!(
-        "do shell script \"rm {escaped_target}\" with prompt \"Warp needs administrator privileges to uninstall the command from /usr/local/bin.\" with administrator privileges"
+        "do shell script \"rm {escaped_target}\" with prompt \"Leanterm needs administrator privileges to uninstall the command from /usr/local/bin.\" with administrator privileges"
     );
 
     log::debug!("Removing file with admin privileges");
@@ -191,29 +191,36 @@ fn uninstall_symlink(target: &Path, command_name: &str) -> Result<()> {
     Ok(())
 }
 
-/// Install Warp Control by symlinking its bundled wrapper into /usr/local/bin.
+/// Install Leanterm Control by symlinking its bundled wrapper into /usr/local/bin.
 ///
 /// The wrapper contains no control implementation. It resolves this installed
-/// symlink back into the app bundle, launches the shared Warp executable, and
-/// injects `--warpctrl` so startup selects the separate Warp Control parser
+/// symlink back into the app bundle, launches the shared Leanterm executable, and
+/// injects `--leantermctl` so startup selects the separate Leanterm Control parser
 /// before normal parsing or GUI startup.
-pub fn install_warpctrl() -> Result<()> {
-    let warpctrl_path = warpctrl_install_target_path();
-    let warpctrl_source = warpctrl_bundle_source_path()?;
+pub fn install_leantermctl() -> Result<()> {
+    let leantermctl_path = leantermctl_install_target_path();
+    let leantermctl_source = leantermctl_bundle_source_path()?;
 
-    if !warpctrl_source.exists() {
+    if !leantermctl_source.exists() {
         return Err(anyhow!(
-            "Cannot install Warp Control CLI: bundled wrapper not found at {}",
-            warpctrl_source.display()
+            "Cannot install Leanterm Control CLI: bundled wrapper not found at {}",
+            leantermctl_source.display()
         ));
     }
 
-    install_symlink(&warpctrl_source, &warpctrl_path, "Warp Control CLI")
+    install_symlink(
+        &leantermctl_source,
+        &leantermctl_path,
+        "Leanterm Control CLI",
+    )
 }
 
-/// Uninstall the Warp Control CLI by removing the symlink from /usr/local/bin
-pub fn uninstall_warpctrl() -> Result<()> {
-    uninstall_symlink(&warpctrl_install_target_path(), "Warp Control command")
+/// Uninstall the Leanterm Control CLI by removing the symlink from /usr/local/bin
+pub fn uninstall_leantermctl() -> Result<()> {
+    uninstall_symlink(
+        &leantermctl_install_target_path(),
+        "Leanterm Control command",
+    )
 }
 
 #[cfg(test)]

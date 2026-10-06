@@ -1,6 +1,6 @@
-use repo_metadata::DirectoryWatcher;
-use leanterm_util::standardized_path::StandardizedPath;
 use leanterm_ui::{App, ModelHandle};
+use leanterm_util::standardized_path::StandardizedPath;
+use repo_metadata::DirectoryWatcher;
 
 use super::*;
 use crate::code_review::git_repo_model::GitRepoStatusModel;
@@ -9,7 +9,7 @@ use crate::util::git::RepositoryInfo;
 fn pr(number: u64) -> PrInfo {
     PrInfo {
         number,
-        url: format!("https://github.com/warp/warp/pull/{number}"),
+        url: format!("https://github.com/leanterm/leanterm/pull/{number}"),
         state: "OPEN".to_string(),
         draft: false,
         base_branch: "main".to_string(),
@@ -18,8 +18,8 @@ fn pr(number: u64) -> PrInfo {
 
 fn repository_info() -> RepositoryInfo {
     RepositoryInfo {
-        name: "warp".to_string(),
-        owner: Some("warpdotdev".to_string()),
+        name: "leanterm".to_string(),
+        owner: Some("leandotdev".to_string()),
         host: Some("github.com".to_string()),
     }
 }

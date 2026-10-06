@@ -163,7 +163,7 @@ fn every_hook_tag_dispatches_to_the_matching_variant() {
         ("PreInteractiveSSHSession", serde_json::json!({})),
         (
             "SSH",
-            serde_json::json!({"socket_path": "/tmp/warp.sock", "remote_shell": "bash"}),
+            serde_json::json!({"socket_path": "/tmp/leanterm.sock", "remote_shell": "bash"}),
         ),
         (
             "InitShell",
@@ -180,7 +180,7 @@ fn every_hook_tag_dispatches_to_the_matching_variant() {
             serde_json::json!({"shell": "zsh", "uname": "Darwin"}),
         ),
         (
-            "SourcedRcFileForWarp",
+            "SourcedRcFileForLeanterm",
             serde_json::json!({"shell": "zsh", "uname": "Darwin"}),
         ),
         ("FinishUpdate", serde_json::json!({"update_id": "update-1"})),
@@ -237,11 +237,12 @@ fn precmd_hook_without_completion_metadata_is_prompt_only() {
 fn sourced_rc_file_hook_parses_frozen_snippet_format() {
     // This literal payload shape ships inside user RC files, so it must keep
     // parsing forever.
-    let json = r#"{"hook": "SourcedRcFileForWarp", "value": {"shell": "zsh", "uname": "Darwin"}}"#;
-    let DProtoHook::SourcedRcFileForWarp { value } =
+    let json =
+        r#"{"hook": "SourcedRcFileForLeanterm", "value": {"shell": "zsh", "uname": "Darwin"}}"#;
+    let DProtoHook::SourcedRcFileForLeanterm { value } =
         serde_json::from_str::<DProtoHook>(json).unwrap()
     else {
-        panic!("expected a SourcedRcFileForWarp hook");
+        panic!("expected a SourcedRcFileForLeanterm hook");
     };
     assert_eq!(value.shell, "zsh");
     assert_eq!(value.uname.as_deref(), Some("Darwin"));
@@ -249,7 +250,7 @@ fn sourced_rc_file_hook_parses_frozen_snippet_format() {
 
 #[test]
 fn sourced_rc_file_hook_ignores_legacy_tmux_field() {
-    let json = r#"{"hook": "SourcedRcFileForWarp", "value": {"shell": "zsh", "uname": "Darwin", "tmux": false}}"#;
+    let json = r#"{"hook": "SourcedRcFileForLeanterm", "value": {"shell": "zsh", "uname": "Darwin", "tmux": false}}"#;
     assert!(serde_json::from_str::<DProtoHook>(json).is_ok());
 }
 
@@ -257,7 +258,7 @@ fn sourced_rc_file_hook_ignores_legacy_tmux_field() {
 fn ssh_hook_round_trips_through_serialization() {
     let hook = DProtoHook::SSH {
         value: SSHValue {
-            socket_path: "/tmp/warp.sock".into(),
+            socket_path: "/tmp/leanterm.sock".into(),
             remote_shell: "bash".to_string(),
             session_id: Some(3),
             remote_session_id: Some(4),
@@ -268,7 +269,7 @@ fn ssh_hook_round_trips_through_serialization() {
     let DProtoHook::SSH { value } = serde_json::from_str::<DProtoHook>(&json).unwrap() else {
         panic!("expected an SSH hook");
     };
-    assert_eq!(value.socket_path, PathBuf::from("/tmp/warp.sock"));
+    assert_eq!(value.socket_path, PathBuf::from("/tmp/leanterm.sock"));
     assert_eq!(value.remote_shell, "bash");
     assert_eq!(value.session_id, Some(3));
     assert_eq!(value.remote_session_id, Some(4));

@@ -1,5 +1,5 @@
 {
-  description = "Warp is an agentic development environment, born out of the terminal (Experimental Nix Support, Linux-only).";
+  description = "Leanterm is an agentic development environment, born out of the terminal (Experimental Nix Support, Linux-only).";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -59,7 +59,7 @@
                     postPatch = (old.postPatch or "") + ''
                       find . -name 'Cargo.toml.orig' -delete
 
-                      ${lib.optionalString (hasCrate "warp_multi_agent_api") ''
+                      ${lib.optionalString (hasCrate "leanterm_multi_agent_api") ''
                         mkdir -p apis/multi_agent/v1/gen/rust/nix-vendored-protos
                         cp apis/multi_agent/v1/*.proto \
                           apis/multi_agent/v1/gen/rust/nix-vendored-protos/
@@ -69,7 +69,7 @@
                             'let proto_path = manifest_dir.join("nix-vendored-protos");'
                       ''}
 
-                      ${lib.optionalString (hasCrate "warp-workflows") ''
+                      ${lib.optionalString (hasCrate "leanterm-workflows") ''
                         mkdir -p workflows/nix-vendored-specs
                         cp -R specs/. workflows/nix-vendored-specs/
                         substituteInPlace workflows/build.rs \
@@ -86,7 +86,7 @@
             in
             # crane writes a root config.toml; buildRustPackage expects the
             # cargoDeps layout to include .cargo/config.toml and Cargo.lock.
-            pkgs.runCommand "warp-terminal-experimental-${version}-cargo-vendor" { } ''
+            pkgs.runCommand "leanterm-experimental-${version}-cargo-vendor" { } ''
               cp -R ${craneVendorDir}/. "$out"
               chmod u+w "$out"
               mkdir -p "$out/.cargo"
@@ -128,8 +128,8 @@
             "gui"
           ];
 
-          warp-terminal-experimental = rustPlatform.buildRustPackage {
-            pname = "warp-terminal-experimental";
+          leanterm-experimental = rustPlatform.buildRustPackage {
+            pname = "leanterm-experimental";
             inherit version;
 
             inherit src;
@@ -152,7 +152,7 @@
 
             cargoBuildFlags = [
               "-p"
-              "warp"
+              "leanterm"
               "--bin"
               "leanterm"
             ];
@@ -171,7 +171,7 @@
             };
             postInstall =
               let
-                installDir = "$out/opt/warpdotdev/warp-terminal-experimental";
+                installDir = "$out/opt/leanterm/leanterm-experimental";
                 resourcesDir = "${installDir}/resources";
                 releaseChannel = "oss";
                 libraryPath = lib.makeLibraryPath linuxRuntimeLibraries;
@@ -189,15 +189,15 @@
 
                 install -Dm644 \
                   "${resourcesDir}/THIRD_PARTY_LICENSES.txt" \
-                  "$out/share/licenses/warp-terminal-experimental/THIRD_PARTY_LICENSES.txt"
+                  "$out/share/licenses/leanterm-experimental/THIRD_PARTY_LICENSES.txt"
 
-                install -Dm644 LICENSE-AGPL "$out/share/licenses/warp-terminal-experimental/LICENSE-AGPL"
-                install -Dm644 LICENSE-MIT "$out/share/licenses/warp-terminal-experimental/LICENSE-MIT"
+                install -Dm644 LICENSE-AGPL "$out/share/licenses/leanterm-experimental/LICENSE-AGPL"
+                install -Dm644 LICENSE-MIT "$out/share/licenses/leanterm-experimental/LICENSE-MIT"
 
                 install -Dm644 app/channels/oss/dev.leanterm.Leanterm.desktop \
                   "$out/share/applications/dev.leanterm.Leanterm.desktop"
                 substituteInPlace "$out/share/applications/dev.leanterm.Leanterm.desktop" \
-                  --replace-fail "Exec=warp-terminal-oss %U" "Exec=warp-terminal-experimental %U"
+                  --replace-fail "Exec=leanterm-oss %U" "Exec=leanterm-experimental %U"
 
                 for size in 16x16 32x32 64x64 128x128 256x256 512x512; do
                   icon="app/channels/oss/icon/no-padding/$size.png"
@@ -213,28 +213,28 @@
 
                 mkdir -p "$out/bin"
                 ln -s "${installDir}/leanterm" "$out/bin/leanterm"
-                ln -s "${installDir}/leanterm" "$out/bin/warp-terminal-experimental"
+                ln -s "${installDir}/leanterm" "$out/bin/leanterm-experimental"
               '';
 
             postFixup = lib.optionalString pkgs.stdenv.isLinux ''
-              wrapped="/opt/warpdotdev/warp-terminal-experimental/.leanterm-wrapped"
+              wrapped="/opt/leanterm/leanterm-experimental/.leanterm-wrapped"
               if [ -e "$out$wrapped" ] && ! patchelf --print-needed "$out$wrapped" | grep -q '^libfontconfig\.so\.1$'; then
                 patchelf --add-needed libfontconfig.so.1 "$out$wrapped"
               fi
             '';
 
             meta = {
-              description = "Warp is an agentic development environment, born out of the terminal (Experimental Nix Support, Linux-only).";
+              description = "Leanterm is an agentic development environment, born out of the terminal (Experimental Nix Support, Linux-only).";
               homepage = "https://www.warp.dev";
               license = lib.licenses.agpl3Only;
-              mainProgram = "warp-terminal-experimental";
+              mainProgram = "leanterm-experimental";
               platforms = systems;
               sourceProvenance = with lib.sourceTypes; [ fromSource ];
             };
           };
         in
         {
-          inherit warp-terminal-experimental;
+          inherit leanterm-experimental;
         }
       );
 

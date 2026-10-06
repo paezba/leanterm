@@ -1,11 +1,11 @@
 use std::path::Path;
 
 use futures::channel::oneshot;
-use vec1::vec1;
 use leanterm_editor::content::buffer::{InitialBufferState, SelectionOffsets};
 use leanterm_editor::multiline::MultilineString;
-use leanterm_util::content_version::ContentVersion;
 use leanterm_ui::App;
+use leanterm_util::content_version::ContentVersion;
+use vec1::vec1;
 
 use super::*;
 use crate::code::editor::line::EditorLineLocation;

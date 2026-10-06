@@ -3,7 +3,6 @@ use std::iter::FromIterator;
 use std::path::{Component, Path, PathBuf};
 
 use anyhow::Result;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
 pub use leanterm_core::ui::color::blend::Blend;
 use leanterm_core::ui::color::pick_foreground_color;
 pub use leanterm_core::ui::theme::*;
@@ -14,6 +13,7 @@ use leanterm_ui::elements::{
     Shrinkable, Stack, Text,
 };
 use leanterm_ui::fonts::FamilyId;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use super::default_themes::*;
 use super::theme_creator::{pick_accent_color_from_options, top_colors_for_image};
@@ -131,8 +131,8 @@ impl std::fmt::Display for ThemeKind {
             ThemeKind::Phenomenon => "Phenomenon",
             ThemeKind::SolarFlare => "Solar Flare",
             ThemeKind::Adeberry => "Adeberry",
-            ThemeKind::SentReferralReward => "Warp Referral",
-            ThemeKind::ReceivedReferralReward => "Referred to Warp",
+            ThemeKind::SentReferralReward => "Leanterm Referral",
+            ThemeKind::ReceivedReferralReward => "Referred to Leanterm",
             ThemeKind::Custom(custom_theme) => custom_theme.name.as_str(),
             ThemeKind::CustomBase16(custom_theme) => custom_theme.name.as_str(),
             ThemeKind::InMemory(in_memory_theme) => in_memory_theme.name.as_str(),
@@ -409,7 +409,7 @@ impl InMemoryThemeOptions {
         self.path = path;
     }
 
-    pub fn theme(&self) -> WarpTheme {
+    pub fn theme(&self) -> LeantermTheme {
         let bg_color = self.chosen_bg_color();
         let fg_color = pick_foreground_color(bg_color);
         let possible_accent_colors: Vec<ColorU> = self
@@ -428,7 +428,7 @@ impl InMemoryThemeOptions {
             (Details::Lighter, light_mode_colors())
         };
 
-        WarpTheme::new(
+        LeantermTheme::new(
             bg_color.into(),
             fg_color,
             accent_color.into(),
@@ -449,14 +449,14 @@ impl InMemoryThemeOptions {
 }
 
 #[derive(Debug, Clone)]
-pub struct WarpThemeConfig {
-    theme_map: HashMap<ThemeKind, WarpTheme>,
+pub struct LeantermThemeConfig {
+    theme_map: HashMap<ThemeKind, LeantermTheme>,
 }
 
-impl WarpThemeConfig {
+impl LeantermThemeConfig {
     pub fn new() -> Self {
         // preload with built-in themes
-        let theme_map: HashMap<ThemeKind, WarpTheme> = HashMap::from_iter([
+        let theme_map: HashMap<ThemeKind, LeantermTheme> = HashMap::from_iter([
             (ThemeKind::SentReferralReward, sent_referral_reward()),
             (
                 ThemeKind::ReceivedReferralReward,
@@ -484,10 +484,10 @@ impl WarpThemeConfig {
             (ThemeKind::SolarFlare, solar_flare()),
             (ThemeKind::Adeberry, adeberry()),
         ]);
-        WarpThemeConfig { theme_map }
+        LeantermThemeConfig { theme_map }
     }
 
-    pub fn add_new_theme(&mut self, theme_name: ThemeKind, theme: WarpTheme) {
+    pub fn add_new_theme(&mut self, theme_name: ThemeKind, theme: LeantermTheme) {
         self.theme_map.insert(theme_name, theme);
     }
 
@@ -495,16 +495,16 @@ impl WarpThemeConfig {
         CustomTheme::new(name, path).into()
     }
 
-    pub fn theme_items(&self) -> impl Iterator<Item = (&ThemeKind, &WarpTheme)> {
+    pub fn theme_items(&self) -> impl Iterator<Item = (&ThemeKind, &LeantermTheme)> {
         self.theme_map.iter()
     }
 
-    pub fn theme(&self, name: &ThemeKind) -> WarpTheme {
+    pub fn theme(&self, name: &ThemeKind) -> LeantermTheme {
         self.theme_map.get(name).cloned().unwrap_or_else(dark_theme)
     }
 }
 
-impl Default for WarpThemeConfig {
+impl Default for LeantermThemeConfig {
     fn default() -> Self {
         Self::new()
     }
@@ -573,8 +573,8 @@ pub struct PromptColors {
     pub input_prompt_ssh: ColorU,
 }
 
-impl From<WarpTheme> for PromptColors {
-    fn from(theme: WarpTheme) -> Self {
+impl From<LeantermTheme> for PromptColors {
+    fn from(theme: LeantermTheme) -> Self {
         PromptColors {
             input_prompt_conversation_management: theme.terminal_colors().normal.white.into(),
             input_prompt_pwd: theme.terminal_colors().normal.magenta.into(),
@@ -597,7 +597,7 @@ impl From<WarpTheme> for PromptColors {
 }
 
 pub fn render_preview(
-    theme: &WarpTheme,
+    theme: &LeantermTheme,
     font_family: FamilyId,
     form_factor: Option<f32>,
 ) -> Box<dyn Element> {

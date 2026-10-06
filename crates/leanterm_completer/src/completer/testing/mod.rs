@@ -6,11 +6,11 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use smol_str::SmolStr;
-use typed_path::{TypedPath, TypedPathBuf};
-use warp_command_signatures::IconType;
+use leanterm_command_signatures::IconType;
 use leanterm_core::command::ExitCode;
 use leanterm_util::path::{EscapeChar, ShellFamily, TEST_SESSION_HOME_DIR};
+use smol_str::SmolStr;
+use typed_path::{TypedPath, TypedPathBuf};
 
 use super::{CommandExitStatus, MatchedSuggestion, PathSeparators};
 use crate::completer::{

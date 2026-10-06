@@ -1,13 +1,13 @@
 use std::cell::Cell;
 use std::sync::Arc;
 
-use pathfinder_color::ColorU;
-use string_offset::CharOffset;
-use sum_tree::SumTree;
 use leanterm_ui_core::assets::asset_cache::AssetSource;
 use leanterm_ui_core::fonts::FamilyId;
 use leanterm_ui_core::text_layout::{CaretPosition, TextFrame};
 use leanterm_ui_core::units::IntoPixels;
+use pathfinder_color::ColorU;
+use string_offset::CharOffset;
+use sum_tree::SumTree;
 
 use crate::content::text::{
     BufferBlockStyle, CodeBlockType, FormattedTable, table_cell_offset_maps,

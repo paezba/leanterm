@@ -2,15 +2,11 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use async_channel::TryRecvError;
-use parking_lot::Mutex;
-use string_offset::CharOffset;
-use tempfile::tempdir;
 use leanterm_editor::content::mermaid_diagram::mermaid_asset_source;
 use leanterm_editor::render::element::RichTextAction;
 use leanterm_editor::render::model::{
     BlockItem, BlockSpacing, HitTestBlockType, ImageBlockConfig, Location, RenderEvent,
 };
-use leanterm_util::user_input::UserInput;
 use leanterm_ui::assets::asset_cache::{AssetCache, AssetState};
 use leanterm_ui::r#async::block_on;
 use leanterm_ui::event::ModifiersState;
@@ -19,7 +15,13 @@ use leanterm_ui::platform::WindowStyle;
 use leanterm_ui::presenter::ChildView;
 use leanterm_ui::units::Pixels;
 use leanterm_ui::windowing::WindowManager;
-use leanterm_ui::{App, Element, Entity, SingletonEntity, TypedActionView, View, ViewHandle, WindowId};
+use leanterm_ui::{
+    App, Element, Entity, SingletonEntity, TypedActionView, View, ViewHandle, WindowId,
+};
+use leanterm_util::user_input::UserInput;
+use parking_lot::Mutex;
+use string_offset::CharOffset;
+use tempfile::tempdir;
 
 use super::{EditorViewAction, LayoutAffectingAssetLoad, RichTextEditorConfig, RichTextEditorView};
 use crate::appearance::Appearance;
@@ -589,7 +591,7 @@ fn test_link_editing() {
                 .url_editor()
                 .clone()
                 .update(ctx, |url_editor, ctx| {
-                    url_editor.user_insert("https://warp.dev", ctx);
+                    url_editor.user_insert("https://lean.dev", ctx);
                 });
 
             editor.link_editor.update(ctx, |link_editor, ctx| {
@@ -601,7 +603,7 @@ fn test_link_editing() {
         editor_view.read(&app, |editor, ctx| {
             assert_eq!(
                 editor.model.as_ref(ctx).debug_buffer(ctx),
-                "<text>Some <a_https://warp.dev>text<a>"
+                "<text>Some <a_https://lean.dev>text<a>"
             );
         });
 
@@ -632,7 +634,7 @@ fn test_link_editing() {
         editor_view.read(&app, |editor, ctx| {
             assert_eq!(
                 editor.model.as_ref(ctx).debug_buffer(ctx),
-                "<text>Some <a_https://warp.dev>text<a><a_https://example.com>new link<a>"
+                "<text>Some <a_https://lean.dev>text<a><a_https://example.com>new link<a>"
             );
         });
     });
@@ -868,7 +870,7 @@ fn test_link_editing_disabled_for_multiselect() {
                 .url_editor()
                 .clone()
                 .update(ctx, |url_editor, ctx| {
-                    url_editor.user_insert("https://warp.dev", ctx);
+                    url_editor.user_insert("https://lean.dev", ctx);
                 });
 
             editor.link_editor.update(ctx, |link_editor, ctx| {

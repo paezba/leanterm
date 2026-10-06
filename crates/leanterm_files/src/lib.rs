@@ -17,14 +17,14 @@ use futures::channel::oneshot;
 use futures::future::BoxFuture;
 use futures::io::{AsyncBufReadExt, BufReader};
 use futures::{FutureExt, StreamExt};
+use leanterm_ui_core::r#async::SpawnedFutureHandle;
+use leanterm_ui_core::{Entity, ModelContext, ModelHandle, SingletonEntity};
+use leanterm_util::content_version::ContentVersion;
+use leanterm_util::file::{FileId, FileLoadError, FileSaveError};
 use notify_debouncer_full::notify::{RecursiveMode, WatchFilter};
 use repo_metadata::repositories::DetectedRepositories;
 use repo_metadata::repository::{RepositorySubscriber, SubscriberId};
 use repo_metadata::{CanonicalizedPath, Repository, RepositoryUpdate, RepositoryWatchMode};
-use leanterm_util::content_version::ContentVersion;
-use leanterm_util::file::{FileId, FileLoadError, FileSaveError};
-use leanterm_ui_core::r#async::SpawnedFutureHandle;
-use leanterm_ui_core::{Entity, ModelContext, ModelHandle, SingletonEntity};
 use watcher::{BulkFilesystemWatcher, BulkFilesystemWatcherEvent};
 
 pub mod text_file_reader;
@@ -470,7 +470,7 @@ impl FileModel {
     ///
     /// Derived from the stored path so registration and unregistration always agree. `None` when
     /// the file's path has no usable parent — a bare relative name such as `README.md` yields an
-    /// empty parent, which platform watchers resolve to Warp's own process directory.
+    /// empty parent, which platform watchers resolve to Leanterm's own process directory.
     fn watch_path(&self, file_id: FileId) -> Option<PathBuf> {
         Self::watch_path_for(self.file_state.get_local(file_id)?.path.as_deref()?)
     }

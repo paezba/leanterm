@@ -1,7 +1,7 @@
-use pathfinder_geometry::vector::Vector2F;
 use leanterm_ui::SingletonEntity;
 use leanterm_ui::integration::TestStep;
 use leanterm_ui::windowing::WindowManager;
+use pathfinder_geometry::vector::Vector2F;
 
 use crate::integration_testing::step::new_step_with_default_assertions;
 use crate::integration_testing::terminal::assert_context_menu_is_open;
@@ -9,7 +9,9 @@ use crate::integration_testing::view_getters::{single_input_view_for_tab, single
 use crate::terminal::view::TerminalAction;
 
 /// Asserts that the Rich Input buffer text for `tab_index` is empty.
-pub fn rich_input_buffer_text_is_empty(tab_index: usize) -> leanterm_ui::integration::AssertionCallback {
+pub fn rich_input_buffer_text_is_empty(
+    tab_index: usize,
+) -> leanterm_ui::integration::AssertionCallback {
     Box::new(move |app, window_id| {
         let input_view = single_input_view_for_tab(app, window_id, tab_index);
         input_view.read(app, |view, ctx| {

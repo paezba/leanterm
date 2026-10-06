@@ -61,8 +61,8 @@ fn enabled_features() -> HashSet<FeatureFlag> {
         FeatureFlag::EmbeddedCodeReviewComments,
         #[cfg(feature = "file_and_diff_set_comments")]
         FeatureFlag::FileAndDiffSetComments,
-        #[cfg(feature = "warp_control_cli")]
-        FeatureFlag::WarpControlCli,
+        #[cfg(feature = "leanterm_control_cli")]
+        FeatureFlag::LeantermControlCli,
     ]);
 
     flags

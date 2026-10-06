@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use leanterm_ui::AppContext;
+use serde::{Deserialize, Serialize};
 
 pub mod categories;
 use workflow::Workflow;
@@ -21,10 +21,10 @@ pub enum WorkflowSource {
     Global,
     Local,
     Project,
-    WarpAI,
+    LeantermAI,
     Notebook,
 
-    /// A hardcoded workflow type that allows Warp to surface features as Workflows (e.g.
+    /// A hardcoded workflow type that allows Leanterm to surface features as Workflows (e.g.
     /// a command to see our network log)
     App,
 }
@@ -34,7 +34,7 @@ pub enum WorkflowSelectionSource {
     CommandPalette,
     UniversalSearch,
     Voltron,
-    WarpAI,
+    LeantermAI,
     Notebook,
     SlashMenu,
     UpArrowHistory,

@@ -1,9 +1,8 @@
 use std::marker::PhantomData;
 
-use pathfinder_geometry::vector::vec2f;
 use leanterm_ui::elements::{
     Border, ChildAnchor, ConstrainedBox, CornerRadius, CrossAxisAlignment, Flex,
-    Icon as WarpUiIcon, MainAxisAlignment, MouseStateHandle, OffsetPositioning, ParentElement,
+    Icon as LeantermUiIcon, MainAxisAlignment, MouseStateHandle, OffsetPositioning, ParentElement,
     PositionedElementAnchor, PositionedElementOffsetBounds, Radius, SavePosition, Stack,
 };
 use leanterm_ui::presenter::ChildView;
@@ -13,6 +12,7 @@ use leanterm_ui::{
     AppContext, BlurContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle,
 };
+use pathfinder_geometry::vector::vec2f;
 
 use super::dropdown::{DropdownAction, DropdownItemAction};
 use crate::appearance::Appearance;
@@ -109,7 +109,7 @@ impl<A: DropdownItemAction> CompactDropdown<A> {
     }
 
     /// Render an icon at the configured icon size.
-    fn render_sized_icon(&self, appearance: &Appearance, icon: WarpUiIcon) -> Box<dyn Element> {
+    fn render_sized_icon(&self, appearance: &Appearance, icon: LeantermUiIcon) -> Box<dyn Element> {
         let icon_size = self.icon_size.unwrap_or(appearance.ui_font_size());
         ConstrainedBox::new(icon.finish())
             .with_width(icon_size)
@@ -131,13 +131,14 @@ impl<A: DropdownItemAction> CompactDropdown<A> {
             let icon_color = fields
                 .override_icon_color()
                 .unwrap_or_else(|| appearance.theme().active_ui_text_color());
-            button_label
-                .add_child(self.render_sized_icon(appearance, icon.to_warpui_icon(icon_color)));
+            button_label.add_child(
+                self.render_sized_icon(appearance, icon.to_leanterm_ui_icon(icon_color)),
+            );
         }
 
         button_label.add_child(self.render_sized_icon(
             appearance,
-            WarpUiIcon::new(
+            LeantermUiIcon::new(
                 "bundled/svg/chevron-down.svg",
                 appearance.theme().active_ui_text_color(),
             ),

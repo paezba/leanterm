@@ -7,7 +7,7 @@
 //! Internally, [`Performer`] delegates to finer-grained methods for handling
 //! PTY output implemented by the [`Handler`] trait -- this could be printing to
 //! the terminal, executing actions as a result of CSI or OSC sequences,
-//! executing one of Warp's DCS hooks, etc. [`Handler`] should be implemented by
+//! executing one of Leanterm's DCS hooks, etc. [`Handler`] should be implemented by
 //! an app-level model that updates the terminal's state accordingly.
 mod ansi_c_decoder;
 pub mod control_sequence_parameters;
@@ -27,12 +27,12 @@ use hex;
 use instant::Instant;
 use itertools::Itertools;
 use lazy_static::lazy_static;
-use log::debug;
-use vte::{Params, Parser as VteParser, Perform as VtePerform};
 use leanterm_core::features::FeatureFlag;
 use leanterm_core::{safe_debug, safe_error, safe_warn};
 use leanterm_errors::report_error;
 use leanterm_ui_core::color::ColorU;
+use log::debug;
+use vte::{Params, Parser as VteParser, Perform as VtePerform};
 
 use super::kitty::parse_kitty_chunk;
 use crate::model::completions::{ShellCompletion, ShellCompletionUpdate};
@@ -41,18 +41,18 @@ use crate::model::index::VisibleRow;
 use crate::model::iterm_image::parse_iterm_image_metadata;
 use crate::model::{KeyboardModes, KeyboardModesApplyBehavior};
 
-/// Marks an OSC as one that is sent by Warp logic registered in the shell.
+/// Marks an OSC as one that is sent by Leanterm logic registered in the shell.
 ///
-/// 9277 spells out "WARP" on a dialpad :).
-const WARP_IN_BAND_GENERATOR_OSC_MARKER: &[u8] = b"9277";
-const WARP_IN_BAND_GENERATOR_START_BYTE: &[u8] = b"A";
-const WARP_IN_BAND_GENERATOR_END_BYTE: &[u8] = b"B";
+/// 9277 spells out "LEANTERM" on a dialpad :).
+const LEANTERM_IN_BAND_GENERATOR_OSC_MARKER: &[u8] = b"9277";
+const LEANTERM_IN_BAND_GENERATOR_START_BYTE: &[u8] = b"A";
+const LEANTERM_IN_BAND_GENERATOR_END_BYTE: &[u8] = b"B";
 
 /// Marks an OSC that is used for messages containing shell hooks.
-const WARP_OSC_MARKER: &[u8] = b"9278";
+const LEANTERM_OSC_MARKER: &[u8] = b"9278";
 /// Marks an OSC that is used for resetting ConPTY's grid. This is useful for performing a series
-/// of checks ensuring that Warp's grids and ConPTY's grid are in sync.
-const WARP_RESET_GRID_OSC_MARKER: &[u8] = b"9279";
+/// of checks ensuring that Leanterm's grids and ConPTY's grid are in sync.
+const LEANTERM_RESET_GRID_OSC_MARKER: &[u8] = b"9279";
 
 /// The amount of time a single synchronized update can take from the time the corresponding
 /// 'Set Mode' escape sequence is processed before a redraw is forced.
@@ -69,16 +69,16 @@ lazy_static! {
     static ref SYNC_OUTPUT_MAX_BUFFER_SIZE: Byte = Byte::from_u64_with_unit(2, ByteUnit::MiB).expect("Can create byte size for sync output max buffer size");
 }
 
-const WARP_COMPLETIONS_OSC_MARKER: &[u8] = b"9280";
-const WARP_COMPLETIONS_START_BYTE: &[u8] = b"A";
-const WARP_COMPLETIONS_END_BYTE: &[u8] = b"B";
-const WARP_COMPLETIONS_MATCH_RESULT_BYTE: &[u8] = b"C";
-const WARP_COMPLETIONS_REPLACEMENT_SPAN_BYTE: &[u8] = b"S";
-const WARP_COMPLETIONS_MATCH_UPDATE_METADATA: &[u8] = b"D?";
+const LEANTERM_COMPLETIONS_OSC_MARKER: &[u8] = b"9280";
+const LEANTERM_COMPLETIONS_START_BYTE: &[u8] = b"A";
+const LEANTERM_COMPLETIONS_END_BYTE: &[u8] = b"B";
+const LEANTERM_COMPLETIONS_MATCH_RESULT_BYTE: &[u8] = b"C";
+const LEANTERM_COMPLETIONS_REPLACEMENT_SPAN_BYTE: &[u8] = b"S";
+const LEANTERM_COMPLETIONS_MATCH_UPDATE_METADATA: &[u8] = b"D?";
 
-const WARP_KV_START_BYTE: &[u8] = b"A";
-const WARP_KV_ENTRY_BYTE: &[u8] = b"B";
-const WARP_KV_END_BYTE: &[u8] = b"C";
+const LEANTERM_KV_START_BYTE: &[u8] = b"A";
+const LEANTERM_KV_ENTRY_BYTE: &[u8] = b"B";
+const LEANTERM_KV_END_BYTE: &[u8] = b"C";
 
 /// Parse colors in XParseColor format.
 #[allow(dead_code)]
@@ -246,7 +246,7 @@ impl DcsData {
 /// to issue multiple updates to the state of the PTY without causing a redraw
 /// between each update.
 ///
-/// There are two mechanisms to prevent Warp from falling too behind:
+/// There are two mechanisms to prevent Leanterm from falling too behind:
 /// 1. a timeout. After [`SYNC_OUTPUT_MAX_TIMEOUT`] has elapsed, a redraw will be forced.
 /// 2. a max buffer limit. After [`SYNC_OUTPUT_MAX_BUFFER_SIZE`] bytes have been buffered,
 ///    a redraw will be forced.
@@ -609,12 +609,12 @@ impl<'a, H: Handler + 'a, W: io::Write> Performer<'a, H, W> {
             }
             Ok(DProtoHook::Clear { value }) => self.handler.clear(value),
             Ok(DProtoHook::InitSubshell { value }) => self.handler.init_subshell(value),
-            Ok(DProtoHook::SourcedRcFileForWarp { .. }) => {
-                // The SourcedRCFileForWarp hook should only be emitted by the
+            Ok(DProtoHook::SourcedRcFileForLeanterm { .. }) => {
+                // The SourcedRCFileForLeanterm hook should only be emitted by the
                 // shell without hex encoding. The RC file snippet given to
                 // users is not hex-encoded for the sake of transparency and
                 // debugability.
-                report_error!("Received hex-encoded SourcedRcFileForWarp escape sequence.");
+                report_error!("Received hex-encoded SourcedRcFileForLeanterm escape sequence.");
             }
             Ok(DProtoHook::FinishUpdate { value }) => self.handler.finish_update(value),
             Ok(DProtoHook::ExitShell { value }) => self.handler.exit_shell(value),
@@ -629,7 +629,7 @@ impl<'a, H: Handler + 'a, W: io::Write> Performer<'a, H, W> {
     /// Calls the appropriate `ansi::Handler` function according to the given hook. This function
     /// assumes that the hook was never encoded.
     fn handle_unencoded_hook(&mut self, hook: Result<DProtoHook, serde_json::Error>) {
-        // Currently, only the `SourcedRcFileForWarp`, `InitShell`, and `InitSubshell` DCS's may
+        // Currently, only the `SourcedRcFileForLeanterm`, `InitShell`, and `InitSubshell` DCS's may
         // be emitted without hex-encoding -- other DCS hooks should be sent hex-encoded.
         // This is because we can guarantee that theses RC file hook don't contain non-ASCII chars
         // that might otherwise corrupt parsing of the PTY output (the same can't be said for the
@@ -644,14 +644,14 @@ impl<'a, H: Handler + 'a, W: io::Write> Performer<'a, H, W> {
             Ok(DProtoHook::InitSubshell { value }) => {
                 self.handler.init_subshell(value);
             }
-            Ok(DProtoHook::SourcedRcFileForWarp { value }) => {
+            Ok(DProtoHook::SourcedRcFileForLeanterm { value }) => {
                 self.handler.sourced_rc_file(value);
             }
             Ok(_) => {
-                report_error!("Received non hex-encoded hook that is not SourcedRcFileForWarp");
+                report_error!("Received non hex-encoded hook that is not SourcedRcFileForLeanterm");
             }
             Err(err) => {
-                log::warn!("Received malformed SourcedRcFileForWarp hook {err:#}");
+                log::warn!("Received malformed SourcedRcFileForLeanterm hook {err:#}");
             }
         }
     }
@@ -681,14 +681,14 @@ impl<'a, H: Handler + 'a, W: io::Write> Performer<'a, H, W> {
 
     fn handle_kv_marker(&mut self, params: &[&[u8]]) {
         match params.get(2) {
-            Some(&WARP_KV_START_BYTE) => {
+            Some(&LEANTERM_KV_START_BYTE) => {
                 let Some(hook) = params.get(3).map(|data| String::from_utf8_lossy(data)) else {
                     log::warn!("Start pending hook OSC did not contain shell hook");
                     return;
                 };
                 self.handler.start_receiving_hook(hook.into());
             }
-            Some(&WARP_KV_END_BYTE) => {
+            Some(&LEANTERM_KV_END_BYTE) => {
                 let Some(pending_shell_hook) = self.handler.finish_receiving_hook() else {
                     return;
                 };
@@ -705,7 +705,7 @@ impl<'a, H: Handler + 'a, W: io::Write> Performer<'a, H, W> {
                 );
                 self.handle_decoded_hook(Ok(hook));
             }
-            Some(&WARP_KV_ENTRY_BYTE) => {
+            Some(&LEANTERM_KV_ENTRY_BYTE) => {
                 let Some(key) = params.get(3) else {
                     log::warn!("Pending hook update OSC did not contain key");
                     return;
@@ -1099,22 +1099,24 @@ where
                 }
             }
 
-            // Received a Warp OSC used for in-band generators.
-            WARP_IN_BAND_GENERATOR_OSC_MARKER => match params.get(1) {
-                Some(&WARP_IN_BAND_GENERATOR_START_BYTE) => {
-                    log::info!("Received a Warp OSC marker for starting in-band command output.");
+            // Received a Leanterm OSC used for in-band generators.
+            LEANTERM_IN_BAND_GENERATOR_OSC_MARKER => match params.get(1) {
+                Some(&LEANTERM_IN_BAND_GENERATOR_START_BYTE) => {
+                    log::info!(
+                        "Received a Leanterm OSC marker for starting in-band command output."
+                    );
                     self.handler.start_in_band_command_output();
                 }
-                Some(&WARP_IN_BAND_GENERATOR_END_BYTE) => {
+                Some(&LEANTERM_IN_BAND_GENERATOR_END_BYTE) => {
                     self.handler.end_in_band_command_output(true);
                 }
                 _ => {
-                    log::warn!("Received a Warp OSC marker missing required param.");
+                    log::warn!("Received a Leanterm OSC marker missing required param.");
                 }
             },
 
-            // Received a Warp OSC used for shell hooks.
-            WARP_OSC_MARKER => {
+            // Received a Leanterm OSC used for shell hooks.
+            LEANTERM_OSC_MARKER => {
                 let Some(json_marker_char) = params
                     .get(1)
                     .map(|json_marker_bytes| String::from_utf8_lossy(json_marker_bytes))
@@ -1131,12 +1133,12 @@ where
                             .get(2)
                             .map(|osc_data| String::from_utf8_lossy(osc_data))
                         else {
-                            log::warn!("Warp OSC marker did not contain payload");
+                            log::warn!("Leanterm OSC marker did not contain payload");
                             return;
                         };
                         safe_debug!(
-                            safe: ("Received Warp OSC string for shell hook"),
-                            full: ("Received Warp OSC string for shell hook with JSON payload: {:?}", data_str)
+                            safe: ("Received Leanterm OSC string for shell hook"),
+                            full: ("Received Leanterm OSC string for shell hook with JSON payload: {:?}", data_str)
                         );
                         let decoded_data = hex::decode(&*data_str);
                         self.handle_decoded_data(decoded_data);
@@ -1147,12 +1149,12 @@ where
                             .get(2)
                             .map(|osc_data| String::from_utf8_lossy(osc_data))
                         else {
-                            log::warn!("Warp OSC marker did not contain payload");
+                            log::warn!("Leanterm OSC marker did not contain payload");
                             return;
                         };
                         safe_debug!(
-                            safe: ("Received Warp OSC string for shell hook"),
-                            full: ("Received Warp OSC string for shell hook with JSON payload: {:?}", data_str)
+                            safe: ("Received Leanterm OSC string for shell hook"),
+                            full: ("Received Leanterm OSC string for shell hook with JSON payload: {:?}", data_str)
                         );
                         let hook = serde_json::from_str::<DProtoHook>(&data_str);
                         self.handle_unencoded_hook(hook)
@@ -1167,23 +1169,23 @@ where
                 }
             }
 
-            WARP_RESET_GRID_OSC_MARKER => {
-                log::debug!("Received Warp OSC string for reset grid");
+            LEANTERM_RESET_GRID_OSC_MARKER => {
+                log::debug!("Received Leanterm OSC string for reset grid");
                 self.handler.on_reset_grid();
             }
 
-            // Received a Warp OSC used for completions.
-            WARP_COMPLETIONS_OSC_MARKER => match params.get(1) {
-                Some(&WARP_COMPLETIONS_START_BYTE) => {
+            // Received a Leanterm OSC used for completions.
+            LEANTERM_COMPLETIONS_OSC_MARKER => match params.get(1) {
+                Some(&LEANTERM_COMPLETIONS_START_BYTE) => {
                     self.handler.start_completions_output();
                 }
-                Some(&WARP_COMPLETIONS_END_BYTE) => {
+                Some(&LEANTERM_COMPLETIONS_END_BYTE) => {
                     self.handler.end_completions_output();
                 }
-                Some(&WARP_COMPLETIONS_MATCH_RESULT_BYTE) => {
+                Some(&LEANTERM_COMPLETIONS_MATCH_RESULT_BYTE) => {
                     let Some(match_text) = decode_hex_completions_payload(params.get(2)) else {
                         log::warn!(
-                            "Warp completions match result OSC marker was missing or had an \
+                            "Leanterm completions match result OSC marker was missing or had an \
                              invalid hex payload; skipping this match"
                         );
                         return;
@@ -1194,24 +1196,24 @@ where
                     self.handler
                         .on_completion_result_received(shell_completion_result);
                 }
-                Some(&WARP_COMPLETIONS_REPLACEMENT_SPAN_BYTE) => {
+                Some(&LEANTERM_COMPLETIONS_REPLACEMENT_SPAN_BYTE) => {
                     let Some(data_str) = params
                         .get(2)
                         .map(|osc_data| String::from_utf8_lossy(osc_data))
                     else {
                         log::warn!(
-                            "Warp completions replacement span OSC marker did not contain payload"
+                            "Leanterm completions replacement span OSC marker did not contain payload"
                         );
                         return;
                     };
                     let Some((start_str, length_str)) = data_str.split_once(',') else {
                         safe_warn!(
                             safe: (
-                                "Warp completions replacement span OSC marker payload was not a \
+                                "Leanterm completions replacement span OSC marker payload was not a \
                                  comma-separated pair"
                             ),
                             full: (
-                                "Warp completions replacement span OSC marker payload was not a \
+                                "Leanterm completions replacement span OSC marker payload was not a \
                                  comma-separated pair: {data_str:?}"
                             )
                         );
@@ -1222,11 +1224,11 @@ where
                     else {
                         safe_warn!(
                             safe: (
-                                "Warp completions replacement span OSC marker payload was not a \
+                                "Leanterm completions replacement span OSC marker payload was not a \
                                  pair of non-negative integers"
                             ),
                             full: (
-                                "Warp completions replacement span OSC marker payload was not a \
+                                "Leanterm completions replacement span OSC marker payload was not a \
                                  pair of non-negative integers: {data_str:?}"
                             )
                         );
@@ -1235,7 +1237,7 @@ where
                     self.handler
                         .on_completion_replacement_span_received(start, length);
                 }
-                Some(bytes) if bytes.starts_with(WARP_COMPLETIONS_MATCH_UPDATE_METADATA) => {
+                Some(bytes) if bytes.starts_with(LEANTERM_COMPLETIONS_MATCH_UPDATE_METADATA) => {
                     let Ok(parameter) = String::from_utf8(bytes.to_vec()) else {
                         log::warn!(
                             "Unable to convert update completions match parameter into a string"
@@ -1255,11 +1257,11 @@ where
                         _ => {
                             safe_warn!(
                                 safe: (
-                                    "Invalid Warp OSC marker parameter for completions match \
+                                    "Invalid Leanterm OSC marker parameter for completions match \
                                      metadata"
                                 ),
                                 full: (
-                                    "Invalid Warp OSC marker parameter for completions match \
+                                    "Invalid Leanterm OSC marker parameter for completions match \
                                      metadata: {parameter}"
                                 )
                             );
@@ -1267,7 +1269,9 @@ where
                     }
                 }
                 _ => {
-                    log::warn!("Received a Warp OSC completions marker missing required param.");
+                    log::warn!(
+                        "Received a Leanterm OSC completions marker missing required param."
+                    );
                 }
             },
 

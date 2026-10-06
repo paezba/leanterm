@@ -4,11 +4,11 @@ use std::path::{Path, PathBuf};
 
 use futures::future::{Either, ready};
 #[cfg(test)]
-use virtual_fs::{Stub, VirtualFS};
-use leanterm_util::standardized_path::StandardizedPath;
-#[cfg(test)]
 use leanterm_ui_core::r#async::FutureId;
 use leanterm_ui_core::{AppContext, Entity, ModelContext, ModelHandle, SingletonEntity};
+use leanterm_util::standardized_path::StandardizedPath;
+#[cfg(test)]
+use virtual_fs::{Stub, VirtualFS};
 
 use crate::{DirectoryWatcher, Repository};
 

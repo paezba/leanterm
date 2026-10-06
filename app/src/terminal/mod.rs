@@ -5,19 +5,19 @@ pub use model::terminal_model::TerminalModel;
 use ordered_float::Float;
 mod package_installers;
 pub use history::{History, HistoryEntry, HistoryEvent, LinkedWorkflowData, ShellHost};
-pub use view::{Event, TerminalView};
 pub use leanterm_terminal::shell::{self, ShellLaunchData};
 pub use leanterm_terminal::{CellSizeAndWindowPadding, ClipboardType, SizeInfo};
 use leanterm_ui::geometry::vector::Vector2F;
 use leanterm_ui::units::Lines;
 use leanterm_ui::{AppContext, SingletonEntity, WindowId};
+pub use view::{Event, TerminalView};
 mod block_list_settings;
 
 mod alias;
 pub(crate) mod alt_screen;
 pub mod alt_screen_reporting;
 mod audible_bell;
-mod shimmering_warp_loading_text;
+mod shimmering_leanterm_loading_text;
 pub use audible_bell::AudibleBell;
 pub mod available_shells;
 
@@ -63,11 +63,11 @@ pub mod session_settings;
 pub mod settings;
 mod shell_launch_state;
 
+pub mod leantermify;
 pub mod ssh;
 pub mod terminal_manager;
 mod terminal_size_element;
 pub mod view;
-pub mod warpify;
 mod waterfall_gap_element;
 mod writeable_pty;
 #[cfg(windows)]

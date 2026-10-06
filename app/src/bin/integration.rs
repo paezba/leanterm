@@ -2,10 +2,10 @@ use anyhow::Result;
 use clap::Parser;
 use leanterm_cli::WorkerCommand;
 use leanterm_core::AppId;
-use leanterm_core::channel::{Channel, ChannelConfig, ChannelState, WarpServerConfig};
+use leanterm_core::channel::{Channel, ChannelConfig, ChannelState, LeantermServerConfig};
 
 #[derive(Debug, Default, Parser, Clone)]
-#[command(name = "warp-integration")]
+#[command(name = "leanterm-integration")]
 #[clap(args_conflicts_with_subcommands = true)]
 pub struct Args {
     #[command(subcommand)]
@@ -18,15 +18,15 @@ pub fn main() -> Result<()> {
         ChannelConfig {
             app_id: AppId::new(
                 "dev",
-                "warp",
+                "leanterm",
                 if cfg!(target_os = "macos") {
-                    "Warp-Integration"
+                    "Leanterm-Integration"
                 } else {
-                    "WarpIntegration"
+                    "LeantermIntegration"
                 },
             ),
-            logfile_name: "warp_integration.log".into(),
-            server_config: WarpServerConfig {
+            logfile_name: "leanterm_integration.log".into(),
+            server_config: LeantermServerConfig {
                 // Use an IP in the IANA testing range, with the TCP discard port, to
                 // black-hole server traffic.
                 server_root_url: "http://192.0.2.0:9".into(),

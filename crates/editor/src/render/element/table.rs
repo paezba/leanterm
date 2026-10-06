@@ -1,6 +1,5 @@
 use std::ops::Range;
 
-use string_offset::CharOffset;
 use leanterm_ui_core::elements::{
     Axis, CornerRadius, DEFAULT_SCROLL_WHEEL_PIXELS_PER_LINE, Radius, ScrollData,
     ScrollbarAppearance, ScrollbarGeometry, ScrollbarWidth, compute_scrollbar_geometry,
@@ -11,6 +10,7 @@ use leanterm_ui_core::geometry::rect::RectF;
 use leanterm_ui_core::geometry::vector::{Vector2F, vec2f};
 use leanterm_ui_core::units::{IntoPixels, Pixels};
 use leanterm_ui_core::{AppContext, ClipBounds, Event, EventContext};
+use string_offset::CharOffset;
 
 use super::paint::{CursorData, CursorDisplayType};
 use super::{RenderContext, RenderableBlock};
@@ -112,7 +112,8 @@ impl RenderableBlock for RenderableTable {
         &self.viewport_item
     }
 
-    fn layout(&mut self, _: &RenderState, _: &mut leanterm_ui_core::LayoutContext, _: &AppContext) {}
+    fn layout(&mut self, _: &RenderState, _: &mut leanterm_ui_core::LayoutContext, _: &AppContext) {
+    }
 
     fn paint(&mut self, model: &RenderState, ctx: &mut RenderContext, _app: &AppContext) {
         let content = model.content();

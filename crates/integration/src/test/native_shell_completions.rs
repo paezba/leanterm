@@ -9,7 +9,6 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use settings::Setting as _;
 use leanterm::integration_testing::input::{input_is_empty, tab_completions_menu_is_open};
 use leanterm::integration_testing::step::new_step_with_default_assertions;
 use leanterm::integration_testing::terminal::util::{
@@ -22,11 +21,12 @@ use leanterm::integration_testing::terminal::{
 use leanterm::integration_testing::view_getters::{
     single_input_suggestions_view_for_tab, single_input_view_for_tab, single_terminal_view_for_tab,
 };
-use leanterm::settings::{NativeShellCompletionsEnabled, WarpCompletionsEnabled};
+use leanterm::settings::{LeantermCompletionsEnabled, NativeShellCompletionsEnabled};
 use leanterm::terminal::model::block::TranscriptScope;
 use leanterm::terminal::shell::ShellType;
 use leanterm_ui_core::async_assert;
 use leanterm_ui_core::units::Lines;
+use settings::Setting as _;
 
 use super::new_builder;
 use crate::Builder;
@@ -69,7 +69,7 @@ pub fn test_zsh_native_completions_without_compinit_use_filepaths() -> Builder {
             new_step_with_default_assertions(
                 "Request filepaths without zsh completion initialization",
             )
-            .with_typed_characters(&["warptool ./native_a"])
+            .with_typed_characters(&["leantermtool ./native_a"])
             .with_keystrokes(&["tab"])
             .set_timeout(Duration::from_secs(30))
             .add_named_assertion(
@@ -98,12 +98,12 @@ pub fn test_zsh_native_completions_without_compinit_use_filepaths() -> Builder {
 /// effect once the app starts.
 fn enable_native_shell_completions_feature() {}
 
-/// Warp completions off, native on, resolving to `CompletionSources::NativeOnly`: the shell is
-/// asked before Warp considers file-path suggestions.
+/// Leanterm completions off, native on, resolving to `CompletionSources::NativeOnly`: the shell is
+/// asked before Leanterm considers file-path suggestions.
 fn native_only_completion_defaults() -> HashMap<String, String> {
     HashMap::from([
         (
-            WarpCompletionsEnabled::storage_key().to_string(),
+            LeantermCompletionsEnabled::storage_key().to_string(),
             "false".to_string(),
         ),
         (
@@ -113,12 +113,12 @@ fn native_only_completion_defaults() -> HashMap<String, String> {
     ])
 }
 
-/// Both toggles on, resolving to `CompletionSources::WarpThenNative`: the bundled specs answer
+/// Both toggles on, resolving to `CompletionSources::LeantermThenNative`: the bundled specs answer
 /// first and the shell is asked only when they come back empty.
 fn specs_first_completion_defaults() -> HashMap<String, String> {
     HashMap::from([
         (
-            WarpCompletionsEnabled::storage_key().to_string(),
+            LeantermCompletionsEnabled::storage_key().to_string(),
             "true".to_string(),
         ),
         (
@@ -137,7 +137,7 @@ fn shell_supports_native_completions() -> bool {
     )
 }
 
-/// Registers a completion for a made-up, spec-less command (`warptool`), so a request for it can
+/// Registers a completion for a made-up, spec-less command (`leantermtool`), so a request for it can
 /// only be answered by the shell's own machinery. `apple` and `avocado` match the typed `a` prefix
 /// and `banana` does not; two matches sharing no prefix beyond `a` mean Tab opens the menu instead
 /// of extending the line. With `with_marker`, the completion also writes the marker file.
@@ -150,16 +150,16 @@ fn write_specless_completion_rc_files(dir: impl AsRef<Path>, with_marker: bool) 
     write_rc_files_for_test(
         &dir,
         format!(
-            "_warptool_complete() {{\n  {bash_marker}\
+            "_leantermtool_complete() {{\n  {bash_marker}\
                local cur=${{COMP_WORDS[COMP_CWORD]}}\n  \
                COMPREPLY=( $(compgen -W \"apple avocado banana\" -- \"$cur\") )\n\
              }}\n\
-             complete -F _warptool_complete warptool\n"
+             complete -F _leantermtool_complete leantermtool\n"
         ),
         [ShellRcType::Bash],
     );
 
-    // Warp's bootstrap does not initialize zsh's completion system, so `compdef` needs it here.
+    // Leanterm's bootstrap does not initialize zsh's completion system, so `compdef` needs it here.
     let zsh_marker = if with_marker {
         format!("printf 'x' >> \"$HOME/{SHELL_ASKED_MARKER_FILE}\"; ")
     } else {
@@ -170,8 +170,8 @@ fn write_specless_completion_rc_files(dir: impl AsRef<Path>, with_marker: bool) 
         format!(
             "autoload -Uz compinit\n\
              compinit -u\n\
-             _warptool_complete() {{ {zsh_marker}compadd apple avocado banana }}\n\
-             compdef _warptool_complete warptool\n"
+             _leantermtool_complete() {{ {zsh_marker}compadd apple avocado banana }}\n\
+             compdef _leantermtool_complete leantermtool\n"
         ),
         [ShellRcType::Zsh],
     );
@@ -185,11 +185,11 @@ fn write_specless_completion_rc_files(dir: impl AsRef<Path>, with_marker: bool) 
     };
     write_rc_files_for_test(
         &dir,
-        format!("complete -c warptool -f -a '{fish_candidates}'\n"),
+        format!("complete -c leantermtool -f -a '{fish_candidates}'\n"),
         [ShellRcType::Fish],
     );
 
-    // pwsh is launched `-NoProfile`, but Warp's bootstrap dot-sources the user profile afterward,
+    // pwsh is launched `-NoProfile`, but Leanterm's bootstrap dot-sources the user profile afterward,
     // so a profile written here is still sourced.
     let pwsh_marker = if with_marker {
         format!("  [System.IO.File]::AppendAllText(\"$env:HOME/{SHELL_ASKED_MARKER_FILE}\", 'x')\n")
@@ -199,7 +199,7 @@ fn write_specless_completion_rc_files(dir: impl AsRef<Path>, with_marker: bool) 
     write_rc_files_for_test(
         &dir,
         format!(
-            "Register-ArgumentCompleter -Native -CommandName warptool -ScriptBlock {{\n  \
+            "Register-ArgumentCompleter -Native -CommandName leantermtool -ScriptBlock {{\n  \
                param($wordToComplete, $commandAst, $cursorPosition)\n\
              {pwsh_marker}  \
                @('apple','avocado','banana') | Where-Object {{ $_ -like \"$wordToComplete*\" }} | ForEach-Object {{\n    \
@@ -211,7 +211,7 @@ fn write_specless_completion_rc_files(dir: impl AsRef<Path>, with_marker: bool) 
     );
 }
 
-/// Overrides `git`'s completion -- a command with a bundled Warp spec -- with an instrumented one
+/// Overrides `git`'s completion -- a command with a bundled Leanterm spec -- with an instrumented one
 /// offering sentinels the spec would never produce, so a test can tell whether the shell was asked
 /// for a spec-backed command. Two sentinels rather than one because a lone match is inserted
 /// straight into the buffer instead of opening the menu.
@@ -262,10 +262,11 @@ fn write_spec_command_marker_override_rc_files(dir: impl AsRef<Path>) {
 
 /// Asserts no user-visible block holds the generator command. Its own block is hidden (zero
 /// height), so a non-zero-height block carrying it is the ghost block this guards against. The name
-/// is normalized to match both `warp_run_generator_command*` and `Warp-Run-GeneratorCommand*`.
-fn assert_no_visible_generator_block()
--> impl Fn(&mut leanterm_ui_core::App, leanterm_ui_core::WindowId) -> leanterm_ui_core::integration::AssertionOutcome
-{
+/// is normalized to match both `leanterm_run_generator_command*` and `Leanterm-Run-GeneratorCommand*`.
+fn assert_no_visible_generator_block() -> impl Fn(
+    &mut leanterm_ui_core::App,
+    leanterm_ui_core::WindowId,
+) -> leanterm_ui_core::integration::AssertionOutcome {
     move |app, window_id| {
         let terminal_view = single_terminal_view_for_tab(app, window_id, 0);
         terminal_view.read(app, |view, _ctx| {
@@ -281,7 +282,7 @@ fn assert_no_visible_generator_block()
                     command
                         .to_ascii_lowercase()
                         .replace(['_', '-'], "")
-                        .contains("warprungeneratorcommand")
+                        .contains("leantermrungeneratorcommand")
                 })
                 .collect();
             async_assert!(
@@ -304,8 +305,8 @@ pub fn test_native_shell_completions_menu() -> Builder {
         .with_step(wait_until_bootstrapped_single_pane_for_tab(0))
         .with_step(clear_blocklist_to_remove_bootstrapped_blocks())
         .with_step(
-            new_step_with_default_assertions("Type 'warptool a' and press tab")
-                .with_typed_characters(&["warptool a"])
+            new_step_with_default_assertions("Type 'leantermtool a' and press tab")
+                .with_typed_characters(&["leantermtool a"])
                 .with_keystrokes(&["tab"])
                 .set_timeout(Duration::from_secs(30))
                 .add_named_assertion(
@@ -337,8 +338,8 @@ pub fn test_native_shell_completions_menu() -> Builder {
                         input.read(app, |view, ctx| {
                             let buffer = view.buffer_text(ctx);
                             async_assert!(
-                                buffer == "warptool a",
-                                "expected the input to be left as 'warptool a', got {buffer:?}"
+                                buffer == "leantermtool a",
+                                "expected the input to be left as 'leantermtool a', got {buffer:?}"
                             )
                         })
                     },
@@ -361,7 +362,7 @@ pub fn test_command_runs_cleanly_after_native_shell_completion() -> Builder {
         .with_step(clear_blocklist_to_remove_bootstrapped_blocks())
         .with_step(
             new_step_with_default_assertions("Request completions for a spec-less command")
-                .with_typed_characters(&["warptool a"])
+                .with_typed_characters(&["leantermtool a"])
                 .with_keystrokes(&["tab"])
                 .set_timeout(Duration::from_secs(30))
                 .add_named_assertion(
@@ -398,8 +399,8 @@ pub fn test_native_shell_completions_used_when_no_bundled_spec() -> Builder {
         .with_step(wait_until_bootstrapped_single_pane_for_tab(0))
         .with_step(clear_blocklist_to_remove_bootstrapped_blocks())
         .with_step(
-            new_step_with_default_assertions("Type 'warptool a' and press tab")
-                .with_typed_characters(&["warptool a"])
+            new_step_with_default_assertions("Type 'leantermtool a' and press tab")
+                .with_typed_characters(&["leantermtool a"])
                 .with_keystrokes(&["tab"])
                 .set_timeout(Duration::from_secs(30))
                 .add_named_assertion(

@@ -7,12 +7,6 @@ use std::path::Path;
 
 use code_diff::diff_validation::DiffDelta;
 use lazy_static::lazy_static;
-use num_traits::SaturatingSub;
-use pathfinder_geometry::vector::vec2f;
-use settings::Setting as _;
-use string_offset::CharOffset;
-use vec1::{Vec1, vec1};
-use vim::vim::{Direction, InsertPosition, VimMode, VimModel, VimState, VimSubscriber};
 use leanterm_core::platform::SessionPlatform;
 use leanterm_editor::content::buffer::{
     Buffer, BufferEditAction, EditOrigin, InitialBufferState, ToBufferCharOffset as _,
@@ -31,8 +25,6 @@ use leanterm_editor::render::model::{
     ExpansionType, LineCount, ParagraphStyles, RichTextStyles,
 };
 use leanterm_editor::search::{MATCH_FILL, SELECTED_MATCH_FILL, SearchEvent, Searcher};
-use leanterm_util::content_version::ContentVersion;
-use leanterm_util::standardized_path::StandardizedPath;
 use leanterm_ui::elements::new_scrollable::{
     AxisConfiguration, DualAxisConfig, NewScrollableElement, ScrollableAppearance,
 };
@@ -51,6 +43,14 @@ use leanterm_ui::{
     AppContext, BlurContext, CursorInfo, Element, Entity, FocusContext, ModelHandle,
     SingletonEntity, View, ViewContext, ViewHandle, WeakViewHandle, WindowId,
 };
+use leanterm_util::content_version::ContentVersion;
+use leanterm_util::standardized_path::StandardizedPath;
+use num_traits::SaturatingSub;
+use pathfinder_geometry::vector::vec2f;
+use settings::Setting as _;
+use string_offset::CharOffset;
+use vec1::{Vec1, vec1};
+use vim::vim::{Direction, InsertPosition, VimMode, VimModel, VimState, VimSubscriber};
 
 use crate::appearance::Appearance;
 use crate::code::editor::EditorReviewComment;
@@ -1006,12 +1006,12 @@ impl CodeEditorView {
                         results
                             .matches
                             .iter()
-                            .map(
-                                |match_result| leanterm_editor::content::buffer::SelectionOffsets {
+                            .map(|match_result| {
+                                leanterm_editor::content::buffer::SelectionOffsets {
                                     head: match_result.end,
                                     tail: match_result.start,
-                                },
-                            )
+                                }
+                            })
                             .collect();
 
                     // Set multiple selections on the editor to highlight all matches

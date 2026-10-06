@@ -1,7 +1,7 @@
-pkgname=warp-terminal@@CHANNEL_SUFFIX@@
+pkgname=leanterm@@CHANNEL_SUFFIX@@
 pkgver=@@VERSION@@
 pkgrel=@@RELEASE@@
-pkgdesc="Warp, the Rust-based terminal for developers and teams"
+pkgdesc="Leanterm, the Rust-based terminal for developers and teams"
 arch=('@@ARCH@@')
 url="https://warp.dev"
 license=('custom')

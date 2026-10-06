@@ -1,5 +1,5 @@
-use settings::SupportedPlatforms;
 use leanterm_core::define_settings_group;
+use settings::SupportedPlatforms;
 
 use crate::banner::BannerState;
 

@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use ordered_float::OrderedFloat;
 use leanterm_core::ui::builder;
 use leanterm_ui::elements::{
     Align, ConstrainedBox, Container, CrossAxisAlignment, Flex, Highlight, Icon, MainAxisAlignment,
@@ -9,6 +8,7 @@ use leanterm_ui::elements::{
 use leanterm_ui::fonts::{Properties, Weight};
 use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
 use leanterm_ui::{AppContext, Element, SingletonEntity};
+use ordered_float::OrderedFloat;
 
 use crate::appearance::Appearance;
 use crate::search::command_search::searcher::{AcceptedHistoryItem, CommandSearchItemAction};

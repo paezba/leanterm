@@ -9,10 +9,10 @@ use std::pin::{Pin, pin};
 use async_channel::Receiver;
 use enclose::enclose;
 use futures::StreamExt;
-use rand::prelude::StdRng;
-use test::Network;
 use leanterm_ui::color::ColorU;
 use leanterm_ui::{App, ModelHandle};
+use rand::prelude::StdRng;
+use test::Network;
 
 use super::*;
 use crate::editor::soft_wrap::ClampDirection;

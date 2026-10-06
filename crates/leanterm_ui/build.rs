@@ -1,5 +1,5 @@
 // We can use `std::process:Command` here because this is invoked within a build script,
-// _not_ within the Warp binary (where it could cause a terminal to temporarily flash on
+// _not_ within the Leanterm binary (where it could cause a terminal to temporarily flash on
 // Windows).
 #![allow(clippy::disallowed_types)]
 
@@ -81,7 +81,7 @@ fn compile_metal_shaders() {
 
     // LOCAL VERIFICATION ONLY (never commit): this machine has no Metal
     // toolchain; an empty library satisfies `include_bytes!` for `cargo check`.
-    if env::var("WARP_LOCAL_SKIP_METAL").is_ok() {
+    if env::var("LEANTERM_LOCAL_SKIP_METAL").is_ok() {
         std::fs::write(lib_path, b"").expect("write empty metallib");
         return;
     }
@@ -182,7 +182,7 @@ fn compile_objc_lib() {
         .file("src/platform/mac/objc/window.m")
         .file("src/platform/mac/objc/fullscreen_queue.m")
         .file("src/platform/mac/objc/window_blur.m")
-        .compile("warp_objc");
+        .compile("leanterm_objc");
 }
 
 /// Determine the path containing the macOS standard libraries by querying

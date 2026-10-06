@@ -5,9 +5,9 @@ use leanterm_core::channel::Channel;
 mod miss_cache;
 pub mod registry;
 
-pub use registry::CommandRegistry;
 #[cfg(feature = "test-util")]
-use warp_command_signatures::Signature;
+use leanterm_command_signatures::Signature;
+pub use registry::CommandRegistry;
 
 static GLOBAL_REGISTRY: OnceLock<Arc<CommandRegistry>> = OnceLock::new();
 
@@ -34,26 +34,26 @@ impl CommandRegistry {
         let registry = CommandRegistry::new(
             |command| {
                 let start = instant::Instant::now();
-                let signature = warp_command_signatures::signature_by_name(command);
+                let signature = leanterm_command_signatures::signature_by_name(command);
                 log::debug!(
                     "Lazily loaded command signature for {command} in {}s",
                     start.elapsed().as_secs_f32()
                 );
                 signature
             },
-            warp_command_signatures::dynamic_command_signature_data(),
+            leanterm_command_signatures::dynamic_command_signature_data(),
         );
 
-        Self::register_warp_signatures(&registry);
+        Self::register_leanterm_signatures(&registry);
 
         registry
     }
 
-    /// Register signatures for Warp CLI commands.
+    /// Register signatures for Leanterm CLI commands.
     ///
     /// Ideally this would be done outside of the `leanterm_completer` crate, but it's not currently
     /// possible to configure the shared [`Self::global_instance`].
-    fn register_warp_signatures(registry: &Self) {
+    fn register_leanterm_signatures(registry: &Self) {
         // We use the current instance's signature for each channel. This is not entirely accurate - for example:
         // * The user might be SSHed into a host with a different version of the CLI
         // * The user might be using Preview, which will have different features than Stable.
@@ -77,13 +77,13 @@ impl CommandRegistry {
 
     /// Returns a [`CommandRegistry`] that uses the provided set of signatures
     /// and generators.  This does not utilize any data from the
-    /// warp-command-signatures crate.
+    /// leanterm-command-signatures crate.
     #[cfg(feature = "test-util")]
     pub fn new_for_test(
         signatures: impl IntoIterator<Item = Signature>,
         generators: std::collections::HashMap<
             String,
-            warp_command_signatures::DynamicCompletionData,
+            leanterm_command_signatures::DynamicCompletionData,
         >,
     ) -> Self {
         let registry = CommandRegistry::new(|_| None, generators);

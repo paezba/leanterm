@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
 use leanterm_ui::elements::MouseStateHandle;
 use leanterm_ui::{AppContext, EntityId, SingletonEntity, ViewContext, ViewHandle, WindowId};
+use serde::{Deserialize, Serialize};
 
 use crate::appearance::Appearance;
 use crate::pane_group::PaneId;
@@ -40,7 +40,7 @@ pub(super) struct WorkspaceMouseStates {
     pub(super) title_bar_search_bar: MouseStateHandle,
     pub(super) team_switcher_pill: MouseStateHandle,
     #[cfg(target_family = "wasm")]
-    pub(super) warp_logo: MouseStateHandle,
+    pub(super) leanterm_logo: MouseStateHandle,
 }
 
 // TODO change this struct to enum (as we can only have 1 of them set to true at a time)
@@ -249,7 +249,7 @@ pub enum TerminalSessionFallbackBehavior {
 /// Given a [`WindowId`], see if its [`Workspace`] contains an active [`TerminalView`] and return
 /// that.
 ///
-/// Note that "active" is not the same as "focused" in Warp's pane management.
+/// Note that "active" is not the same as "focused" in Leanterm's pane management.
 pub fn active_terminal_in_window<T, F>(
     window_id: WindowId,
     ctx: &mut AppContext,

@@ -1,7 +1,6 @@
 //! This module contains the code for the editable accept autosuggestion keybinding
 //! shown inline in the input.
 use lazy_static::lazy_static;
-use pathfinder_geometry::vector::vec2f;
 use leanterm_core::ui::theme::Fill;
 use leanterm_ui::elements::{
     Border, ChildAnchor, ChildView, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment,
@@ -12,7 +11,10 @@ use leanterm_ui::keymap::Keystroke;
 use leanterm_ui::platform::Cursor;
 use leanterm_ui::ui_components::components::{UiComponent, UiComponentStyles};
 use leanterm_ui::ui_components::keyboard_shortcut::KeyboardShortcut;
-use leanterm_ui::{AppContext, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle};
+use leanterm_ui::{
+    AppContext, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
+};
+use pathfinder_geometry::vector::vec2f;
 
 use super::EditorElement;
 use crate::appearance::Appearance;
@@ -303,7 +305,7 @@ impl View for AcceptAutosuggestionKeybinding {
             let chevron_down = Container::new(
                 ConstrainedBox::new(
                     Icon::ArrowDropDown
-                        .to_warpui_icon(Fill::Solid(font_color))
+                        .to_leanterm_ui_icon(Fill::Solid(font_color))
                         .finish(),
                 )
                 .with_height(height_without_border)

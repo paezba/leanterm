@@ -1,4 +1,4 @@
-use leanterm_ui_core::elements::Icon as WarpUiIcon;
+use leanterm_ui_core::elements::Icon as LeantermUiIcon;
 
 use crate::ui::theme::Fill;
 
@@ -63,9 +63,9 @@ pub enum Icon {
     CloudOffline,
     Compass,
     CreateTeam,
-    WarpDrive,
-    Warp,
-    WarpLogoLight,
+    LeantermDrive,
+    Leanterm,
+    LeantermLogoLight,
     ArrowLeft,
     ArrowBlockLeft,
     ArrowBlockUp,
@@ -211,18 +211,18 @@ pub enum Icon {
     LoadingAgents5,
     LoadingAgents6,
     LoadingAgents7,
-    Warping0,
-    Warping1,
-    Warping2,
-    Warping3,
-    Warping4,
-    Warping5,
-    Warping6,
-    Warping7,
-    Warping8,
-    Warping9,
-    Warping10,
-    Warping11,
+    Leanterming0,
+    Leanterming1,
+    Leanterming2,
+    Leanterming3,
+    Leanterming4,
+    Leanterming5,
+    Leanterming6,
+    Leanterming7,
+    Leanterming8,
+    Leanterming9,
+    Leanterming10,
+    Leanterming11,
     FlipForward,
     PaintBrush,
     GamingPad,
@@ -293,12 +293,12 @@ pub enum Icon {
     AntigravityLogo,
     NLD,
     Oz,
-    /// The Warp "W" glyph used as the agent brand mark (sourced from
-    /// `bundled/svg/warp-drive.svg`). The background and tint color are
+    /// The Leanterm "W" glyph used as the agent brand mark (sourced from
+    /// `bundled/svg/leanterm-drive.svg`). The background and tint color are
     /// the **call site's responsibility** — this variant carries the shape
     /// only. Most surfaces tint it with the surrounding theme color (light
     /// theme: dark glyph; dark theme: light glyph). Kept distinct from
-    /// `Warp` so agent surfaces and non-agent Warp UI (e.g.
+    /// `Leanterm` so agent surfaces and non-agent Leanterm UI (e.g.
     /// `QueryFilter::Drive`) can evolve independently.
     Agent,
     Conversation,
@@ -414,9 +414,9 @@ impl From<Icon> for &'static str {
             Icon::CloudOffline => "bundled/svg/cloud-offline.svg",
             Icon::Compass => "bundled/svg/compass-3.svg",
             Icon::CreateTeam => "bundled/svg/create-team.svg",
-            Icon::WarpDrive => "bundled/svg/warp.svg",
-            Icon::Warp => "bundled/svg/warp-drive.svg",
-            Icon::WarpLogoLight => "bundled/svg/warp-logo-light.svg",
+            Icon::LeantermDrive => "bundled/svg/leanterm.svg",
+            Icon::Leanterm => "bundled/svg/leanterm-drive.svg",
+            Icon::LeantermLogoLight => "bundled/svg/leanterm-logo-light.svg",
             Icon::ArrowLeft => "bundled/svg/arrow-left.svg",
             Icon::ArrowBlockLeft => "bundled/svg/arrow-block-left.svg",
             Icon::ArrowBlockUp => "bundled/svg/arrow-block-up.svg",
@@ -560,18 +560,18 @@ impl From<Icon> for &'static str {
             Icon::LoadingAgents5 => "bundled/svg/loading-agents-06.svg",
             Icon::LoadingAgents6 => "bundled/svg/loading-agents-07.svg",
             Icon::LoadingAgents7 => "bundled/svg/loading-agents-08.svg",
-            Icon::Warping0 => "bundled/svg/warp-loading-0.svg",
-            Icon::Warping1 => "bundled/svg/warp-loading-1.svg",
-            Icon::Warping2 => "bundled/svg/warp-loading-2.svg",
-            Icon::Warping3 => "bundled/svg/warp-loading-3.svg",
-            Icon::Warping4 => "bundled/svg/warp-loading-4.svg",
-            Icon::Warping5 => "bundled/svg/warp-loading-5.svg",
-            Icon::Warping6 => "bundled/svg/warp-loading-6.svg",
-            Icon::Warping7 => "bundled/svg/warp-loading-7.svg",
-            Icon::Warping8 => "bundled/svg/warp-loading-8.svg",
-            Icon::Warping9 => "bundled/svg/warp-loading-9.svg",
-            Icon::Warping10 => "bundled/svg/warp-loading-10.svg",
-            Icon::Warping11 => "bundled/svg/warp-loading-11.svg",
+            Icon::Leanterming0 => "bundled/svg/leanterm-loading-0.svg",
+            Icon::Leanterming1 => "bundled/svg/leanterm-loading-1.svg",
+            Icon::Leanterming2 => "bundled/svg/leanterm-loading-2.svg",
+            Icon::Leanterming3 => "bundled/svg/leanterm-loading-3.svg",
+            Icon::Leanterming4 => "bundled/svg/leanterm-loading-4.svg",
+            Icon::Leanterming5 => "bundled/svg/leanterm-loading-5.svg",
+            Icon::Leanterming6 => "bundled/svg/leanterm-loading-6.svg",
+            Icon::Leanterming7 => "bundled/svg/leanterm-loading-7.svg",
+            Icon::Leanterming8 => "bundled/svg/leanterm-loading-8.svg",
+            Icon::Leanterming9 => "bundled/svg/leanterm-loading-9.svg",
+            Icon::Leanterming10 => "bundled/svg/leanterm-loading-10.svg",
+            Icon::Leanterming11 => "bundled/svg/leanterm-loading-11.svg",
             Icon::FlipForward => "bundled/svg/flip-forward.svg",
             Icon::PaintBrush => "bundled/svg/brush-01.svg",
             Icon::GamingPad => "bundled/svg/gaming-pad-01.svg",
@@ -643,8 +643,8 @@ impl From<Icon> for &'static str {
             Icon::GooseLogo => "bundled/svg/goose.svg",
             Icon::AntigravityLogo => "bundled/svg/antigravity_cli.svg",
             Icon::NLD => "bundled/svg/nld.svg",
-            Icon::Oz => "bundled/svg/warp-3.svg",
-            Icon::Agent => "bundled/svg/warp-drive.svg",
+            Icon::Oz => "bundled/svg/leanterm-3.svg",
+            Icon::Agent => "bundled/svg/leanterm-drive.svg",
             Icon::Conversation => "bundled/svg/conversation.svg",
             Icon::Prompt => "bundled/svg/prompt.svg",
             Icon::Grid => "bundled/svg/grid.svg",
@@ -695,13 +695,13 @@ impl From<Icon> for &'static str {
 }
 
 impl Icon {
-    pub fn to_warpui_icon(self, color: Fill) -> WarpUiIcon {
-        WarpUiIcon::new(self.into(), color.into_solid())
+    pub fn to_leanterm_ui_icon(self, color: Fill) -> LeantermUiIcon {
+        LeantermUiIcon::new(self.into(), color.into_solid())
     }
 
-    pub fn icon_for_key(key: &str) -> Option<WarpUiIcon> {
+    pub fn icon_for_key(key: &str) -> Option<LeantermUiIcon> {
         match key {
-            "⏎" => Some(Self::CornerDownLeft.to_warpui_icon(Fill::black())),
+            "⏎" => Some(Self::CornerDownLeft.to_leanterm_ui_icon(Fill::black())),
             _ => None,
         }
     }

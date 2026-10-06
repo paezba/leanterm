@@ -2,9 +2,9 @@ use std::time::Duration;
 use std::{pin, task};
 
 use futures_lite::{Stream, ready};
+use leanterm_ui::r#async::Timer;
 use pin::Pin;
 use task::{Context, Poll};
-use leanterm_ui::r#async::Timer;
 
 pub struct Throttle<S> {
     period: Duration,

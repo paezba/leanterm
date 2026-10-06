@@ -14,11 +14,11 @@ use alt_screen::{AltScreenFindRun, run_find_on_alt_screen};
 pub use async_find::{AsyncFindController, AsyncFindStatus};
 use block_list::run_find_on_block_list;
 pub use block_list::{BlockGridMatch, BlockListFindRun, BlockListMatch};
+use leanterm_ui::{AppContext, Entity, EntityId, ModelContext, SingletonEntity, ViewHandle};
 use parking_lot::FairMutex;
 use rich_content::FindableRichContentHandle;
 pub use rich_content::{FindableRichContentView, RichContentMatchId};
 use settings::Setting as _;
-use leanterm_ui::{AppContext, Entity, EntityId, ModelContext, SingletonEntity, ViewHandle};
 
 use crate::settings::InputModeSettings;
 use crate::terminal::block_list_element::GridType;

@@ -7,12 +7,10 @@ use std::path::PathBuf;
 use std::rc::Rc;
 
 use chrono::{Duration, Local};
-use pathfinder_color::ColorU;
 use leanterm_core::ui::theme::Fill;
 use leanterm_core::ui::theme::color::internal_colors::{neutral_1, neutral_2, text_sub};
 use leanterm_editor::content::buffer::InitialBufferState;
 use leanterm_editor::render::element::VerticalExpansionBehavior;
-use leanterm_util::standardized_path::StandardizedPath;
 use leanterm_ui::elements::new_scrollable::ScrollableAppearance;
 use leanterm_ui::elements::{
     Border, ChildView, Container, CornerRadius, CrossAxisAlignment, Flex, Hoverable,
@@ -22,7 +20,11 @@ use leanterm_ui::elements::{
 use leanterm_ui::platform::Cursor;
 use leanterm_ui::text_layout::ClipConfig;
 use leanterm_ui::units::Pixels;
-use leanterm_ui::{AppContext, Element, EventContext, SingletonEntity, View, ViewContext, ViewHandle};
+use leanterm_ui::{
+    AppContext, Element, EventContext, SingletonEntity, View, ViewContext, ViewHandle,
+};
+use leanterm_util::standardized_path::StandardizedPath;
+use pathfinder_color::ColorU;
 
 use crate::appearance::Appearance;
 use crate::code::editor::comment_editor::create_readonly_comment_markdown_editor;
@@ -44,7 +46,7 @@ pub(crate) struct HeaderClickHandler {
 /// (rounded corners, neutral background, outline border).
 fn comment_card_container(
     content: Box<dyn Element>,
-    theme: &leanterm_core::ui::theme::WarpTheme,
+    theme: &leanterm_core::ui::theme::LeantermTheme,
 ) -> Box<dyn Element> {
     Container::new(content)
         .with_corner_radius(CornerRadius::with_all(Radius::Pixels(8.)))

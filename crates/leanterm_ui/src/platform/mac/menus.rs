@@ -6,6 +6,12 @@ use std::rc::Rc;
 
 use cocoa::base::{id, nil};
 use lazy_static::lazy_static;
+use leanterm_ui_core::actions::StandardAction;
+use leanterm_ui_core::keymap::Keystroke;
+use leanterm_ui_core::platform::menu::{
+    ItemTriggeredCallback, Menu, MenuBar, MenuItem, MenuItemProperties, MenuItemPropertyChanges,
+    UpdateMenuItemCallback,
+};
 use objc2::rc::{Retained, autoreleasepool};
 use objc2::runtime::Sel;
 use objc2::{MainThreadMarker, Message, sel};
@@ -20,12 +26,6 @@ use objc2_app_kit::{
     NSRunningApplication, NSUpArrowFunctionKey,
 };
 use objc2_foundation::{NSInteger, NSString, ns_string};
-use leanterm_ui_core::actions::StandardAction;
-use leanterm_ui_core::keymap::Keystroke;
-use leanterm_ui_core::platform::menu::{
-    ItemTriggeredCallback, Menu, MenuBar, MenuItem, MenuItemProperties, MenuItemPropertyChanges,
-    UpdateMenuItemCallback,
-};
 
 use super::app::callback_dispatcher;
 
@@ -119,7 +119,7 @@ impl MenuItemData {
 /// The NSMenuItem logically holds a reference count on this Rc, which is balanced in our dealloc callback below.
 /// The following functions are invoked from Cocoa.
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_menu_item_needs_update(item: id, ctx: *mut c_void) {
+extern "C-unwind" fn leanterm_menu_item_needs_update(item: id, ctx: *mut c_void) {
     let ctx = MenuItemData::read_context(ctx);
     let props: MenuItemProperties = ctx.props.borrow().clone();
     let func = &ctx.update;
@@ -143,13 +143,13 @@ extern "C-unwind" fn warp_menu_item_needs_update(item: id, ctx: *mut c_void) {
 }
 
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_menu_item_triggered(_item: id, ctx: *mut c_void) {
+extern "C-unwind" fn leanterm_menu_item_triggered(_item: id, ctx: *mut c_void) {
     let func = &MenuItemData::read_context(ctx).triggered;
     callback_dispatcher().menu_item_triggered(func);
 }
 
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_menu_item_deallocated(ctx: *mut c_void) {
+extern "C-unwind" fn leanterm_menu_item_deallocated(ctx: *mut c_void) {
     MenuItemData::consume_context(ctx)
 }
 
@@ -157,7 +157,7 @@ extern "C-unwind" fn warp_menu_item_deallocated(ctx: *mut c_void) {
 // These signatures must be manually synced - there's no type checking here.
 unsafe extern "C" {
     fn make_delegated_menu(title: id) -> id;
-    fn make_warp_custom_menu_item(ctx: *mut c_void) -> id;
+    fn make_leanterm_custom_menu_item(ctx: *mut c_void) -> id;
     fn set_menu_item_submenu(item: id, submenu: id);
     fn make_services_menu_item() -> id;
 }
@@ -186,12 +186,12 @@ impl KeyEquivalent {
     }
 }
 
-/// The running app's localized name, falling back to "Warp".
+/// The running app's localized name, falling back to "Leanterm".
 fn app_name() -> String {
     NSRunningApplication::currentApplication()
         .localizedName()
         .map(|name| name.to_string())
-        .unwrap_or_else(|| "Warp".to_owned())
+        .unwrap_or_else(|| "Leanterm".to_owned())
 }
 
 // Get properties from a standard action.
@@ -309,7 +309,7 @@ fn resolve_key_equivalent(keystroke: Option<&Keystroke>) -> (KeyEquivalent, NSEv
 
 // Apply any differences between the two states to the menu item.
 unsafe fn apply_changes(changes: MenuItemPropertyChanges, item: id) {
-    // Wrap in a local autorelease pool: AppKit invokes `warp_menu_item_needs_update`
+    // Wrap in a local autorelease pool: AppKit invokes `leanterm_menu_item_needs_update`
     // on every menu validation (per menu open and per keystroke for shortcut matching),
     // so this is a hot path. A local pool bounds peak memory for the temporaries AppKit
     // produces here (e.g. inside `setTitle:`/`setKeyEquivalent:`) without relying on the
@@ -364,7 +364,7 @@ unsafe fn make_menu_item(menu_item: MenuItem) -> id {
                     update: custom_menu_item.updater,
                 });
 
-                let nsmenu_item = make_warp_custom_menu_item(MenuItemData::into_context(data));
+                let nsmenu_item = make_leanterm_custom_menu_item(MenuItemData::into_context(data));
 
                 // Set initial properties for the item.
                 apply_changes(

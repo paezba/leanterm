@@ -12,10 +12,10 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use background_task::spawn_find_task;
-use parking_lot::FairMutex;
-use sum_tree::SeekBias;
 use leanterm_ui::r#async::SpawnedFutureHandle;
 use leanterm_ui::{EntityId, ModelContext};
+use parking_lot::FairMutex;
+use sum_tree::SeekBias;
 use work_queue::FindWorkQueue;
 
 use super::FindOptions;

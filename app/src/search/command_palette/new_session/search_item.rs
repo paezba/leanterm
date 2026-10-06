@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use fuzzy_match::FuzzyMatchResult;
-use ordered_float::OrderedFloat;
 use leanterm_ui::{AppContext, Element, SingletonEntity};
+use ordered_float::OrderedFloat;
 
 use super::new_session_option::NewSessionOption;
 use crate::appearance::Appearance;

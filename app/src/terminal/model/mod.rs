@@ -29,7 +29,6 @@ pub mod terminal_model;
 #[cfg(any(test, feature = "test-util"))]
 pub mod test_utils;
 
-pub use lifecycle::StartCommandOutcome;
 pub use leanterm_terminal::model::grid::cell;
 pub use leanterm_terminal::model::secrets::{
     ObfuscateSecrets, RespectObfuscatedSecrets, Secret, SecretHandle,
@@ -39,3 +38,4 @@ pub use leanterm_terminal::model::{
     BlockId, ansi, blockgrid, char_or_str, completions, escape_sequences, find, grid, image_map,
     iterm_image, kitty, mouse, selection,
 };
+pub use lifecycle::StartCommandOutcome;

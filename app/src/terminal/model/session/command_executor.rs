@@ -23,16 +23,16 @@ pub use in_band_command_executor::{
     InBandCommand, InBandCommandCancelledEvent, InBandCommandExecutor, InBandCommandOutputReceiver,
     is_in_band_command,
 };
+use leanterm_completer::completer::CommandOutput;
+#[cfg(feature = "local_tty")]
+use leanterm_errors::report_error;
+use leanterm_ui::ModelContext;
 #[cfg(feature = "local_tty")]
 pub use local_command_executor::LocalCommandExecutor;
 pub use noop_command_executor::NoOpCommandExecutor;
 #[cfg(feature = "local_tty")]
 pub use remote_command_executor::RemoteCommandExecutor;
 pub use shared::{ExecutorCommandEvent, shell_escape_single_quotes, shell_quote_arg};
-use leanterm_completer::completer::CommandOutput;
-#[cfg(feature = "local_tty")]
-use leanterm_errors::report_error;
-use leanterm_ui::ModelContext;
 
 use super::SessionInfo;
 use crate::terminal::event::ExecutedExecutorCommandEvent;
@@ -147,9 +147,9 @@ fn new_command_executor_for_local_tty_session(
     parent_session_info: Option<&SessionInfo>,
     ctx: &mut ModelContext<Sessions>,
 ) -> Arc<dyn CommandExecutor> {
+    use leanterm_ui::SingletonEntity as _;
     use msys2_command_executor::MSYS2CommandExecutor;
     use settings::Setting as _;
-    use leanterm_ui::SingletonEntity as _;
     use wsl_command_executor::WslCommandExecutor;
 
     use super::IsSSHWrapperSession;
@@ -179,7 +179,7 @@ fn new_command_executor_for_local_tty_session(
     //
     // TODO(advait): For production this should be a dedicated
     // `SandboxCommandExecutor` that runs generators via
-    // `sbx exec warp-sandbox-<id> -- sh -c "<cmd>"` (analogous to
+    // `sbx exec leanterm-sandbox-<id> -- sh -c "<cmd>"` (analogous to
     // how `LocalCommandExecutor` spawns fresh subprocesses for the
     // host-shell path). That would avoid serializing generators
     // through the user's live PTY (slower, blocked by long-running
@@ -259,7 +259,7 @@ fn new_command_executor_for_local_tty_session(
                 }
             }
         }
-        BootstrapSessionType::WarpifiedRemote
+        BootstrapSessionType::LeantermifiedRemote
             if is_ssh_wrapper_session
                 && !FeatureFlag::InBandGeneratorsForSSH.is_enabled()
                 && !force_use_in_band_generators =>
@@ -286,7 +286,7 @@ fn new_command_executor_for_local_tty_session(
                 // This code path exists as a fail-safe for disabling in-band
                 // generators if some unforeseen severe issue surfaces during or
                 // shortly after subshells launch. The setting that triggers this
-                // codepath is only accessible via a user defaults command that a Warp
+                // codepath is only accessible via a user defaults command that a Leanterm
                 // engineer would have given to the user via some first-hand
                 // correspondence (e.g. GitHub issues).
                 log::info!("creating a no-op executor!");

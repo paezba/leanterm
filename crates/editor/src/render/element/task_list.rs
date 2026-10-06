@@ -1,4 +1,3 @@
-use pathfinder_color::ColorU;
 use leanterm_ui_core::elements::{
     Align, Border, ConstrainedBox, Container, CornerRadius, Hoverable, Icon, ListIndentLevel,
     MouseStateHandle, Radius, Rect,
@@ -6,6 +5,7 @@ use leanterm_ui_core::elements::{
 use leanterm_ui_core::geometry::vector::vec2f;
 use leanterm_ui_core::platform::Cursor;
 use leanterm_ui_core::{AppContext, Element, SizeConstraint, WeakViewHandle};
+use pathfinder_color::ColorU;
 
 use super::paint::RenderContext;
 use super::placeholder::{self, BlockPlaceholder};

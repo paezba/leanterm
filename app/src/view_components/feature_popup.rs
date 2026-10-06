@@ -3,7 +3,9 @@ use leanterm_ui::elements::{
     ParentElement, Radius, Text,
 };
 use leanterm_ui::platform::Cursor;
-use leanterm_ui::{AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext};
+use leanterm_ui::{
+    AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext,
+};
 
 use crate::appearance::Appearance;
 use crate::ui_components::icons::Icon;
@@ -67,7 +69,7 @@ impl FeaturePopup {
             FeaturePopupBadge::AlertIcon => Container::new(
                 ConstrainedBox::new(
                     Icon::AlertCircle
-                        .to_warpui_icon(appearance.theme().main_text_color(
+                        .to_leanterm_ui_icon(appearance.theme().main_text_color(
                             appearance.theme().terminal_colors().normal.green.into(),
                         ))
                         .finish(),
@@ -117,7 +119,7 @@ impl View for FeaturePopup {
                         Hoverable::new(self.dismiss_mouse_state.clone(), |_| {
                             ConstrainedBox::new(
                                 Icon::X
-                                    .to_warpui_icon(appearance.theme().sub_text_color(
+                                    .to_leanterm_ui_icon(appearance.theme().sub_text_color(
                                         appearance.theme().main_text_color(background),
                                     ))
                                     .finish(),

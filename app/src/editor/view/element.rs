@@ -6,14 +6,9 @@ use std::{cmp, mem};
 
 use instant::Instant;
 use itertools::Itertools;
-use pathfinder_geometry::rect::RectF;
-use pathfinder_geometry::vector::{Vector2F, vec2f};
-use smallvec::SmallVec;
-use vim::vim::{MotionType, VimMode};
 use leanterm_core::features::FeatureFlag;
 use leanterm_core::ui::appearance::DEFAULT_UI_FONT_SIZE;
 use leanterm_errors::report_error;
-use leanterm_util::user_input::UserInput;
 use leanterm_ui::elements::{
     AfterLayoutContext, ChildView, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment,
     DEFAULT_UI_LINE_HEIGHT_RATIO, Element, Event, EventContext, Flex, LayoutContext, PaintContext,
@@ -31,6 +26,11 @@ use leanterm_ui::text_selection_utils::{
 };
 use leanterm_ui::ui_components::components::UiComponent;
 use leanterm_ui::{AppContext, SingletonEntity, TaskId, ViewHandle};
+use leanterm_util::user_input::UserInput;
+use pathfinder_geometry::rect::RectF;
+use pathfinder_geometry::vector::{Vector2F, vec2f};
+use smallvec::SmallVec;
+use vim::vim::{MotionType, VimMode};
 
 use super::super::soft_wrap::{
     ClampDirection, DisplayPointAndClampDirection, FrameLayouts, SoftWrapPoint, SoftWrapState,
@@ -1473,7 +1473,7 @@ impl EditorElement {
             .with_cross_axis_alignment(CrossAxisAlignment::End)
             .with_children([
                 Container::new(
-                    ConstrainedBox::new(Icon::ArrowDown.to_warpui_icon(color).finish())
+                    ConstrainedBox::new(Icon::ArrowDown.to_leanterm_ui_icon(color).finish())
                         .with_max_height(icon_height)
                         .with_max_width(icon_height)
                         .finish(),

@@ -16,17 +16,19 @@
 use std::collections::HashSet;
 use std::path::PathBuf;
 
-use settings::SettingsMode;
-use settings::schema::SettingSchemaEntry;
-use leanterm_core::features::{DEBUG_FLAGS, DOGFOOD_FLAGS, FeatureFlag, PREVIEW_FLAGS, RELEASE_FLAGS};
+use leanterm_core::features::{
+    DEBUG_FLAGS, DOGFOOD_FLAGS, FeatureFlag, PREVIEW_FLAGS, RELEASE_FLAGS,
+};
 use leanterm_ui_extras::user_preferences::UserPreferences as _;
 use leanterm_ui_extras::user_preferences::toml_backed::TomlBackedUserPreferences;
+use settings::SettingsMode;
+use settings::schema::SettingSchemaEntry;
 
 /// Ensures all `inventory::submit!` registrations from the app crate's
 /// dependency tree are linked into the binary.
 ///
 /// Binary targets only link crate code that is transitively referenced.
-/// Without an explicit reference to the `warp` library, the linker will
+/// Without an explicit reference to the `leanterm` library, the linker will
 /// not include most of the app's object files and the `inventory`
 /// submissions they contain.
 fn ensure_settings_linked() {

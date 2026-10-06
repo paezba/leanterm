@@ -9,11 +9,11 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use anyhow::{Result, anyhow, ensure};
-use url::Url;
-use leanterm_util::path::LineAndColumnArg;
 use leanterm_ui::notification::UserNotification;
 use leanterm_ui::platform::TerminationMode;
 use leanterm_ui::{AppContext, SingletonEntity as _, TypedActionView, WindowId};
+use leanterm_util::path::LineAndColumnArg;
+use url::Url;
 
 use self::docker::open_docker_container;
 use crate::event_sources::LaunchConfigUiLocation;
@@ -23,8 +23,8 @@ use crate::settings_view::{SettingsSection, settings_widget_deeplink_target};
 use crate::tab_configs::TabConfig;
 use crate::user_config::{load_launch_configs, load_tab_configs, tab_configs_dir};
 use crate::util::openable_file_type::{
-    is_file_openable_in_warp, is_markdown_file, is_runnable_shell_script,
-    renders_in_warp_notebook_viewer, starts_with_shebang,
+    is_file_openable_in_leanterm, is_markdown_file, is_runnable_shell_script,
+    renders_in_leanterm_notebook_viewer, starts_with_shebang,
 };
 use crate::view_components::DismissibleToast;
 use crate::workspace::util::PaneViewLocator;
@@ -35,14 +35,14 @@ use crate::{ChannelState, OpenPath, quake_mode_window_id, quake_mode_window_is_o
 
 const DESKTOP_REDIRECT_URI_PATH: &str = "/desktop_redirect";
 
-/// Args for the `warp://settings` deeplink family, dispatched to the
+/// Args for the `leanterm://settings` deeplink family, dispatched to the
 /// `root_view:open_settings_in_{existing,new}_window` actions.
 pub enum OpenSettingsArgs {
-    /// `warp://settings` — open a settings tab on the default page.
+    /// `leanterm://settings` — open a settings tab on the default page.
     Default,
-    /// `warp://settings?q=<query>` — open settings with the search bar pre-filled.
+    /// `leanterm://settings?q=<query>` — open settings with the search bar pre-filled.
     Search { query: String },
-    /// `warp://settings?widget=<widget_id>` — open settings scrolled to a widget.
+    /// `leanterm://settings?widget=<widget_id>` — open settings scrolled to a widget.
     Widget {
         page: SettingsSection,
         widget_id: &'static str,
@@ -56,7 +56,7 @@ pub enum UriHost {
     /// A host prefix for all actions that involve launch configurations
     Launch,
     /// Supports WD object actions
-    /// Supports opening warp's settings panel via URI
+    /// Supports opening leanterm's settings panel via URI
     Settings,
     /// A host prefix for a general-purpose home/landing page. Unlike other intent URIs, the home
     /// page behavior may change over time and vary from platform to platform.
@@ -124,16 +124,16 @@ impl UriHost {
             }
             UriHost::Settings => {
                 // We support opening different settings pages through URI:
-                // - warp://settings - opens a settings tab on the default page
-                // - warp://settings?q={query} - opens settings with the search bar pre-filled
-                // - warp://settings?widget={widget_id} - opens settings scrolled to a widget
-                // - warp://settings/teams?invite={email} - opens team settings with invite modal
-                // - warp://settings/billing_and_usage - opens billing and usage settings page
-                // - warp://settings/platform - opens platform settings page
-                // - warp://settings/appearance - opens appearance settings page (themes, fonts, etc.)
-                // - warp://settings/warp_agent - opens the Warp Agent settings page (inference / API keys)
+                // - leanterm://settings - opens a settings tab on the default page
+                // - leanterm://settings?q={query} - opens settings with the search bar pre-filled
+                // - leanterm://settings?widget={widget_id} - opens settings scrolled to a widget
+                // - leanterm://settings/teams?invite={email} - opens team settings with invite modal
+                // - leanterm://settings/billing_and_usage - opens billing and usage settings page
+                // - leanterm://settings/platform - opens platform settings page
+                // - leanterm://settings/appearance - opens appearance settings page (themes, fonts, etc.)
+                // - leanterm://settings/leanterm_agent - opens the Leanterm Agent settings page (inference / API keys)
                 let query_string: HashMap<_, _> = url.query_pairs().collect();
-                // A bare `warp://settings` (or a trailing slash) yields an empty path
+                // A bare `leanterm://settings` (or a trailing slash) yields an empty path
                 // segment; treat that as "no sub-page" so the query-param routing below
                 // handles it.
                 let settings_sub_page: Option<String> = url
@@ -148,7 +148,7 @@ impl UriHost {
                     // No special sub-page: route the bare host, the `q` (search) and
                     // `widget` (scroll-to) query params, and the simple section
                     // sub-pages (e.g. billing_and_usage, platform, appearance,
-                    // warp_agent) resolved via `settings_section_for_simple_subpage`.
+                    // leanterm_agent) resolved via `settings_section_for_simple_subpage`.
                     maybe_simple_subpage => {
                         let simple_section =
                             maybe_simple_subpage.and_then(settings_section_for_simple_subpage);
@@ -192,7 +192,7 @@ impl UriHost {
                                 ctx,
                             );
                         } else if maybe_simple_subpage.is_none() {
-                            // Bare `warp://settings` opens the default settings page.
+                            // Bare `leanterm://settings` opens the default settings page.
                             let args = OpenSettingsArgs::Default;
                             dispatch_action_in_new_or_existing_window(
                                 primary_window_id,
@@ -459,13 +459,13 @@ fn find_matching_config_name<'a>(
         .find(|&config| config.name.to_lowercase() == target_name_lower)
 }
 
-/// Handles `warp://tab_config/<name>` deeplinks.
+/// Handles `leanterm://tab_config/<name>` deeplinks.
 ///
 /// Resolution rules:
 /// - `<name>` is matched case-insensitively against each tab config's file
-///   stem, so both `warp://tab_config/my_tab` and
-///   `warp://tab_config/my_tab.toml` work.
-/// - When `?new_window=true` (or no Warp window is open) the tab config opens
+///   stem, so both `leanterm://tab_config/my_tab` and
+///   `leanterm://tab_config/my_tab.toml` work.
+/// - When `?new_window=true` (or no Leanterm window is open) the tab config opens
 ///   in a brand-new window. Otherwise it opens as a new tab in the active
 ///   window.
 fn handle_tab_config_uri(primary_window_id: Option<WindowId>, url: &Url, ctx: &mut AppContext) {
@@ -685,7 +685,7 @@ impl Action {
             Self::Docker | Self::OpenFileEditor { .. } | Self::OpenRepo => W::default(),
             Self::NewTab => W::ShowPrimaryWindow(WindowActivationFallbackBehavior::Notify {
                 title: "New tab created".to_owned(),
-                description: "Go to Warp to see your new tab.".to_owned(),
+                description: "Go to Leanterm to see your new tab.".to_owned(),
             }),
             Self::NewWindow => W::Nothing,
         }
@@ -766,7 +766,7 @@ fn get_primary_window(
 enum OpenFileAction {
     /// Open in the notebook viewer pane (Markdown, or Jupyter when enabled).
     Notebook,
-    /// Open in Warp's code/text editor pane.
+    /// Open in Leanterm's code/text editor pane.
     Editor,
     /// Open a session at the parent directory and queue the file as the pending command,
     /// or just open a session at the directory path if `path` is a directory.
@@ -777,19 +777,20 @@ enum OpenFileAction {
 /// standing up a full `AppContext`.
 ///
 /// The Markdown Viewer preference is passed in because macOS can hand Markdown
-/// file URLs to Warp via the file type registration in `Info.plist`. Since Warp
+/// file URLs to Leanterm via the file type registration in `Info.plist`. Since Leanterm
 /// cannot easily update that registration when the user toggles the viewer
 /// preference, the URI handler must check the preference before routing a
-/// Markdown file to the in-Warp notebook viewer. Other notebook viewer formats,
+/// Markdown file to the in-Leanterm notebook viewer. Other notebook viewer formats,
 /// such as Jupyter notebooks, are controlled by their own routing checks.
 fn classify_open_file_action(path: &Path, prefer_markdown_viewer: bool) -> OpenFileAction {
-    if renders_in_warp_notebook_viewer(path) && (!is_markdown_file(path) || prefer_markdown_viewer)
+    if renders_in_leanterm_notebook_viewer(path)
+        && (!is_markdown_file(path) || prefer_markdown_viewer)
     {
         OpenFileAction::Notebook
     } else if is_runnable_shell_script(path) {
         OpenFileAction::ExecuteInSession
     } else if path.is_file()
-        && (is_file_openable_in_warp(path).is_some() || starts_with_shebang(path))
+        && (is_file_openable_in_leanterm(path).is_some() || starts_with_shebang(path))
     {
         OpenFileAction::Editor
     } else {
@@ -799,7 +800,7 @@ fn classify_open_file_action(path: &Path, prefer_markdown_viewer: bool) -> OpenF
 
 #[cfg(feature = "local_fs")]
 fn can_open_file_editor_path(path: &Path) -> bool {
-    path.is_file() && is_file_openable_in_warp(path).is_some()
+    path.is_file() && is_file_openable_in_leanterm(path).is_some()
 }
 
 /// Handle an incoming `file://` URL.
@@ -842,11 +843,11 @@ fn open_file(window_id: Option<WindowId>, path: PathBuf, ctx: &mut AppContext) {
             use crate::code::editor_management::CodeSource;
             use crate::root_view::{NewWorkspaceSource, open_new_with_workspace_source};
             use crate::util::file::external_editor::EditorSettings;
-            use crate::util::openable_file_type::resolve_file_target_to_open_in_warp;
+            use crate::util::openable_file_type::resolve_file_target_to_open_in_leanterm;
 
-            // Open text/code files in Warp's code editor, respecting the user's layout preference.
+            // Open text/code files in Leanterm's code editor, respecting the user's layout preference.
             let editor_settings = EditorSettings::as_ref(ctx);
-            let target = resolve_file_target_to_open_in_warp(&path, editor_settings, None);
+            let target = resolve_file_target_to_open_in_leanterm(&path, editor_settings, None);
 
             let window_id = if let Some((wid, _)) = primary_window_and_view {
                 wid
@@ -927,7 +928,7 @@ fn open_file_editor(
         use crate::code::editor_management::CodeSource;
         use crate::root_view::{NewWorkspaceSource, open_new_with_workspace_source};
         use crate::util::file::external_editor::EditorSettings;
-        use crate::util::openable_file_type::resolve_file_target_to_open_in_warp;
+        use crate::util::openable_file_type::resolve_file_target_to_open_in_leanterm;
 
         if !can_open_file_editor_path(&path) {
             log::warn!("open_file_editor action rejected non-openable path: {path:?}");
@@ -935,7 +936,7 @@ fn open_file_editor(
         }
 
         let editor_settings = EditorSettings::as_ref(ctx);
-        let target = resolve_file_target_to_open_in_warp(&path, editor_settings, None);
+        let target = resolve_file_target_to_open_in_leanterm(&path, editor_settings, None);
 
         let window_id = if let Some((wid, _)) = primary_window_id.and_then(|window_id| {
             ctx.root_view_id(window_id)

@@ -4,17 +4,11 @@
 mod alias_expansion;
 mod notifications_discovery;
 mod notifications_error;
-mod open_in_warp;
+mod open_in_leanterm;
 mod shell_process_terminated;
 mod vim_mode;
 
 pub use alias_expansion::*;
-pub use notifications_discovery::*;
-pub use notifications_error::*;
-pub use open_in_warp::*;
-use pathfinder_color::ColorU;
-pub use shell_process_terminated::*;
-pub use vim_mode::*;
 use leanterm_ui::Element;
 use leanterm_ui::elements::{
     Align, Clipped, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Flex, Icon,
@@ -24,6 +18,12 @@ use leanterm_ui::elements::{
 use leanterm_ui::fonts::{FamilyId, Properties, Weight};
 use leanterm_ui::ui_components::button::ButtonVariant;
 use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
+pub use notifications_discovery::*;
+pub use notifications_error::*;
+pub use open_in_leanterm::*;
+use pathfinder_color::ColorU;
+pub use shell_process_terminated::*;
+pub use vim_mode::*;
 
 use crate::appearance::Appearance;
 use crate::terminal::view::TerminalAction;

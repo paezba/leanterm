@@ -3,12 +3,12 @@ use std::iter::FromIterator;
 use std::sync::Arc;
 
 use itertools::Itertools;
-use typed_path::{TypedPath, TypedPathBuf};
-#[cfg(windows)]
-use typed_path::{UnixComponent, WindowsComponent, WindowsPrefix};
 use leanterm_completer::completer::{CompletionContext, EngineDirEntry, PathCompletionContext};
 use leanterm_completer::signatures::CommandRegistry;
 use leanterm_ui::App;
+use typed_path::{TypedPath, TypedPathBuf};
+#[cfg(windows)]
+use typed_path::{UnixComponent, WindowsComponent, WindowsPrefix};
 
 use crate::completer::SessionContext;
 use crate::terminal::model::session::command_executor::testing::TestCommandExecutor;
@@ -274,7 +274,7 @@ pub fn test_session_context_lists_directory_entries_remotely() {
     });
 }
 
-/// Regression test for APP-5190: in a remote/Warpified session a symlink pointing at a
+/// Regression test for APP-5190: in a remote/Leantermified session a symlink pointing at a
 /// directory is classified as a directory (so it completes with a trailing separator and is
 /// offered for `cd`), while a symlink to a file completes as a file.
 #[cfg(unix)]
@@ -447,8 +447,9 @@ pub fn test_session_context_refresh_directory_entries_bypasses_cache() {
                 );
 
                 // `refresh_directory_entries` re-reads from disk and overwrites the cached entry.
-                let refreshed =
-                    leanterm_ui::r#async::block_on(ctx.refresh_directory_entries(tests_dir.clone()));
+                let refreshed = leanterm_ui::r#async::block_on(
+                    ctx.refresh_directory_entries(tests_dir.clone()),
+                );
                 assert_eq!(
                     HashSet::<EngineDirEntry>::from_iter(Arc::unwrap_or_clone(refreshed)),
                     HashSet::from_iter([

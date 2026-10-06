@@ -1,4 +1,3 @@
-use pathfinder_color::ColorU;
 use leanterm_core::ui::theme::Fill;
 use leanterm_core::ui::theme::phenomenon::PhenomenonStyle;
 use leanterm_ui::Element;
@@ -8,6 +7,7 @@ use leanterm_ui::elements::{
 };
 use leanterm_ui::ui_components::checkbox::Checkbox;
 use leanterm_ui::ui_components::components::UiComponentStyles;
+use pathfinder_color::ColorU;
 
 use crate::appearance::Appearance;
 use crate::ui_components::icons::Icon;
@@ -115,7 +115,7 @@ pub fn render_callout_bubble(
         .with_child(
             ConstrainedBox::new(
                 border_icon
-                    .to_warpui_icon(Fill::Solid(border_color))
+                    .to_leanterm_ui_icon(Fill::Solid(border_color))
                     .finish(),
             )
             .with_width(24.)
@@ -123,7 +123,7 @@ pub fn render_callout_bubble(
             .finish(),
         )
         .with_child(
-            ConstrainedBox::new(fill_icon.to_warpui_icon(background).finish())
+            ConstrainedBox::new(fill_icon.to_leanterm_ui_icon(background).finish())
                 .with_width(24.)
                 .with_height(24.)
                 .finish(),

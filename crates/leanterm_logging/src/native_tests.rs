@@ -32,14 +32,14 @@ fn log_state(base_directory: &Path, frontend: LogFrontend, logfile_name: &str) -
 #[test]
 fn collects_active_in_session_and_old_logs_in_expected_order() {
     let tmp = tempfile::tempdir().unwrap();
-    let active = touch(tmp.path(), "warp.log");
-    let in_session_0 = touch(tmp.path(), "warp.log.in_session.0");
-    let in_session_1 = touch(tmp.path(), "warp.log.in_session.1");
-    let in_session_2 = touch(tmp.path(), "warp.log.in_session.2");
-    let old_0 = touch(tmp.path(), "warp.log.old.0");
-    let old_1 = touch(tmp.path(), "warp.log.old.1");
+    let active = touch(tmp.path(), "leanterm.log");
+    let in_session_0 = touch(tmp.path(), "leanterm.log.in_session.0");
+    let in_session_1 = touch(tmp.path(), "leanterm.log.in_session.1");
+    let in_session_2 = touch(tmp.path(), "leanterm.log.in_session.2");
+    let old_0 = touch(tmp.path(), "leanterm.log.old.0");
+    let old_1 = touch(tmp.path(), "leanterm.log.old.1");
 
-    let paths = collect_log_paths_in(tmp.path(), "warp.log").unwrap();
+    let paths = collect_log_paths_in(tmp.path(), "leanterm.log").unwrap();
 
     assert_eq!(
         paths,
@@ -57,9 +57,9 @@ fn collects_active_in_session_and_old_logs_in_expected_order() {
 #[test]
 fn includes_in_session_logs_even_when_no_active_or_old_logs_exist() {
     let tmp = tempfile::tempdir().unwrap();
-    let in_session_0 = touch(tmp.path(), "warp.log.in_session.0");
+    let in_session_0 = touch(tmp.path(), "leanterm.log.in_session.0");
 
-    let paths = collect_log_paths_in(tmp.path(), "warp.log").unwrap();
+    let paths = collect_log_paths_in(tmp.path(), "leanterm.log").unwrap();
 
     assert_eq!(paths, vec![in_session_0]);
 }
@@ -67,14 +67,14 @@ fn includes_in_session_logs_even_when_no_active_or_old_logs_exist() {
 #[test]
 fn ignores_unrelated_files_and_malformed_suffixes() {
     let tmp = tempfile::tempdir().unwrap();
-    let active = touch(tmp.path(), "warp.log");
-    touch(tmp.path(), "warp.log.in_session.abc"); // not a number
-    touch(tmp.path(), "warp.log.in_session."); // empty suffix
-    touch(tmp.path(), "warp.log.old.xyz"); // not a number
+    let active = touch(tmp.path(), "leanterm.log");
+    touch(tmp.path(), "leanterm.log.in_session.abc"); // not a number
+    touch(tmp.path(), "leanterm.log.in_session."); // empty suffix
+    touch(tmp.path(), "leanterm.log.old.xyz"); // not a number
     touch(tmp.path(), "other.log"); // unrelated
-    touch(tmp.path(), "warp.log.old.temp"); // matches old. prefix but non-numeric
+    touch(tmp.path(), "leanterm.log.old.temp"); // matches old. prefix but non-numeric
 
-    let paths = collect_log_paths_in(tmp.path(), "warp.log").unwrap();
+    let paths = collect_log_paths_in(tmp.path(), "leanterm.log").unwrap();
 
     assert_eq!(paths, vec![active]);
 }
@@ -82,8 +82,8 @@ fn ignores_unrelated_files_and_malformed_suffixes() {
 #[test]
 fn errors_when_directory_is_empty() {
     let tmp = tempfile::tempdir().unwrap();
-    let err = collect_log_paths_in(tmp.path(), "warp.log").unwrap_err();
-    assert!(err.to_string().contains("No warp logs were found"));
+    let err = collect_log_paths_in(tmp.path(), "leanterm.log").unwrap_err();
+    assert!(err.to_string().contains("No leanterm logs were found"));
 }
 
 #[test]
@@ -91,12 +91,12 @@ fn respects_channel_specific_logfile_name() {
     // Beta/preview channels use a different base name; make sure scanning
     // is gated on that name and doesn't pick up the wrong channel's files.
     let tmp = tempfile::tempdir().unwrap();
-    let active = touch(tmp.path(), "warp_preview.log");
-    let in_session_0 = touch(tmp.path(), "warp_preview.log.in_session.0");
-    touch(tmp.path(), "warp.log"); // different channel — must be ignored
-    touch(tmp.path(), "warp.log.in_session.0");
+    let active = touch(tmp.path(), "leanterm_preview.log");
+    let in_session_0 = touch(tmp.path(), "leanterm_preview.log.in_session.0");
+    touch(tmp.path(), "leanterm.log"); // different channel — must be ignored
+    touch(tmp.path(), "leanterm.log.in_session.0");
 
-    let paths = collect_log_paths_in(tmp.path(), "warp_preview.log").unwrap();
+    let paths = collect_log_paths_in(tmp.path(), "leanterm_preview.log").unwrap();
 
     assert_eq!(paths, vec![active, in_session_0]);
 }
@@ -108,15 +108,15 @@ fn interleaves_old_logs_with_their_nested_in_session_chunks() {
     // immediately followed by its .old.K.in_session.M chunks before
     // moving on to .old.{K+1}.
     let tmp = tempfile::tempdir().unwrap();
-    let active = touch(tmp.path(), "warp.log");
-    let cur_in_session_0 = touch(tmp.path(), "warp.log.in_session.0");
-    let old_0 = touch(tmp.path(), "warp.log.old.0");
-    let old_0_chunk_0 = touch(tmp.path(), "warp.log.old.0.in_session.0");
-    let old_0_chunk_1 = touch(tmp.path(), "warp.log.old.0.in_session.1");
-    let old_1 = touch(tmp.path(), "warp.log.old.1");
-    let old_1_chunk_0 = touch(tmp.path(), "warp.log.old.1.in_session.0");
+    let active = touch(tmp.path(), "leanterm.log");
+    let cur_in_session_0 = touch(tmp.path(), "leanterm.log.in_session.0");
+    let old_0 = touch(tmp.path(), "leanterm.log.old.0");
+    let old_0_chunk_0 = touch(tmp.path(), "leanterm.log.old.0.in_session.0");
+    let old_0_chunk_1 = touch(tmp.path(), "leanterm.log.old.0.in_session.1");
+    let old_1 = touch(tmp.path(), "leanterm.log.old.1");
+    let old_1_chunk_0 = touch(tmp.path(), "leanterm.log.old.1.in_session.0");
 
-    let paths = collect_log_paths_in(tmp.path(), "warp.log").unwrap();
+    let paths = collect_log_paths_in(tmp.path(), "leanterm.log").unwrap();
 
     assert_eq!(
         paths,
@@ -138,10 +138,10 @@ fn nested_chunks_surface_even_when_parent_old_slot_is_missing() {
     // remain (e.g. truncated by manual cleanup), the chunks should
     // still be bundled rather than silently dropped.
     let tmp = tempfile::tempdir().unwrap();
-    let active = touch(tmp.path(), "warp.log");
-    let orphan_chunk = touch(tmp.path(), "warp.log.old.3.in_session.0");
+    let active = touch(tmp.path(), "leanterm.log");
+    let orphan_chunk = touch(tmp.path(), "leanterm.log.old.3.in_session.0");
 
-    let paths = collect_log_paths_in(tmp.path(), "warp.log").unwrap();
+    let paths = collect_log_paths_in(tmp.path(), "leanterm.log").unwrap();
 
     assert_eq!(paths, vec![active, orphan_chunk]);
 }
@@ -151,27 +151,27 @@ fn migrate_previous_session_renames_in_session_to_old_0_in_session() {
     // Mid-session chunks from the previous session belong with the
     // .old.0 slot that holds that session's final-state log.
     let tmp = tempfile::tempdir().unwrap();
-    touch(tmp.path(), "warp.log.in_session.0");
-    touch(tmp.path(), "warp.log.in_session.1");
-    touch(tmp.path(), "warp.log.in_session.2");
+    touch(tmp.path(), "leanterm.log.in_session.0");
+    touch(tmp.path(), "leanterm.log.in_session.1");
+    touch(tmp.path(), "leanterm.log.in_session.2");
 
-    migrate_previous_session_in_session_chunks(tmp.path(), "warp.log");
+    migrate_previous_session_in_session_chunks(tmp.path(), "leanterm.log");
 
-    assert!(tmp.path().join("warp.log.old.0.in_session.0").is_file());
-    assert!(tmp.path().join("warp.log.old.0.in_session.1").is_file());
-    assert!(tmp.path().join("warp.log.old.0.in_session.2").is_file());
+    assert!(tmp.path().join("leanterm.log.old.0.in_session.0").is_file());
+    assert!(tmp.path().join("leanterm.log.old.0.in_session.1").is_file());
+    assert!(tmp.path().join("leanterm.log.old.0.in_session.2").is_file());
     // Bare .in_session.* slots are free for the new session.
-    assert!(!tmp.path().join("warp.log.in_session.0").exists());
-    assert!(!tmp.path().join("warp.log.in_session.1").exists());
-    assert!(!tmp.path().join("warp.log.in_session.2").exists());
+    assert!(!tmp.path().join("leanterm.log.in_session.0").exists());
+    assert!(!tmp.path().join("leanterm.log.in_session.1").exists());
+    assert!(!tmp.path().join("leanterm.log.in_session.2").exists());
 }
 
 #[test]
 fn migrate_previous_session_is_a_noop_when_no_in_session_chunks_exist() {
     let tmp = tempfile::tempdir().unwrap();
-    let unrelated = touch(tmp.path(), "warp.log");
+    let unrelated = touch(tmp.path(), "leanterm.log");
 
-    migrate_previous_session_in_session_chunks(tmp.path(), "warp.log");
+    migrate_previous_session_in_session_chunks(tmp.path(), "leanterm.log");
 
     // Active log untouched; no spurious .old.0.in_session.* files.
     assert!(unrelated.is_file());
@@ -181,7 +181,7 @@ fn migrate_previous_session_is_a_noop_when_no_in_session_chunks_exist() {
         .any(|e| {
             e.file_name()
                 .to_string_lossy()
-                .starts_with("warp.log.old.0.in_session.")
+                .starts_with("leanterm.log.old.0.in_session.")
         });
     assert!(!any_nested);
 }
@@ -189,15 +189,15 @@ fn migrate_previous_session_is_a_noop_when_no_in_session_chunks_exist() {
 #[test]
 fn migrate_previous_session_ignores_malformed_in_session_filenames() {
     let tmp = tempfile::tempdir().unwrap();
-    let real = touch(tmp.path(), "warp.log.in_session.0");
-    let bogus_a = touch(tmp.path(), "warp.log.in_session.abc");
-    let bogus_b = touch(tmp.path(), "warp.log.in_session.");
-    let unrelated = touch(tmp.path(), "warp.log.in_session.0.weird"); // not a usize
+    let real = touch(tmp.path(), "leanterm.log.in_session.0");
+    let bogus_a = touch(tmp.path(), "leanterm.log.in_session.abc");
+    let bogus_b = touch(tmp.path(), "leanterm.log.in_session.");
+    let unrelated = touch(tmp.path(), "leanterm.log.in_session.0.weird"); // not a usize
 
-    migrate_previous_session_in_session_chunks(tmp.path(), "warp.log");
+    migrate_previous_session_in_session_chunks(tmp.path(), "leanterm.log");
 
     assert!(!real.exists()); // moved
-    assert!(tmp.path().join("warp.log.old.0.in_session.0").is_file());
+    assert!(tmp.path().join("leanterm.log.old.0.in_session.0").is_file());
     // Malformed entries are left where they are.
     assert!(bogus_a.is_file());
     assert!(bogus_b.is_file());
@@ -207,54 +207,57 @@ fn migrate_previous_session_ignores_malformed_in_session_filenames() {
 #[test]
 fn shift_nested_chunks_renames_old_n_in_session_to_old_n_plus_1() {
     let tmp = tempfile::tempdir().unwrap();
-    touch(tmp.path(), "warp.log.old.0.in_session.0");
-    touch(tmp.path(), "warp.log.old.0.in_session.1");
+    touch(tmp.path(), "leanterm.log.old.0.in_session.0");
+    touch(tmp.path(), "leanterm.log.old.0.in_session.1");
 
-    shift_old_session_in_session_chunks(tmp.path(), "warp.log", 0);
+    shift_old_session_in_session_chunks(tmp.path(), "leanterm.log", 0);
 
-    assert!(tmp.path().join("warp.log.old.1.in_session.0").is_file());
-    assert!(tmp.path().join("warp.log.old.1.in_session.1").is_file());
-    assert!(!tmp.path().join("warp.log.old.0.in_session.0").exists());
-    assert!(!tmp.path().join("warp.log.old.0.in_session.1").exists());
+    assert!(tmp.path().join("leanterm.log.old.1.in_session.0").is_file());
+    assert!(tmp.path().join("leanterm.log.old.1.in_session.1").is_file());
+    assert!(!tmp.path().join("leanterm.log.old.0.in_session.0").exists());
+    assert!(!tmp.path().join("leanterm.log.old.0.in_session.1").exists());
 }
 
 #[test]
 fn shift_nested_chunks_only_touches_the_requested_slot() {
     // Shifting slot 0 must not disturb slot 1's nested chunks.
     let tmp = tempfile::tempdir().unwrap();
-    touch(tmp.path(), "warp.log.old.0.in_session.0");
-    let slot1_chunk = touch(tmp.path(), "warp.log.old.1.in_session.0");
+    touch(tmp.path(), "leanterm.log.old.0.in_session.0");
+    let slot1_chunk = touch(tmp.path(), "leanterm.log.old.1.in_session.0");
 
-    shift_old_session_in_session_chunks(tmp.path(), "warp.log", 0);
+    shift_old_session_in_session_chunks(tmp.path(), "leanterm.log", 0);
 
-    assert!(tmp.path().join("warp.log.old.1.in_session.0").is_file());
-    assert_eq!(tmp.path().join("warp.log.old.1.in_session.0"), slot1_chunk);
+    assert!(tmp.path().join("leanterm.log.old.1.in_session.0").is_file());
+    assert_eq!(
+        tmp.path().join("leanterm.log.old.1.in_session.0"),
+        slot1_chunk
+    );
 }
 
 #[test]
 fn remove_nested_chunks_deletes_every_chunk_of_the_target_slot() {
     let tmp = tempfile::tempdir().unwrap();
-    touch(tmp.path(), "warp.log.old.4.in_session.0");
-    touch(tmp.path(), "warp.log.old.4.in_session.1");
-    let survivor = touch(tmp.path(), "warp.log.old.3.in_session.0");
+    touch(tmp.path(), "leanterm.log.old.4.in_session.0");
+    touch(tmp.path(), "leanterm.log.old.4.in_session.1");
+    let survivor = touch(tmp.path(), "leanterm.log.old.3.in_session.0");
 
-    remove_old_session_in_session_chunks(tmp.path(), "warp.log", 4);
+    remove_old_session_in_session_chunks(tmp.path(), "leanterm.log", 4);
 
-    assert!(!tmp.path().join("warp.log.old.4.in_session.0").exists());
-    assert!(!tmp.path().join("warp.log.old.4.in_session.1").exists());
+    assert!(!tmp.path().join("leanterm.log.old.4.in_session.0").exists());
+    assert!(!tmp.path().join("leanterm.log.old.4.in_session.1").exists());
     // Other slots' chunks are untouched.
     assert!(survivor.is_file());
 }
 
 #[test]
 fn crash_recovery_paths_use_channel_name_in_tui_directory() {
-    let tui_dir = PathBuf::from("/tmp/warp-logs/warp-cli");
+    let tui_dir = PathBuf::from("/tmp/leanterm-logs/leanterm-cli");
     assert_eq!(
-        temp_log_file_path(&tui_dir, "warp_dev.log"),
-        tui_dir.join("warp_dev.log.old.temp")
+        temp_log_file_path(&tui_dir, "leanterm_dev.log"),
+        tui_dir.join("leanterm_dev.log.old.temp")
     );
     assert_eq!(
-        crash_recovery_process_log_file_path(&tui_dir, "warp_dev.log"),
-        tui_dir.join("warp_dev.log.recovery")
+        crash_recovery_process_log_file_path(&tui_dir, "leanterm_dev.log"),
+        tui_dir.join("leanterm_dev.log.recovery")
     );
 }

@@ -411,21 +411,21 @@ fn handle_terminal_view_event(
             Event::OpenPromptEditor => {
                 ctx.emit(pane_group::Event::OpenPromptEditor);
             }
-            Event::OpenFileInWarp { path, session } => {
-                ctx.emit(pane_group::Event::OpenFileInWarp {
+            Event::OpenFileInLeanterm { path, session } => {
+                ctx.emit(pane_group::Event::OpenFileInLeanterm {
                     path: path.clone(),
                     session: session.clone(),
                 });
             }
             #[cfg(feature = "local_fs")]
-            Event::PreviewCodeInWarp { source } => {
-                ctx.emit(pane_group::Event::PreviewCodeInWarp {
+            Event::PreviewCodeInLeanterm { source } => {
+                ctx.emit(pane_group::Event::PreviewCodeInLeanterm {
                     source: source.clone(),
                 });
             }
             #[cfg(feature = "local_fs")]
-            Event::OpenCodeInWarp { source, layout } => {
-                ctx.emit(pane_group::Event::OpenCodeInWarp {
+            Event::OpenCodeInLeanterm { source, layout } => {
+                ctx.emit(pane_group::Event::OpenCodeInLeanterm {
                     source: source.clone(),
                     layout: *layout,
                     line_col: if let CodeSource::Link { range_start, .. } = source {

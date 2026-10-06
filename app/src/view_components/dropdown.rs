@@ -1,7 +1,6 @@
 use std::fmt::Debug;
 use std::marker::PhantomData;
 
-use pathfinder_color::ColorU;
 use leanterm_ui::elements::{
     Border, ChildAnchor, ChildView, ConstrainedBox, Container, CornerRadius, Element, Fill, Icon,
     MainAxisAlignment, MainAxisSize, MouseStateHandle, OffsetPositioning, ParentElement,
@@ -17,6 +16,7 @@ use leanterm_ui::{
     Action, AppContext, BlurContext, Entity, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle, WeakViewHandle,
 };
+use pathfinder_color::ColorU;
 
 use crate::appearance::Appearance;
 use crate::menu::{Event as MenuEvent, Menu, MenuItem, MenuItemFields, MenuVariant};

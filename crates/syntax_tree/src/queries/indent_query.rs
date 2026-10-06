@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use std::ops::Range;
 
 use arborium::tree_sitter::{Node, Query, QueryCursor, Tree};
-use streaming_iterator::StreamingIterator;
 use leanterm_editor::content::buffer::Buffer;
 use leanterm_ui_core::text::point::Point;
+use streaming_iterator::StreamingIterator;
 
 use super::highlight_query::TextBuffer;
 

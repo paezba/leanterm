@@ -3,7 +3,7 @@ name = "repo_metadata"
 authors = ["Leanterm contributors"]
 version = "0.1.0"
 edition = "2024"
-description = "Repository metadata utilities for Warp"
+description = "Repository metadata utilities for Leanterm"
 publish.workspace = true
 license.workspace = true
 

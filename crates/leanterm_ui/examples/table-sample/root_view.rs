@@ -215,7 +215,8 @@ impl TableSampleView {
             if auto_capture && !is_last_demo {
                 ctx.spawn(
                     async {
-                        leanterm_ui::r#async::Timer::after(std::time::Duration::from_millis(350)).await;
+                        leanterm_ui::r#async::Timer::after(std::time::Duration::from_millis(350))
+                            .await;
                     },
                     |_, _, ctx| {
                         ctx.dispatch_typed_action(&SampleAction::NextDemo);
@@ -1250,8 +1251,10 @@ impl TypedActionView for TableSampleView {
                     ctx.spawn(
                         async {
                             // Wait for render to complete
-                            leanterm_ui::r#async::Timer::after(std::time::Duration::from_millis(300))
-                                .await;
+                            leanterm_ui::r#async::Timer::after(std::time::Duration::from_millis(
+                                300,
+                            ))
+                            .await;
                         },
                         |view, _, ctx| {
                             view.capture_current_demo(ctx);

@@ -1,9 +1,9 @@
-use pathfinder_color::ColorU;
 use leanterm_ui::elements::{
     CacheOption, ConstrainedBox, Flex, Icon, Image, MainAxisAlignment, MainAxisSize, ParentElement,
     Rect, Stack,
 };
 use leanterm_ui::{AppContext, Element, Entity, TypedActionView, View};
+use pathfinder_color::ColorU;
 
 pub struct RootView {}
 

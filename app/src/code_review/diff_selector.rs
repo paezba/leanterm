@@ -1,6 +1,5 @@
 //! Trigger button + [`CodeReviewDiffMenu`] overlay for picking the diff
 //! target in the code review header.
-use pathfinder_geometry::vector::vec2f;
 use leanterm_core::ui::theme::Fill;
 use leanterm_ui::elements::{
     ChildAnchor, ChildView, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Element,
@@ -17,6 +16,7 @@ use leanterm_ui::{
     AppContext, Entity, FocusContext, SingletonEntity as _, TypedActionView, View, ViewContext,
     ViewHandle, id,
 };
+use pathfinder_geometry::vector::vec2f;
 
 use crate::appearance::Appearance;
 use crate::code_review::diff_menu::{CodeReviewDiffMenu, CodeReviewDiffMenuEvent};
@@ -173,7 +173,7 @@ impl View for DiffSelector {
         // for short labels.
         let icon = ConstrainedBox::new(
             Icon::SwitchHorizontal01
-                .to_warpui_icon(Fill::Solid(text_color))
+                .to_leanterm_ui_icon(Fill::Solid(text_color))
                 .finish(),
         )
         .with_width(15.)

@@ -1,10 +1,10 @@
 use std::path::PathBuf;
 use std::time::Duration;
 
-use settings::Setting as _;
 use leanterm_errors::report_if_error;
 use leanterm_ui::r#async::SpawnedFutureHandle;
 use leanterm_ui::{Entity, ModelContext, ModelHandle, SingletonEntity as _};
+use settings::Setting as _;
 
 use super::GitHubRepoEvent;
 use crate::code_review::git_repo_model::{GitRepoStatusEvent, GitRepoStatusModel};
@@ -186,7 +186,7 @@ impl LocalGitHubRepoModel {
         let repo_path = self.repo_path.clone();
         #[cfg(feature = "local_tty")]
         let path_future = {
-            // Use the shell's interactive PATH so `gh` can be found when Warp
+            // Use the shell's interactive PATH so `gh` can be found when Leanterm
             // was launched outside of a login shell, e.g. from the macOS GUI.
             LocalShellState::handle(ctx).update(ctx, |shell_state, ctx| {
                 shell_state.get_interactive_path_env_var(ctx)
@@ -228,7 +228,7 @@ impl LocalGitHubRepoModel {
         let repo_path = self.repo_path.clone();
         #[cfg(feature = "local_tty")]
         let path_future = {
-            // Use the shell's interactive PATH so `gh` can be found when Warp
+            // Use the shell's interactive PATH so `gh` can be found when Leanterm
             // was launched outside of a login shell, e.g. from the macOS GUI.
             LocalShellState::handle(ctx).update(ctx, |shell_state, ctx| {
                 shell_state.get_interactive_path_env_var(ctx)

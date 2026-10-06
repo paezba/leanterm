@@ -4,15 +4,15 @@ use std::ops::{Range, RangeInclusive};
 use std::sync::Arc;
 
 use itertools::Itertools;
-use num_traits::Float as _;
-use parking_lot::Mutex;
-use pathfinder_color::ColorU;
-use vec1::Vec1;
 use leanterm_core::semantic_selection::SemanticSelection;
 use leanterm_errors::report_error;
 use leanterm_terminal::model::{KeyboardModes, KeyboardModesApplyBehavior};
 use leanterm_ui::text::SelectionType;
 use leanterm_ui::units::Lines;
+use num_traits::Float as _;
+use parking_lot::Mutex;
+use pathfinder_color::ColorU;
+use vec1::Vec1;
 
 use super::find::RegexDFAs;
 use super::grid::RespectDisplayedOutput;

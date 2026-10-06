@@ -4,7 +4,7 @@ app/frameworks/dev/Carthage
 app/frameworks/**/*.xcframework
 /target
 /app/target
-/warp.xcworkspace
+/leanterm.xcworkspace
 .idea/
 .DS_Store
 *.icloud
@@ -40,7 +40,7 @@ script/windows/Output
 [._]sw[a-p]
 
 # Don't include the PTY recording.
-warp.pty.recording
+leanterm.pty.recording
 
 # Don't include captured frames generated locally.
 frame_capture_*.png

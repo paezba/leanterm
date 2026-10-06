@@ -1,12 +1,12 @@
 use std::path::Path;
 
-use settings::{Setting as _, SettingsManager};
 use leanterm_core::features::FeatureFlag;
 use leanterm_core::semantic_selection::SemanticSelection;
 use leanterm_errors::report_if_error;
 use leanterm_ui::rendering::GPUPowerPreference;
 use leanterm_ui::{AppContext, SingletonEntity};
 use leanterm_ui_extras::user_preferences;
+use settings::{Setting as _, SettingsManager};
 
 use super::app_icon::AppIconSettings;
 use super::app_installation_detection::UserAppInstallDetectionSettings;
@@ -26,11 +26,11 @@ use crate::terminal::BlockListSettings;
 use crate::terminal::alt_screen_reporting::AltScreenReporting;
 use crate::terminal::general_settings::GeneralSettings;
 use crate::terminal::keys_settings::KeysSettings;
+use crate::terminal::leantermify::settings::LeantermifySettings;
 use crate::terminal::ligature_settings::LigatureSettings;
 use crate::terminal::safe_mode_settings::SafeModeSettings;
 use crate::terminal::session_settings::{SessionSettings, SessionSettingsChangedEvent};
 use crate::terminal::settings::TerminalSettings;
-use crate::terminal::warpify::settings::WarpifySettings;
 use crate::undo_close::UndoCloseSettings;
 use crate::window_settings::{WindowSettings, stage_legacy_background_backdrop};
 use crate::workspace::tab_settings::TabSettings;
@@ -74,7 +74,7 @@ pub fn register_all_settings(ctx: &mut AppContext) {
     AppIconSettings::register(ctx);
     AppEditorSettings::register(ctx);
     InputSettings::register(ctx);
-    WarpifySettings::register(ctx);
+    LeantermifySettings::register(ctx);
     AltScreenReporting::register(ctx);
     UndoCloseSettings::register(ctx);
     SshSettings::register(ctx);
@@ -82,7 +82,7 @@ pub fn register_all_settings(ctx: &mut AppContext) {
     EmacsBindingsSettings::register(ctx);
     SameLinePromptBlockSettings::register(ctx);
     SemanticSelection::register(ctx);
-    if FeatureFlag::WarpControlCli.is_enabled() {
+    if FeatureFlag::LeantermControlCli.is_enabled() {
         LocalControlSettings::register(ctx);
     }
 
@@ -202,7 +202,7 @@ pub fn init(
 
     appearance::register(ctx);
 
-    // Set up hot-reload for the settings file. When the WarpConfig watcher
+    // Set up hot-reload for the settings file. When the LeantermConfig watcher
     // detects a change to settings.toml, reload preferences from disk and
     // push changed values into setting models.
     #[cfg(feature = "local_fs")]
@@ -210,8 +210,8 @@ pub fn init(
         let prefs = <settings::PublicPreferences as leanterm_ui::SingletonEntity>::as_ref(ctx);
         if prefs.is_settings_file() {
             ctx.subscribe_to_model(
-                &crate::user_config::WarpConfig::handle(ctx),
-                handle_warp_config_change,
+                &crate::user_config::LeantermConfig::handle(ctx),
+                handle_leanterm_config_change,
             );
         }
     }
@@ -219,24 +219,24 @@ pub fn init(
     user_defaults_on_startup
 }
 
-/// Handles a `WarpConfig` change event, reloading settings from disk when
+/// Handles a `LeantermConfig` change event, reloading settings from disk when
 /// the settings file is modified, created, or deleted.
 #[cfg(feature = "local_fs")]
-fn handle_warp_config_change(
-    _: leanterm_ui::ModelHandle<crate::user_config::WarpConfig>,
-    event: &crate::user_config::WarpConfigUpdateEvent,
+fn handle_leanterm_config_change(
+    _: leanterm_ui::ModelHandle<crate::user_config::LeantermConfig>,
+    event: &crate::user_config::LeantermConfigUpdateEvent,
     ctx: &mut AppContext,
 ) {
-    use crate::user_config::{WarpConfig, WarpConfigUpdateEvent};
+    use crate::user_config::{LeantermConfig, LeantermConfigUpdateEvent};
 
-    if !matches!(event, WarpConfigUpdateEvent::Settings) {
+    if !matches!(event, LeantermConfigUpdateEvent::Settings) {
         return;
     }
     let prefs = <settings::PublicPreferences as leanterm_ui::SingletonEntity>::as_ref(ctx);
     if let Err(err) = prefs.reload_from_disk() {
         log::warn!("Settings file reload failed: {err}");
-        WarpConfig::handle(ctx).update(ctx, |_, ctx| {
-            ctx.emit(WarpConfigUpdateEvent::SettingsErrors(
+        LeantermConfig::handle(ctx).update(ctx, |_, ctx| {
+            ctx.emit(LeantermConfigUpdateEvent::SettingsErrors(
                 super::SettingsFileError::FileParseFailed(err.to_string()),
             ));
         });
@@ -244,11 +244,11 @@ fn handle_warp_config_change(
     }
     let failed_keys = settings::SettingsManager::handle(ctx)
         .update(ctx, |manager, ctx| manager.reload_all_public_settings(ctx));
-    WarpConfig::handle(ctx).update(ctx, |_, ctx| {
+    LeantermConfig::handle(ctx).update(ctx, |_, ctx| {
         if failed_keys.is_empty() {
-            ctx.emit(WarpConfigUpdateEvent::SettingsErrorsCleared);
+            ctx.emit(LeantermConfigUpdateEvent::SettingsErrorsCleared);
         } else {
-            ctx.emit(WarpConfigUpdateEvent::SettingsErrors(
+            ctx.emit(LeantermConfigUpdateEvent::SettingsErrors(
                 super::SettingsFileError::InvalidSettings(failed_keys),
             ));
         }

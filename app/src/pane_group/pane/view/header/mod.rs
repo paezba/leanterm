@@ -1,7 +1,5 @@
 use std::fmt::Debug;
 
-use pathfinder_geometry::rect::RectF;
-use pathfinder_geometry::vector::{Vector2F, vec2f};
 use leanterm_core::settings::Setting;
 use leanterm_errors::report_error;
 use leanterm_ui::elements::{
@@ -16,6 +14,8 @@ use leanterm_ui::{
     AppContext, Element, Entity, EntityId, ModelHandle, SingletonEntity, TypedActionView, View,
     ViewContext, ViewHandle,
 };
+use pathfinder_geometry::rect::RectF;
+use pathfinder_geometry::vector::{Vector2F, vec2f};
 
 use super::PaneDropTargetData;
 use super::header_content::{HeaderContent, HeaderRenderContext, StandardHeaderOptions};

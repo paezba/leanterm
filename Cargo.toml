@@ -309,8 +309,7 @@ vec1 = { version = "1.8.0", features = ["serde"] }
 version-compare = "0.1"
 vte = { git = "https://github.com/warpdotdev/vte.git", rev = "4b399c87b63ba88f45709edaa6383fc519f6c900", default-features = false }
 walkdir = "2"
-warp-workflows = { git = "https://github.com/warpdotdev/workflows", rev = "793a98ddda6ef19682aed66364faebd2829f0e01" }
-warp_multi_agent_api = { git = "https://github.com/warpdotdev/warp-proto-apis.git", rev = "aad8b601abc02256ce6ea9648ff598ed0139a265" }
+leanterm_workflows = { package = "warp-workflows", git = "https://github.com/warpdotdev/workflows", rev = "793a98ddda6ef19682aed66364faebd2829f0e01" }
 wasm-bindgen = "0.2.89"
 wasm-bindgen-futures = "0.4.42"
 web-sys = { version = "0.3.69", features = [
@@ -354,7 +353,7 @@ dirs = "6.0.0"
 rayon = "1.10.0"
 sha2 = "0.10"
 shellexpand = "3.1.1"
-warp-command-signatures = { git = "https://github.com/warpdotdev/command-signatures.git", rev = "48fd7aa5b7b4d99f5db57d1c5a25c47c05567fcf", default-features = false }
+leanterm_command_signatures = { package = "warp-command-signatures", git = "https://github.com/warpdotdev/command-signatures.git", rev = "48fd7aa5b7b4d99f5db57d1c5a25c47c05567fcf", default-features = false }
 winit = { git = "https://github.com/warpdotdev/winit.git", rev = "14db95a686387211d57cf2afd1d908b2d82a20fe" }
 x11rb = "0.13.0"
 mockito = "1.7.0"
@@ -519,8 +518,4 @@ yaml-rust = { git = "https://github.com/warpdotdev/yaml-rust.git", rev = "516847
 
 tikv-jemallocator = { git = "https://github.com/warpdotdev/jemallocator.git", rev = "2ee30bfdf7059223b54810e4ea6c666f0a379e0b" }
 tikv-jemalloc-sys = { git = "https://github.com/warpdotdev/jemallocator.git", rev = "2ee30bfdf7059223b54810e4ea6c666f0a379e0b" }
-
-[patch."https://github.com/warpdotdev/warp-proto-apis.git"]
-# Uncomment for local development of warp-proto-apis
-# warp_multi_agent_api = { path = "../warp-proto-apis/apis/multi_agent/v1/gen/rust" }
 

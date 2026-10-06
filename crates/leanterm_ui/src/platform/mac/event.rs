@@ -1,13 +1,13 @@
 use std::ffi::CStr;
 
 use cocoa::base::id;
-use objc2_app_kit::{NSEvent, NSEventModifierFlags, NSEventType};
-use objc2_foundation::NSUInteger;
-use pathfinder_geometry::vector::vec2f;
 use leanterm_ui_core::Event;
 use leanterm_ui_core::event::{KeyEventDetails, ModifiersState};
 use leanterm_ui_core::keymap::Keystroke;
 use leanterm_ui_core::platform::keyboard::{KeyCode, PhysicalKey};
+use objc2_app_kit::{NSEvent, NSEventModifierFlags, NSEventType};
+use objc2_foundation::NSUInteger;
+use pathfinder_geometry::vector::vec2f;
 
 use super::keycode::{Keycode, scancode_to_physicalkey};
 use super::utils::unicode_char_to_key;

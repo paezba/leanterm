@@ -14,11 +14,11 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug executable 'warp'",
+      "name": "Debug executable 'leanterm'",
       "cargo": {
-        "args": ["build", "--bin=warp"],
+        "args": ["build", "--bin=leanterm"],
         "filter": {
-          "name": "warp",
+          "name": "leanterm",
           "kind": "bin"
         }
       },
@@ -30,8 +30,8 @@
       "type": "lldb",
       "request": "launch",
       "name": "Debug MacOS executable",
-      "preLaunchTask": "build_warplocal",
-      "program": "${workspaceFolder}/target/debug/bundle/osx/WarpLocal.app/Contents/MacOS/warp",
+      "preLaunchTask": "build_leantermlocal",
+      "program": "${workspaceFolder}/target/debug/bundle/osx/LeantermLocal.app/Contents/MacOS/leanterm",
       "args": [],
       "cwd": "${workspaceFolder}",
       "sourceLanguages": ["rust"]
@@ -39,11 +39,11 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug executable 'warp' with fast_dev",
+      "name": "Debug executable 'leanterm' with fast_dev",
       "cargo": {
-        "args": ["build", "--bin=warp", "--features=fast_dev"],
+        "args": ["build", "--bin=leanterm", "--features=fast_dev"],
         "filter": {
-          "name": "warp",
+          "name": "leanterm",
           "kind": "bin"
         }
       },
@@ -54,11 +54,11 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug executable 'warp' with with_local_server",
+      "name": "Debug executable 'leanterm' with with_local_server",
       "cargo": {
-        "args": ["build", "--bin=warp", "--features=with_local_server"],
+        "args": ["build", "--bin=leanterm", "--features=with_local_server"],
         "filter": {
-          "name": "warp",
+          "name": "leanterm",
           "kind": "bin"
         }
       },
@@ -73,8 +73,8 @@
       "env": {
         "RUST_BACKTRACE": "1"
       },
-      "preLaunchTask": "build_warplocal_fastdev",
-      "program": "${workspaceFolder}/target/debug/bundle/osx/WarpLocal.app/Contents/MacOS/warp",
+      "preLaunchTask": "build_leantermlocal_fastdev",
+      "program": "${workspaceFolder}/target/debug/bundle/osx/LeantermLocal.app/Contents/MacOS/leanterm",
       "args": [],
       "cwd": "${workspaceFolder}",
       "sourceLanguages": ["rust"]
@@ -82,11 +82,11 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug unit tests in executable 'warp'",
+      "name": "Debug unit tests in executable 'leanterm'",
       "cargo": {
-        "args": ["test", "--no-run", "--bin=warp", "--package=warp"],
+        "args": ["test", "--no-run", "--bin=leanterm", "--package=leanterm"],
         "filter": {
-          "name": "warp",
+          "name": "leanterm",
           "kind": "bin"
         }
       },
@@ -99,9 +99,9 @@
       "request": "launch",
       "name": "Debug integration tests in executable 'integration'",
       "cargo": {
-        "args": ["build", "--bin=integration", "--package=warp"],
+        "args": ["build", "--bin=integration", "--package=leanterm"],
         "env": {
-          "WARPUI_USE_REAL_DISPLAY_IN_INTEGRATION_TESTS": "1"
+          "LEANTERM_UI_USE_REAL_DISPLAY_IN_INTEGRATION_TESTS": "1"
         },
         "filter": {
           "name": "integration",

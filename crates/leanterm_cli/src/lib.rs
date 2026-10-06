@@ -4,8 +4,8 @@ use std::path::Path;
 use std::{env, fmt};
 
 use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
-use url::Url;
 use leanterm_core::channel::ChannelState;
+use url::Url;
 
 #[cfg(windows)]
 mod process_handle;
@@ -16,25 +16,25 @@ pub mod local_control;
 mod output_format;
 pub use output_format::OutputFormat;
 
-// Each of these variables is injected under both its `OZ_` and its `WARP_` name, carrying the
+// Each of these variables is injected under both its `OZ_` and its `LEANTERM_` name, carrying the
 // identical value. Read sites still use the `OZ_` names.
 pub const OZ_RUN_ID_ENV: &str = "OZ_RUN_ID";
-pub const WARP_RUN_ID_ENV: &str = "WARP_RUN_ID";
+pub const LEANTERM_RUN_ID_ENV: &str = "LEANTERM_RUN_ID";
 pub const OZ_PARENT_RUN_ID_ENV: &str = "OZ_PARENT_RUN_ID";
-pub const WARP_PARENT_RUN_ID_ENV: &str = "WARP_PARENT_RUN_ID";
+pub const LEANTERM_PARENT_RUN_ID_ENV: &str = "LEANTERM_PARENT_RUN_ID";
 pub const OZ_CLI_ENV: &str = "OZ_CLI";
-pub const WARP_CLI_ENV: &str = "WARP_CLI";
+pub const LEANTERM_CLI_ENV: &str = "LEANTERM_CLI";
 pub const OZ_HARNESS_ENV: &str = "OZ_HARNESS";
-pub const WARP_HARNESS_ENV: &str = "WARP_HARNESS";
+pub const LEANTERM_HARNESS_ENV: &str = "LEANTERM_HARNESS";
 
-/// Options related to the parent process that spawned this Warp instance.
+/// Options related to the parent process that spawned this Leanterm instance.
 #[derive(Debug, Default, Clone, clap::Args)]
 pub struct ParentOpts {
-    /// The ID of the Warp process that spawned this one.
+    /// The ID of the Leanterm process that spawned this one.
     ///
-    /// Used by codepaths that attempt to detect when the parent Warp process
+    /// Used by codepaths that attempt to detect when the parent Leanterm process
     /// has terminated. Guaranteed to be [`None`] when this is the initial
-    /// Warp process, but may also be [`None`] for Warp child processes if the
+    /// Leanterm process, but may also be [`None`] for Leanterm child processes if the
     /// child process doesn't need to keep track of its parent.
     #[arg(long = "parent-pid", hide = true)]
     pub pid: Option<u32>,
@@ -48,7 +48,7 @@ pub struct ParentOpts {
     pub handle: Option<process_handle::ProcessHandle>,
 }
 
-/// Returns whether an argument requests one of Warp's hidden worker modes.
+/// Returns whether an argument requests one of Leanterm's hidden worker modes.
 pub fn is_worker_invocation(arg: &str) -> bool {
     let command = WorkerCommand::augment_subcommands(clap::Command::new("worker"));
     command.find_subcommand(arg).is_some()
@@ -59,11 +59,11 @@ pub fn is_worker_invocation(arg: &str) -> bool {
         })
 }
 
-/// Argument parser for the shared Warp executable across all channels.
+/// Argument parser for the shared Leanterm executable across all channels.
 ///
-// Warp Control uses its separate [`local_control::ControlArgs`] parser, selected before this one.
+// Leanterm Control uses its separate [`local_control::ControlArgs`] parser, selected before this one.
 #[derive(Debug, Default, Parser, Clone)]
-#[command(name = "warp", about = "Warp terminal")]
+#[command(name = "leanterm", about = "Leanterm terminal")]
 #[clap(subcommand_precedence_over_arg = true)]
 pub struct Args {
     /// Enable debug mode.
@@ -77,11 +77,11 @@ pub struct Args {
     args: AppArgs,
 }
 
-/// Flags for the Warp application. Additional binaries, like test runners, may use this type
+/// Flags for the Leanterm application. Additional binaries, like test runners, may use this type
 /// along with their own flags, or convert their flags into an `AppArgs` value.
 #[derive(Debug, Default, clap::Args, Clone)]
 pub struct AppArgs {
-    /// True if this instance of Warp was launched at the end of the auto-update process.
+    /// True if this instance of Leanterm was launched at the end of the auto-update process.
     #[arg(long = "finish-update", hide = true)]
     pub finish_update: bool,
 
@@ -90,11 +90,11 @@ pub struct AppArgs {
     #[arg(long = "crash-recovery-mechanism", value_enum, requires = "ParentOpts")]
     pub crash_recovery_mechanism: Option<RecoveryMechanism>,
 
-    /// Options related to the parent process that spawned this Warp instance.
+    /// Options related to the parent process that spawned this Leanterm instance.
     #[clap(flatten)]
     pub parent: ParentOpts,
 
-    /// URLs to open in Warp.
+    /// URLs to open in Leanterm.
     #[arg(hide = true)]
     pub urls: Vec<Url>,
 }
@@ -139,12 +139,12 @@ impl Args {
         self.command.as_ref()
     }
 
-    /// Args for the main Warp application, if not running a subcommand.
+    /// Args for the main Leanterm application, if not running a subcommand.
     pub fn app_args(&self) -> &AppArgs {
         &self.args
     }
 
-    /// Extract the main Warp application args.
+    /// Extract the main Leanterm application args.
     pub fn into_app_args(self) -> AppArgs {
         self.args
     }
@@ -155,9 +155,9 @@ impl Args {
     }
 }
 
-/// Warp may spawn several worker processes - mostly servers that support the main application.
+/// Leanterm may spawn several worker processes - mostly servers that support the main application.
 ///
-/// These subcommands run those worker processes, which are bundled into the Warp binary.
+/// These subcommands run those worker processes, which are bundled into the Leanterm binary.
 #[derive(Debug, Clone, Subcommand)]
 pub enum WorkerCommand {
     /// Run the terminal server.
@@ -182,7 +182,7 @@ pub enum WorkerCommand {
     },
 }
 
-/// A subcommand of the main Warp application. This includes all [`WorkerCommand`]s as well as app-specific debugging tools.
+/// A subcommand of the main Leanterm application. This includes all [`WorkerCommand`]s as well as app-specific debugging tools.
 #[derive(Debug, Clone, Subcommand)]
 pub enum Command {
     #[clap(flatten)]
@@ -192,18 +192,18 @@ pub enum Command {
     ///
     ///
     /// For bash, add the following to ~/.bashrc:
-    ///     source <(path/to/warp completions bash)
+    ///     source <(path/to/leanterm completions bash)
     ///
     /// For zsh, add the following to ~/.zshrc:
-    ///     source <(path/to/warp completions zsh)
+    ///     source <(path/to/leanterm completions zsh)
     ///
     /// For fish, add the following to ~/.config/fish/config.fish:
-    ///     path/to/warp completions fish | source
+    ///     path/to/leanterm completions fish | source
     ///
     /// For Powershell, add the following to $PROFILE:
-    ///     path\to\warp | Out-String | Invoke-Expression
+    ///     path\to\leanterm | Out-String | Invoke-Expression
     ///
-    /// If no shell is provided, this defaults to the shell that Warp was run from.
+    /// If no shell is provided, this defaults to the shell that Leanterm was run from.
     #[command(verbatim_doc_comment)]
     Completions {
         /// Shell to generate completions for.
@@ -214,7 +214,7 @@ pub enum Command {
     /// Print debugging information and exit.
     #[clap(long_flag = "dump-debug-info")]
     DumpDebugInfo,
-    /// Print the JSON schema for the current Warp channel's settings and exit.
+    /// Print the JSON schema for the current Leanterm channel's settings and exit.
     #[cfg(not(target_family = "wasm"))]
     DumpSettingsSchema {
         /// Write the schema to this path instead of standard output.
@@ -314,7 +314,7 @@ pub fn dump_debug_info_flag() -> String {
     format!("--{flag}")
 }
 
-/// Returns a flag that sets the current process as the parent of a Warp subcommand to spawn.
+/// Returns a flag that sets the current process as the parent of a Leanterm subcommand to spawn.
 pub fn parent_flag() -> String {
     let command = <Args as CommandFactory>::command();
     let flag = command

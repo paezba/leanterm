@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::ops::Range;
 
-use string_offset::CharOffset;
 #[cfg(not(target_family = "wasm"))]
 use leanterm_core::channel::ChannelState;
 #[cfg(not(target_family = "wasm"))]
@@ -13,6 +12,7 @@ use leanterm_editor::search::{RestorableSearchResults, SelectedResult};
 use leanterm_errors::report_error;
 use leanterm_ui::r#async::SpawnedFutureHandle;
 use leanterm_ui::{AppContext, Entity, EntityId, ModelContext, ViewHandle, WeakViewHandle};
+use string_offset::CharOffset;
 
 use crate::code::local_code_editor::LocalCodeEditorView;
 use crate::code_review::code_review_view::CodeReviewView;

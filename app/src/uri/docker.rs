@@ -2,10 +2,10 @@ use std::collections::HashMap;
 use std::fmt::Display;
 
 use anyhow::{Result, anyhow};
+use leanterm_ui::AppContext;
+use leanterm_util::path::{ShellFamily, is_posix_portable_pathname};
 use regex::Regex;
 use url::Url;
-use leanterm_util::path::{ShellFamily, is_posix_portable_pathname};
-use leanterm_ui::AppContext;
 
 use crate::root_view::SubshellCommandArg;
 use crate::terminal::shell::ShellType;
@@ -26,7 +26,7 @@ impl TryFrom<String> for DockerContainerId {
             ))
         } else if input.chars().any(|c| !c.is_ascii_hexdigit()) {
             Err(anyhow!(
-                "Could not find valid docker container id to open warpified shell"
+                "Could not find valid docker container id to open leantermified shell"
             ))
         } else {
             Ok(DockerContainerId(input))
@@ -42,7 +42,7 @@ impl Display for DockerContainerId {
 
 /// Given a Url with query parameters in the correct format, dispatch an action to create a new tab
 /// (or open a new window if there is no window), then run a command to open a subshell into the
-/// specified Docker container, and then warpify that new subshell.
+/// specified Docker container, and then leantermify that new subshell.
 pub fn open_docker_container(url: &Url, ctx: &mut AppContext) -> Result<()> {
     let query_params: HashMap<String, String> = url
         .query_pairs()

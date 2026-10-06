@@ -10,7 +10,6 @@
 //! place.
 use leanterm_editor::content::buffer::InitialBufferState;
 use leanterm_editor::render::element::VerticalExpansionBehavior;
-use leanterm_util::path::LineAndColumnArg;
 use leanterm_ui::elements::{ChildView, MouseStateHandle};
 use leanterm_ui::text_layout::ClipConfig;
 use leanterm_ui::ui_components::components::UiComponent;
@@ -18,6 +17,7 @@ use leanterm_ui::{
     AppContext, Element, Entity, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle,
 };
+use leanterm_util::path::LineAndColumnArg;
 
 use crate::appearance::Appearance;
 use crate::code::editor::scroll::{ScrollPosition, ScrollTrigger};

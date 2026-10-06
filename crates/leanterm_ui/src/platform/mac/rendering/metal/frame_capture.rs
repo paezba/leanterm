@@ -1,6 +1,7 @@
 use std::ffi::c_void;
 use std::ptr::NonNull;
 
+use leanterm_ui_core::platform::CapturedFrame;
 use objc2::rc::Retained;
 use objc2::runtime::ProtocolObject;
 use objc2_metal::{
@@ -8,7 +9,6 @@ use objc2_metal::{
     MTLTextureDescriptor, MTLTextureUsage,
 };
 use pathfinder_geometry::vector::Vector2F;
-use leanterm_ui_core::platform::CapturedFrame;
 
 #[cfg(test)]
 #[path = "frame_capture_tests.rs"]

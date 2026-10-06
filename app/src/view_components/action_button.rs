@@ -1,8 +1,6 @@
 use std::borrow::Cow;
 use std::sync::Arc;
 
-use pathfinder_color::ColorU;
-use pathfinder_geometry::vector::{Vector2F, vec2f};
 use leanterm_core::ui::appearance::Appearance;
 use leanterm_core::ui::color::contrast::MinimumAllowedContrast;
 use leanterm_core::ui::color::{ContrastingColor, coloru_with_opacity};
@@ -23,6 +21,8 @@ use leanterm_ui::{
     AppContext, BlurContext, Element, Entity, EventContext, FocusContext, Gradient,
     SingletonEntity as _, TypedActionView, View, ViewContext,
 };
+use pathfinder_color::ColorU;
+use pathfinder_geometry::vector::{Vector2F, vec2f};
 
 use crate::settings_view::keybindings::{KeybindingChangedEvent, KeybindingChangedNotifier};
 use crate::terminal::input::{MenuPositioning, MenuPositioningProvider};
@@ -777,7 +777,7 @@ impl View for ActionButton {
                     })
                     .unwrap_or(Fill::Solid(text_color));
                 row.add_child(
-                    ConstrainedBox::new(icon.to_warpui_icon(icon_fill).finish())
+                    ConstrainedBox::new(icon.to_leanterm_ui_icon(icon_fill).finish())
                         .with_width(icon_size)
                         .with_height(icon_size)
                         .finish(),
@@ -845,7 +845,9 @@ impl View for ActionButton {
                 row.add_child(
                     Container::new(
                         ConstrainedBox::new(
-                            Icon::ChevronDown.to_warpui_icon(text_color.into()).finish(),
+                            Icon::ChevronDown
+                                .to_leanterm_ui_icon(text_color.into())
+                                .finish(),
                         )
                         .with_width(icon_size)
                         .with_height(icon_size)

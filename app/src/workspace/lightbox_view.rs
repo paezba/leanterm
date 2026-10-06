@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
-pub use lightbox::LightboxImage;
-use pathfinder_geometry::vector::Vector2F;
-use ui_components::{Component as _, lightbox};
 use leanterm_ui::assets::asset_cache::{AssetCache, AssetSource, AssetState};
 use leanterm_ui::image_cache::ImageType;
 use leanterm_ui::keymap::{FixedBinding, Keystroke};
 use leanterm_ui::prelude::*;
 use leanterm_ui::{AppContext, BlurContext, Element, Entity, SingletonEntity, View, ViewContext};
+pub use lightbox::LightboxImage;
+use pathfinder_geometry::vector::Vector2F;
+use ui_components::{Component as _, lightbox};
 
 use crate::appearance::Appearance;
 

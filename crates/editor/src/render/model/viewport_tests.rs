@@ -1,8 +1,8 @@
 use itertools::Itertools;
-use sum_tree::SumTree;
 use leanterm_ui_core::SizeConstraint;
 use leanterm_ui_core::geometry::vector::vec2f;
 use leanterm_ui_core::units::{IntoPixels, Pixels};
+use sum_tree::SumTree;
 
 use super::ViewportState;
 use crate::render::model::RenderState;

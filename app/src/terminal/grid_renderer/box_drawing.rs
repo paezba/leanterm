@@ -1,8 +1,8 @@
 //! Procedural geometry for supported solid Unicode box-drawing glyphs.
 
-use smallvec::SmallVec;
 use leanterm_ui::geometry::rect::RectF;
 use leanterm_ui::geometry::vector::vec2f;
+use smallvec::SmallVec;
 
 /// Weight of a box-drawing stroke.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

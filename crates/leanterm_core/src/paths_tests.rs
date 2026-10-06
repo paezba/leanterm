@@ -39,27 +39,31 @@ fn test_config_local_dir_path() {
 #[cfg(target_os = "macos")]
 #[test]
 fn test_macos_config_dir_name_scopes_to_data_profile() {
-    assert_eq!(macos_config_dir_name_for(Channel::Stable, None), ".warp");
+    assert_eq!(
+        macos_config_dir_name_for(Channel::Stable, None),
+        ".leanterm"
+    );
     assert_eq!(
         macos_config_dir_name_for(Channel::Local, None),
-        ".warp-local"
+        ".leanterm-local"
     );
 
     // Each development profile must get its own directory so shared config
     // (notably settings.toml) cannot leak between profiles.
     assert_eq!(
         macos_config_dir_name_for(Channel::Local, Some("myprofile")),
-        ".warp-local-myprofile"
+        ".leanterm-local-myprofile"
     );
     assert_eq!(
         macos_config_dir_name_for(Channel::Stable, Some("myprofile")),
-        ".warp-myprofile"
+        ".leanterm-myprofile"
     );
 }
 
 #[test]
 fn test_gui_app_id_maps_oss_tui_to_oss_gui() {
-    let gui_app_id = gui_app_id_for_channel(Channel::Oss, AppId::new("dev", "warp", "WarpTui"));
+    let gui_app_id =
+        gui_app_id_for_channel(Channel::Oss, AppId::new("dev", "leanterm", "LeantermTui"));
 
     assert_eq!(gui_app_id.to_string(), "dev.leanterm.Leanterm");
 }
@@ -84,10 +88,13 @@ fn test_gui_config_and_mcp_paths_resolve_explicit_sources() {
         }
     }
 
-    assert_eq!(gui_mcp_config_file_path(), warp_home_mcp_config_file_path());
+    assert_eq!(
+        gui_mcp_config_file_path(),
+        leanterm_home_mcp_config_file_path()
+    );
 }
 #[test]
-fn test_warp_home_config_dir_path() {
+fn test_leanterm_home_config_dir_path() {
     let home_dir = home_dir().expect("Should be able to compute home directory");
     let expected_dir_name = match ChannelState::data_profile() {
         Some(data_profile) => format!(".leanterm-{data_profile}"),
@@ -95,20 +102,20 @@ fn test_warp_home_config_dir_path() {
     };
 
     assert_eq!(
-        warp_home_config_dir(),
+        leanterm_home_config_dir(),
         Some(home_dir.join(expected_dir_name))
     );
 }
 
 #[test]
-fn test_warp_home_skills_and_mcp_paths() {
-    let Some(config_dir) = warp_home_config_dir() else {
-        panic!("Should be able to compute Warp home config directory");
+fn test_leanterm_home_skills_and_mcp_paths() {
+    let Some(config_dir) = leanterm_home_config_dir() else {
+        panic!("Should be able to compute Leanterm home config directory");
     };
 
-    assert_eq!(warp_home_skills_dir(), Some(config_dir.join("skills")));
+    assert_eq!(leanterm_home_skills_dir(), Some(config_dir.join("skills")));
     assert_eq!(
-        warp_home_mcp_config_file_path(),
+        leanterm_home_mcp_config_file_path(),
         Some(config_dir.join(".mcp.json"))
     );
 }
@@ -148,16 +155,16 @@ fn test_state_dir_path() {
 }
 
 #[test]
-fn test_project_path_for_warp_app_id() {
-    let project_dirs = project_dirs_for_app_id(AppId::new("dev", "warp", "Warp"), None)
+fn test_project_path_for_leanterm_app_id() {
+    let project_dirs = project_dirs_for_app_id(AppId::new("dev", "leanterm", "Leanterm"), None)
         .expect("should be able to compute project dirs");
     cfg_if::cfg_if! {
         if #[cfg(target_os = "macos")] {
-            assert_eq!(project_dirs.project_path(), "dev.warp.Warp");
+            assert_eq!(project_dirs.project_path(), "dev.leanterm.Leanterm");
         } else if #[cfg(any(target_os = "linux", target_os = "freebsd"))] {
-            assert_eq!(project_dirs.project_path(), "warp-terminal");
+            assert_eq!(project_dirs.project_path(), "leanterm");
         } else if #[cfg(windows)] {
-            assert_eq!(project_dirs.project_path(), "warp\\Warp");
+            assert_eq!(project_dirs.project_path(), "leanterm\\Leanterm");
         } else {
             unimplemented!("Need to update tests for current platform!");
         }
@@ -165,16 +172,16 @@ fn test_project_path_for_warp_app_id() {
 }
 
 #[test]
-fn test_project_path_for_warp_dev_app_id() {
-    let project_dirs = project_dirs_for_app_id(AppId::new("dev", "warp", "WarpDev"), None)
+fn test_project_path_for_leanterm_dev_app_id() {
+    let project_dirs = project_dirs_for_app_id(AppId::new("dev", "leanterm", "LeantermDev"), None)
         .expect("should be able to compute project dirs");
     cfg_if::cfg_if! {
         if #[cfg(target_os = "macos")] {
-            assert_eq!(project_dirs.project_path(), "dev.warp.WarpDev");
+            assert_eq!(project_dirs.project_path(), "dev.leanterm.LeantermDev");
         } else if #[cfg(any(target_os = "linux", target_os = "freebsd"))] {
-            assert_eq!(project_dirs.project_path(), "warp-terminal-dev");
+            assert_eq!(project_dirs.project_path(), "leanterm-dev");
         } else if #[cfg(windows)] {
-            assert_eq!(project_dirs.project_path(), "warp\\WarpDev");
+            assert_eq!(project_dirs.project_path(), "leanterm\\LeantermDev");
         } else {
             unimplemented!("Need to update tests for current platform!");
         }

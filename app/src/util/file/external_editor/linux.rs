@@ -6,8 +6,8 @@ use std::sync::OnceLock;
 use command::blocking::Command;
 use freedesktop_desktop_entry::DesktopEntry;
 use leanterm_errors::report_error;
-use leanterm_util::path::LineAndColumnArg;
 use leanterm_ui::AppContext;
+use leanterm_util::path::LineAndColumnArg;
 
 use super::Editor;
 

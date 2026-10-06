@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use settings::Setting as _;
 use leanterm::integration_testing::step::new_step_with_default_assertions;
 use leanterm::integration_testing::subshell::util::ssh_command;
 use leanterm::integration_testing::subshell::{
@@ -12,12 +11,13 @@ use leanterm::integration_testing::terminal::util::current_shell_starter_and_ver
 use leanterm::integration_testing::terminal::wait_until_bootstrapped_single_pane_for_tab;
 use leanterm::integration_testing::view_getters::single_input_view_for_tab;
 use leanterm::root_view::SubshellCommandArg;
+use leanterm::terminal::leantermify::settings::AddedSubshellCommands;
 use leanterm::terminal::shell::ShellType;
-use leanterm::terminal::warpify::settings::AddedSubshellCommands;
 use leanterm_ui_core::integration::{AssertionOutcome, TestStep};
 use leanterm_ui_core::windowing::WindowManager;
 use leanterm_ui_core::windowing::state::ApplicationStage;
 use leanterm_ui_core::{UpdateModel, async_assert};
+use settings::Setting as _;
 
 use super::{Builder, new_builder};
 use crate::util::skip_if_powershell_core_2303;
@@ -83,7 +83,7 @@ generate_can_bootstrap_remote_subshell_for_shell!(test_can_bootstrap_remote_bash
 // generate_can_bootstrap_remote_subshell_for_shell!(test_can_bootstrap_remote_fish_subshell, "fish");
 
 // Test the flow of creating a new window and running a command that should create a subshell and
-//  automaticall bootstrapping AKA "warpifying" that subshell.
+//  automaticall bootstrapping AKA "leantermifying" that subshell.
 pub fn test_can_auto_bootstrap() -> Builder {
     const SUBSHELL_COMMAND: &str = "zsh";
 

@@ -52,32 +52,6 @@ pub use history::*;
 pub use input::*;
 pub use keyboard_protocol::*;
 pub use launch_configs::*;
-pub use native_shell_completions::*;
-pub use osc8_hyperlinks::*;
-pub use pane_restoration::*;
-use parking_lot::Mutex;
-use pathfinder_geometry::rect::RectF;
-use pathfinder_geometry::vector::Vector2F;
-#[cfg(target_os = "macos")]
-pub use preview_config_migration::*;
-use rust_embed::RustEmbed;
-pub use secrets::*;
-pub use session_restoration::*;
-use settings::Setting as _;
-pub use settings_file_errors::*;
-pub use settings_file_hot_reload::*;
-pub use settings_file_migration::*;
-pub use settings_navigation::*;
-pub use settings_private::*;
-use shell::ShellType;
-pub use ssh::*;
-pub use subshell::*;
-use sum_tree::SeekBias;
-pub use sync_inputs::*;
-use sysinfo::{Pid, ProcessesToUpdate, System};
-pub use typeahead::*;
-use version_compare::Cmp;
-pub use video_recording::*;
 use leanterm::appearance::Appearance;
 use leanterm::cmd_or_ctrl_shift;
 use leanterm::integration_testing::assertions::assert_binding_display_string;
@@ -161,7 +135,9 @@ use leanterm::terminal::view::{
 use leanterm::terminal::{TerminalView, shell};
 use leanterm::util::bindings::CustomAction;
 use leanterm::workflows::categories::CategoriesView;
-use leanterm::workspace::{NEW_SESSION_MENU_BUTTON_POSITION_ID, NEW_TAB_BUTTON_POSITION_ID, Workspace};
+use leanterm::workspace::{
+    NEW_SESSION_MENU_BUTTON_POSITION_ID, NEW_TAB_BUTTON_POSITION_ID, Workspace,
+};
 use leanterm_ui_core::event::KeyState;
 use leanterm_ui_core::integration::{AssertionOutcome, StepData, TestStep};
 use leanterm_ui_core::keymap::{Keystroke, PerPlatformKeystroke, Trigger};
@@ -172,6 +148,32 @@ use leanterm_ui_core::windowing::WindowManager;
 use leanterm_ui_core::{
     AssetProvider, Event, SingletonEntity, UpdateView, ViewHandle, async_assert, async_assert_eq,
 };
+pub use native_shell_completions::*;
+pub use osc8_hyperlinks::*;
+pub use pane_restoration::*;
+use parking_lot::Mutex;
+use pathfinder_geometry::rect::RectF;
+use pathfinder_geometry::vector::Vector2F;
+#[cfg(target_os = "macos")]
+pub use preview_config_migration::*;
+use rust_embed::RustEmbed;
+pub use secrets::*;
+pub use session_restoration::*;
+use settings::Setting as _;
+pub use settings_file_errors::*;
+pub use settings_file_hot_reload::*;
+pub use settings_file_migration::*;
+pub use settings_navigation::*;
+pub use settings_private::*;
+use shell::ShellType;
+pub use ssh::*;
+pub use subshell::*;
+use sum_tree::SeekBias;
+pub use sync_inputs::*;
+use sysinfo::{Pid, ProcessesToUpdate, System};
+pub use typeahead::*;
+use version_compare::Cmp;
+pub use video_recording::*;
 pub use workflows::*;
 pub use workspace::*;
 
@@ -201,12 +203,12 @@ fn new_builder() -> Builder {
     Builder::new()
 }
 
-/// Adds a workflow file, containing two workflows, to the mocked out warp
+/// Adds a workflow file, containing two workflows, to the mocked out leanterm
 /// config directory and verifies that the workflows appear in the workflow menu.
-pub fn test_add_workflows_to_warp_config() -> Builder {
+pub fn test_add_workflows_to_leanterm_config() -> Builder {
     new_builder()
         .with_setup(move |utils| {
-            utils.set_env("WARP_CONFIG_WATCHER_DELAY_MS", Some((10).to_string()));
+            utils.set_env("LEANTERM_CONFIG_WATCHER_DELAY_MS", Some((10).to_string()));
 
             std::fs::create_dir_all(integration_testing::workflow::workflows_dir())
                 .expect("Should be able to create workflows dir");
@@ -220,7 +222,7 @@ pub fn test_add_workflows_to_warp_config() -> Builder {
 
                     workflows.read(app, |workflows, _| {
                         // Note that this can be a synchronous assertion because unlike the next test step,
-                        // we don't have concurrency with a WarpConfig watcher thread
+                        // we don't have concurrency with a LeantermConfig watcher thread
                         assert_eq!(
                             workflows.local_workflows().count(),
                             0,
@@ -257,10 +259,10 @@ pub fn test_add_workflows_to_warp_config() -> Builder {
         )
 }
 
-pub fn test_launch_warp_with_theme_in_warp_config() -> Builder {
+pub fn test_launch_leanterm_with_theme_in_leanterm_config() -> Builder {
     new_builder()
         .with_setup(move |utils| {
-            utils.set_env("WARP_CONFIG_WATCHER_DELAY_MS", Some((10).to_string()));
+            utils.set_env("LEANTERM_CONFIG_WATCHER_DELAY_MS", Some((10).to_string()));
 
             integration_testing::create_file_from_assets(
                 TEST_ONLY_ASSETS,
@@ -271,12 +273,12 @@ pub fn test_launch_warp_with_theme_in_warp_config() -> Builder {
         .with_step(assert_theme_chooser_contains("Test Theme", 1))
 }
 
-/// Adds a theme to the mocked out warp config directory and verifies that
+/// Adds a theme to the mocked out leanterm config directory and verifies that
 /// the theme appears in the theme picker.
-pub fn test_add_theme_to_warp_config() -> Builder {
+pub fn test_add_theme_to_leanterm_config() -> Builder {
     new_builder()
         .with_setup(move |utils| {
-            utils.set_env("WARP_CONFIG_WATCHER_DELAY_MS", Some((10).to_string()));
+            utils.set_env("LEANTERM_CONFIG_WATCHER_DELAY_MS", Some((10).to_string()));
 
             std::fs::create_dir_all(integration_testing::themes::themes_dir())
                 .expect("Should be able to create themes dir");
@@ -2373,7 +2375,7 @@ precmd_functions+=(_p9k_precmd)
         )
         .with_step(wait_until_bootstrapped_single_pane_for_tab(1))
         .with_step(check_banner_open(1, true))
-        // If the user then switches back to the Warp prompt, we should close the banner.
+        // If the user then switches back to the Leanterm prompt, we should close the banner.
         .with_step(
             new_step_with_default_assertions("Disable honor_ps1").with_action(|app, _, _| {
                 SessionSettings::handle(app).update(app, |session_settings, ctx| {
@@ -3273,7 +3275,7 @@ pub fn test_custom_ps1_expansion_bash() -> Builder {
         )
 }
 
-/// Default auto title. We test that Warp's auto title is used and verify that
+/// Default auto title. We test that Leanterm's auto title is used and verify that
 /// DISABLE_AUTO_TITLE is set correctly.
 pub fn test_auto_title() -> Builder {
     new_builder()
@@ -3295,8 +3297,8 @@ pub fn test_auto_title() -> Builder {
         ))
 }
 
-/// Validate that disabling Warp's auto title feature will not mess with oh-my-zsh settings.
-pub fn test_warp_auto_title_disabled() -> Builder {
+/// Validate that disabling Leanterm's auto title feature will not mess with oh-my-zsh settings.
+pub fn test_leanterm_auto_title_disabled() -> Builder {
     new_builder()
         .set_should_run_test(|| {
             // Only run this one on bash and zsh
@@ -3311,20 +3313,20 @@ pub fn test_warp_auto_title_disabled() -> Builder {
             write_rc_files_for_test(
                 &dir,
                 r#"
-WARP_DISABLE_AUTO_TITLE="1"
+LEANTERM_DISABLE_AUTO_TITLE="1"
 "#,
                 [ShellRcType::Bash],
             );
             write_rc_files_for_test(
                 &dir,
                 r#"
-WARP_DISABLE_AUTO_TITLE="true"
+LEANTERM_DISABLE_AUTO_TITLE="true"
 "#,
                 [ShellRcType::Zsh],
             );
         })
         .with_step(wait_until_bootstrapped_single_pane_for_tab(0))
-        // If Warp title is disabled, we don't set the DISABLE_AUTO_TITLE env variable
+        // If Leanterm title is disabled, we don't set the DISABLE_AUTO_TITLE env variable
         .with_step(execute_command_for_single_terminal_in_tab(
             0,
             "echo $DISABLE_AUTO_TITLE".to_string(),
@@ -3336,9 +3338,9 @@ WARP_DISABLE_AUTO_TITLE="true"
         ))
 }
 
-/// Checks that the tab title set by the user takes precedence over the Warp's default title and
+/// Checks that the tab title set by the user takes precedence over the Leanterm's default title and
 /// doesn't require any additional setting from the user's POV. This is bash-specific test.
-pub fn test_warp_honors_user_title_bash() -> Builder {
+pub fn test_leanterm_honors_user_title_bash() -> Builder {
     new_builder()
         .set_should_run_test(|| {
             // Only run this one on bash
@@ -3368,9 +3370,9 @@ PROMPT_COMMAND='echo -en "\033]0;TEST_TAB_TITLE\a"'
         ))
 }
 
-/// Checks that the tab title set by the user takes precedence over the Warp's default title and
+/// Checks that the tab title set by the user takes precedence over the Leanterm's default title and
 /// doesn't require any additional setting from the user's POV. This is zsh-specific test.
-pub fn test_warp_honors_user_title_zsh() -> Builder {
+pub fn test_leanterm_honors_user_title_zsh() -> Builder {
     new_builder()
         .set_should_run_test(|| {
             // Only run this one on bash
@@ -3402,7 +3404,7 @@ precmd_functions+=(set_title)
 /// Checks that an OSC 7 escape sequence (`\e]7;file://host/path\a`) emitted by
 /// the running command updates the block's current working directory mid-command
 /// without waiting for the next prompt. This lets external tools that change
-/// directory (for example `wt switch` from worktrunk) keep Warp's per-block CWD
+/// directory (for example `wt switch` from worktrunk) keep Leanterm's per-block CWD
 /// in sync with the shell. See issue #9125.
 pub fn test_osc7_updates_current_working_directory() -> Builder {
     new_builder()
@@ -3448,7 +3450,7 @@ pub fn test_osc7_updates_current_working_directory() -> Builder {
                 // the `WorkingDirectory` prompt chip text (read by
                 // `display_working_directory`, which feeds the vertical-tab
                 // subtitle) must be refreshed after OSC 7. Without
-                // `refresh_warp_prompt` in the `BlockWorkingDirectoryUpdated`
+                // `refresh_leanterm_prompt` in the `BlockWorkingDirectoryUpdated`
                 // path, the block's `pwd` updates but the chip text stays on
                 // the old CWD until the next `BlockCompleted`.
                 .add_assertion(|app, window_id| {
@@ -5450,7 +5452,7 @@ pub fn test_preferred_shell() -> Builder {
 pub fn test_git_prompt() -> Builder {
     let (starter, _) = current_shell_starter_and_version();
     // Note that we can't use the OUT_DIR for the temp directory
-    // here because that would put us in the warp repo. We need to
+    // here because that would put us in the leanterm repo. We need to
     // be in a place in the filesystem that's not already a git repo.
     new_builder()
         // TODO(CORE-2734): Unknown failure for Powershell
@@ -5524,7 +5526,7 @@ pub fn test_terminal_announces_capabilities_to_shell() -> Builder {
     };
 
     // Note that we can't use the OUT_DIR for the temp directory
-    // here because that would put us in the warp repo. We need to
+    // here because that would put us in the leanterm repo. We need to
     // be in a place in the filesystem that's not already a git repo.
     new_builder()
         .with_step(wait_until_bootstrapped_single_pane_for_tab(0))
@@ -5538,7 +5540,7 @@ pub fn test_terminal_announces_capabilities_to_shell() -> Builder {
             0,
             format!("echo ${var_prefix}TERM_PROGRAM"),
             ExpectedExitStatus::Success,
-            "WarpTerminal",
+            "Leanterm",
         ))
         .with_step(execute_command_for_single_terminal_in_tab(
             0,
@@ -5786,7 +5788,7 @@ function prompt {{
 }
 
 pub fn test_copy_block_command_and_output_honor_ps1_disabled() -> Builder {
-    let command = "echo WARP_COPY_E2E_OUTPUT";
+    let command = "echo LEANTERM_COPY_E2E_OUTPUT";
     new_builder()
         .use_tmp_filesystem_for_test_root_directory()
         .with_step(wait_until_bootstrapped_single_pane_for_tab(0))
@@ -5806,14 +5808,14 @@ pub fn test_copy_block_command_and_output_honor_ps1_disabled() -> Builder {
             new_step_with_default_assertions("Copy block copies command and output")
                 .with_click_on_saved_position("Copy")
                 .add_assertion(assert_clipboard_contains_string(format!(
-                    "{command}\nWARP_COPY_E2E_OUTPUT"
+                    "{command}\nLEANTERM_COPY_E2E_OUTPUT"
                 ))),
         )
 }
 
 pub fn test_copy_block_command_and_output_honor_ps1_enabled() -> Builder {
     let prompt_text = "this is my custom prompt";
-    let command = "echo WARP_PS1_COPY_E2E_OUTPUT";
+    let command = "echo LEANTERM_PS1_COPY_E2E_OUTPUT";
     new_builder()
         // TODO(CORE-2732): Flakey on linux
         .set_should_run_test(skip_if_powershell_core_2303)
@@ -5875,7 +5877,7 @@ function prompt {{
             new_step_with_default_assertions("Copy block includes PS1 prompt, command, and output")
                 .with_click_on_saved_position("Copy")
                 .add_assertion(assert_clipboard_contains_string(format!(
-                    "{prompt_text}{command}\nWARP_PS1_COPY_E2E_OUTPUT"
+                    "{prompt_text}{command}\nLEANTERM_PS1_COPY_E2E_OUTPUT"
                 ))),
         )
 }
@@ -5901,7 +5903,7 @@ pub fn test_copy_prompt_from_input_honor_ps1_disabled() -> Builder {
                 .add_assertion(assert_clipboard_contains_string("~".into())),
         )
 }
-pub fn test_warp_prompt_unsets_zsh_rprompt() -> Builder {
+pub fn test_leanterm_prompt_unsets_zsh_rprompt() -> Builder {
     new_builder()
         .set_should_run_test(|| {
             let (starter, _) = current_shell_starter_and_version();
@@ -6697,7 +6699,7 @@ pub fn test_context_chips_prompt_at_bootstrap() -> Builder {
             (String::from("SavedPrompt"), String::from("Default")),
         ]))
         .with_step(
-            new_step_with_default_assertions("Check Warp prompt")
+            new_step_with_default_assertions("Check Leanterm prompt")
                 .add_assertion(assert_working_dir_is_present(0)),
         )
 }

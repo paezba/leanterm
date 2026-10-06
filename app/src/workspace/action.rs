@@ -2,14 +2,14 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use ui_components::lightbox;
-use leanterm_util::path::LineAndColumnArg;
 use leanterm_ui::accessibility::AccessibilityVerbosity;
 use leanterm_ui::geometry::rect::RectF;
 use leanterm_ui::geometry::vector::Vector2F;
 use leanterm_ui::platform::Cursor;
 use leanterm_ui::platform::keyboard::KeyCode;
 use leanterm_ui::{EntityId, WindowId};
+use leanterm_util::path::LineAndColumnArg;
+use ui_components::lightbox;
 
 use super::tab_settings::{
     VerticalTabsCompactSubtitle, VerticalTabsDisplayGranularity, VerticalTabsPrimaryInfo,
@@ -320,9 +320,9 @@ pub enum WorkspaceAction {
         cursor_position: Vector2F,
     },
     DropGroup,
-    /// Toggles the left panel. In Code Mode V1 this toggles Warp Drive.
+    /// Toggles the left panel. In Code Mode V1 this toggles Leanterm Drive.
     /// In Code Mode V2 this toggles the left panel which contains both the project explorer and
-    /// Warp Drive. This happens as explicit action from the user.
+    /// Leanterm Drive. This happens as explicit action from the user.
     ToggleLeftPanel,
     /// Toggles the right panel. This happens as an explicit action from the user.
     ToggleRightPanel,
@@ -375,7 +375,7 @@ pub enum WorkspaceAction {
         position: Vector2F,
     },
     OpenLink(String),
-    /// On WASM, opens a given URL in the desktop Warp app (if installed) or redirects to download page.
+    /// On WASM, opens a given URL in the desktop Leanterm app (if installed) or redirects to download page.
     #[cfg(target_family = "wasm")]
     OpenLinkOnDesktop(url::Url),
     ReopenClosedSession,
@@ -397,7 +397,7 @@ pub enum WorkspaceAction {
     },
     TerminateApp,
     CloseWindow,
-    /// Help the user call the Warp executable with the [`crate::args::DEBUG_DUMP_FLAG`].
+    /// Help the user call the Leanterm executable with the [`crate::args::DEBUG_DUMP_FLAG`].
     DumpDebugInfo,
     ToggleInBandGenerators,
     ToggleDebugNetworkStatus,
@@ -431,12 +431,12 @@ pub enum WorkspaceAction {
         page: SettingsSection,
         widget_id: &'static str,
     },
-    /// Install the Warp Control CLI command to /usr/local/bin
+    /// Install the Leanterm Control CLI command to /usr/local/bin
     #[cfg(target_os = "macos")]
-    InstallWarpctrl,
-    /// Uninstall the Warp Control CLI command from /usr/local/bin
+    InstallLeantermctl,
+    /// Uninstall the Leanterm Control CLI command from /usr/local/bin
     #[cfg(target_os = "macos")]
-    UninstallWarpctrl,
+    UninstallLeantermctl,
     UndoRevertInCodeReviewPane {
         window_id: WindowId,
         view_id: EntityId,
@@ -728,7 +728,7 @@ impl WorkspaceAction {
             #[cfg(target_os = "macos")]
             SampleProcess => false,
             #[cfg(target_os = "macos")]
-            InstallWarpctrl | UninstallWarpctrl => false,
+            InstallLeantermctl | UninstallLeantermctl => false,
             #[cfg(feature = "local_fs")]
             FileRenamed { .. } => false, // File rename doesn't change workspace state
             #[cfg(feature = "local_fs")]

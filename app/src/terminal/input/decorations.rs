@@ -1,15 +1,15 @@
-//! Warp input editor logic related to decorating the input's text, such as
+//! Leanterm input editor logic related to decorating the input's text, such as
 //! applying syntax highlighting and error underlining.
 
 use std::collections::HashMap;
 use std::ops::Range;
 
-use settings::Setting as _;
-use string_offset::{ByteOffset, CharOffset};
 pub use leanterm_completer::completer::SuggestionTypeName;
 pub use leanterm_completer::util::parse_current_commands_and_tokens;
 pub use leanterm_completer::{ParsedTokenData, ParsedTokensSnapshot};
 use leanterm_ui::{AppContext, SingletonEntity, ViewContext};
+use settings::Setting as _;
+use string_offset::{ByteOffset, CharOffset};
 
 use super::Input;
 use crate::appearance::Appearance;

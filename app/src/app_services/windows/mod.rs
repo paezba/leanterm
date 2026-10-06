@@ -1,12 +1,11 @@
-use registry::register_uri_handler;
 #[cfg(feature = "release_bundle")]
 use leanterm_errors::report_error;
 use leanterm_ui::AppContext;
+use registry::register_uri_handler;
 #[cfg(feature = "release_bundle")]
 use {
-    service_impl::forward_uri_to_sole_running_instance,
+    leanterm_core::channel::ChannelState, service_impl::forward_uri_to_sole_running_instance,
     single_instance_manager::SingleInstanceManager, thiserror::Error, url::Url,
-    leanterm_core::channel::ChannelState,
 };
 
 mod registry;
@@ -25,7 +24,7 @@ pub enum StartupArgsForwardingError {
     /// which would open a duplicate window.
     #[error("should not forward arguments from the crash recovery process")]
     IgnoredForCrashRecoveryProcess,
-    #[error("there is no other instance of Warp")]
+    #[error("there is no other instance of Leanterm")]
     NoExistingInstance,
     #[error("failed to construct url")]
     CouldNotCreateUrl(#[from] url::ParseError),

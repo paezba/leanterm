@@ -4,10 +4,6 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use cocoa::base::{BOOL, NO, YES, id, nil};
-use objc2::{MainThreadMarker, msg_send};
-use objc2_app_kit::{NSApplication, NSCursor, NSRequestUserAttentionType};
-use objc2_av_foundation::{AVAuthorizationStatus, AVCaptureDevice, AVMediaTypeAudio};
-use objc2_foundation::NSUInteger;
 use leanterm_ui_core::accessibility::AccessibilityContent;
 use leanterm_ui_core::clipboard::InMemoryClipboard;
 use leanterm_ui_core::keymap::Keystroke;
@@ -20,6 +16,10 @@ use leanterm_ui_core::platform::{
     SendNotificationErrorCallback, TerminationMode,
 };
 use leanterm_ui_core::{ApplicationBundleInfo, WindowId, platform};
+use objc2::{MainThreadMarker, msg_send};
+use objc2_app_kit::{NSApplication, NSCursor, NSRequestUserAttentionType};
+use objc2_av_foundation::{AVAuthorizationStatus, AVCaptureDevice, AVMediaTypeAudio};
+use objc2_foundation::NSUInteger;
 
 use super::app::create_native_platform_modal;
 use super::keycode::{Keycode, modifier_code};
@@ -283,7 +283,7 @@ impl platform::Delegate for AppDelegate {
         dispatch::Queue::main().exec_async(move || {
             // See https://developer.apple.com/documentation/appkit/nsapplication/1428455-orderfrontcharacterpalette.
             // If the `sender` argument is nil, the palette is shown relative to the
-            // first responder's cursor location. In our case, that will be the Warp
+            // first responder's cursor location. In our case, that will be the Leanterm
             // host view, with a location set via the `active_cursor_position` API.
             // SAFETY: the closure runs on the main dispatch queue.
             let mtm = unsafe { MainThreadMarker::new_unchecked() };
@@ -375,9 +375,9 @@ impl platform::Delegate for AppDelegate {
         // `showModal:modalId:` selector's `NSUInteger` parameter.
         // SAFETY: `ModalId` and `NSUInteger` share the same representation.
         let modal_id: NSUInteger = unsafe { std::mem::transmute(id) };
-        // SAFETY: `showModal:modalId:` is a custom warp NSApplication selector.
+        // SAFETY: `showModal:modalId:` is a custom leanterm NSApplication selector.
         unsafe {
-            let app = &*app::get_warp_app().cast::<NSApplication>();
+            let app = &*app::get_leanterm_app().cast::<NSApplication>();
             let _: () = msg_send![app, showModal: &*alert, modalId: modal_id];
         }
     }
@@ -403,9 +403,11 @@ impl platform::Delegate for AppDelegate {
             // SAFETY: the closure runs on the main dispatch queue.
             let mtm = unsafe { MainThreadMarker::new_unchecked() };
             let app = NSApplication::sharedApplication(mtm);
-            let app_delegate = app.delegate().expect("the warp app always has a delegate");
+            let app_delegate = app
+                .delegate()
+                .expect("the leanterm app always has a delegate");
             let value: BOOL = if visible { YES } else { NO };
-            // `setDockIconVisible:` is a custom warp app-delegate selector.
+            // `setDockIconVisible:` is a custom leanterm app-delegate selector.
             // SAFETY: messaging the app delegate on the main thread.
             let _: BOOL = unsafe { msg_send![&*app_delegate, setDockIconVisible: value] };
         });
@@ -423,7 +425,7 @@ impl platform::Delegate for AppDelegate {
                 // window (e.g. during tab drag), so they can close immediately without
                 // prompting the user for confirmation.
                 TerminationMode::ForceTerminate | TerminationMode::ContentTransferred => {
-                    // `setForceTermination` is a custom warp NSApplication selector.
+                    // `setForceTermination` is a custom leanterm NSApplication selector.
                     // SAFETY: messaging the shared application.
                     let _: () = unsafe { msg_send![&*app, setForceTermination] };
                 }
@@ -460,7 +462,7 @@ impl platform::Delegate for AppDelegate {
 /// # Safety
 /// This function is marked unsafe because it retrieves the pointer to the callback
 /// function that we sent down to the Objective-C code.
-pub unsafe extern "C-unwind" fn warp_on_request_notification_permissions_completed(
+pub unsafe extern "C-unwind" fn leanterm_on_request_notification_permissions_completed(
     result_type: NSUInteger,
     result_msg: id,
     callback: *mut c_void,
@@ -479,7 +481,7 @@ pub unsafe extern "C-unwind" fn warp_on_request_notification_permissions_complet
 /// # Safety
 /// This function is marked unsafe because it retrieves the pointer to the callback
 /// function that we sent down to the Objective-C code.
-pub unsafe extern "C-unwind" fn warp_on_notification_send_error(
+pub unsafe extern "C-unwind" fn leanterm_on_notification_send_error(
     error_type: NSUInteger,
     error_msg: id,
     callback: *mut c_void,

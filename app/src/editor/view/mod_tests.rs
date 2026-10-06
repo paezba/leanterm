@@ -1,14 +1,14 @@
 use anyhow::Error;
 use itertools::Itertools;
-use pathfinder_geometry::vector::vec2f;
-use settings::ToggleableSetting;
-use unindent::Unindent;
 use leanterm_errors::report_if_error;
 use leanterm_ui::color::ColorU;
 use leanterm_ui::platform::WindowStyle;
 use leanterm_ui::text_layout::TextFrame;
 use leanterm_ui::windowing::WindowManager;
 use leanterm_ui::{AddSingletonModel, App, UpdateModel, UpdateView};
+use pathfinder_geometry::vector::vec2f;
+use settings::ToggleableSetting;
+use unindent::Unindent;
 
 use super::*;
 use crate::editor::EditorView;
@@ -455,12 +455,12 @@ fn test_select_word_with_smart_select() {
 
         app.add_window(WindowStyle::NotStealFocus, |ctx| {
             let mut editor = EditorView::new_with_base_text(
-                "word ~/.warp/themes/foo-bar.yaml thing",
+                "word ~/.lean/themes/foo-bar.yaml thing",
                 Default::default(),
                 ctx,
             );
             editor.select_word(&DisplayPoint::new(0, 8), ctx);
-            assert_eq!(editor.selected_text(ctx), "~/.warp/themes/foo-bar.yaml");
+            assert_eq!(editor.selected_text(ctx), "~/.lean/themes/foo-bar.yaml");
             editor
         });
     });
@@ -486,12 +486,12 @@ fn test_select_word_with_custom_boundaries() {
 
         app.add_window(WindowStyle::NotStealFocus, |ctx| {
             let mut editor = EditorView::new_with_base_text(
-                "word ~/.warp/themes/foo-bar.yaml thing",
+                "word ~/.lean/themes/foo-bar.yaml thing",
                 Default::default(),
                 ctx,
             );
             editor.select_word(&DisplayPoint::new(0, 8), ctx);
-            assert_eq!(editor.selected_text(ctx), "/.warp/themes/foo-bar.yaml");
+            assert_eq!(editor.selected_text(ctx), "/.lean/themes/foo-bar.yaml");
             editor
         });
     });
@@ -511,7 +511,7 @@ fn test_smart_select_with_drag() {
 
         app.add_window(WindowStyle::NotStealFocus, |ctx| {
             let mut editor = EditorView::new_with_base_text(
-                "word ~/.warp/themes/foo-bar.yaml andy@warp.dev",
+                "word ~/.lean/themes/foo-bar.yaml andy@lean.dev",
                 Default::default(),
                 ctx,
             );
@@ -519,7 +519,7 @@ fn test_smart_select_with_drag() {
             editor.update_selection(DisplayPoint::new(0, 34), Vector2F::zero(), ctx);
             assert_eq!(
                 editor.selected_text(ctx),
-                "~/.warp/themes/foo-bar.yaml andy"
+                "~/.lean/themes/foo-bar.yaml andy"
             );
             editor
         });
@@ -3273,7 +3273,7 @@ fn test_add_next_occurrence() {
 
         app.add_window(WindowStyle::NotStealFocus, |ctx| {
             let mut editor =
-                EditorView::new_with_base_text("warpwordwarpwordwarp", Default::default(), ctx);
+                EditorView::new_with_base_text("leanwordleanwordlean", Default::default(), ctx);
             editor
                 .select_ranges(vec![DisplayPoint::new(0, 0)..DisplayPoint::new(0, 4)], ctx)
                 .unwrap();
@@ -3284,7 +3284,7 @@ fn test_add_next_occurrence() {
             assert_eq!(editor.buffer_text(ctx), "wordword");
 
             editor.undo(ctx);
-            assert_eq!(editor.buffer_text(ctx), "warpwordwarpwordwarp");
+            assert_eq!(editor.buffer_text(ctx), "leanwordleanwordlean");
             editor.redo(ctx);
             assert_eq!(editor.buffer_text(ctx), "wordword");
 
@@ -3459,7 +3459,7 @@ fn test_autocomplete_symbols() {
 
         app.add_window(WindowStyle::NotStealFocus, |ctx| {
             let mut editor =
-                EditorView::new_with_base_text("word warp word", Default::default(), ctx);
+                EditorView::new_with_base_text("word lean word", Default::default(), ctx);
 
             editor.set_autocomplete_symbols_allowed(true);
             editor
@@ -3473,12 +3473,12 @@ fn test_autocomplete_symbols() {
                 .unwrap();
             editor.add_next_occurrence(ctx);
             editor.user_insert("[", ctx);
-            assert_eq!(editor.buffer_text(ctx), "[word] warp [word]");
+            assert_eq!(editor.buffer_text(ctx), "[word] lean [word]");
 
             editor.undo(ctx);
-            assert_eq!(editor.buffer_text(ctx), "word warp word");
+            assert_eq!(editor.buffer_text(ctx), "word lean word");
             editor.redo(ctx);
-            assert_eq!(editor.buffer_text(ctx), "[word] warp [word]");
+            assert_eq!(editor.buffer_text(ctx), "[word] lean [word]");
 
             editor
         });
@@ -3499,11 +3499,11 @@ fn test_autocomplete_symbols() {
                 autocomplete_symbols: true,
                 ..Default::default()
             };
-            let mut editor = EditorView::new_with_base_text("word warp word", options, ctx);
+            let mut editor = EditorView::new_with_base_text("word lean word", options, ctx);
 
             editor.move_to_visual_line_end(ctx);
             editor.user_insert("(", ctx);
-            assert_eq!(editor.buffer_text(ctx), "word warp word(");
+            assert_eq!(editor.buffer_text(ctx), "word lean word(");
 
             editor
         });

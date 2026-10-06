@@ -1,7 +1,7 @@
-use settings::Setting as _;
 use leanterm_ui::integration::{AssertionCallback, AssertionOutcome};
 use leanterm_ui::units::{IntoPixels, Lines};
 use leanterm_ui::{AppContext, SingletonEntity, WindowId, async_assert, async_assert_eq};
+use settings::Setting as _;
 
 use crate::integration_testing::terminal::util::ExpectedOutput;
 use crate::integration_testing::view_getters::{

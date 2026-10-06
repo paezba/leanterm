@@ -6,11 +6,6 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 use chrono::Local;
 use fuzzy_match::FuzzyMatchResult;
-use repo_metadata::RepoMetadataModel;
-use repo_metadata::repositories::DetectedRepositories;
-use repo_metadata::watcher::DirectoryWatcher;
-use smol_str::SmolStr;
-use unindent::Unindent;
 use leanterm_completer::completer::{
     Match, MatchStrategy, MatchedSuggestion, Priority, Suggestion, SuggestionResults,
     SuggestionType,
@@ -18,6 +13,11 @@ use leanterm_completer::completer::{
 use leanterm_completer::meta::Span;
 use leanterm_ui::platform::WindowStyle;
 use leanterm_ui::{App, UpdateView, WindowId};
+use repo_metadata::RepoMetadataModel;
+use repo_metadata::repositories::DetectedRepositories;
+use repo_metadata::watcher::DirectoryWatcher;
+use smol_str::SmolStr;
+use unindent::Unindent;
 use watcher::HomeDirectoryWatcher;
 use workflows::workflow::{Argument, ArgumentType, Workflow};
 
@@ -25,6 +25,7 @@ use super::*;
 use crate::context_chips::prompt::Prompt;
 use crate::editor::{DisplayPoint, EditorAction, TextStyleOperation};
 use crate::input_suggestions::Item;
+use crate::leanterm_managed_paths_watcher::LeantermManagedPathsWatcher;
 use crate::network::NetworkStatus;
 use crate::persisted_workspace::PersistedWorkspace;
 use crate::search::files::model::FileSearchModel;
@@ -53,7 +54,6 @@ use crate::terminal::view::Event as TerminalViewEvent;
 use crate::test_util::assert_eventually;
 use crate::test_util::settings::initialize_settings_for_tests;
 use crate::themes::theme::AnsiColorIdentifier;
-use crate::warp_managed_paths_watcher::WarpManagedPathsWatcher;
 use crate::workspace::{ActiveSession, ToastStack, WorkspaceRegistry};
 use crate::{GlobalResourceHandles, GlobalResourceHandlesProvider};
 
@@ -235,7 +235,7 @@ pub fn initialize_app(app: &mut App) {
     app.add_singleton_model(FileSearchModel::new);
     app.add_singleton_model(|_| IgnoredSuggestionsModel::new(vec![]));
     app.add_singleton_model(HomeDirectoryWatcher::new_for_test);
-    app.add_singleton_model(WarpManagedPathsWatcher::new_for_testing);
+    app.add_singleton_model(LeantermManagedPathsWatcher::new_for_testing);
 
     // Add GlobalResourceHandlesProvider for persistence
     let user_default_shell_unsupported_banner_model_handle =
@@ -640,9 +640,9 @@ fn combined_completions_show_file_paths_after_empty_native_results() {
         app.update(|ctx| {
             InputSettings::handle(ctx).update(ctx, |settings, ctx| {
                 settings
-                    .warp_completions_enabled
+                    .leanterm_completions_enabled
                     .set_value(true, ctx)
-                    .expect("Warp completions setting must update");
+                    .expect("Leanterm completions setting must update");
                 settings
                     .native_shell_completions_enabled
                     .set_value(true, ctx)
@@ -672,7 +672,7 @@ fn combined_completions_show_file_paths_after_empty_native_results() {
 
         input.update(&mut app, |input, ctx| {
             input.clear_buffer_and_reset_undo_stack(ctx);
-            input.user_insert("warptool ./src/", ctx);
+            input.user_insert("leantermtool ./src/", ctx);
             input.input_tab(ctx);
         });
 
@@ -696,9 +696,9 @@ fn combined_completions_preserve_nonempty_native_results() {
         app.update(|ctx| {
             InputSettings::handle(ctx).update(ctx, |settings, ctx| {
                 settings
-                    .warp_completions_enabled
+                    .leanterm_completions_enabled
                     .set_value(true, ctx)
-                    .expect("Warp completions setting must update");
+                    .expect("Leanterm completions setting must update");
                 settings
                     .native_shell_completions_enabled
                     .set_value(true, ctx)
@@ -732,7 +732,7 @@ fn combined_completions_preserve_nonempty_native_results() {
 
         input.update(&mut app, |input, ctx| {
             input.clear_buffer_and_reset_undo_stack(ctx);
-            input.user_insert("warptool n", ctx);
+            input.user_insert("leantermtool n", ctx);
             input.input_tab(ctx);
         });
 
@@ -1485,7 +1485,7 @@ fn test_cursor_movement() {
 
         let history_file_commands = vec![
             "cd Documents/zed".to_string(),
-            "curl https://app.warp.dev".to_string(),
+            "curl https://app.lean.dev".to_string(),
             "cargo check\ncargo run".to_string(),
         ];
         let terminal =
@@ -2237,7 +2237,7 @@ fn test_last_word_insertions() {
 
         // last word insertion looks for preceding whitespace character
         let history_file_commands = vec![
-            "https://app.warp.dev".to_string(),
+            "https://app.lean.dev".to_string(),
             "cargo check\ncargo run --features".to_string(),
         ];
         let terminal =
@@ -2274,7 +2274,7 @@ fn test_last_word_insertions() {
             input.insert_last_word_previous_command(ctx);
         });
         input.read(&app, |input, ctx| {
-            assert_eq!(input.buffer_text(ctx), "git https://app.warp.dev");
+            assert_eq!(input.buffer_text(ctx), "git https://app.lean.dev");
         });
 
         // Insert is temporary, undo goes back to initial state before first insertion

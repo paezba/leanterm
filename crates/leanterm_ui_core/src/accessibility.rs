@@ -3,8 +3,8 @@
 //! disabilities to use certain software. In our case: we focus on blind users and their day-to-day
 //! life with screen readers.
 //!
-//! ## How does a11y work in Warp?
-//! Because Warp uses its own rust UI framework (leanterm_ui), we don’t benefit from the built-in
+//! ## How does a11y work in Leanterm?
+//! Because Leanterm uses its own rust UI framework (leanterm_ui), we don’t benefit from the built-in
 //! VoiceOver integration and objc NSAccessibility APIs. This is both good and bad for our app and
 //! the UI framework.
 //!
@@ -20,7 +20,7 @@
 //! - We need to think about a11y (yeah, I mentioned it in good parts, but given that a11y is usually
 //!   thirdwheeling next to AwesomeFeatures™ and BugFixes® it’s easy to ship features that are not accessible).
 //!
-//! WarpUI framework right now provides 3 ways of announcing what’s happening in the app:
+//! LeantermUi framework right now provides 3 ways of announcing what’s happening in the app:
 //! - Accessibility Contents for the currently focused View;
 //! - Accessibility Contents for the currently performed Action;
 //! - On-demand emitting Accessibility Contents.
@@ -64,14 +64,14 @@ pub struct AccessibilityContent {
     /// (currently unused) The rectangle that describes where the given element is on the screen.
     /// System’s APIs then draw a frame around that element, making it super clear what object
     /// the description is referring to.
-    /// Frame support is a work-in-progress in Warp and right now this field is omitted and not set.
+    /// Frame support is a work-in-progress in Leanterm and right now this field is omitted and not set.
     pub frame: Option<RectF>,
-    /// The role a given element has. Note that we use our own, WarpUI-defined roles (vs those that
+    /// The role a given element has. Note that we use our own, LeantermUi-defined roles (vs those that
     /// come from the NSAccessibility framework). The role describes the action/element/event role (
     /// for example, when the “Command Input” is focused, it announces with a `TextareaRole`.
     /// This is another helper field that lets the user understand what they can potentially do,
     /// or what object is in focus.
-    pub role: WarpA11yRole,
+    pub role: LeantermA11yRole,
 }
 
 /// Verbosity level of a11y announcements. By default, all announcements include both the value
@@ -149,14 +149,14 @@ fn string_announcement(s: String) -> String {
 
 impl AccessibilityContent {
     // TODO add frame support
-    pub fn new_without_help<T>(value: T, role: WarpA11yRole) -> Self
+    pub fn new_without_help<T>(value: T, role: LeantermA11yRole) -> Self
     where
         T: Into<String>,
     {
         Self::new_internal::<T, String>(value, None, role)
     }
 
-    pub fn new<V, H>(value: V, help: H, role: WarpA11yRole) -> Self
+    pub fn new<V, H>(value: V, help: H, role: LeantermA11yRole) -> Self
     where
         V: Into<String>,
         H: Into<String>,
@@ -164,7 +164,7 @@ impl AccessibilityContent {
         Self::new_internal(value, Some(help), role)
     }
 
-    fn new_internal<V, H>(value: V, help: Option<H>, role: WarpA11yRole) -> Self
+    fn new_internal<V, H>(value: V, help: Option<H>, role: LeantermA11yRole) -> Self
     where
         V: Into<String>,
         H: Into<String>,
@@ -204,7 +204,7 @@ impl AccessibilityContent {
 }
 
 #[derive(Default, Debug, Clone, Copy)]
-pub enum WarpA11yRole {
+pub enum LeantermA11yRole {
     ButtonRole,
     CheckboxRole,
     HelpRole,
@@ -223,9 +223,9 @@ pub enum WarpA11yRole {
     UserAction,
 }
 
-impl std::fmt::Display for WarpA11yRole {
+impl std::fmt::Display for LeantermA11yRole {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        use WarpA11yRole::*;
+        use LeantermA11yRole::*;
         let word = match self {
             ButtonRole => "Button",
             CheckboxRole => "Checkbox",
@@ -258,7 +258,10 @@ pub enum ActionAccessibilityContent {
 impl ActionAccessibilityContent {
     pub fn from_debug() -> Self {
         Self::CustomFn(|action| {
-            AccessibilityContent::new_without_help(format!("{action:?}."), WarpA11yRole::UserAction)
+            AccessibilityContent::new_without_help(
+                format!("{action:?}."),
+                LeantermA11yRole::UserAction,
+            )
         })
     }
 }

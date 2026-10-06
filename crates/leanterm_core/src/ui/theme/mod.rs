@@ -4,10 +4,10 @@ pub mod phenomenon;
 use std::path::PathBuf;
 
 use dirs::home_dir;
-use serde::{Deserialize, Serialize};
 use leanterm_ui_core::assets::asset_cache::AssetSource;
 use leanterm_ui_core::color::ColorU;
 use leanterm_ui_core::geometry::vector::vec2f;
+use serde::{Deserialize, Serialize};
 
 use self::color::CustomDetails;
 use super::color::blend::Blend;
@@ -583,7 +583,7 @@ impl TerminalColors {
 }
 
 #[derive(Serialize, Clone, Debug, Deserialize, PartialEq, Eq)]
-pub struct WarpTheme {
+pub struct LeantermTheme {
     background: Fill,
     accent: Fill,
     #[serde(with = "hex_color")]
@@ -601,7 +601,7 @@ pub struct WarpTheme {
     name: Option<String>,
 }
 
-impl WarpTheme {
+impl LeantermTheme {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         bg: Fill,
@@ -613,7 +613,7 @@ impl WarpTheme {
         background_image: Option<Image>,
         name: Option<String>,
     ) -> Self {
-        WarpTheme {
+        LeantermTheme {
             background: bg,
             foreground,
             accent,

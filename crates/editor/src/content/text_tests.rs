@@ -1,5 +1,5 @@
-use markdown_parser::FormattedTable;
 use leanterm_ui_core::fonts::Weight;
+use markdown_parser::FormattedTable;
 
 use super::{BufferBlockItem, BufferTextStyle, MarkdownStyle, TextStyles, format_image_markdown};
 

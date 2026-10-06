@@ -4,7 +4,6 @@ use std::sync::Arc;
 
 use itertools::Itertools;
 use lazy_static::lazy_static;
-use leanterm_util::path::LineAndColumnArg;
 use leanterm_ui::elements::{
     Align, Border, ChildView, Clipped, ClippedScrollStateHandle, ClippedScrollable, ConstrainedBox,
     Container, CornerRadius, Dismiss, DispatchEventResult, Empty, EventHandler, Fill, Flex,
@@ -18,6 +17,7 @@ use leanterm_ui::{
     AppContext, Element, Entity, EntityId, FocusContext, ModelHandle, SingletonEntity,
     TypedActionView, ViewContext, ViewHandle, WindowId,
 };
+use leanterm_util::path::LineAndColumnArg;
 
 use super::super::palette_styles as styles;
 use super::CommandPaletteMixer;
@@ -40,7 +40,7 @@ use crate::search::search_bar::{
 use crate::session_management::SessionSource;
 use crate::settings::CtrlTabBehavior;
 use crate::terminal::keys_settings::KeysSettings;
-use crate::themes::theme::WarpTheme;
+use crate::themes::theme::LeantermTheme;
 use crate::workspace::WorkspaceAction;
 
 lazy_static! {
@@ -638,7 +638,7 @@ impl View {
         })
     }
 
-    fn render_palette_list(&self, theme: &WarpTheme, app: &AppContext) -> Box<dyn Element> {
+    fn render_palette_list(&self, theme: &LeantermTheme, app: &AppContext) -> Box<dyn Element> {
         match self.search_bar_state.as_ref(app).query_result_renderers() {
             None => Empty::new().finish(),
             Some(renderers) if renderers.is_empty() => {

@@ -8,16 +8,16 @@ use std::sync::Arc;
 
 use futures::stream::AbortHandle;
 use itertools::Itertools;
-use pathfinder_color::ColorU;
-use rangemap::RangeMap;
-use similar::{ChangeTag, DiffOp, TextDiff};
-use string_offset::CharOffset;
 use leanterm_core::ui::theme::{AnsiColorIdentifier, Fill};
 use leanterm_editor::content::edit::TemporaryBlock;
 use leanterm_editor::content::version::BufferVersion;
 use leanterm_editor::multiline::{AnyMultilineString, LF, MultilineStr, MultilineString};
 use leanterm_editor::render::model::{Decoration, LineCount, LineDecoration};
 use leanterm_ui::{Entity, ModelContext};
+use pathfinder_color::ColorU;
+use rangemap::RangeMap;
+use similar::{ChangeTag, DiffOp, TextDiff};
+use string_offset::CharOffset;
 
 use super::super::DiffResult;
 use crate::appearance::Appearance;

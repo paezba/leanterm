@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
+use leanterm_editor::multiline::{MultilineStr, MultilineString};
 use rangemap::RangeMap;
 use unindent::Unindent as _;
-use leanterm_editor::multiline::{MultilineStr, MultilineString};
 
 use super::{DiffModel, compute_unified_diff};
 use crate::code::editor::diff::ChangeType;

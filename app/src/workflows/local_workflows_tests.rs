@@ -5,7 +5,7 @@ use leanterm_ui::App;
 use super::*;
 
 fn initialize_app(app: &App) {
-    app.add_singleton_model(WarpConfig::mock);
+    app.add_singleton_model(LeantermConfig::mock);
 }
 
 #[test]

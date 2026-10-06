@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::path::PathBuf;
 
-use serde::{Deserialize, Serialize};
-use leanterm_util::path::LineAndColumnArg;
 use leanterm_ui::{AppContext, Entity, EntityId, SingletonEntity, ViewHandle, WindowId};
+use leanterm_util::path::LineAndColumnArg;
+use serde::{Deserialize, Serialize};
 
 use super::view::CodeView;
 use crate::code_review::code_review_view::CodeReviewView;

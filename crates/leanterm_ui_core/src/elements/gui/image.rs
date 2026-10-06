@@ -6,10 +6,10 @@ use std::time::Duration;
 use anyhow::Context as _;
 use instant::Instant;
 use lazy_static::lazy_static;
+use leanterm_errors::report_error;
 use parking_lot::Mutex;
 use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::{Vector2F, Vector2I, vec2f};
-use leanterm_errors::report_error;
 
 use super::{CornerRadius, Element, Point};
 use crate::assets::asset_cache::{AssetCache, AssetSource, AssetState};

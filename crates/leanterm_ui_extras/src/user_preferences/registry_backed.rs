@@ -12,23 +12,23 @@ pub struct RegistryBackedPreferences {
     app_key_path: String,
 }
 
-static WARP_REGISTRY_BASE_PATH: &str = "Software\\Warp.dev\\";
+static LEANTERM_REGISTRY_BASE_PATH: &str = "Software\\Leanterm.dev\\";
 pub const KEY_NOT_FOUND_ERR: HRESULT = HRESULT::from_win32(0x80070002);
 
 impl RegistryBackedPreferences {
     /// Construct a separate registry path for each channel (stable, dev, local, etc.)
     pub fn new(app_name: &str) -> Self {
         Self {
-            app_key_path: WARP_REGISTRY_BASE_PATH.to_owned() + app_name,
+            app_key_path: LEANTERM_REGISTRY_BASE_PATH.to_owned() + app_name,
         }
     }
 
-    /// Gets Warp's registry key, creating it if it does not already exist.
-    fn get_warp_registry(&self) -> Result<Key, super::Error> {
+    /// Gets Leanterm's registry key, creating it if it does not already exist.
+    fn get_leanterm_registry(&self) -> Result<Key, super::Error> {
         CURRENT_USER.create(self.app_key_path.clone()).map_err(|e| {
             report_error!(
                 anyhow::Error::new(e.clone())
-                    .context("unable to access Warp app key in Windows Registry")
+                    .context("unable to access Leanterm app key in Windows Registry")
             );
             super::Error::IoError(io::Error::from(e))
         })
@@ -37,17 +37,17 @@ impl RegistryBackedPreferences {
 
 impl UserPreferences for RegistryBackedPreferences {
     fn read_value(&self, name: &str) -> Result<Option<String>, super::Error> {
-        Ok(self.get_warp_registry()?.get_string(name).ok())
+        Ok(self.get_leanterm_registry()?.get_string(name).ok())
     }
 
     fn write_value(&self, key: &str, value: String) -> Result<(), super::Error> {
-        self.get_warp_registry()?
+        self.get_leanterm_registry()?
             .set_string(key, value.as_str())
             .map_err(|e| super::Error::from(io::Error::from(e)))
     }
 
     fn remove_value(&self, key: &str) -> Result<(), super::Error> {
-        match self.get_warp_registry()?.remove_value(key) {
+        match self.get_leanterm_registry()?.remove_value(key) {
             Ok(_) => Ok(()),
             // If the key doesn't exist, then treat removal of that nonexistent key as a success.
             Err(e) if e.code() == KEY_NOT_FOUND_ERR => Ok(()),

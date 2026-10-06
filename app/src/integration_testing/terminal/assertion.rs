@@ -1,11 +1,11 @@
-use pathfinder_geometry::rect::RectF;
-use regex::Regex;
-use settings::Setting as _;
-use leanterm_util::path::user_friendly_path;
 use leanterm_ui::integration::{AssertionCallback, AssertionOutcome};
 use leanterm_ui::units::Lines;
 use leanterm_ui::windowing::WindowManager;
 use leanterm_ui::{App, SingletonEntity, ViewHandle, WindowId, async_assert, async_assert_eq};
+use leanterm_util::path::user_friendly_path;
+use pathfinder_geometry::rect::RectF;
+use regex::Regex;
+use settings::Setting as _;
 
 use super::util::ExpectedOutput;
 use crate::integration_testing::view_getters::{

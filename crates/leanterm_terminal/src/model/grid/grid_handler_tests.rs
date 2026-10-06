@@ -3,8 +3,8 @@
 
 use std::ops::BitOrAssign;
 
-use leanterm_util::path::LineAndColumnArg;
 use leanterm_ui_core::text::words::is_default_word_boundary;
+use leanterm_util::path::LineAndColumnArg;
 
 use super::*;
 use crate::model::blockgrid::BlockGrid;
@@ -84,14 +84,14 @@ fn regex_right() {
     #[rustfmt::skip]
     let blockgrid = mock_blockgrid("\
         testing66\r\n\
-        Warp\n\
+        Lean\n\
         123\r\n\
-        Warp\r\n\
+        Lean\r\n\
         123\
     ");
 
     // Check regex across wrapped and unwrapped lines.
-    let dfas = RegexDFAs::new("Wa.*123").unwrap();
+    let dfas = RegexDFAs::new("Le.*123").unwrap();
     let start = Point::new(1, 0);
     let end = Point::new(4, 2);
     let match_start = Point::new(1, 0);
@@ -109,14 +109,14 @@ fn regex_left() {
     #[rustfmt::skip]
     let blockgrid = mock_blockgrid("\
         testing66\r\n\
-        Warp\n\
+        Lean\n\
         123\r\n\
-        Warp\r\n\
+        Lean\r\n\
         123\
     ");
 
     // Check regex across wrapped and unwrapped lines.
-    let dfas = RegexDFAs::new("Wa.*123").unwrap();
+    let dfas = RegexDFAs::new("Le.*123").unwrap();
     let start = Point::new(4, 2);
     let end = Point::new(1, 0);
     let match_start = Point::new(1, 0);
@@ -133,12 +133,12 @@ fn regex_left() {
 fn nested_regex() {
     #[rustfmt::skip]
     let blockgrid = mock_blockgrid("\
-        Wa -> Warp -> rp\r\n\
-        rp\
+        Le -> Lean -> an\r\n\
+        an\
     ");
 
     // Greedy stopped at linebreak.
-    let dfas = RegexDFAs::new("Wa.*rp").unwrap();
+    let dfas = RegexDFAs::new("Le.*an").unwrap();
     let start = Point::new(0, 0);
     let end = Point::new(0, 15);
     assert_eq!(
@@ -149,7 +149,7 @@ fn nested_regex() {
     );
 
     // Greedy stopped at dead state.
-    let dfas = RegexDFAs::new("Wa[^y]*rp").unwrap();
+    let dfas = RegexDFAs::new("Le[^y]*an").unwrap();
     let start = Point::new(0, 0);
     let end = Point::new(0, 9);
     assert_eq!(
@@ -562,12 +562,12 @@ fn test_line_to_fragments() {
 
 #[test]
 fn test_secrets_serialization() {
-    let mut blockgrid = mock_blockgrid("foo zach@warp.dev bar");
+    let mut blockgrid = mock_blockgrid("foo zach@lean.dev bar");
     blockgrid.maybe_enable_secret_obfuscation(ObfuscateSecrets::Yes);
     blockgrid.grid_handler_mut().mark_secret_range(
         Point::new(0, 4)..=Point::new(0, 16),
         IsObfuscated::Yes,
-        "zach@warp.dev".to_string(),
+        "zach@lean.dev".to_string(),
         SecretLevel::User,
     );
 
@@ -594,7 +594,7 @@ fn test_secrets_serialization() {
         .expect("should unobfuscate secret");
 
     assert_eq!(
-        "foo zach@warp.dev bar",
+        "foo zach@lean.dev bar",
         blockgrid.grid_handler.bounds_to_string(
             Point::new(0, 0),
             Point::new(0, 21),
@@ -702,7 +702,7 @@ fn test_find_url_with_delimiter() {
         None
     );
 
-    let blockgrid = mock_blockgrid("https://google.com/search?q=warp");
+    let blockgrid = mock_blockgrid("https://google.com/search?q=lean");
     assert_eq!(
         blockgrid
             .grid_handler
@@ -743,7 +743,7 @@ fn test_find_url_wide_characters() {
 #[test]
 fn test_find_url_omits_trailing_periods() {
     // Test that it omits a single trailing period.
-    let blockgrid = mock_blockgrid("Visit https://github.com/warpdotdev/Warp/issues.");
+    let blockgrid = mock_blockgrid("Visit https://github.com/leandotdev/Lean/issues.");
     assert_eq!(
         blockgrid
             .grid_handler
@@ -761,7 +761,7 @@ fn test_find_url_omits_trailing_periods() {
     );
 
     // Test that it omits multiple trailing periods.
-    let blockgrid = mock_blockgrid("Visit https://github.com/warpdotdev/Warp/issues...");
+    let blockgrid = mock_blockgrid("Visit https://github.com/leandotdev/Lean/issues...");
     assert_eq!(
         blockgrid
             .grid_handler
@@ -779,7 +779,7 @@ fn test_find_url_omits_trailing_periods() {
     );
 
     // Test that it handles a period in the middle of the URL path somewhere.
-    let blockgrid = mock_blockgrid("Visit https://github.com/warp.dev/Warp/issues.");
+    let blockgrid = mock_blockgrid("Visit https://github.com/lean.dev/Lean/issues.");
     assert_eq!(
         blockgrid
             .grid_handler

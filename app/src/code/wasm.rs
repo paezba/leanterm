@@ -1,11 +1,11 @@
 use std::path::{Path, PathBuf};
 
 use code_diff::diff_validation::DiffDelta;
-use leanterm_util::path::LineAndColumnArg;
 use leanterm_ui::elements::{DraggableState, Empty, MouseStateHandle};
 use leanterm_ui::{
     AppContext, Element, Entity, ModelHandle, TypedActionView, View, ViewContext, ViewHandle,
 };
+use leanterm_util::path::LineAndColumnArg;
 
 use super::editor_management::CodeSource;
 use super::local_code_editor::LocalCodeEditorView;

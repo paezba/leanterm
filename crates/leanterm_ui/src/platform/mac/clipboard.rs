@@ -4,10 +4,10 @@ use std::slice;
 
 use anyhow::Result;
 use cocoa::base::id;
+use leanterm_ui_core::clipboard::{ClipboardContent, ImageData};
 use objc2::rc::Retained;
 use objc2_app_kit::{NSPasteboard, NSPasteboardTypeHTML, NSPasteboardTypeString};
 use objc2_foundation::{NSArray, NSData, NSString, ns_string};
-use leanterm_ui_core::clipboard::{ClipboardContent, ImageData};
 
 unsafe extern "C" {
     fn getFilePathsFromPasteboard() -> id;

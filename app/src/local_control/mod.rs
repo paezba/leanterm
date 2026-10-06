@@ -1,7 +1,7 @@
-//! Running app-side server for local Warp control requests.
+//! Running app-side server for local Leanterm control requests.
 //!
 //! This module owns the in-process listener, discovery registration, credential
-//! broker socket, and request handoff from Axum into the WarpUI model graph.
+//! broker socket, and request handoff from Axum into the LeantermUi model graph.
 //! It complements `crates/local_control/src/discovery.rs`: that shared module
 //! defines how clients find and validate candidate instances, while this module
 //! creates the app-owned endpoints and publishes their routing metadata through
@@ -53,7 +53,7 @@
 //! outside this boundary.
 //!
 //! The Settings > Scripting gates used here are local-only settings backed by
-//! Warp's secure storage provider.
+//! Leanterm's secure storage provider.
 //!
 //! Discovery records never include raw bearer tokens: discovery only exposes
 //! endpoint metadata and credential broker references while Scripting is enabled.
@@ -88,13 +88,13 @@ use axum::{Json, Router};
 pub use bridge::LocalControlBridge;
 #[cfg(any(unix, test))]
 use chrono::Duration;
+use leanterm_core::channel::ChannelState;
+use leanterm_ui::{Entity, ModelContext, ModelSpawner, SingletonEntity};
 use permissions::ensure_feature_enabled;
 #[cfg(any(unix, test))]
 use permissions::{ensure_action_allowed, ensure_protocol_version};
 #[cfg(unix)]
 use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
-use leanterm_core::channel::ChannelState;
-use leanterm_ui::{Entity, ModelContext, ModelSpawner, SingletonEntity};
 
 #[cfg(any(unix, test))]
 const MAX_ACTIVE_CREDENTIALS: usize = 128;
@@ -111,7 +111,7 @@ struct ControlServerState {
     expected_host: String,
     credentials: Arc<Mutex<HashMap<String, CredentialGrant>>>,
 }
-/// Process-local publisher, credential broker, and HTTP server for one Warp instance.
+/// Process-local publisher, credential broker, and HTTP server for one Leanterm instance.
 ///
 /// Holding the runtime and registration keeps both listeners and the discovery
 /// route alive. Dropping them stops request handling and removes the app's
@@ -151,7 +151,7 @@ impl LocalControlServer {
 
     /// Starts, refreshes, or removes local-control publication as settings change.
     fn refresh_for_settings(&mut self, ctx: &mut ModelContext<Self>) -> Result<(), ControlError> {
-        if !permissions::warp_control_cli_enabled() {
+        if !permissions::leanterm_control_cli_enabled() {
             self.stop(ctx);
             return Ok(());
         }
@@ -403,9 +403,9 @@ async fn handle_credential_broker_connection(
 }
 
 #[cfg(unix)]
-/// Requires the kernel-reported peer UID to match Warp's effective UID.
+/// Requires the kernel-reported peer UID to match Leanterm's effective UID.
 ///
-/// This excludes other OS users but does not distinguish trusted Warp code from
+/// This excludes other OS users but does not distinguish trusted Leanterm code from
 /// arbitrary processes already running as the same user.
 fn ensure_same_user_peer(stream: &tokio::net::UnixStream) -> Result<(), ControlError> {
     ensure_peer_uid(stream, unsafe { libc::geteuid() })

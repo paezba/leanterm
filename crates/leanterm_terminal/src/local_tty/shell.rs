@@ -4,16 +4,16 @@ use std::{io, process};
 
 use anyhow::Context as _;
 use itertools::Itertools as _;
-use serde::{Deserialize, Serialize};
-use typed_path::UnixPathBuf;
 use leanterm_core::channel::{Channel, ChannelState};
 use leanterm_core::session_id::SessionId;
 use leanterm_errors::report_error;
 #[cfg(windows)]
 use leanterm_util::path::windows::{powershell_5_path, powershell_7_path, wsl_path};
 use leanterm_util::path::{
-    canonicalize_git_bash_path, is_msys2_path, resolve_executable, warp_shell_path,
+    canonicalize_git_bash_path, is_msys2_path, leanterm_shell_path, resolve_executable,
 };
+use serde::{Deserialize, Serialize};
+use typed_path::UnixPathBuf;
 
 use crate::bootstrap::{generate_session_id, init_shell_script_for_shell};
 use crate::local_tty::docker_sandbox::DockerSandboxShellStarter;
@@ -28,7 +28,7 @@ pub trait AvailableShell {
 }
 
 /// Returns an iterator of additional PATH entries to append to the shell's PATH.
-/// * On macOS, this includes `$APP_PATH/Contents/Resources/bin`, in which we put a wrapper around the Warp CLI.
+/// * On macOS, this includes `$APP_PATH/Contents/Resources/bin`, in which we put a wrapper around the Leanterm CLI.
 /// * On all other platforms, this is empty.
 pub fn extra_path_entries() -> impl Iterator<Item = PathBuf> {
     cfg_if::cfg_if! {
@@ -48,7 +48,7 @@ pub fn extra_path_entries() -> impl Iterator<Item = PathBuf> {
 }
 
 /// Returns `true` if the given `path_or_command` is a valid, executable command or path to a
-/// executable binary for one of Warp's supported shell types (bash, fish, zsh).
+/// executable binary for one of Leanterm's supported shell types (bash, fish, zsh).
 pub fn is_valid_path_or_command_for_supported_shell(path_or_command: &str) -> bool {
     supported_shell_path_and_type(path_or_command).is_some()
 }
@@ -69,7 +69,7 @@ pub enum ShellStarter {
 
 impl ShellStarter {
     /// Constructs a `ShellStarter` represent the shell binary (and corresponding arguments) to be
-    /// used to spawn a shell process for a new top-level Warp session. If a WSL Distribution is
+    /// used to spawn a shell process for a new top-level Leanterm session. If a WSL Distribution is
     /// given, then it will always construct a `ShellStarter` starting the default shell for that
     /// WSL Distribution.
     ///
@@ -163,21 +163,25 @@ impl ShellStarter {
             }
         }
 
-        if let Some(warp_shell_env_var) = warp_shell_path() {
-            let (warp_shell_path, shell_type) = supported_shell_path_and_type(&warp_shell_env_var)
-                .unwrap_or_else(|| {
-                    panic!("Cannot spawn shell; $WARP_SHELL_PATH is invalid: {warp_shell_env_var}")
-                });
+        if let Some(leanterm_shell_env_var) = leanterm_shell_path() {
+            let (leanterm_shell_path, shell_type) = supported_shell_path_and_type(
+                &leanterm_shell_env_var,
+            )
+            .unwrap_or_else(|| {
+                panic!(
+                    "Cannot spawn shell; $LEANTERM_SHELL_PATH is invalid: {leanterm_shell_env_var}"
+                )
+            });
             let session_id = generate_session_id();
             let args = arguments_for_session_spawning_command(
-                warp_shell_path.as_path().to_string_lossy().as_ref(),
+                leanterm_shell_path.as_path().to_string_lossy().as_ref(),
                 shell_type,
                 session_id,
             );
             return Some(
                 ShellStarterSource::Environment(DirectShellStarter {
                     args,
-                    shell_path: warp_shell_path,
+                    shell_path: leanterm_shell_path,
                     shell_type,
                     session_id,
                 })
@@ -329,7 +333,7 @@ pub struct DirectShellStarter {
     shell_type: ShellType,
     shell_path: PathBuf,
 
-    /// Arguments to be passed to the shell binary at [`shell_path`] when spawning a new Warp
+    /// Arguments to be passed to the shell binary at [`shell_path`] when spawning a new Leanterm
     /// session.
     args: Vec<OsString>,
 
@@ -345,7 +349,7 @@ pub struct WslShellStarter {
     shell_type: ShellType,
     shell_path: String,
 
-    /// Arguments to be passed to the shell binary at [`shell_path`] when spawning a new Warp
+    /// Arguments to be passed to the shell binary at [`shell_path`] when spawning a new Leanterm
     /// session.
     args: Vec<OsString>,
     distribution: String,
@@ -361,10 +365,10 @@ pub enum ShellStarterSource {
     /// The user chose the path by setting a custom shell path in settings or selecting a WSL
     /// distribution.
     Override(ShellStarter),
-    /// The user chose the path to the shell by setting the `WARP_SHELL_PATH` environment variable.
+    /// The user chose the path to the shell by setting the `LEANTERM_SHELL_PATH` environment variable.
     Environment(DirectShellStarter),
     /// The default shell for the user (as indicated by the user's passwd entry on UNIX).
-    /// On Windows, this an ordered list of shells hardcoded _by Warp_.
+    /// On Windows, this an ordered list of shells hardcoded _by Leanterm_.
     UserDefault(DirectShellStarter),
     /// We weren't able to find a shell that could be bootstrapped for the user.
     Fallback {
@@ -626,7 +630,7 @@ fn arguments_for_session_spawning_command(
             // The --no-rcs option executes the minimal level of startup files so we can
             // take over. The one exception: "Commands are first read from /etc/zshenv; this cannot be overridden."
             // The -g option sets the HIST_IGNORE_SPACE option, which ignores a command from history if it
-            // begins with a space. We use this to hide Warp bootstrap commands from the history.
+            // begins with a space. We use this to hide Leanterm bootstrap commands from the history.
             vec![
                 "-c".to_owned().into(),
                 format!("exec -a -zsh '{resolved_shell_path}' -g --no-rcs").into(),
@@ -644,8 +648,8 @@ fn arguments_for_session_spawning_command(
              * 3. The rcfile option reads the startup script from a file
              * 4. Process substitution i.e. <() send the output of a process via
              * /dev/fd/<n> (or temp files if this is unavailable) to another process
-             * 5. Send an InitShell message to Warp through escape sequences.
-             * The warp_send_message function is inlined here.
+             * 5. Send an InitShell message to Leanterm through escape sequences.
+             * The leanterm_send_message function is inlined here.
              * 6. We disable PS2 and the line editor to work around a gnarly bug involving
              * garbage being inserted in every line. We further disable PS1 and echo'ing
              * in order to show nothing to the user when we input characters. We later
@@ -689,7 +693,7 @@ fn arguments_for_session_spawning_command(
                     // we want fish to source config files for us (we don't
                     // manually do so in the bootstrap script like we do for zsh, for example).
                     // `-f no-mark-prompt` disables OSC 133 (the non-standard FinalTerm escape codes).
-                    // Fish's implementation of this breaks Warp by emitting `OSC 133 A` but not
+                    // Fish's implementation of this breaks Leanterm by emitting `OSC 133 A` but not
                     // `OSC 133 B` afterwards, which we have assumed. This is a temporary workaround.
                     // See this issue: https://github.com/warpdotdev/Warp/issues/7588
                     r#"exec '{}' -f no-mark-prompt --login --init-command '{}'"#,

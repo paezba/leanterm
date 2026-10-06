@@ -1,4 +1,3 @@
-use pathfinder_color::ColorU;
 use leanterm_ui::elements::{
     Border, Container, CornerRadius, CrossAxisAlignment, Flex, MainAxisAlignment, MainAxisSize,
     MouseStateHandle, ParentElement, Radius, Shrinkable,
@@ -8,6 +7,7 @@ use leanterm_ui::{
     AppContext, Element, Entity, FocusContext, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle,
 };
+use pathfinder_color::ColorU;
 
 use crate::appearance::Appearance;
 use crate::editor::{

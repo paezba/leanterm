@@ -12,17 +12,17 @@ pub struct ChannelConfig {
     /// The name of the file to which logs should be written.
     pub logfile_name: Cow<'static, str>,
 
-    /// Configuration for talking to Warp's servers.
-    pub server_config: WarpServerConfig,
+    /// Configuration for talking to Leanterm's servers.
+    pub server_config: LeantermServerConfig,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct WarpServerConfig {
+pub struct LeantermServerConfig {
     /// The root URL for the standard server pool.
     pub server_root_url: Cow<'static, str>,
 }
 
-impl WarpServerConfig {
+impl LeantermServerConfig {
     pub fn production() -> Self {
         Self {
             server_root_url: "https://app.warp.dev".into(),

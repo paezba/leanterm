@@ -7,10 +7,10 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use futures_util::future::Either;
-use url::Url;
-use leanterm_util::path::{CleanPathResult, LineAndColumnArg};
 use leanterm_ui::r#async::SpawnedFutureHandle;
 use leanterm_ui::{AppContext, Entity, ModelContext, ModelHandle, SingletonEntity, WindowId};
+use leanterm_util::path::{CleanPathResult, LineAndColumnArg};
+use url::Url;
 
 use super::file::is_markdown_file;
 use crate::terminal::model::session::Session;
@@ -34,7 +34,7 @@ pub enum LinkTarget {
         /// The base session when the link was resolved. It's stored here in case it changes
         /// between resolving and opening the link.
         session: Arc<Session>,
-        /// Whether or not this file is a Markdown file viewable in Warp.
+        /// Whether or not this file is a Markdown file viewable in Leanterm.
         is_markdown: bool,
     },
     LocalDirectory {
@@ -300,7 +300,7 @@ impl NotebookLinks {
                 is_markdown: true,
                 ..
             } => {
-                // The default action for Markdown file links is to open them in Warp. As a
+                // The default action for Markdown file links is to open them in Leanterm. As a
                 // secondary action, open them in an external app.
                 open_file(path.clone(), *line_and_column, ctx)
             }
@@ -438,7 +438,7 @@ pub enum LinkEvent {
     /// resolution has changed.
     RefreshLinks,
     #[cfg(feature = "local_fs")]
-    /// Emitted when a file should be opened in Warp (code editor or markdown viewer).
+    /// Emitted when a file should be opened in Leanterm (code editor or markdown viewer).
     OpenFileWithTarget {
         path: PathBuf,
         target: FileTarget,

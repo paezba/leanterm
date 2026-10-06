@@ -3,8 +3,6 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
-use rayon::ThreadPoolBuilder;
-use string_offset::CharOffset;
 use leanterm_editor::content::buffer::{StyledBufferBlock, StyledBufferRun, StyledTextBlock};
 use leanterm_editor::content::edit::EditDelta;
 use leanterm_editor::content::text::{BufferBlockStyle, TextStylesWithMetadata};
@@ -22,6 +20,8 @@ use leanterm_ui_core::elements::{Border, Fill};
 use leanterm_ui_core::fonts::Cache as FontCache;
 use leanterm_ui_core::fonts::{FamilyId, Weight};
 use leanterm_ui_core::units::IntoPixels;
+use rayon::ThreadPoolBuilder;
+use string_offset::CharOffset;
 
 const BLOCK_COUNT: usize = 4_096;
 const RAYON_THREAD_COUNT: usize = 6;

@@ -4,11 +4,11 @@ use std::ops::{Bound, Index, Range, RangeBounds};
 use std::rc::Rc;
 
 use arrayvec::ArrayVec;
+use leanterm_ui::text::point::Point;
+use leanterm_ui::text_layout::TextStyle;
 use num_traits::SaturatingSub;
 use string_offset::{ByteOffset, CharOffset};
 use sum_tree::{self, SeekBias, SumTree};
-use leanterm_ui::text::point::Point;
-use leanterm_ui::text_layout::TextStyle;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 enum Run {

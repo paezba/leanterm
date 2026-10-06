@@ -1,4 +1,3 @@
-use serde::{Deserialize, Serialize};
 use leanterm_editor::content::text::BufferBlockItem;
 use leanterm_ui::elements::{
     AnchorPair, Border, Container, CornerRadius, MouseStateHandle, OffsetPositioning, OffsetType,
@@ -9,6 +8,7 @@ use leanterm_ui::presenter::ChildView;
 use leanterm_ui::ui_components::button::ButtonTooltipPosition;
 use leanterm_ui::ui_components::components::{UiComponent, UiComponentStyles};
 use leanterm_ui::{AppContext, Element, SingletonEntity, ViewContext, ViewHandle};
+use serde::{Deserialize, Serialize};
 
 use super::BlockType;
 use super::view::{EditorViewAction, EditorViewEvent, RichTextEditorView};
@@ -80,7 +80,9 @@ impl BlockInsertionMenuState {
             MenuItemFields::new("Divider")
                 .with_icon(Icon::HorizontalRuleBlock)
                 .with_on_select_action(EditorViewAction::InsertBlock(
-                    leanterm_editor::content::text::BlockType::Item(BufferBlockItem::HorizontalRule),
+                    leanterm_editor::content::text::BlockType::Item(
+                        BufferBlockItem::HorizontalRule,
+                    ),
                 ))
                 .with_override_icon_color(Fill::Solid(appearance.theme().ui_warning_color()))
                 .into_item(),

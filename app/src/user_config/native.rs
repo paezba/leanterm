@@ -4,27 +4,27 @@ use std::{fs, io};
 
 use anyhow::{Result, anyhow};
 use itertools::Itertools;
-use repo_metadata::RepositoryUpdate;
 use leanterm_ui::{ModelContext, ModelHandle, SingletonEntity};
+use repo_metadata::RepositoryUpdate;
 
 use super::util::{
     for_each_dir_entry, has_name, is_config_file, parse_multi_launch_config_dir_entry,
     parse_multi_workflow_dir_entry, parse_single_theme_dir_entry, parse_tab_config_dir_entry,
 };
 use super::{
-    LAUNCH_CONFIG_COMMENT, WarpConfigUpdateEvent, launch_configs_dir, tab_configs_dir, themes_dir,
-    workflows_dir,
+    LAUNCH_CONFIG_COMMENT, LeantermConfigUpdateEvent, launch_configs_dir, tab_configs_dir,
+    themes_dir, workflows_dir,
 };
 use crate::launch_configs::launch_config::LaunchConfig;
-use crate::tab_configs::{TabConfig, TabConfigError};
-use crate::themes::theme::WarpThemeConfig;
-use crate::warp_managed_paths_watcher::{
-    WarpManagedPathsWatcher, WarpManagedPathsWatcherEvent, repository_update_touches_path,
+use crate::leanterm_managed_paths_watcher::{
+    LeantermManagedPathsWatcher, LeantermManagedPathsWatcherEvent, repository_update_touches_path,
     repository_update_touches_prefix,
 };
+use crate::tab_configs::{TabConfig, TabConfigError};
+use crate::themes::theme::LeantermThemeConfig;
 use crate::workflows::workflow::Workflow;
 
-impl super::WarpConfig {
+impl super::LeantermConfig {
     pub fn new(ctx: &mut ModelContext<Self>) -> Self {
         // Load launch configs, and workflows from disk asynchronously on a background
         // thread.
@@ -36,7 +36,7 @@ impl super::WarpConfig {
             async move { load_launch_configs(&launch_configs_dir()) },
             |me, launch_configs, ctx| {
                 me.launch_configs = launch_configs;
-                ctx.emit(WarpConfigUpdateEvent::LaunchConfigs);
+                ctx.emit(LeantermConfigUpdateEvent::LaunchConfigs);
             },
         );
         let _ = ctx.spawn(
@@ -44,7 +44,7 @@ impl super::WarpConfig {
             |me, (tab_configs, tab_config_errors), ctx| {
                 me.tab_configs = tab_configs;
                 me.tab_config_errors = tab_config_errors;
-                ctx.emit(WarpConfigUpdateEvent::TabConfigs);
+                ctx.emit(LeantermConfigUpdateEvent::TabConfigs);
                 // Don't emit TabConfigErrors on startup — the error toast
                 // should only appear when the user saves a config file,
                 // not on app restart.
@@ -54,12 +54,12 @@ impl super::WarpConfig {
             async move { load_workflows(&workflows_dir()) },
             |me, user_workflows, ctx| {
                 me.local_user_workflows = user_workflows;
-                ctx.emit(WarpConfigUpdateEvent::LocalUserWorkflows);
+                ctx.emit(LeantermConfigUpdateEvent::LocalUserWorkflows);
             },
         );
         ctx.subscribe_to_model(
-            &WarpManagedPathsWatcher::handle(ctx),
-            Self::handle_warp_managed_paths_event,
+            &LeantermManagedPathsWatcher::handle(ctx),
+            Self::handle_leanterm_managed_paths_event,
         );
 
         Self {
@@ -68,13 +68,13 @@ impl super::WarpConfig {
         }
     }
 
-    fn handle_warp_managed_paths_event(
+    fn handle_leanterm_managed_paths_event(
         &mut self,
-        _: ModelHandle<WarpManagedPathsWatcher>,
-        event: &WarpManagedPathsWatcherEvent,
+        _: ModelHandle<LeantermManagedPathsWatcher>,
+        event: &LeantermManagedPathsWatcherEvent,
         ctx: &mut ModelContext<Self>,
     ) {
-        let WarpManagedPathsWatcherEvent::FilesChanged(update) = event;
+        let LeantermManagedPathsWatcherEvent::FilesChanged(update) = event;
 
         if update_touches_dir(update, &themes_dir()) {
             let theme_dir = themes_dir();
@@ -82,7 +82,7 @@ impl super::WarpConfig {
                 async move { load_theme_configs(&theme_dir) },
                 |me, theme_config, ctx| {
                     me.theme_config = theme_config;
-                    ctx.emit(WarpConfigUpdateEvent::Themes);
+                    ctx.emit(LeantermConfigUpdateEvent::Themes);
                 },
             );
         }
@@ -93,7 +93,7 @@ impl super::WarpConfig {
                 async move { load_workflows(&workflow_dir) },
                 |me, workflows, ctx| {
                     me.local_user_workflows = workflows;
-                    ctx.emit(WarpConfigUpdateEvent::LocalUserWorkflows);
+                    ctx.emit(LeantermConfigUpdateEvent::LocalUserWorkflows);
                 },
             );
         }
@@ -104,7 +104,7 @@ impl super::WarpConfig {
                 async move { load_launch_configs(&launch_config_dir) },
                 |me, launch_configs, ctx| {
                     me.launch_configs = launch_configs;
-                    ctx.emit(WarpConfigUpdateEvent::LaunchConfigs);
+                    ctx.emit(LeantermConfigUpdateEvent::LaunchConfigs);
                 },
             );
         }
@@ -116,16 +116,16 @@ impl super::WarpConfig {
                 |me, (configs, errors), ctx| {
                     me.tab_configs = configs;
                     me.tab_config_errors = errors.clone();
-                    ctx.emit(WarpConfigUpdateEvent::TabConfigs);
+                    ctx.emit(LeantermConfigUpdateEvent::TabConfigs);
                     if !errors.is_empty() {
-                        ctx.emit(WarpConfigUpdateEvent::TabConfigErrors(errors));
+                        ctx.emit(LeantermConfigUpdateEvent::TabConfigErrors(errors));
                     }
                 },
             );
         }
 
         if update_touches_path(update, &crate::settings::user_preferences_toml_file_path()) {
-            ctx.emit(WarpConfigUpdateEvent::Settings);
+            ctx.emit(LeantermConfigUpdateEvent::Settings);
         }
     }
 
@@ -159,8 +159,8 @@ impl super::WarpConfig {
     }
 }
 
-pub fn load_theme_configs(theme_path: &Path) -> WarpThemeConfig {
-    let mut theme_configs = WarpThemeConfig::new();
+pub fn load_theme_configs(theme_path: &Path) -> LeantermThemeConfig {
+    let mut theme_configs = LeantermThemeConfig::new();
     for_each_dir_entry(theme_path, parse_single_theme_dir_entry)
         .into_iter()
         .for_each(|(theme_name, theme)| theme_configs.add_new_theme(theme_name, theme));

@@ -2,9 +2,6 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use itertools::Itertools;
-use markdown_parser::{
-    FormattedText, FormattedTextFragment, FormattedTextHeader, FormattedTextLine,
-};
 use leanterm_core::command::ExitCode;
 use leanterm_core::ui::appearance::Appearance;
 use leanterm_core::ui::color::blend::Blend as _;
@@ -15,6 +12,9 @@ use leanterm_ui::elements::{
 use leanterm_ui::ui_components::button::ButtonVariant;
 use leanterm_ui::ui_components::components::UiComponent as _;
 use leanterm_ui::{Element, Entity, SingletonEntity, TypedActionView, View, ViewContext};
+use markdown_parser::{
+    FormattedText, FormattedTextFragment, FormattedTextHeader, FormattedTextLine,
+};
 
 use crate::terminal::ssh::util::InteractiveSshCommand;
 use crate::ui_components::buttons::icon_button;
@@ -187,7 +187,7 @@ impl FileUpload {
         }
     }
 
-    /// Creates an sftp command that copies a given local file into the PWD of the warpified ssh session, if any.
+    /// Creates an sftp command that copies a given local file into the PWD of the leantermified ssh session, if any.
     fn transfer_file_sftp_command(&self, file_upload: &FileUploadInfo) -> String {
         // "sftp "
         let mut command = String::from("sftp ");

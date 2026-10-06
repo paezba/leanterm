@@ -4,12 +4,12 @@ use std::path::{Path, PathBuf};
 
 use async_io::block_on;
 use command::blocking::Command;
-use rand::distributions::Alphanumeric;
-use rand::{Rng, thread_rng};
-use regex::Regex;
 use leanterm_core::command::ExitCode;
 #[cfg(windows)]
 use leanterm_core::paths::base_config_dir;
+use rand::distributions::Alphanumeric;
+use rand::{Rng, thread_rng};
+use regex::Regex;
 
 use crate::terminal::local_tty::shell::{DirectShellStarter, ShellStarter, ShellStarterSource};
 use crate::terminal::shell;

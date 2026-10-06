@@ -2,14 +2,14 @@
 
 use std::ops::Range;
 
-use string_offset::CharOffset;
-use vim::vim::VimMode;
 use leanterm_core::ui::appearance::DEFAULT_UI_FONT_SIZE;
 use leanterm_ui_core::PaintContext;
 use leanterm_ui_core::elements::{CornerRadius, Point, Radius};
 use leanterm_ui_core::geometry::rect::RectF;
 use leanterm_ui_core::geometry::vector::{Vector2F, vec2f};
 use leanterm_ui_core::text_layout::{Line, PaintStyleOverride, TextFrame};
+use string_offset::CharOffset;
+use vim::vim::VimMode;
 
 use crate::editor::TextDecoration;
 use crate::render::layout::line_height;

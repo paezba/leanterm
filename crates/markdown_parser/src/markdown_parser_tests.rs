@@ -578,6 +578,23 @@ fn test_parse_table_block_lang() {
 }
 
 #[test]
+fn test_parse_legacy_block_langs() {
+    assert_eq!(
+        test_parse_markdown("```warp-runnable-command\nls\n```"),
+        vec![FormattedTextLine::CodeBlock(CodeBlockText {
+            lang: RUNNABLE_BLOCK_MARKDOWN_LANG.to_string(),
+            code: "ls\n".to_string()
+        }),]
+    );
+    assert_eq!(
+        test_parse_markdown("```warp-markdown-table\nname\tage\n```"),
+        vec![FormattedTextLine::Table(
+            FormattedTable::from_internal_format("name\tage\n")
+        )]
+    );
+}
+
+#[test]
 fn test_parse_code_block_missing_lang() {
     let source = "```\nsome code\n```";
     assert_eq!(
@@ -850,12 +867,12 @@ fn test_parse_link_in_tag() {
         ])]
     );
 
-    let source = "a [https://google.com](https://warp.dev) link";
+    let source = "a [https://google.com](https://lean.dev) link";
     assert_eq!(
         test_parse_markdown(source),
         vec![FormattedTextLine::Line(vec![
             FormattedTextFragment::plain_text("a "),
-            FormattedTextFragment::hyperlink("https://google.com", "https://warp.dev"),
+            FormattedTextFragment::hyperlink("https://google.com", "https://lean.dev"),
             FormattedTextFragment::plain_text(" link")
         ])]
     );
@@ -905,9 +922,12 @@ fn test_autolink_with_escaped_dot() {
 #[test]
 fn test_autolink_with_escaped_dash() {
     assert_eq!(
-        test_parse_markdown("https://warp\\-dev.com"),
+        test_parse_markdown("https://leanterm\\-dev.com"),
         vec![FormattedTextLine::Line(vec![
-            FormattedTextFragment::hyperlink("https://warp-dev.com", "https://warp-dev.com"),
+            FormattedTextFragment::hyperlink(
+                "https://leanterm-dev.com",
+                "https://leanterm-dev.com"
+            ),
         ])]
     );
 }
@@ -1065,14 +1085,14 @@ fn test_parse_escapes() {
 
 #[test]
 fn test_parse_escape_in_style() {
-    let source = "Some *styled \\* escaped* [te\\]xt\\^](https://warp.dev)";
+    let source = "Some *styled \\* escaped* [te\\]xt\\^](https://lean.dev)";
     assert_eq!(
         test_parse_markdown(source),
         vec![FormattedTextLine::Line(vec![
             FormattedTextFragment::plain_text("Some "),
             FormattedTextFragment::italic("styled * escaped"),
             FormattedTextFragment::plain_text(" "),
-            FormattedTextFragment::hyperlink("te]xt^", "https://warp.dev")
+            FormattedTextFragment::hyperlink("te]xt^", "https://lean.dev")
         ])]
     );
 }
@@ -1430,10 +1450,10 @@ fn test_parse_inline() {
 #[test]
 fn test_parse_inline_link() {
     assert_eq!(
-        parse_all("[basic](https://warp.dev)", parse_inline),
+        parse_all("[basic](https://lean.dev)", parse_inline),
         vec![FormattedTextFragment::hyperlink(
             "basic",
-            "https://warp.dev"
+            "https://lean.dev"
         )]
     );
 
@@ -1671,14 +1691,14 @@ fn test_parse_inline_link_spec() {
 #[test]
 fn test_parse_long_link_with_parens() {
     // This is a regression test for CLD-1604.
-    let source = "This is [a link](https://console.cloud.google.com/traces/list?project=astral-field-294621&pageState=(%22traceIntervalPicker%22:(%22groupValue%22:%22P1D%22,%22customValue%22:null),%22traceFilter%22:(%22chips%22:%22%255B%257B_22k_22_3A_22%252Fhttp%252Furl_22_2C_22t_22_3A10_2C_22v_22_3A_22_5C_22https_3A%252F%252Fapp.warp.dev%252Fgraphql_5C_22_22_2C_22s_22_3Atrue_2C_22i_22_3A_22%252Fhttp%252Furl_22%257D%255D%22))&minl=0&maxl=53.33333333333334&tid=c3c3ffc64f74f16a1015e3f2d105c3d9&spanId=0ddd4991fda16831) with parentheses";
+    let source = "This is [a link](https://console.cloud.google.com/traces/list?project=astral-field-294621&pageState=(%22traceIntervalPicker%22:(%22groupValue%22:%22P1D%22,%22customValue%22:null),%22traceFilter%22:(%22chips%22:%22%255B%257B_22k_22_3A_22%252Fhttp%252Furl_22_2C_22t_22_3A10_2C_22v_22_3A_22_5C_22https_3A%252F%252Fapp.lean.dev%252Fgraphql_5C_22_22_2C_22s_22_3Atrue_2C_22i_22_3A_22%252Fhttp%252Furl_22%257D%255D%22))&minl=0&maxl=53.33333333333334&tid=c3c3ffc64f74f16a1015e3f2d105c3d9&spanId=0ddd4991fda16831) with parentheses";
     assert_eq!(
         parse_all(source, parse_inline),
         vec![
             FormattedTextFragment::plain_text("This is "),
             FormattedTextFragment::hyperlink(
                 "a link",
-                "https://console.cloud.google.com/traces/list?project=astral-field-294621&pageState=(%22traceIntervalPicker%22:(%22groupValue%22:%22P1D%22,%22customValue%22:null),%22traceFilter%22:(%22chips%22:%22%255B%257B_22k_22_3A_22%252Fhttp%252Furl_22_2C_22t_22_3A10_2C_22v_22_3A_22_5C_22https_3A%252F%252Fapp.warp.dev%252Fgraphql_5C_22_22_2C_22s_22_3Atrue_2C_22i_22_3A_22%252Fhttp%252Furl_22%257D%255D%22))&minl=0&maxl=53.33333333333334&tid=c3c3ffc64f74f16a1015e3f2d105c3d9&spanId=0ddd4991fda16831"
+                "https://console.cloud.google.com/traces/list?project=astral-field-294621&pageState=(%22traceIntervalPicker%22:(%22groupValue%22:%22P1D%22,%22customValue%22:null),%22traceFilter%22:(%22chips%22:%22%255B%257B_22k_22_3A_22%252Fhttp%252Furl_22_2C_22t_22_3A10_2C_22v_22_3A_22_5C_22https_3A%252F%252Fapp.lean.dev%252Fgraphql_5C_22_22_2C_22s_22_3Atrue_2C_22i_22_3A_22%252Fhttp%252Furl_22%257D%255D%22))&minl=0&maxl=53.33333333333334&tid=c3c3ffc64f74f16a1015e3f2d105c3d9&spanId=0ddd4991fda16831"
             ),
             FormattedTextFragment::plain_text(" with parentheses")
         ]
@@ -1898,7 +1918,7 @@ fn test_parse_escapes_inline() {
 #[test]
 fn test_parse_embedded() {
     assert_eq!(
-        test_parse_markdown("```warp-embedded-object\nid: workflow-123\n```"),
+        test_parse_markdown("```leanterm-embedded-object\nid: workflow-123\n```"),
         vec![FormattedTextLine::Embedded(Mapping::from_iter([(
             Value::String("id".to_string()),
             Value::String("workflow-123".to_string())
@@ -1906,7 +1926,7 @@ fn test_parse_embedded() {
     );
 
     assert_eq!(
-        test_parse_markdown("```warp-embedded-object\nid: notebook-123\ntype: notebook\n```"),
+        test_parse_markdown("```leanterm-embedded-object\nid: notebook-123\ntype: notebook\n```"),
         vec![FormattedTextLine::Embedded(Mapping::from_iter([
             (
                 Value::String("id".to_string()),
@@ -1921,9 +1941,9 @@ fn test_parse_embedded() {
 
     // Fallback to code block.
     assert_eq!(
-        test_parse_markdown("```warp-embedded-object\ncargo run --features abc\n```"),
+        test_parse_markdown("```leanterm-embedded-object\ncargo run --features abc\n```"),
         vec![FormattedTextLine::CodeBlock(CodeBlockText {
-            lang: "warp-embedded-object".to_string(),
+            lang: "leanterm-embedded-object".to_string(),
             code: "cargo run --features abc\n".to_string()
         })]
     );
@@ -2862,7 +2882,7 @@ fn test_parse_table_with_empty_cells() {
 
 #[test]
 fn test_parse_table_with_links() {
-    let source = "| Link | Text |\n| --- | --- |\n| [Warp](https://warp.dev) | normal |\n";
+    let source = "| Link | Text |\n| --- | --- |\n| [Leanterm](https://lean.dev) | normal |\n";
     let result = test_parse_markdown_with_gfm_tables(source);
     assert_eq!(result.len(), 1);
 
@@ -2870,10 +2890,10 @@ fn test_parse_table_with_links() {
         assert_eq!(table.rows.len(), 1);
         let link_cell = &table.rows[0][0];
         assert_eq!(link_cell.len(), 1);
-        assert_eq!(link_cell[0].text, "Warp");
+        assert_eq!(link_cell[0].text, "Leanterm");
         assert!(matches!(
             &link_cell[0].styles.hyperlink,
-            Some(Hyperlink::Url(url)) if url == "https://warp.dev"
+            Some(Hyperlink::Url(url)) if url == "https://lean.dev"
         ));
     } else {
         panic!("Expected table");

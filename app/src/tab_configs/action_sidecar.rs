@@ -1,4 +1,3 @@
-use leanterm_util::path::user_friendly_path;
 use leanterm_ui::elements::{
     Border, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment, Flex, MainAxisSize,
     MouseStateHandle, ParentElement, Radius, Text,
@@ -7,6 +6,7 @@ use leanterm_ui::platform::Cursor;
 use leanterm_ui::ui_components::button::ButtonVariant;
 use leanterm_ui::ui_components::components::{UiComponent, UiComponentStyles};
 use leanterm_ui::{AppContext, Element, SingletonEntity};
+use leanterm_util::path::user_friendly_path;
 
 use crate::appearance::Appearance;
 use crate::tab_configs::TabConfig;

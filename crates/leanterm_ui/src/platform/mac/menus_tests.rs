@@ -19,11 +19,11 @@
 use cocoa::appkit::NSMenuItem;
 use cocoa::base::nil;
 use cocoa::foundation::NSAutoreleasePool;
-use objc::runtime::Object;
-use objc::{msg_send, sel, sel_impl};
 use leanterm_ui_core::actions::StandardAction;
 use leanterm_ui_core::keymap::Keystroke;
 use leanterm_ui_core::platform::menu::{MenuItem, MenuItemPropertyChanges};
+use objc::runtime::Object;
+use objc::{msg_send, sel, sel_impl};
 
 use super::{apply_changes, make_menu_item};
 
@@ -75,7 +75,7 @@ fn apply_changes_local_pool_memory_behavior() {
 
         for _ in 0..APPLY_CHANGES_ITERS {
             let changes = MenuItemPropertyChanges {
-                name: Some("Warp Menu Item".to_string()),
+                name: Some("Leanterm Menu Item".to_string()),
                 keystroke: Some(Some(Keystroke {
                     cmd: true,
                     key: "k".to_string(),

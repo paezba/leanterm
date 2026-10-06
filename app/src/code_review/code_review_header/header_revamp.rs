@@ -5,13 +5,13 @@
 //!
 //! Separated into its own module so the two codepaths are easy to distinguish.
 
-use pathfinder_geometry::vector::vec2f;
 use leanterm_ui::elements::{
     ChildAnchor, ChildView, Clipped, ConstrainedBox, Container, CrossAxisAlignment, Flex,
     MainAxisAlignment, MainAxisSize, OffsetPositioning, ParentAnchor, ParentElement,
     ParentOffsetBounds, Shrinkable, Stack,
 };
 use leanterm_ui::{Element, ViewHandle};
+use pathfinder_geometry::vector::vec2f;
 
 use super::CodeReviewHeader;
 use crate::appearance::Appearance;

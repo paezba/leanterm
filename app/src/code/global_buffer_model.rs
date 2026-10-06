@@ -6,16 +6,16 @@ use std::sync::Arc;
 
 use bimap::BiMap;
 use futures_util::stream::AbortHandle;
-use lsp::types::TextDocumentContentChangeEvent;
-use lsp::{LspManagerModel, LspServerLogLevel, LspServerModel};
-use vec1::vec1;
 use leanterm_editor::content::buffer::Buffer;
 use leanterm_editor::content::diff::{TextDiff, text_diff};
 use leanterm_editor::content::edit::PreciseDelta;
 use leanterm_editor::content::version::BufferVersion;
+use leanterm_ui::{Entity, ModelContext, ModelHandle, SingletonEntity, WeakModelHandle};
 use leanterm_util::content_version::ContentVersion;
 use leanterm_util::file::{FileId, FileLoadError, FileSaveError};
-use leanterm_ui::{Entity, ModelContext, ModelHandle, SingletonEntity, WeakModelHandle};
+use lsp::types::TextDocumentContentChangeEvent;
+use lsp::{LspManagerModel, LspServerLogLevel, LspServerModel};
+use vec1::vec1;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "local_fs")] {

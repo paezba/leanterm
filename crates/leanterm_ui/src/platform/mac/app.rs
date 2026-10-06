@@ -5,11 +5,6 @@ use std::path::PathBuf;
 
 use cocoa::base::id;
 use futures_util::future::LocalBoxFuture;
-use objc::runtime::{BOOL, NO, Object, Sel, YES};
-use objc2::rc::{Retained, autoreleasepool};
-use objc2::{AnyThread, MainThreadMarker, msg_send};
-use objc2_app_kit::{NSAlert, NSApplication, NSImage, NSRunningApplication};
-use objc2_foundation::{NSArray, NSData, NSString, NSUInteger, NSURL};
 use leanterm_errors::report_error;
 use leanterm_ui_core::assets::AssetProvider;
 use leanterm_ui_core::integration::TestDriver;
@@ -21,6 +16,11 @@ use leanterm_ui_core::platform::app::{
 use leanterm_ui_core::platform::menu::{Menu, MenuBar};
 use leanterm_ui_core::platform::{self, FilePickerCallback, SaveFilePickerCallback};
 use leanterm_ui_core::{AppContext, Event};
+use objc::runtime::{BOOL, NO, Object, Sel, YES};
+use objc2::rc::{Retained, autoreleasepool};
+use objc2::{AnyThread, MainThreadMarker, msg_send};
+use objc2_app_kit::{NSAlert, NSApplication, NSImage, NSRunningApplication};
+use objc2_foundation::{NSArray, NSData, NSString, NSUInteger, NSURL};
 
 use super::keycode::{CMD_KEY, CONTROL_KEY, Keycode, OPTION_KEY, SHIFT_KEY};
 use super::menus::{make_dock_menu, make_main_menu};
@@ -44,8 +44,8 @@ pub fn create_native_platform_modal(dialog: AlertDialog) -> Retained<NSAlert> {
 const RUST_WRAPPER_IVAR_NAME: &str = "rustWrapper";
 
 unsafe extern "C" {
-    // Implemented in ObjC to get the warp NSApplication subclass.
-    pub(super) fn get_warp_app() -> id;
+    // Implemented in ObjC to get the leanterm NSApplication subclass.
+    pub(super) fn get_leanterm_app() -> id;
 }
 
 /// An extension trait defining additional configurability for
@@ -137,8 +137,8 @@ impl App {
         // until termination).
         autoreleasepool(|_| {
             // Get (and create, if necessary) the underlying NSApplication.
-            // SAFETY: `get_warp_app()` returns the warp NSApplication subclass instance.
-            let app_ptr = unsafe { get_warp_app() };
+            // SAFETY: `get_leanterm_app()` returns the leanterm NSApplication subclass instance.
+            let app_ptr = unsafe { get_leanterm_app() };
             let app = unsafe { &*app_ptr.cast::<NSApplication>() };
 
             // When running without an application bundle (dev builds), install the
@@ -157,7 +157,9 @@ impl App {
             // SAFETY: the app and its delegate are exclusively owned here, so writing
             // the `rustWrapper` ivar and messaging them is sound.
             unsafe {
-                let app_delegate = app.delegate().expect("the warp app always has a delegate");
+                let app_delegate = app
+                    .delegate()
+                    .expect("the leanterm app always has a delegate");
 
                 let self_ptr = Box::into_raw(Box::new(self));
                 (*app_ptr).set_ivar(RUST_WRAPPER_IVAR_NAME, self_ptr as *mut c_void);
@@ -223,14 +225,14 @@ unsafe fn get_app(object: &mut Object) -> &mut App {
 
 pub(super) fn callback_dispatcher() -> &'static mut AppCallbackDispatcher {
     unsafe {
-        let app = get_warp_app();
+        let app = get_leanterm_app();
         let app = get_app(&mut *app);
         &mut app.callbacks
     }
 }
 
 #[unsafe(no_mangle)]
-pub(crate) extern "C-unwind" fn warp_app_send_global_keybinding(
+pub(crate) extern "C-unwind" fn leanterm_app_send_global_keybinding(
     this: &mut Object,
     modifiers: NSUInteger,
     key_code: NSUInteger,
@@ -257,7 +259,7 @@ pub(crate) extern "C-unwind" fn warp_app_send_global_keybinding(
 }
 
 #[unsafe(no_mangle)]
-pub unsafe extern "C-unwind" fn warp_app_will_finish_launching(this: &mut Object) {
+pub unsafe extern "C-unwind" fn leanterm_app_will_finish_launching(this: &mut Object) {
     unsafe {
         log::info!("application will finish launching");
 
@@ -277,10 +279,10 @@ pub unsafe extern "C-unwind" fn warp_app_will_finish_launching(this: &mut Object
 
         let app_delegate = ns_app
             .delegate()
-            .expect("the warp app always has a delegate");
+            .expect("the leanterm app always has a delegate");
 
         if app.callbacks.has_internet_reachability_changed_callback() {
-            // `setReachabilityListener` is a custom warp app-delegate selector.
+            // `setReachabilityListener` is a custom leanterm app-delegate selector.
             let _: () = msg_send![&*app_delegate, setReachabilityListener];
         }
 
@@ -293,7 +295,7 @@ pub unsafe extern "C-unwind" fn warp_app_will_finish_launching(this: &mut Object
         if let Some(dock_menu_builder) = app.dock_menu_builder.take() {
             let dock_menu = app.callbacks.with_mutable_app_context(dock_menu_builder);
             let nsmenu = make_dock_menu(dock_menu);
-            // `setDockMenu:` is a custom warp app-delegate selector.
+            // `setDockMenu:` is a custom leanterm app-delegate selector.
             let _: () = msg_send![&*app_delegate, setDockMenu: &*nsmenu];
         }
 
@@ -302,19 +304,19 @@ pub unsafe extern "C-unwind" fn warp_app_will_finish_launching(this: &mut Object
         } else {
             NO
         };
-        // `setDockIconVisible:` is a custom warp app-delegate selector.
+        // `setDockIconVisible:` is a custom leanterm app-delegate selector.
         let _: BOOL = msg_send![&*app_delegate, setDockIconVisible: show_dock_icon];
     }
 }
 
 #[unsafe(no_mangle)]
-pub(crate) extern "C-unwind" fn warp_app_did_become_active(this: &mut Object, _: Sel, _: id) {
+pub(crate) extern "C-unwind" fn leanterm_app_did_become_active(this: &mut Object, _: Sel, _: id) {
     let app = unsafe { get_app(this) };
     app.callbacks.app_became_active();
 }
 
 #[unsafe(no_mangle)]
-pub(crate) extern "C-unwind" fn warp_app_internet_reachability_changed(
+pub(crate) extern "C-unwind" fn leanterm_app_internet_reachability_changed(
     this: &mut Object,
     can_reach: u8,
 ) {
@@ -326,7 +328,7 @@ pub(crate) extern "C-unwind" fn warp_app_internet_reachability_changed(
 
 /// Returns whether or not we can proceed with termination.
 #[unsafe(no_mangle)]
-pub(crate) extern "C-unwind" fn warp_app_should_terminate_app(
+pub(crate) extern "C-unwind" fn leanterm_app_should_terminate_app(
     this: &mut Object,
     system_initiated: BOOL,
 ) -> BOOL {
@@ -346,7 +348,7 @@ pub(crate) extern "C-unwind" fn warp_app_should_terminate_app(
 /// Returns a NSAlert object if we want to show a dialog for users to confirm or
 /// nil for closing the window immediately.
 #[unsafe(no_mangle)]
-pub(crate) extern "C-unwind" fn warp_app_should_close_window(
+pub(crate) extern "C-unwind" fn leanterm_app_should_close_window(
     this: &mut Object,
     window_id: &mut Object,
 ) -> BOOL {
@@ -360,7 +362,7 @@ pub(crate) extern "C-unwind" fn warp_app_should_close_window(
 }
 
 #[unsafe(no_mangle)]
-pub(crate) extern "C-unwind" fn warp_app_are_key_bindings_disabled_for_window(
+pub(crate) extern "C-unwind" fn leanterm_app_are_key_bindings_disabled_for_window(
     this: &mut Object,
     window_id: &mut Object,
 ) -> BOOL {
@@ -375,14 +377,14 @@ pub(crate) extern "C-unwind" fn warp_app_are_key_bindings_disabled_for_window(
 }
 
 #[unsafe(no_mangle)]
-pub(crate) extern "C-unwind" fn warp_app_has_binding_for_keystroke(
+pub(crate) extern "C-unwind" fn leanterm_app_has_binding_for_keystroke(
     this: &mut Object,
     event: id,
 ) -> BOOL {
     let app = unsafe { get_app(this) };
-    let warp_event = unsafe { super::event::from_native(event, None, false) };
+    let leanterm_event = unsafe { super::event::from_native(event, None, false) };
 
-    let Some(Event::KeyDown { keystroke, .. }) = warp_event else {
+    let Some(Event::KeyDown { keystroke, .. }) = leanterm_event else {
         return NO;
     };
     let has_binding = app.callbacks.with_mutable_app_context(|ctx| {
@@ -399,14 +401,14 @@ pub(crate) extern "C-unwind" fn warp_app_has_binding_for_keystroke(
 }
 
 #[unsafe(no_mangle)]
-pub(crate) extern "C-unwind" fn warp_app_has_custom_action_for_keystroke(
+pub(crate) extern "C-unwind" fn leanterm_app_has_custom_action_for_keystroke(
     this: &mut Object,
     event: id,
 ) -> BOOL {
     let app = unsafe { get_app(this) };
-    let warp_event = unsafe { super::event::from_native(event, None, false) };
+    let leanterm_event = unsafe { super::event::from_native(event, None, false) };
 
-    let Some(Event::KeyDown { keystroke, .. }) = warp_event else {
+    let Some(Event::KeyDown { keystroke, .. }) = leanterm_event else {
         return NO;
     };
     let has_binding = app.callbacks.with_mutable_app_context(|ctx| {
@@ -426,13 +428,13 @@ pub(crate) extern "C-unwind" fn warp_app_has_custom_action_for_keystroke(
 }
 
 #[unsafe(no_mangle)]
-pub(crate) extern "C-unwind" fn warp_app_disable_warning_modal(this: &mut Object) {
+pub(crate) extern "C-unwind" fn leanterm_app_disable_warning_modal(this: &mut Object) {
     let app = unsafe { get_app(this) };
     app.callbacks.warning_modal_disabled();
 }
 
 #[unsafe(no_mangle)]
-pub(crate) extern "C-unwind" fn warp_app_process_modal_response(
+pub(crate) extern "C-unwind" fn leanterm_app_process_modal_response(
     this: &mut Object,
     modal_id: ModalId,
     response: usize,
@@ -444,7 +446,7 @@ pub(crate) extern "C-unwind" fn warp_app_process_modal_response(
 }
 
 #[unsafe(no_mangle)]
-pub(crate) extern "C-unwind" fn warp_app_notification_clicked(
+pub(crate) extern "C-unwind" fn leanterm_app_notification_clicked(
     this: &mut Object,
     date: f64,
     data: id,
@@ -458,25 +460,25 @@ pub(crate) extern "C-unwind" fn warp_app_notification_clicked(
 }
 
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_app_did_resign_active(this: &mut Object, _: Sel, _: id) {
+extern "C-unwind" fn leanterm_app_did_resign_active(this: &mut Object, _: Sel, _: id) {
     let app = unsafe { get_app(this) };
     app.callbacks.app_resigned_active();
 }
 
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_app_will_terminate(this: &mut Object, _: Sel, _: id) {
+extern "C-unwind" fn leanterm_app_will_terminate(this: &mut Object, _: Sel, _: id) {
     let app = unsafe { get_app(this) };
     app.callbacks.app_will_terminate();
 }
 
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_app_new_window(this: &mut Object) {
+extern "C-unwind" fn leanterm_app_new_window(this: &mut Object) {
     let app = unsafe { get_app(this) };
     app.callbacks.open_new_window();
 }
 
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_app_active_window_changed(this: &mut Object) {
+extern "C-unwind" fn leanterm_app_active_window_changed(this: &mut Object) {
     let app = unsafe { get_app(this) };
     Window::close_ime_on_active_window();
     app.callbacks
@@ -484,26 +486,26 @@ extern "C-unwind" fn warp_app_active_window_changed(this: &mut Object) {
 }
 
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_app_window_did_resize(this: &mut Object) {
+extern "C-unwind" fn leanterm_app_window_did_resize(this: &mut Object) {
     let app = unsafe { get_app(this) };
     app.callbacks.window_resized();
 }
 
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_app_window_did_move(this: &mut Object) {
+extern "C-unwind" fn leanterm_app_window_did_move(this: &mut Object) {
     let app = unsafe { get_app(this) };
     app.callbacks.window_moved();
 }
 
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_app_window_will_close(this: &mut Object, window: &mut Object) {
+extern "C-unwind" fn leanterm_app_window_will_close(this: &mut Object, window: &mut Object) {
     let app = unsafe { get_app(this) };
     let window_state = unsafe { get_window_state(window) };
     app.callbacks.window_will_close(window_state.id());
 }
 
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_app_screen_did_change(this: &mut Object) {
+extern "C-unwind" fn leanterm_app_screen_did_change(this: &mut Object) {
     log::info!("received NSApplicationDidChangeScreenParametersNotification");
     let app = unsafe { get_app(this) };
     app.callbacks.screen_changed();
@@ -522,7 +524,7 @@ extern "C-unwind" fn cpu_will_sleep(this: &mut Object) {
 }
 
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_app_open_files(this: &mut Object, paths: id) {
+extern "C-unwind" fn leanterm_app_open_files(this: &mut Object, paths: id) {
     // SAFETY: `paths` is an `NSArray<NSString>` of file paths.
     let paths = unsafe {
         let paths = &*paths.cast::<NSArray<NSString>>();
@@ -546,7 +548,7 @@ extern "C-unwind" fn warp_app_open_files(this: &mut Object, paths: id) {
 }
 
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_app_open_urls(this: &mut Object, urls: id) {
+extern "C-unwind" fn leanterm_app_open_urls(this: &mut Object, urls: id) {
     // SAFETY: `urls` is an `NSArray<NSURL>`.
     let urls = unsafe {
         let urls = &*urls.cast::<NSArray<NSURL>>();
@@ -571,14 +573,14 @@ extern "C-unwind" fn warp_app_open_urls(this: &mut Object, urls: id) {
 }
 
 #[unsafe(no_mangle)]
-extern "C-unwind" fn warp_app_os_appearance_changed(this: &mut Object) {
+extern "C-unwind" fn leanterm_app_os_appearance_changed(this: &mut Object) {
     let app = unsafe { get_app(this) };
     app.callbacks.os_appearance_changed();
 }
 
 // Calls the callback with None if no file was selected
 #[unsafe(no_mangle)]
-pub(crate) extern "C-unwind" fn warp_open_panel_file_selected(urls: id, callback: *mut c_void) {
+pub(crate) extern "C-unwind" fn leanterm_open_panel_file_selected(urls: id, callback: *mut c_void) {
     // Start by converting the callback from a raw pointer back into a Box, to
     // avoid the memory leak that would occur if we left it in raw pointer form.
     let callback = unsafe { Box::from_raw(callback as *mut FilePickerCallback) };
@@ -600,8 +602,8 @@ pub(crate) extern "C-unwind" fn warp_open_panel_file_selected(urls: id, callback
         log::info!("No file was selected. Dialog was cancelled.")
     }
 
-    // SAFETY: `get_warp_app()` returns the warp NSApplication subclass instance.
-    let app = unsafe { get_app(&mut *get_warp_app()) };
+    // SAFETY: `get_leanterm_app()` returns the leanterm NSApplication subclass instance.
+    let app = unsafe { get_app(&mut *get_leanterm_app()) };
     app.callbacks.with_mutable_app_context(move |ctx| {
         callback(Ok(paths), ctx);
     });
@@ -609,7 +611,7 @@ pub(crate) extern "C-unwind" fn warp_open_panel_file_selected(urls: id, callback
 
 // Calls the save callback with the selected path or None if cancelled
 #[unsafe(no_mangle)]
-pub(crate) extern "C-unwind" fn warp_save_panel_file_selected(url: id, callback: *mut c_void) {
+pub(crate) extern "C-unwind" fn leanterm_save_panel_file_selected(url: id, callback: *mut c_void) {
     let callback = unsafe { Box::from_raw(callback as *mut SaveFilePickerCallback) };
 
     // SAFETY: `url` is null or a valid `NSURL`.
@@ -624,8 +626,8 @@ pub(crate) extern "C-unwind" fn warp_save_panel_file_selected(url: id, callback:
         log::info!("Save dialog was cancelled.");
     }
 
-    // SAFETY: `get_warp_app()` returns the warp NSApplication subclass instance.
-    let app = unsafe { get_app(&mut *get_warp_app()) };
+    // SAFETY: `get_leanterm_app()` returns the leanterm NSApplication subclass instance.
+    let app = unsafe { get_app(&mut *get_leanterm_app()) };
     app.callbacks.with_mutable_app_context(move |ctx| {
         callback(path, ctx);
     });

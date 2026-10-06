@@ -5,12 +5,12 @@ use super::*;
 #[test]
 fn test_prompt_chip_log_filename_uses_channel_logfile_stem() {
     assert_eq!(
-        prompt_chip_log_filename("warp_dev.log"),
-        "warp_dev.prompt_chips.log"
+        prompt_chip_log_filename("leanterm_dev.log"),
+        "leanterm_dev.prompt_chips.log"
     );
     assert_eq!(
-        prompt_chip_log_filename("warp_local"),
-        "warp_local.prompt_chips.log"
+        prompt_chip_log_filename("leanterm_local"),
+        "leanterm_local.prompt_chips.log"
     );
 }
 
@@ -18,16 +18,16 @@ fn test_prompt_chip_log_filename_uses_channel_logfile_stem() {
 fn prompt_chip_log_path_stays_beside_resolved_frontend_log() {
     for (active_log, expected_sidecar) in [
         (
-            "/tmp/warp-logs/warp_dev.log",
-            "/tmp/warp-logs/warp_dev.prompt_chips.log",
+            "/tmp/leanterm-logs/leanterm_dev.log",
+            "/tmp/leanterm-logs/leanterm_dev.prompt_chips.log",
         ),
         (
-            "/tmp/warp-logs/warp-cli/warp_preview.log",
-            "/tmp/warp-logs/warp-cli/warp_preview.prompt_chips.log",
+            "/tmp/leanterm-logs/leanterm-cli/leanterm_preview.log",
+            "/tmp/leanterm-logs/leanterm-cli/leanterm_preview.prompt_chips.log",
         ),
         (
-            "/tmp/warp-logs/oz/warp.log",
-            "/tmp/warp-logs/oz/warp.prompt_chips.log",
+            "/tmp/leanterm-logs/oz/leanterm.log",
+            "/tmp/leanterm-logs/oz/leanterm.prompt_chips.log",
         ),
     ] {
         assert_eq!(
@@ -61,7 +61,7 @@ fn test_format_log_entry_uses_explicit_empty_and_missing_markers() {
 #[test]
 fn test_format_log_entry_preserves_stdout_and_stderr_sections() {
     let output = CommandOutput {
-        stdout: b"https://github.com/warpdotdev/warp-internal/pull/123\n".to_vec(),
+        stdout: b"https://github.com/leandotdev/lean-internal/pull/123\n".to_vec(),
         stderr: b"warning output\n".to_vec(),
         status: CommandExitStatus::Success,
         exit_code: Some(leanterm_core::command::ExitCode::from(0)),
@@ -83,7 +83,7 @@ fn test_format_log_entry_preserves_stdout_and_stderr_sections() {
     assert!(entry.contains("working_directory: /tmp/project"));
     assert!(entry.contains("command:\n<<<COMMAND\ngh pr view --json url --jq .url\n>>>COMMAND"));
     assert!(entry.contains(
-        "stdout:\n<<<STDOUT\nhttps://github.com/warpdotdev/warp-internal/pull/123\n>>>STDOUT"
+        "stdout:\n<<<STDOUT\nhttps://github.com/leandotdev/lean-internal/pull/123\n>>>STDOUT"
     ));
     assert!(entry.contains("stderr:\n<<<STDERR\nwarning output\n>>>STDERR"));
 }

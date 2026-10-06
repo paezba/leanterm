@@ -15,11 +15,11 @@ use futures::prelude::*;
 use instant::Instant;
 use itertools::Itertools;
 use lazy_static::lazy_static;
+use leanterm_errors::report_error;
 use parking_lot::Mutex;
 use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::Vector2F;
 use rustc_hash::FxHashMap;
-use leanterm_errors::report_error;
 
 use super::{
     ActionCallback, BlurContext, FocusContext, GlobalActionCallback, GlobalShortcut,
@@ -4564,7 +4564,7 @@ impl AppContext {
             window_bounds: WindowBounds::ExactPosition(RectF::new(origin, size)),
             anchor_new_windows_from_closed_position:
                 NextNewWindowsHasThisWindowsBoundsUponClose::No,
-            window_instance: Some("dev.warp.leanterm_ui-debug".to_owned()),
+            window_instance: Some("dev.leanterm.leanterm_ui-debug".to_owned()),
             title: Some("View Tree Debugger".to_owned()),
             ..Default::default()
         };

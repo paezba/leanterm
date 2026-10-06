@@ -32,11 +32,19 @@ const HORIZONTALRULE_TAG_MIN_COUNT: usize = 3;
 pub const INDENT_MAX_LEVEL: usize = 5;
 pub const NUM_SPACE_PER_INDENT_LEVEL: usize = 4;
 
-pub const EMBED_BLOCK_MARKDOWN_LANG: &str = "warp-embedded-object";
+pub const EMBED_BLOCK_MARKDOWN_LANG: &str = "leanterm-embedded-object";
 
-pub const RUNNABLE_BLOCK_MARKDOWN_LANG: &str = "warp-runnable-command";
+pub const RUNNABLE_BLOCK_MARKDOWN_LANG: &str = "leanterm-runnable-command";
 pub const CODE_BLOCK_DEFAULT_MARKDOWN_LANG: &str = "text";
-pub const TABLE_BLOCK_MARKDOWN_LANG: &str = "warp-markdown-table";
+pub const TABLE_BLOCK_MARKDOWN_LANG: &str = "leanterm-markdown-table";
+
+/// Block languages that notebooks were saved with before the app was renamed to Leanterm, paired
+/// with their current names.
+const LEGACY_BLOCK_MARKDOWN_LANGS: [(&str, &str); 3] = [
+    ("warp-embedded-object", EMBED_BLOCK_MARKDOWN_LANG),
+    ("warp-runnable-command", RUNNABLE_BLOCK_MARKDOWN_LANG),
+    ("warp-markdown-table", TABLE_BLOCK_MARKDOWN_LANG),
+];
 
 const INDENT_TAG_MIN_COUNT: usize = 0;
 const INDENT_TAG_MAX_COUNT: usize = INDENT_MAX_LEVEL * NUM_SPACE_PER_INDENT_LEVEL;
@@ -985,10 +993,12 @@ fn parse_code_block_lang<'a, E: ContextError<&'a str> + ParseError<&'a str>>(
     // If we can't, we still want to parse the code block so we'll just mark the language as default.
     map(parse_line, |line| {
         if line.trim().is_empty() {
-            RUNNABLE_BLOCK_MARKDOWN_LANG
-        } else {
-            line
+            return RUNNABLE_BLOCK_MARKDOWN_LANG;
         }
+        LEGACY_BLOCK_MARKDOWN_LANGS
+            .iter()
+            .find(|(legacy, _)| *legacy == line)
+            .map_or(line, |(_, current)| current)
     })(markdown)
 }
 

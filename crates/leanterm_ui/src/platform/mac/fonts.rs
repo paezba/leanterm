@@ -27,9 +27,6 @@ use foreign_types::ForeignType;
 use futures::FutureExt as _;
 use futures::future::BoxFuture;
 use itertools::Itertools as _;
-use ordered_float::OrderedFloat;
-use pathfinder_geometry::rect::RectI;
-use pathfinder_geometry::vector::{Vector2F, Vector2I};
 use leanterm_ui_core::fonts::canvas::RasterFormat;
 use leanterm_ui_core::fonts::{
     FamilyId, FontId, FontInfo, GlyphId, Metrics, Properties, RasterizedGlyph, SubpixelAlignment,
@@ -37,6 +34,9 @@ use leanterm_ui_core::fonts::{
 use leanterm_ui_core::platform::{self, FontDB as _, LineStyle, TextLayoutSystem};
 use leanterm_ui_core::rendering;
 use leanterm_ui_core::text_layout::{ClipConfig, StyleAndFont, TextAlignment, TextFrame};
+use ordered_float::OrderedFloat;
+use pathfinder_geometry::rect::RectI;
+use pathfinder_geometry::vector::{Vector2F, Vector2I};
 
 use super::text_layout::{layout_line, layout_text};
 use crate::fonts::font_kit::{Rasterizer, properties_to_font_kit};
@@ -147,7 +147,7 @@ mod loader {
         LoadedSystemFonts(fonts)
     }
 
-    // We use font-kit's family handle to load fonts that come with Warp as
+    // We use font-kit's family handle to load fonts that come with Leanterm as
     // these binaries are already in memory and won't increase our memory load.
     pub fn load_font_family_from_bytes(name: &str, font_bytes: Vec<Vec<u8>>) -> Result<FontFamily> {
         let mut fonts = Vec::with_capacity(font_bytes.len());

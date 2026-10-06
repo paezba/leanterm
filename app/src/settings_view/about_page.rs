@@ -54,7 +54,7 @@ impl SettingsWidget for AboutPageWidget {
     type View = AboutPageView;
 
     fn search_terms(&self) -> &str {
-        "about warp version"
+        "about leanterm version"
     }
 
     fn render(
@@ -67,9 +67,9 @@ impl SettingsWidget for AboutPageWidget {
         let ui_builder = appearance.ui_builder();
 
         let image_path = if theme.inferred_color_scheme() == ColorScheme::LightOnDark {
-            "bundled/svg/warp-logo-with-light-title.svg"
+            "bundled/svg/leanterm-logo-with-light-title.svg"
         } else {
-            "bundled/svg/warp-logo-with-dark-title.svg"
+            "bundled/svg/leanterm-logo-with-dark-title.svg"
         };
 
         let version = ChannelState::app_version().unwrap_or("v#.##.###");
@@ -119,8 +119,8 @@ impl SettingsWidget for AboutPageWidget {
                 .with_child(
                     ui_builder
                         .span(
-                            "Leanterm: a lean fork of the Warp open-source terminal, without AI, cloud, \
-                             or account features. Not affiliated with Warp.",
+                            "Leanterm: a lean fork of the Leanterm open-source terminal, without AI, cloud, \
+                             or account features. Not affiliated with Leanterm.",
                         )
                         .with_soft_wrap()
                         .build()

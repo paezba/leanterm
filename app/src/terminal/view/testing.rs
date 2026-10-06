@@ -13,7 +13,7 @@ cfg_if::cfg_if! {
         use crate::terminal::model::block::SerializedBlockListItem;
         use crate::terminal::model::session::Sessions;
         use crate::terminal::model_events::ModelEventDispatcher;
-        use crate::terminal::view::WARP_PROMPT_HEIGHT_LINES;
+        use crate::terminal::view::LEANTERM_PROMPT_HEIGHT_LINES;
         use crate::terminal::{SizeInfo, TerminalModel};
 
         use crate::context_chips::prompt_type::PromptType;
@@ -38,8 +38,8 @@ impl TerminalView {
         _is_cloud_mode: bool,
         ctx: &mut ViewContext<Self>,
     ) -> Self {
-        use pathfinder_geometry::vector::vec2f;
         use leanterm_ui::units::{IntoPixels as _, Pixels};
+        use pathfinder_geometry::vector::vec2f;
 
         use crate::terminal::BlockPadding;
         use crate::terminal::event_listener::ChannelEventListener;
@@ -72,7 +72,7 @@ impl TerminalView {
             block_padding,
             size: size_info,
             max_block_scroll_limit,
-            warp_prompt_height_lines: WARP_PROMPT_HEIGHT_LINES,
+            leanterm_prompt_height_lines: LEANTERM_PROMPT_HEIGHT_LINES,
         };
         let terminal_view_resources = TerminalViewResources {
             model_event_sender: None,

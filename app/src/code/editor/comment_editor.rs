@@ -1,7 +1,5 @@
 use std::cell::RefCell;
 
-use pathfinder_color::ColorU;
-use pathfinder_geometry::vector::Vector2F;
 use leanterm_core::ui::appearance::Appearance;
 use leanterm_core::ui::theme::Fill;
 use leanterm_editor::render::element::VerticalExpansionBehavior;
@@ -16,6 +14,8 @@ use leanterm_ui::{
     AppContext, Element, Entity, FocusContext, ModelHandle, SingletonEntity, TypedActionView, View,
     ViewContext, ViewHandle,
 };
+use pathfinder_color::ColorU;
+use pathfinder_geometry::vector::Vector2F;
 
 use crate::code::editor::comments::{EditorCommentsModel, PendingCommentEvent};
 use crate::code::editor::line::EditorLineLocation;
@@ -330,7 +330,7 @@ impl CommentEditor {
         let theme = appearance.theme();
         let sub_text_color = theme.sub_text_color(Fill::Solid(background)).into_solid();
         let icon = Icon::Github
-            .to_warpui_icon(Fill::Solid(sub_text_color))
+            .to_leanterm_ui_icon(Fill::Solid(sub_text_color))
             .finish();
 
         let label = Text::new(

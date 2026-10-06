@@ -2,11 +2,11 @@ use std::any::Any;
 use std::fmt::Debug;
 use std::ops::AddAssign;
 
-use pathfinder_geometry::rect::RectF;
 use leanterm_errors::{ErrorExt, register_error};
-use leanterm_util::file::FileSaveError;
 use leanterm_ui::AppContext;
 use leanterm_ui::elements::DropTargetData;
+use leanterm_util::file::FileSaveError;
+use pathfinder_geometry::rect::RectF;
 
 #[cfg(not(target_family = "wasm"))]
 pub mod find_references_view;

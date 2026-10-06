@@ -17,6 +17,12 @@ use std::str;
 use anyhow::{Result, anyhow};
 use itertools::Itertools;
 use lazy_static::lazy_static;
+use leanterm_ui::color::ColorU;
+use leanterm_ui::text::point::Point;
+use leanterm_ui::text::words::is_default_word_boundary;
+use leanterm_ui::text::{BufferIndex, TextBuffer};
+use leanterm_ui::text_layout::TextStyle;
+use leanterm_ui::{Entity, ModelContext};
 #[cfg(test)]
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -25,12 +31,6 @@ use sum_tree::{self, Cursor, FilterCursor, SeekBias, SumTree};
 use time::{Global, Lamport};
 use undo::{LocalUndoStack, UndoHistory};
 use vec1::{Vec1, vec1};
-use leanterm_ui::color::ColorU;
-use leanterm_ui::text::point::Point;
-use leanterm_ui::text::words::is_default_word_boundary;
-use leanterm_ui::text::{BufferIndex, TextBuffer};
-use leanterm_ui::text_layout::TextStyle;
-use leanterm_ui::{Entity, ModelContext};
 /// The public interfaces that we expose to the model.
 /// This should be a very limited set of APIs and should
 /// not expose the internal details of the buffer.

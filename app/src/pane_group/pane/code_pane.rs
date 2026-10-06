@@ -1,5 +1,5 @@
-use leanterm_util::path::LineAndColumnArg;
 use leanterm_ui::{AppContext, ModelHandle, SingletonEntity, View, ViewContext, ViewHandle};
+use leanterm_util::path::LineAndColumnArg;
 
 use super::{
     DetachType, PaneConfiguration, PaneContent, PaneId, PaneView, ShareableLink, ShareableLinkError,

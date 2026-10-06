@@ -2,16 +2,16 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
 /// Sentinel title that identifies structured CLI-agent events sent via OSC 777.
-pub const CLI_AGENT_NOTIFICATION_SENTINEL: &str = "warp://cli-agent";
+pub const CLI_AGENT_NOTIFICATION_SENTINEL: &str = "leanterm://cli-agent";
 
 /// Schema version emitted by the current CLI-agent notification protocol.
 pub const CLI_AGENT_PROTOCOL_VERSION: u32 = 1;
 
 /// Environment variable that advertises the host's CLI-agent protocol version.
-pub const WARP_CLI_AGENT_PROTOCOL_VERSION_ENV: &str = "WARP_CLI_AGENT_PROTOCOL_VERSION";
+pub const LEANTERM_CLI_AGENT_PROTOCOL_VERSION_ENV: &str = "LEANTERM_CLI_AGENT_PROTOCOL_VERSION";
 
-/// Environment variable that identifies the hosting Warp client version.
-pub const WARP_CLIENT_VERSION_ENV: &str = "WARP_CLIENT_VERSION";
+/// Environment variable that identifies the hosting Leanterm client version.
+pub const LEANTERM_CLIENT_VERSION_ENV: &str = "LEANTERM_CLIENT_VERSION";
 
 /// Wire representation of a structured CLI-agent notification.
 #[skip_serializing_none]

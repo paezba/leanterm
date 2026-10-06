@@ -11,7 +11,9 @@ use leanterm_ui::platform::Cursor;
 use leanterm_ui::ui_components::button::ButtonVariant;
 use leanterm_ui::ui_components::checkbox::Checkbox;
 use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
-use leanterm_ui::{AppContext, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle};
+use leanterm_ui::{
+    AppContext, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
+};
 
 /// Registers keybindings for the new-worktree modal (ESC to close).
 pub fn init(app: &mut AppContext) {
@@ -357,7 +359,7 @@ impl View for NewWorktreeModal {
             // X close icon
             let close_icon = ConstrainedBox::new(
                 leanterm_core::ui::Icon::X
-                    .to_warpui_icon(theme.sub_text_color(theme.background()))
+                    .to_leanterm_ui_icon(theme.sub_text_color(theme.background()))
                     .finish(),
             )
             .with_width(CLOSE_ICON_SIZE)

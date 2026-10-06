@@ -2,7 +2,7 @@ use leanterm_ui_core::fonts::{FamilyId, Weight};
 use leanterm_ui_core::{Entity, ModelContext, SingletonEntity};
 
 use super::builder::UiBuilder;
-use super::theme::WarpTheme;
+use super::theme::LeantermTheme;
 
 /// The standard font size to use for headers (e.g.: in dialogs).
 const HEADER_FONT_SIZE: f32 = 18.;
@@ -16,7 +16,7 @@ pub const DEFAULT_COMMAND_PALETTE_FONT_SIZE: f32 = 14.0;
 /// to individually listen for changes. The most prominent examples are
 /// settings related to themes and fonts.
 pub struct Appearance {
-    theme: WarpTheme,
+    theme: LeantermTheme,
     monospace_font_family: FamilyId,
     monospace_font_size: f32,
     monospace_font_weight: Weight,
@@ -69,7 +69,7 @@ pub enum AppearanceEvent {
 impl Appearance {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        theme: WarpTheme,
+        theme: LeantermTheme,
         monospace_font_family: FamilyId,
         monospace_font_size: f32,
         monospace_font_weight: Weight,
@@ -101,7 +101,7 @@ impl Appearance {
 
         use crate::ui::theme::{Details, Fill, mock_terminal_colors};
 
-        let mock_theme = WarpTheme::new(
+        let mock_theme = LeantermTheme::new(
             Fill::Solid(ColorU::from_u32(0x000000ff)),
             ColorU::from_u32(0xffffffff),
             Fill::Solid(ColorU::new(18, 123, 156, 255)),
@@ -132,7 +132,7 @@ impl Appearance {
         }
     }
 
-    pub fn set_theme(&mut self, new_theme: WarpTheme, ctx: &mut ModelContext<Self>) {
+    pub fn set_theme(&mut self, new_theme: LeantermTheme, ctx: &mut ModelContext<Self>) {
         self.theme = new_theme;
         self.ui_builder = UiBuilder::new(
             self.theme.clone(),
@@ -255,7 +255,7 @@ impl Appearance {
         &self.ui_builder
     }
 
-    pub fn theme(&self) -> &WarpTheme {
+    pub fn theme(&self) -> &LeantermTheme {
         &self.theme
     }
 

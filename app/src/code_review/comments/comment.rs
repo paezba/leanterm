@@ -2,15 +2,15 @@ use std::fmt::{Display, Formatter};
 use std::path::PathBuf;
 
 use chrono::{DateTime, Local};
-use serde::{Deserialize, Serialize};
 use leanterm_editor::render::model::LineCount;
+use serde::{Deserialize, Serialize};
 
 use crate::code::editor::EditorReviewComment;
 use crate::code::editor::line::EditorLineLocation;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub enum CommentOrigin {
-    /// Comments originally created in the Warp UI.
+    /// Comments originally created in the Leanterm UI.
     #[default]
     Native,
     /// Comments imported from a GitHub pull request.

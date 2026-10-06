@@ -756,7 +756,7 @@ impl TextFrame {
         positions
     }
 
-    /// We can't mark this as cfg(test) because we need this in the warp crate tests.
+    /// We can't mark this as cfg(test) because we need this in the leanterm crate tests.
     pub fn mock(text: &str) -> Self {
         let mut acc = 0;
         let lines = text
@@ -798,7 +798,7 @@ impl TextFrame {
     /// This makes geometry helpers (e.g. `x_for_index`) and caret hit-testing usable in tests,
     /// which the zero-position [`Self::mock`] cannot support. Only supports a single line.
     ///
-    /// We can't mark this as cfg(test) because warp crate tests need it too.
+    /// We can't mark this as cfg(test) because leanterm crate tests need it too.
     pub fn mock_with_positions(text: &str, advance: f32) -> Self {
         assert!(
             !text.contains('\n'),
@@ -975,7 +975,7 @@ impl Line {
         }
     }
 
-    /// We can't mark this as cfg(test) because we need this in the warp crate tests.
+    /// We can't mark this as cfg(test) because we need this in the leanterm crate tests.
     pub fn mock(runs: Vec<Run>) -> Self {
         Line {
             width: Default::default(),

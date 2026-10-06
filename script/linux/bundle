@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Builds a Warp binary and bundles it up for distribution.
+# Builds a Leanterm binary and bundles it up for distribution.
 
 set -e
 
@@ -85,8 +85,8 @@ while (( "$#" )); do
       ;;
     --artifact)
       if [ -n "$2" ] && [ "${2:0:1}" != "-" ]; then
-        if [[ "$2" != "app" && "$2" != "cli" && "$2" != "warpctrl" && "$2" != "tui" ]]; then
-          echo "Error: --artifact must be 'app', 'cli', 'warpctrl', or 'tui', got '$2'" >&2
+        if [[ "$2" != "app" && "$2" != "cli" && "$2" != "leantermctl" && "$2" != "tui" ]]; then
+          echo "Error: --artifact must be 'app', 'cli', 'leantermctl', or 'tui', got '$2'" >&2
           exit 1
         fi
         ARTIFACT="$2"
@@ -143,8 +143,8 @@ if [[ "$ARTIFACT" == "tui" && "$BUILD" == "true" && "$BUILD_ARCH" != "$HOST_ARCH
   exit 1
 fi
 
-# Statically compile the CLI and warpctrl artifacts so they can run on older Linux distros.
-if [[ "$ARTIFACT" == "cli" || "$ARTIFACT" == "warpctrl" ]]; then
+# Statically compile the CLI and leantermctl artifacts so they can run on older Linux distros.
+if [[ "$ARTIFACT" == "cli" || "$ARTIFACT" == "leantermctl" ]]; then
   TARGET_TRIPLE="${BUILD_ARCH}-unknown-linux-musl"
   # Only configure the musl toolchain when we are actually compiling.  Packaging-only
   # runs (--skip-build) just need TARGET_TRIPLE to locate the prebuilt binary, and
@@ -167,13 +167,13 @@ elif [[ $RELEASE_CHANNEL = "local" || $RELEASE_CHANNEL = "dev" ]]; then
   # For dev bundles, we want to enable debug assertions to
   # catch violations that would otherwise silently pass in
   # a normal release build (e.g. in stable).
-  if [[ "$ARTIFACT" == "cli" || "$ARTIFACT" == "warpctrl" || "$ARTIFACT" == "tui" ]]; then
+  if [[ "$ARTIFACT" == "cli" || "$ARTIFACT" == "leantermctl" || "$ARTIFACT" == "tui" ]]; then
     CARGO_PROFILE="release-cli-debug_assertions"
   else
     CARGO_PROFILE="release-lto-debug_assertions"
   fi
 else
-  if [[ "$ARTIFACT" == "cli" || "$ARTIFACT" == "warpctrl" || "$ARTIFACT" == "tui" ]]; then
+  if [[ "$ARTIFACT" == "cli" || "$ARTIFACT" == "leantermctl" || "$ARTIFACT" == "tui" ]]; then
     CARGO_PROFILE="release-cli"
   else
     CARGO_PROFILE="release-lto"
@@ -196,35 +196,35 @@ mkdir -p "$OUT_DIR"
 # APP_NAME here must match the value used in Rust as the
 # application name; see app/src/channel.rs.
 #
-# WARP_BIN is the name of the binary produced by cargo;
+# LEANTERM_BIN is the name of the binary produced by cargo;
 # BINARY_NAME is the desired name of the binary in the final package.
 if [[ $RELEASE_CHANNEL = "local" ]]; then
-  WARP_BIN="warp"
-  BINARY_NAME="warp-local"
-  APP_NAME="WarpLocal"
+  LEANTERM_BIN="leanterm"
+  BINARY_NAME="leanterm-local"
+  APP_NAME="LeantermLocal"
   FEATURES="$FEATURES,agent_mode_debug"
   export HANDLE_MARKDOWN=1
 elif [[ $RELEASE_CHANNEL = "dev" ]]; then
-  WARP_BIN="dev"
-  BINARY_NAME="warp-dev"
-  APP_NAME="WarpDev"
+  LEANTERM_BIN="dev"
+  BINARY_NAME="leanterm-dev"
+  APP_NAME="LeantermDev"
   FEATURES="$FEATURES,agent_mode_debug"
   # Enable heap usage tracking & profiling using jemalloc through pprof.
   FEATURES="$FEATURES,jemalloc_pprof,heap_usage_tracking"
   export HANDLE_MARKDOWN=1
 elif [[ $RELEASE_CHANNEL = "preview" ]]; then
-  WARP_BIN="preview"
-  BINARY_NAME="warp-preview"
-  APP_NAME="WarpPreview"
+  LEANTERM_BIN="preview"
+  BINARY_NAME="leanterm-preview"
+  APP_NAME="LeantermPreview"
   FEATURES="$FEATURES,preview_channel"
   # Enable heap usage tracking & profiling using jemalloc through pprof.
   FEATURES="$FEATURES,jemalloc_pprof,heap_usage_tracking"
 elif [[ $RELEASE_CHANNEL = "stable" ]]; then
-  WARP_BIN="stable"
-  BINARY_NAME="warp"
-  APP_NAME="Warp"
+  LEANTERM_BIN="stable"
+  BINARY_NAME="leanterm"
+  APP_NAME="Leanterm"
 elif [[ $RELEASE_CHANNEL = "oss" ]]; then
-  WARP_BIN="leanterm"
+  LEANTERM_BIN="leanterm"
   BINARY_NAME="leanterm"
   APP_NAME="Leanterm"
   # The OSS channel does not ship Sentry, so drop the crash_reporting feature
@@ -234,39 +234,39 @@ fi
 
 # Artifact-specific binary naming
 if [[ "$ARTIFACT" == "cli" ]]; then
-  # For CLI artifacts, use oz instead of warp as the binary name.  The OSS
+  # For CLI artifacts, use oz instead of leanterm as the binary name.  The OSS
   # channel is an exception: its CLI command name is `leanterm`, matching
   # `Channel::cli_command_name` in the Rust source.
   if [[ $RELEASE_CHANNEL != "oss" ]]; then
-    BINARY_NAME="${BINARY_NAME/warp/oz}"
+    BINARY_NAME="${BINARY_NAME/leanterm/oz}"
   fi
-elif [[ "$ARTIFACT" == "warpctrl" ]]; then
-  BINARY_NAME="warpctrl"
+elif [[ "$ARTIFACT" == "leantermctl" ]]; then
+  BINARY_NAME="leantermctl"
   PACKAGES=()
 elif [[ "$ARTIFACT" == "tui" ]]; then
   case "$RELEASE_CHANNEL" in
-    local) WARP_BIN="warp-tui" ;;
-    oss) WARP_BIN="warp-tui-oss" ;;
-    *) WARP_BIN="warp-tui-$RELEASE_CHANNEL" ;;
+    local) LEANTERM_BIN="leanterm-tui" ;;
+    oss) LEANTERM_BIN="leanterm-tui-oss" ;;
+    *) LEANTERM_BIN="leanterm-tui-$RELEASE_CHANNEL" ;;
   esac
-  BINARY_NAME="$WARP_BIN"
+  BINARY_NAME="$LEANTERM_BIN"
   PACKAGES=()
 fi
 
 # Artifact-specific configuration
-if [[ "$ARTIFACT" == "cli" || "$ARTIFACT" == "warpctrl" ]]; then
+if [[ "$ARTIFACT" == "cli" || "$ARTIFACT" == "leantermctl" ]]; then
   FEATURES="$FEATURES,standalone"
-  if [[ "$ARTIFACT" == "warpctrl" ]]; then
-    FEATURES="$FEATURES,warp_control_cli"
+  if [[ "$ARTIFACT" == "leantermctl" ]]; then
+    FEATURES="$FEATURES,leanterm_control_cli"
   fi
 elif [[ "$ARTIFACT" == "tui" ]]; then
   # The TUI is a separate console crate with its own per-channel bins and a
   # minimal feature set. It uses the native GNU target so the Linux clipboard
   # backends can link against the host's Wayland/X11 libraries. Deliberately
   # omit `voice_input` so portable bundles do not require the host ALSA runtime.
-  WARP_TUI_FEATURES="release_bundle,standalone"
+  LEANTERM_TUI_FEATURES="release_bundle,standalone"
   if [[ "$RELEASE_CHANNEL" != "oss" ]]; then
-    WARP_TUI_FEATURES="$WARP_TUI_FEATURES,crash_reporting"
+    LEANTERM_TUI_FEATURES="$LEANTERM_TUI_FEATURES,crash_reporting"
   fi
 elif [[ "$ARTIFACT" == "app" ]]; then
   # All channels ship the v3 classifier and v2 heuristic.
@@ -274,14 +274,14 @@ elif [[ "$ARTIFACT" == "app" ]]; then
 fi
 if [[ -n "$EXTRA_FEATURES" ]]; then
   if [[ "$ARTIFACT" == "tui" ]]; then
-    WARP_TUI_FEATURES="$WARP_TUI_FEATURES,$EXTRA_FEATURES"
+    LEANTERM_TUI_FEATURES="$LEANTERM_TUI_FEATURES,$EXTRA_FEATURES"
   else
     FEATURES="$FEATURES,$EXTRA_FEATURES"
   fi
 fi
 
-BUNDLE_ID="dev.warp.$APP_NAME"
-EXECUTABLE_PATH="$CARGO_TARGET_OUTPUT_DIR/$WARP_BIN"
+BUNDLE_ID="dev.leanterm.$APP_NAME"
+EXECUTABLE_PATH="$CARGO_TARGET_OUTPUT_DIR/$LEANTERM_BIN"
 DEBUG_EXECUTABLE_PATH="$EXECUTABLE_PATH.debug"
 
 # Note that this variable must be set (and exported!) before we compile the
@@ -294,20 +294,20 @@ export APPIMAGE_NAME="$APP_NAME-$BUILD_ARCH.AppImage"
 # using the same feature flags and profile that we would be using in production.
 if [[ "$CHECK_ONLY" == "true" ]]; then
   if [[ "$ARTIFACT" == "tui" ]]; then
-    cargo check -p warp_tui --profile "$CARGO_PROFILE" --bin "$WARP_BIN" --features "$WARP_TUI_FEATURES"
+    cargo check -p leanterm_tui --profile "$CARGO_PROFILE" --bin "$LEANTERM_BIN" --features "$LEANTERM_TUI_FEATURES"
   else
-    cargo check -p leanterm --profile "$CARGO_PROFILE" --bin "$WARP_BIN" --features "$FEATURES" ${TARGET_TRIPLE:+--target $TARGET_TRIPLE}
+    cargo check -p leanterm --profile "$CARGO_PROFILE" --bin "$LEANTERM_BIN" --features "$FEATURES" ${TARGET_TRIPLE:+--target $TARGET_TRIPLE}
   fi
   exit 0
 fi
 
 # Build the binary.
 if [[ "$BUILD" == "true" ]]; then
-  echo "Building and bundling Warp for channel $RELEASE_CHANNEL and bundle id $BUNDLE_ID"
+  echo "Building and bundling Leanterm for channel $RELEASE_CHANNEL and bundle id $BUNDLE_ID"
   if [[ "$ARTIFACT" == "tui" ]]; then
-    cargo build -p warp_tui --profile "$CARGO_PROFILE" --bin "$WARP_BIN" --features "$WARP_TUI_FEATURES"
+    cargo build -p leanterm_tui --profile "$CARGO_PROFILE" --bin "$LEANTERM_BIN" --features "$LEANTERM_TUI_FEATURES"
   else
-    cargo build -p leanterm --profile "$CARGO_PROFILE" --bin "$WARP_BIN" --features "$FEATURES" ${TARGET_TRIPLE:+--target $TARGET_TRIPLE}
+    cargo build -p leanterm --profile "$CARGO_PROFILE" --bin "$LEANTERM_BIN" --features "$FEATURES" ${TARGET_TRIPLE:+--target $TARGET_TRIPLE}
   fi
 
   echo "Making debug copy of '$EXECUTABLE_PATH' at '$DEBUG_EXECUTABLE_PATH'"
@@ -317,35 +317,35 @@ if [[ "$BUILD" == "true" ]]; then
   if [[ $RELEASE_CHANNEL = "dev" ]]; then
     # For dev builds, only strip debug symbols, as we want to keep some
     # symbols for profiling purposes.
-    "${WARP_MUSL_STRIP:-strip}" --strip-debug "$EXECUTABLE_PATH"
+    "${LEANTERM_MUSL_STRIP:-strip}" --strip-debug "$EXECUTABLE_PATH"
   else
     # For production builds, strip all symbols, to keep the binary size
     # smaller.
-    "${WARP_MUSL_STRIP:-strip}" --strip-all "$EXECUTABLE_PATH"
+    "${LEANTERM_MUSL_STRIP:-strip}" --strip-all "$EXECUTABLE_PATH"
   fi
 else
   echo 'Skipping `cargo build` step due to --skip-build argument'
 fi
 
-if [[ "$ARTIFACT" == "warpctrl" ]]; then
-  echo "Copying control-mode binary into $OUT_DIR/$WARP_BIN"
-  cp "$EXECUTABLE_PATH" "$OUT_DIR/$WARP_BIN"
-  WARPCTRL_SCRIPT_PATH="$OUT_DIR/warpctrl"
-  echo "Creating warpctrl wrapper script at $WARPCTRL_SCRIPT_PATH"
-  cat > "$WARPCTRL_SCRIPT_PATH" << EOF
+if [[ "$ARTIFACT" == "leantermctl" ]]; then
+  echo "Copying control-mode binary into $OUT_DIR/$LEANTERM_BIN"
+  cp "$EXECUTABLE_PATH" "$OUT_DIR/$LEANTERM_BIN"
+  LEANTERMCTL_SCRIPT_PATH="$OUT_DIR/leantermctl"
+  echo "Creating leantermctl wrapper script at $LEANTERMCTL_SCRIPT_PATH"
+  cat > "$LEANTERMCTL_SCRIPT_PATH" << EOF
 #!/usr/bin/env bash
 script_dir="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
-exec "\$script_dir/$WARP_BIN" --warpctrl "\$@"
+exec "\$script_dir/$LEANTERM_BIN" --leantermctl "\$@"
 EOF
-  chmod +x "$WARPCTRL_SCRIPT_PATH"
+  chmod +x "$LEANTERMCTL_SCRIPT_PATH"
 fi
 BINARY_PATH="$EXECUTABLE_PATH"
-if [[ "$ARTIFACT" == "warpctrl" ]]; then
-  BINARY_PATH="$WARPCTRL_SCRIPT_PATH"
+if [[ "$ARTIFACT" == "leantermctl" ]]; then
+  BINARY_PATH="$LEANTERMCTL_SCRIPT_PATH"
 elif [[ "$ARTIFACT" == "tui" ]]; then
-  echo "Copying TUI binary into $OUT_DIR/$WARP_BIN"
-  cp "$EXECUTABLE_PATH" "$OUT_DIR/$WARP_BIN"
-  BINARY_PATH="$OUT_DIR/$WARP_BIN"
+  echo "Copying TUI binary into $OUT_DIR/$LEANTERM_BIN"
+  cp "$EXECUTABLE_PATH" "$OUT_DIR/$LEANTERM_BIN"
+  BINARY_PATH="$OUT_DIR/$LEANTERM_BIN"
 fi
 
 if [[ "${SKIP_SETTINGS_SCHEMA:-}" != "1" && -z "${SETTINGS_SCHEMA_EXECUTABLE:-}" && -z "${SETTINGS_SCHEMA_SOURCE:-}" ]]; then
@@ -356,7 +356,7 @@ if [[ "${SKIP_SETTINGS_SCHEMA:-}" != "1" && -z "${SETTINGS_SCHEMA_EXECUTABLE:-}"
     echo "Error: --skip-build requires SETTINGS_SCHEMA_SOURCE or SETTINGS_SCHEMA_EXECUTABLE." >&2
     exit 1
   elif [[ "$BUILD_ARCH" != "$HOST_ARCH" ]]; then
-    # The CLI/warpctrl artifacts can be cross-compiled (see the musl toolchain
+    # The CLI/leantermctl artifacts can be cross-compiled (see the musl toolchain
     # setup above); the resulting binary cannot then be executed on this host
     # to generate a schema, so require the caller to supply one explicitly
     # instead of failing later with an opaque exec format error.
@@ -381,7 +381,7 @@ if [[ "${SKIP_SETTINGS_SCHEMA:-}" != "1" && -n "${SETTINGS_SCHEMA_EXECUTABLE:-}"
 fi
 
 # Prepare bundled resources for standalone builds.
-if [[ "$ARTIFACT" == "cli" || "$ARTIFACT" == "warpctrl" || "$ARTIFACT" == "tui" ]]; then
+if [[ "$ARTIFACT" == "cli" || "$ARTIFACT" == "leantermctl" || "$ARTIFACT" == "tui" ]]; then
   echo "Preparing standalone resources directory"
   BUNDLED_RESOURCES_DIR="$OUT_DIR/resources"
   "$WORKSPACE_ROOT_DIR/script/prepare_bundled_resources" "$BUNDLED_RESOURCES_DIR" "$RELEASE_CHANNEL"

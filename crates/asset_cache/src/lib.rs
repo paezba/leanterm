@@ -6,10 +6,10 @@ use anyhow::Result;
 use base64::Engine as _;
 use base64::prelude::BASE64_STANDARD;
 use bytes::Bytes;
-use reqwest::Url;
 use leanterm_ui_core::assets::asset_cache::{
     Asset, AssetCache, AssetSource, AssetState, AsyncAssetId, AsyncAssetType,
 };
+use reqwest::Url;
 
 /// Namespace marker for URL-based async asset sources without persistence.
 pub struct UrlAssetWithoutPersistence;

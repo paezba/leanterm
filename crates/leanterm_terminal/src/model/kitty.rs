@@ -6,14 +6,14 @@ use std::{env, fs, str};
 use anyhow::Result;
 use base64::Engine;
 use flate2::read::ZlibDecoder;
-use pathfinder_geometry::vector::Vector2F;
-use rand::Rng;
 use leanterm_ui_core::assets::asset_cache::Asset;
 use leanterm_ui_core::image_cache::{
     CustomHeaderCreationError, CustomImageFormat, CustomImageHeader, FitType, ImageType,
     resize_dimensions,
 };
 use leanterm_ui_core::util::{parse_i32, parse_u32};
+use pathfinder_geometry::vector::Vector2F;
+use rand::Rng;
 
 use super::escape_sequences::C1;
 

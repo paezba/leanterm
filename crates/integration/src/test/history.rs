@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use settings::Setting as _;
 use leanterm::integration_testing::command_search::{
     assert_command_search_has_results, assert_command_search_is_open,
     assert_history_filter_is_active,
@@ -18,6 +17,7 @@ use leanterm::terminal::input::Input;
 use leanterm::terminal::model::session::get_local_hostname;
 use leanterm::terminal::shell::ShellType;
 use leanterm_ui_core::{ViewHandle, async_assert};
+use settings::Setting as _;
 
 use super::{TEST_ONLY_ASSETS, new_builder};
 use crate::Builder;
@@ -320,7 +320,7 @@ pub fn test_command_search_loads_history_from_nondefault_histfile_path() -> Buil
 /// histfile commands, effectively "enriching" them with metadata.
 ///
 /// Basically, if a user manually deletes a command from their shell histfile, it should not show
-/// up in Warp -- so we effectively do a "left join" on commands from the histfile with commands
+/// up in Leanterm -- so we effectively do a "left join" on commands from the histfile with commands
 /// loaded from sqlite.
 pub fn test_histfile_left_joined_with_persisted_history() -> Builder {
     new_builder()

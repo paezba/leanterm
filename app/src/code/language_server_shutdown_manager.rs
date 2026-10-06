@@ -11,9 +11,9 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use futures::stream::AbortHandle;
-use lsp::LspManagerModel;
 use leanterm_ui::r#async::Timer;
 use leanterm_ui::{AppContext, Entity, ModelContext, SingletonEntity};
+use lsp::LspManagerModel;
 
 use crate::code::local_code_editor::LocalCodeEditorView;
 use crate::terminal::TerminalView;

@@ -3,10 +3,6 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::{Result, anyhow};
-use pathfinder_geometry::vector::Vector2F;
-use rust_embed::RustEmbed;
-use ui_components::lightbox::{self, LightboxImage, LightboxImageSource, NavigationDirection};
-use ui_components::{Component as _, Options, button, dialog, switch, tooltip};
 use leanterm_core::ui::Icon;
 use leanterm_core::ui::appearance::Appearance;
 use leanterm_core::ui::theme::color::internal_colors;
@@ -17,6 +13,10 @@ use leanterm_ui_core::image_cache::ImageType;
 use leanterm_ui_core::keymap::FixedBinding;
 use leanterm_ui_core::prelude::*;
 use leanterm_ui_core::{AssetProvider, SingletonEntity, Tracked, platform};
+use pathfinder_geometry::vector::Vector2F;
+use rust_embed::RustEmbed;
+use ui_components::lightbox::{self, LightboxImage, LightboxImageSource, NavigationDirection};
+use ui_components::{Component as _, Options, button, dialog, switch, tooltip};
 
 #[derive(Clone, Copy, RustEmbed)]
 #[folder = "../../app/assets"]

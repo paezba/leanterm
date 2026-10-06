@@ -43,8 +43,8 @@ use std::marker::PhantomData;
 use std::ops::Deref;
 
 use itertools::Itertools as _;
-use line_ending::LineEnding;
 use leanterm_core::platform::SessionPlatform;
+use line_ending::LineEnding;
 
 /// A line ending format. This is the compile-time equivalent to [`LineEnding`].
 pub trait LineFormat {

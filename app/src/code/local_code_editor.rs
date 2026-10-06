@@ -6,30 +6,12 @@ use std::time::Duration;
 
 use code_diff::diff_validation::DiffType;
 use futures::stream::AbortHandle;
-use lsp::types::FileLocation;
-use lsp::{
-    LanguageId, LanguageServerId, LspEvent, LspManagerModel, LspManagerModelEvent, LspServerModel,
-    ReferenceLocation,
-};
-use lsp_types::FormattingOptions;
-use markdown_parser::FormattedText;
-use num_traits::SaturatingSub;
-use pathfinder_geometry::rect::RectF;
-use pathfinder_geometry::vector::Vector2F;
-#[cfg(feature = "local_fs")]
-use repo_metadata::repositories::DetectedRepositories;
-use string_offset::CharOffset;
-use vec1::Vec1;
 use leanterm_core::r#async::debounce;
 use leanterm_core::ui::appearance::Appearance;
 use leanterm_core::ui::icons::Icon;
 use leanterm_editor::content::buffer::InitialBufferState;
 use leanterm_editor::content::text::IndentUnit;
 use leanterm_editor::render::model::Decoration;
-use leanterm_util::content_version::ContentVersion;
-use leanterm_util::file::{FileId, FileLoadError, FileSaveError};
-#[cfg(feature = "local_fs")]
-use leanterm_util::sync::Condition;
 use leanterm_ui::elements::{
     ChildAnchor, ChildView, ClippedScrollStateHandle, ConstrainedBox, Container, CornerRadius,
     CrossAxisAlignment, Flex, Hoverable, MainAxisAlignment, MainAxisSize, MouseStateHandle,
@@ -44,6 +26,24 @@ use leanterm_ui::{
     AppContext, Element, Entity, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle, WindowId,
 };
+use leanterm_util::content_version::ContentVersion;
+use leanterm_util::file::{FileId, FileLoadError, FileSaveError};
+#[cfg(feature = "local_fs")]
+use leanterm_util::sync::Condition;
+use lsp::types::FileLocation;
+use lsp::{
+    LanguageId, LanguageServerId, LspEvent, LspManagerModel, LspManagerModelEvent, LspServerModel,
+    ReferenceLocation,
+};
+use lsp_types::FormattingOptions;
+use markdown_parser::FormattedText;
+use num_traits::SaturatingSub;
+use pathfinder_geometry::rect::RectF;
+use pathfinder_geometry::vector::Vector2F;
+#[cfg(feature = "local_fs")]
+use repo_metadata::repositories::DetectedRepositories;
+use string_offset::CharOffset;
+use vec1::Vec1;
 
 use crate::code::editor::EditorReviewComment;
 use crate::code::editor::model::HoverableLink;
@@ -639,29 +639,30 @@ impl LocalCodeEditorView {
                 let window_id = ctx.window_id();
 
                 // Create the on-click action based on whether we have a definition
-                let on_click: Box<dyn Fn(&mut leanterm_ui::AppContext)> = if has_different_definition {
-                    let target_location = definition_locations.first().unwrap().target.clone();
-                    Box::new(move |app| {
-                        app.dispatch_typed_action_for_view(
-                            window_id,
-                            view_id,
-                            &LocalCodeEditorAction::NavigateToTarget(target_location.clone()),
-                        );
-                    })
-                } else {
-                    // No different definition - on click, lazily fetch find-references as fallback
-                    let anchor_offset = highlight_range.start;
-                    Box::new(move |app| {
-                        app.dispatch_typed_action_for_view(
-                            window_id,
-                            view_id,
-                            &LocalCodeEditorAction::FetchAndShowFindReferences {
-                                lsp_position: lsp_position_for_references.clone(),
-                                anchor_offset,
-                            },
-                        );
-                    })
-                };
+                let on_click: Box<dyn Fn(&mut leanterm_ui::AppContext)> =
+                    if has_different_definition {
+                        let target_location = definition_locations.first().unwrap().target.clone();
+                        Box::new(move |app| {
+                            app.dispatch_typed_action_for_view(
+                                window_id,
+                                view_id,
+                                &LocalCodeEditorAction::NavigateToTarget(target_location.clone()),
+                            );
+                        })
+                    } else {
+                        // No different definition - on click, lazily fetch find-references as fallback
+                        let anchor_offset = highlight_range.start;
+                        Box::new(move |app| {
+                            app.dispatch_typed_action_for_view(
+                                window_id,
+                                view_id,
+                                &LocalCodeEditorAction::FetchAndShowFindReferences {
+                                    lsp_position: lsp_position_for_references.clone(),
+                                    anchor_offset,
+                                },
+                            );
+                        })
+                    };
 
                 // Set up the hoverable link
                 let link = HoverableLink::new(highlight_range).with_on_click(on_click);
@@ -2126,7 +2127,7 @@ pub fn render_unsaved_changes_banner(
             Container::new(
                 ConstrainedBox::new(
                     Icon::Warning
-                        .to_warpui_icon(appearance.theme().active_ui_text_color())
+                        .to_leanterm_ui_icon(appearance.theme().active_ui_text_color())
                         .finish(),
                 )
                 .with_height(16.)

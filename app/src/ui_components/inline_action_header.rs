@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 use std::rc::Rc;
 
-use pathfinder_color::ColorU;
 use leanterm_core::ui::appearance::Appearance;
 use leanterm_core::ui::theme::color::internal_colors;
 use leanterm_ui::elements::{
@@ -13,6 +12,7 @@ use leanterm_ui::elements::{
 use leanterm_ui::fonts::FamilyId;
 use leanterm_ui::platform::Cursor;
 use leanterm_ui::{AppContext, Element, EventContext, SingletonEntity};
+use pathfinder_color::ColorU;
 
 use crate::ui_components::blended_colors;
 use crate::ui_components::inline_action_icons::icon_size;

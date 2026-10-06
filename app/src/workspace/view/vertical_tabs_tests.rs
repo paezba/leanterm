@@ -1,10 +1,10 @@
 use std::collections::HashSet;
 use std::iter::once;
 
-use pathfinder_geometry::rect::RectF;
-use pathfinder_geometry::vector::Vector2F;
 use leanterm_ui::EntityId;
 use leanterm_ui::elements::PositionedElementOffsetBounds;
+use pathfinder_geometry::rect::RectF;
+use pathfinder_geometry::vector::Vector2F;
 
 use super::{
     SummaryPaneKind, SummaryPaneKindIcons, VerticalTabsDetailTarget, VerticalTabsDetailTargetKind,
@@ -330,7 +330,7 @@ fn pane_search_fragments_prepend_custom_title_and_keep_generated_metadata() {
         Some("Production API"),
         vec![
             "cargo nextest run".to_string(),
-            "~/warp".to_string(),
+            "~/leanterm".to_string(),
             "Claude".to_string(),
         ],
     );
@@ -338,7 +338,7 @@ fn pane_search_fragments_prepend_custom_title_and_keep_generated_metadata() {
     assert_eq!(fragments[0], "Production API");
     assert!(search_fragments_contain_query(&fragments, "production api"));
     assert!(search_fragments_contain_query(&fragments, "cargo nextest"));
-    assert!(search_fragments_contain_query(&fragments, "~/warp"));
+    assert!(search_fragments_contain_query(&fragments, "~/leanterm"));
     assert!(search_fragments_contain_query(&fragments, "claude"));
 }
 
@@ -349,11 +349,11 @@ fn pane_search_fragments_dedupe_custom_title_against_generated_text() {
             Some("  Production   API  "),
             vec![
                 "Production API".to_string(),
-                "~/warp".to_string(),
-                "~/warp".to_string(),
+                "~/leanterm".to_string(),
+                "~/leanterm".to_string(),
             ],
         ),
-        vec!["Production API".to_string(), "~/warp".to_string()]
+        vec!["Production API".to_string(), "~/leanterm".to_string()]
     );
 }
 
@@ -390,15 +390,15 @@ fn diff_stats_text_matches_rendered_badge_text() {
 #[test]
 fn branch_label_display_falls_back_without_branch_icon() {
     assert_eq!(
-        branch_label_display(None, "~/warp"),
-        ("~/warp".to_string(), false)
+        branch_label_display(None, "~/leanterm"),
+        ("~/leanterm".to_string(), false)
     );
     assert_eq!(
-        branch_label_display(Some(""), "~/warp"),
-        ("~/warp".to_string(), false)
+        branch_label_display(Some(""), "~/leanterm"),
+        ("~/leanterm".to_string(), false)
     );
     assert_eq!(
-        branch_label_display(Some("main"), "~/warp"),
+        branch_label_display(Some("main"), "~/leanterm"),
         ("main".to_string(), true)
     );
 }
@@ -406,15 +406,15 @@ fn branch_label_display_falls_back_without_branch_icon() {
 #[test]
 fn compact_branch_subtitle_falls_back_to_working_directory_without_branch_icon() {
     assert_eq!(
-        compact_branch_subtitle_display(None, Some("~/warp")),
-        Some(("~/warp".to_string(), false))
+        compact_branch_subtitle_display(None, Some("~/leanterm")),
+        Some(("~/leanterm".to_string(), false))
     );
     assert_eq!(
-        compact_branch_subtitle_display(Some(""), Some("~/warp")),
-        Some(("~/warp".to_string(), false))
+        compact_branch_subtitle_display(Some(""), Some("~/leanterm")),
+        Some(("~/leanterm".to_string(), false))
     );
     assert_eq!(
-        compact_branch_subtitle_display(Some("main"), Some("~/warp")),
+        compact_branch_subtitle_display(Some("main"), Some("~/leanterm")),
         Some(("main".to_string(), true))
     );
 }

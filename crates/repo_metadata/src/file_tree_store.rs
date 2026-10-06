@@ -3,8 +3,8 @@ mod file_tree_state;
 use std::sync::Arc;
 
 use ignore::gitignore::Gitignore;
-use leanterm_util::standardized_path::StandardizedPath;
 use leanterm_ui_core::ModelHandle;
+use leanterm_util::standardized_path::StandardizedPath;
 
 use crate::file_tree_store::file_tree_state::FileTreeMapStore;
 use crate::{BuildTreeError, Entry, FileId, FileMetadata, Repository};

@@ -1,7 +1,7 @@
 use std::ops::Range;
 
-use string_offset::CharOffset;
 use leanterm_ui_core::text::TextBuffer;
+use string_offset::CharOffset;
 
 use crate::vim::WordType;
 use crate::word_iterator::CharacterKind;

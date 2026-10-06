@@ -1,9 +1,9 @@
 use std::collections::HashSet;
 use std::time::Duration;
 
-use ordered_float::OrderedFloat;
 use leanterm_ui_core::r#async::Timer;
 use leanterm_ui_core::{App, AppContext, Element};
+use ordered_float::OrderedFloat;
 
 use super::*;
 use crate::item::SearchItem;

@@ -1,11 +1,11 @@
 use instant::Duration;
-use settings::{PrivatePreferences, PublicPreferences, Setting, SettingsManager};
-use settings_value::SettingsValue;
 use leanterm_core::settings::SupportedPlatforms;
 use leanterm_core::settings::macros::define_settings_group;
 use leanterm_core::user_preferences::GetUserPreferences as _;
 use leanterm_ui::SingletonEntity;
 use leanterm_ui_extras::user_preferences;
+use settings::{PrivatePreferences, PublicPreferences, Setting, SettingsManager};
+use settings_value::SettingsValue;
 
 use super::{
     SETTINGS_FILE_MIGRATION_COMPLETE_KEY, migrate_native_settings_to_settings_file,
@@ -367,10 +367,10 @@ fn test_migration_with_multiple_setting_types() {
 // serde fallback is never reached and values are lost.
 
 mod notifications_migration {
-    use settings::{PrivatePreferences, PublicPreferences, SettingsManager};
     use leanterm_core::settings::SupportedPlatforms;
     use leanterm_core::settings::macros::define_settings_group;
     use leanterm_ui_extras::user_preferences;
+    use settings::{PrivatePreferences, PublicPreferences, SettingsManager};
 
     use crate::terminal::session_settings::NotificationsSettings;
 

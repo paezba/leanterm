@@ -5,7 +5,7 @@ edition = "2024"
 authors = ["Leanterm contributors"]
 publish.workspace = true
 license.workspace = true
-description = "Language Server Protocol implementation for Warp"
+description = "Language Server Protocol implementation for Leanterm"
 
 [features]
 local_fs = []

@@ -2,7 +2,7 @@
 use std::borrow::Cow;
 
 use itertools::Itertools;
-use warp_command_signatures::{
+use leanterm_command_signatures::{
     Alias, AliasGeneratorName, Argument, ArgumentType, CommandBuilder, CommandSignatureGenerators,
     Generator, GeneratorName, GeneratorResults, Importance, IsArgumentOptional, Opt, Order,
     ParserDirectives, Priority, Signature, Suggestion as MetadataSuggestion, Template,
@@ -711,7 +711,7 @@ pub fn test_signature() -> Signature {
                     is_variadic: false,
                     is_command: false,
                     argument_types: vec![ArgumentType::Template(Template {
-                        type_name: warp_command_signatures::TemplateType::FilesAndFolders,
+                        type_name: leanterm_command_signatures::TemplateType::FilesAndFolders,
                         filter_name: None,
                     })],
                     optional: IsArgumentOptional::Required,
@@ -803,7 +803,9 @@ pub fn cd_signature() -> Signature {
             argument_types: vec![
                 create_hidden_argument_suggestion('-'),
                 ArgumentType::Template(Template {
-                    type_name: warp_command_signatures::TemplateType::Folders { must_exist: true },
+                    type_name: leanterm_command_signatures::TemplateType::Folders {
+                        must_exist: true,
+                    },
                     filter_name: None,
                 }),
             ],
@@ -879,7 +881,7 @@ pub fn ls_signature() -> Signature {
             is_variadic: true,
             is_command: false,
             argument_types: vec![ArgumentType::Template(Template {
-                type_name: warp_command_signatures::TemplateType::FilesAndFolders,
+                type_name: leanterm_command_signatures::TemplateType::FilesAndFolders,
                 filter_name: None,
             })],
             optional: IsArgumentOptional::Optional(None),
@@ -971,7 +973,7 @@ pub fn enum_then_path_option_signature() -> Signature {
                     is_variadic: false,
                     is_command: false,
                     argument_types: vec![ArgumentType::Template(Template {
-                        type_name: warp_command_signatures::TemplateType::FilesAndFolders,
+                        type_name: leanterm_command_signatures::TemplateType::FilesAndFolders,
                         filter_name: None,
                     })],
                     optional: IsArgumentOptional::Required,
@@ -998,7 +1000,7 @@ pub fn add_content_signature() -> Signature {
                 is_variadic: false,
                 is_command: false,
                 argument_types: vec![ArgumentType::Template(Template {
-                    type_name: warp_command_signatures::TemplateType::FilesAndFolders,
+                    type_name: leanterm_command_signatures::TemplateType::FilesAndFolders,
                     filter_name: None,
                 })],
                 optional: IsArgumentOptional::Optional(None),
@@ -1010,7 +1012,7 @@ pub fn add_content_signature() -> Signature {
                 is_variadic: false,
                 is_command: false,
                 argument_types: vec![ArgumentType::Template(Template {
-                    type_name: warp_command_signatures::TemplateType::FilesAndFolders,
+                    type_name: leanterm_command_signatures::TemplateType::FilesAndFolders,
                     filter_name: None,
                 })],
                 optional: IsArgumentOptional::Optional(None),
@@ -1053,7 +1055,7 @@ pub fn add_content_signature() -> Signature {
                     is_variadic: false,
                     is_command: false,
                     argument_types: vec![ArgumentType::Template(Template {
-                        type_name: warp_command_signatures::TemplateType::FilesAndFolders,
+                        type_name: leanterm_command_signatures::TemplateType::FilesAndFolders,
                         filter_name: None,
                     })],
                     optional: IsArgumentOptional::Required,

@@ -23,7 +23,7 @@ pub enum ContextFlag {
     NetworkLogConsole,
     RunWorkflow,
     LaunchConfigurations,
-    WarpEssentials,
+    LeantermEssentials,
     AllowSettingsModalToClose,
     ShowSlowShellStartupBanner,
     DynamicBrowserUrl,
@@ -56,14 +56,14 @@ impl ContextFlag {
         FLAG_STATES[*self as usize].store(value, Ordering::Relaxed);
     }
 
-    pub fn set_warp_home_link_only() {
+    pub fn set_leanterm_home_link_only() {
         disable_flag(Self::ForceSidePanelOpen);
         disable_flag(Self::HideOpenOnDesktopButton);
         disable_flag(Self::RunWorkflow);
         disable_flag(Self::CreateNewSession);
         disable_flag(Self::CloseWindow);
         disable_flag(Self::PromptForVersionUpdates);
-        disable_flag(Self::WarpEssentials);
+        disable_flag(Self::LeantermEssentials);
         disable_flag(Self::NetworkLogConsole);
         disable_flag(Self::ShowMCPServers);
     }
@@ -75,7 +75,7 @@ impl ContextFlag {
         disable_flag(Self::CreateNewSession);
         disable_flag(Self::CloseWindow);
         disable_flag(Self::PromptForVersionUpdates);
-        disable_flag(Self::WarpEssentials);
+        disable_flag(Self::LeantermEssentials);
         disable_flag(Self::NetworkLogConsole);
         disable_flag(Self::AllowSettingsModalToClose);
         disable_flag(Self::ShowSlowShellStartupBanner);
@@ -83,14 +83,14 @@ impl ContextFlag {
         disable_flag(Self::ShowMCPServers);
     }
 
-    pub fn set_warp_drive_link_only() {
+    pub fn set_leanterm_drive_link_only() {
         disable_flag(Self::ForceSidePanelOpen);
         disable_flag(Self::HideOpenOnDesktopButton);
         disable_flag(Self::RunWorkflow);
         disable_flag(Self::CreateNewSession);
         disable_flag(Self::CloseWindow);
         disable_flag(Self::PromptForVersionUpdates);
-        disable_flag(Self::WarpEssentials);
+        disable_flag(Self::LeantermEssentials);
         disable_flag(Self::NetworkLogConsole);
         disable_flag(Self::ShowMCPServers);
     }
@@ -105,7 +105,7 @@ impl ContextFlag {
         disable_flag(Self::PromptForVersionUpdates);
         disable_flag(Self::NetworkLogConsole);
         disable_flag(Self::LaunchConfigurations);
-        disable_flag(Self::WarpEssentials);
+        disable_flag(Self::LeantermEssentials);
         disable_flag(Self::ShowMCPServers);
         disable_flag(Self::RunWorkflow);
     }
@@ -124,7 +124,7 @@ impl FromStr for ContextFlag {
             "NetworkLogConsole" => Ok(Self::NetworkLogConsole),
             "RunWorkflow" => Ok(Self::RunWorkflow),
             "LaunchConfigurations" => Ok(Self::LaunchConfigurations),
-            "WarpEssentials" => Ok(Self::WarpEssentials),
+            "LeantermEssentials" => Ok(Self::LeantermEssentials),
             _ => Err(()),
         }
     }

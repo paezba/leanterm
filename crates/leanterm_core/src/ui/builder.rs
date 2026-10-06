@@ -35,7 +35,7 @@ use super::color::ContrastingColor;
 use super::color::blend::Blend;
 use super::color::contrast::MinimumAllowedContrast;
 use super::theme::color::internal_colors::{self, text_main};
-use super::theme::{Fill, WarpTheme};
+use super::theme::{Fill, LeantermTheme};
 
 const CLOSE_SVG_PATH: &str = "bundled/svg/close.svg";
 const COPY_SVG_PATH: &str = "bundled/svg/copy.svg";
@@ -52,7 +52,7 @@ pub const DEFAULT_KEYBOARD_SHORTCUT_HEIGHT: f32 = 24.;
 
 #[derive(Clone, Debug)]
 pub struct UiBuilder {
-    warp_theme: WarpTheme,
+    leanterm_theme: LeantermTheme,
     ui_font_family: FamilyId,
     ui_font_size: f32,
     command_palette_font_size: f32,
@@ -61,14 +61,14 @@ pub struct UiBuilder {
 
 impl UiBuilder {
     pub fn new(
-        warp_theme: WarpTheme,
+        leanterm_theme: LeantermTheme,
         ui_font_family: FamilyId,
         ui_font_size: f32,
         command_palette_font_size: f32,
         line_height_ratio: f32,
     ) -> Self {
         UiBuilder {
-            warp_theme,
+            leanterm_theme,
             ui_font_family,
             ui_font_size,
             command_palette_font_size,
@@ -121,8 +121,8 @@ impl UiBuilder {
             }),
             border_width: Some(1.),
             border_radius: Some(CornerRadius::with_all(Radius::Pixels(4.))),
-            background: Some(self.warp_theme.background().into()),
-            border_color: Some(self.warp_theme.foreground().with_opacity(20).into()),
+            background: Some(self.leanterm_theme.background().into()),
+            border_color: Some(self.leanterm_theme.foreground().with_opacity(20).into()),
             font_color: None,
             ..Default::default()
         }
@@ -130,8 +130,8 @@ impl UiBuilder {
 
     fn default_progress_bar_styles(&self) -> UiComponentStyles {
         UiComponentStyles {
-            background: Some(self.warp_theme.background().into()),
-            foreground: Some(self.warp_theme.accent().into()),
+            background: Some(self.leanterm_theme.background().into()),
+            foreground: Some(self.leanterm_theme.accent().into()),
             width: Some(70.),
             height: Some(2.),
             ..Default::default()
@@ -140,8 +140,8 @@ impl UiBuilder {
 
     pub fn default_tool_tip_styles(&self) -> UiComponentStyles {
         UiComponentStyles {
-            background: Some(self.warp_theme().tooltip_background().into()),
-            font_color: Some(self.warp_theme.background().into_solid()),
+            background: Some(self.leanterm_theme().tooltip_background().into()),
+            font_color: Some(self.leanterm_theme.background().into_solid()),
             padding: Some(Coords {
                 top: 4.,
                 bottom: 4.,
@@ -150,7 +150,7 @@ impl UiBuilder {
             }),
             border_radius: Some(CornerRadius::with_all(Radius::Pixels(4.))),
             border_width: Some(1.),
-            border_color: Some(self.warp_theme.outline().into()),
+            border_color: Some(self.leanterm_theme.outline().into()),
             font_family_id: Some(self.ui_font_family),
             font_size: Some(10.),
             ..Default::default()
@@ -159,8 +159,8 @@ impl UiBuilder {
 
     fn autosuggestion_tool_tip_styles(&self) -> UiComponentStyles {
         UiComponentStyles {
-            background: Some(self.warp_theme().tooltip_background().into()),
-            font_color: Some(self.warp_theme.background().into_solid()),
+            background: Some(self.leanterm_theme().tooltip_background().into()),
+            font_color: Some(self.leanterm_theme.background().into_solid()),
             padding: Some(Coords {
                 top: 6.,
                 bottom: 6.,
@@ -169,7 +169,7 @@ impl UiBuilder {
             }),
             border_radius: Some(CornerRadius::with_all(Radius::Pixels(4.))),
             border_width: Some(1.),
-            border_color: Some(self.warp_theme.outline().into()),
+            border_color: Some(self.leanterm_theme.outline().into()),
             font_family_id: Some(self.ui_font_family),
             font_size: Some(10.),
             ..Default::default()
@@ -178,64 +178,72 @@ impl UiBuilder {
 
     // TODO default/hovered/clicked can most likely be refactored even more
     fn default_button_styles(&self, variant: ButtonVariant) -> UiComponentStyles {
-        let details = self.warp_theme.details();
+        let details = self.leanterm_theme.details();
         let (background, border) = match variant {
             ButtonVariant::Accent => (
-                self.warp_theme.accent().blend(
+                self.leanterm_theme.accent().blend(
                     &self
-                        .warp_theme
+                        .leanterm_theme
                         .foreground()
                         .with_opacity(*details.accent_button_opacity()),
                 ),
-                self.warp_theme.foreground().with_opacity(0),
+                self.leanterm_theme.foreground().with_opacity(0),
             ),
             ButtonVariant::Basic => (
-                self.warp_theme.background().blend(
+                self.leanterm_theme.background().blend(
                     &self
-                        .warp_theme
+                        .leanterm_theme
                         .foreground()
                         .with_opacity(*details.foreground_button_opacity()),
                 ),
-                self.warp_theme.foreground().with_opacity(0),
+                self.leanterm_theme.foreground().with_opacity(0),
             ),
             ButtonVariant::Secondary => {
                 return self.base_styles(
                     None,
-                    self.warp_theme.outline(),
-                    self.warp_theme
-                        .main_text_color(self.warp_theme.background()),
+                    self.leanterm_theme.outline(),
+                    self.leanterm_theme
+                        .main_text_color(self.leanterm_theme.background()),
                 );
             }
-            ButtonVariant::Warn => (Fill::warn(), self.warp_theme.foreground().with_opacity(0)),
-            ButtonVariant::Error => (Fill::error(), self.warp_theme.foreground().with_opacity(0)),
+            ButtonVariant::Warn => (
+                Fill::warn(),
+                self.leanterm_theme.foreground().with_opacity(0),
+            ),
+            ButtonVariant::Error => (
+                Fill::error(),
+                self.leanterm_theme.foreground().with_opacity(0),
+            ),
             ButtonVariant::Outlined => {
                 return self.base_styles(
                     None,
-                    self.warp_theme.foreground().with_opacity(20),
-                    self.warp_theme.sub_text_color(self.warp_theme.background()),
+                    self.leanterm_theme.foreground().with_opacity(20),
+                    self.leanterm_theme
+                        .sub_text_color(self.leanterm_theme.background()),
                 );
             }
             ButtonVariant::Text => {
                 return self.text_button_styles(
-                    self.warp_theme.sub_text_color(self.warp_theme.background()),
+                    self.leanterm_theme
+                        .sub_text_color(self.leanterm_theme.background()),
                 );
             }
             ButtonVariant::Link => {
-                return self.text_button_styles(self.warp_theme.accent());
+                return self.text_button_styles(self.leanterm_theme.accent());
             }
         };
         let font_color = match variant {
-            ButtonVariant::Outlined => self.warp_theme.sub_text_color(background),
+            ButtonVariant::Outlined => self.leanterm_theme.sub_text_color(background),
             ButtonVariant::Text => unreachable!(),
-            _ => self.warp_theme.main_text_color(background),
+            _ => self.leanterm_theme.main_text_color(background),
         };
 
         self.base_styles(Some(background), background.blend(&border), font_color)
     }
 
     fn disabled_button_styles(&self, variant: ButtonVariant) -> UiComponentStyles {
-        let background: Fill = self.warp_theme().surface_3();
-        let font_color = self.warp_theme().disabled_text_color(background);
+        let background: Fill = self.leanterm_theme().surface_3();
+        let font_color = self.leanterm_theme().disabled_text_color(background);
         match variant {
             // TODO: we should re-investigate if we want to do this for disabled Text buttons,
             // as it doesn't conform to our design specification here:
@@ -247,81 +255,88 @@ impl UiBuilder {
     }
 
     fn hovered_button_styles(&self, variant: ButtonVariant) -> UiComponentStyles {
-        let details = self.warp_theme.details();
+        let details = self.leanterm_theme.details();
         let (background, border) = match variant {
             ButtonVariant::Accent => (
-                self.warp_theme
+                self.leanterm_theme
                     .accent()
-                    .blend(&self.warp_theme.foreground().with_opacity(
+                    .blend(&self.leanterm_theme.foreground().with_opacity(
                         details.accent_button_opacity() + details.button_hover_opacity(),
                     )),
-                self.warp_theme.foreground().with_opacity(20),
+                self.leanterm_theme.foreground().with_opacity(20),
             ),
             ButtonVariant::Basic => (
-                self.warp_theme
-                    .background()
-                    .blend(&self.warp_theme.foreground().with_opacity(
+                self.leanterm_theme.background().blend(
+                    &self.leanterm_theme.foreground().with_opacity(
                         details.foreground_button_opacity() + details.button_hover_opacity(),
-                    )),
-                self.warp_theme.foreground().with_opacity(20),
+                    ),
+                ),
+                self.leanterm_theme.foreground().with_opacity(20),
             ),
-            ButtonVariant::Secondary => (self.warp_theme.surface_3(), self.warp_theme.outline()),
+            ButtonVariant::Secondary => (
+                self.leanterm_theme.surface_3(),
+                self.leanterm_theme.outline(),
+            ),
             ButtonVariant::Warn => (
                 Fill::warn().with_opacity(80),
-                self.warp_theme.foreground().with_opacity(20),
+                self.leanterm_theme.foreground().with_opacity(20),
             ),
             ButtonVariant::Error => (
                 Fill::error().with_opacity(80),
-                self.warp_theme.foreground().with_opacity(20),
+                self.leanterm_theme.foreground().with_opacity(20),
             ),
             ButtonVariant::Outlined => {
                 return self.base_styles(
                     None,
-                    self.warp_theme.accent(),
-                    self.warp_theme.sub_text_color(self.warp_theme.background()),
+                    self.leanterm_theme.accent(),
+                    self.leanterm_theme
+                        .sub_text_color(self.leanterm_theme.background()),
                 );
             }
             ButtonVariant::Text => {
                 return self.text_button_styles(
-                    self.warp_theme
-                        .main_text_color(self.warp_theme.background()),
+                    self.leanterm_theme
+                        .main_text_color(self.leanterm_theme.background()),
                 );
             }
             ButtonVariant::Link => {
-                return self.text_button_styles(self.warp_theme.accent());
+                return self.text_button_styles(self.leanterm_theme.accent());
             }
         };
         let font_color = match variant {
-            ButtonVariant::Outlined => self.warp_theme.sub_text_color(background),
+            ButtonVariant::Outlined => self.leanterm_theme.sub_text_color(background),
             ButtonVariant::Text => unreachable!(),
-            _ => self.warp_theme.main_text_color(background),
+            _ => self.leanterm_theme.main_text_color(background),
         };
 
         self.base_styles(Some(background), background.blend(&border), font_color)
     }
 
     fn clicked_button_styles(&self, variant: ButtonVariant) -> UiComponentStyles {
-        let details = self.warp_theme.details();
+        let details = self.leanterm_theme.details();
         let (background, border) = match variant {
             ButtonVariant::Accent => (
-                self.warp_theme
+                self.leanterm_theme
                     .accent()
                     .blend(&Fill::black().with_opacity(*details.button_click_opacity())),
                 Fill::black().with_opacity(30),
             ),
             ButtonVariant::Basic => (
-                self.warp_theme
+                self.leanterm_theme
                     .background()
                     .blend(&Fill::black().with_opacity(*details.button_click_opacity())),
                 Fill::black().with_opacity(30),
             ),
-            ButtonVariant::Secondary => (self.warp_theme.surface_3(), self.warp_theme.outline()),
+            ButtonVariant::Secondary => (
+                self.leanterm_theme.surface_3(),
+                self.leanterm_theme.outline(),
+            ),
             ButtonVariant::Warn => (Fill::warn(), Fill::black().with_opacity(30)),
             ButtonVariant::Error => (Fill::error(), Fill::black().with_opacity(30)),
             ButtonVariant::Outlined => (
-                self.warp_theme.accent().blend(
+                self.leanterm_theme.accent().blend(
                     &self
-                        .warp_theme
+                        .leanterm_theme
                         .foreground()
                         .with_opacity(*details.accent_button_opacity()),
                 ),
@@ -329,18 +344,18 @@ impl UiBuilder {
             ),
             ButtonVariant::Text => {
                 return self.text_button_styles(
-                    self.warp_theme
-                        .main_text_color(self.warp_theme.background()),
+                    self.leanterm_theme
+                        .main_text_color(self.leanterm_theme.background()),
                 );
             }
             ButtonVariant::Link => {
-                return self.text_button_styles(self.warp_theme.accent());
+                return self.text_button_styles(self.leanterm_theme.accent());
             }
         };
         self.base_styles(
             Some(background),
             background.blend(&border),
-            self.warp_theme.main_text_color(background),
+            self.leanterm_theme.main_text_color(background),
         )
     }
 
@@ -349,12 +364,12 @@ impl UiBuilder {
             font_family_id: Some(self.ui_font_family),
             font_size: Some(self.command_palette_font_size),
             font_color: Some(
-                self.warp_theme
-                    .hint_text_color(self.warp_theme.background())
+                self.leanterm_theme
+                    .hint_text_color(self.leanterm_theme.background())
                     .into_solid(),
             ),
             border_radius: Some(CornerRadius::with_all(Radius::Pixels(4.))),
-            background: Some(internal_colors::fg_overlay_1(self.warp_theme()).into()),
+            background: Some(internal_colors::fg_overlay_1(self.leanterm_theme()).into()),
             height: Some(DEFAULT_KEYBOARD_SHORTCUT_HEIGHT),
             padding: Some(Coords::default().left(6.).right(6.)),
             margin: Some(Coords::default().left(3.)),
@@ -576,9 +591,12 @@ impl UiBuilder {
 
     pub fn link_styles(&self) -> LinkStyles {
         let font_color: ColorU = self
-            .warp_theme
+            .leanterm_theme
             .accent()
-            .on_background(self.warp_theme.surface_2(), MinimumAllowedContrast::Text)
+            .on_background(
+                self.leanterm_theme.surface_2(),
+                MinimumAllowedContrast::Text,
+            )
             .into();
 
         let base_link_style = UiComponentStyles {
@@ -590,7 +608,7 @@ impl UiBuilder {
         };
 
         let hover_link_style = UiComponentStyles {
-            border_color: Some(self.warp_theme.accent().into()),
+            border_color: Some(self.leanterm_theme.accent().into()),
             ..base_link_style
         };
         LinkStyles {
@@ -602,9 +620,9 @@ impl UiBuilder {
     }
 
     pub fn tooltip_link_styles(&self) -> LinkStyles {
-        let tooltip_background = self.warp_theme().tooltip_background();
+        let tooltip_background = self.leanterm_theme().tooltip_background();
         let font_color: ColorU = self
-            .warp_theme
+            .leanterm_theme
             .accent()
             .on_background(
                 Fill::Solid(tooltip_background),
@@ -621,7 +639,7 @@ impl UiBuilder {
         };
 
         let hover_link_style = UiComponentStyles {
-            border_color: Some(self.warp_theme.accent().into()),
+            border_color: Some(self.leanterm_theme.accent().into()),
             ..base_link_style
         };
         LinkStyles {
@@ -645,22 +663,35 @@ impl UiBuilder {
 
         Switch::new(
             mouse_state,
-            switch_margin_styles.merge(self.base_styles(
-                Some(Fill::Solid(*TRACK_COLOR)),
-                Fill::white(),
-                self.warp_theme.main_text_color(self.warp_theme.surface_2()),
-            )),
+            switch_margin_styles.merge(
+                self.base_styles(
+                    Some(Fill::Solid(*TRACK_COLOR)),
+                    Fill::white(),
+                    self.leanterm_theme
+                        .main_text_color(self.leanterm_theme.surface_2()),
+                ),
+            ),
             None,
-            Some(switch_margin_styles.merge(self.base_styles(
-                Some(self.warp_theme.accent()),
-                Fill::white(),
-                self.warp_theme.main_text_color(self.warp_theme.surface_2()),
-            ))),
-            Some(switch_margin_styles.merge(self.base_styles(
-                Some(self.warp_theme.disabled_ui_text_color()),
-                Fill::white(),
-                self.warp_theme.main_text_color(self.warp_theme.surface_2()),
-            ))),
+            Some(
+                switch_margin_styles.merge(
+                    self.base_styles(
+                        Some(self.leanterm_theme.accent()),
+                        Fill::white(),
+                        self.leanterm_theme
+                            .main_text_color(self.leanterm_theme.surface_2()),
+                    ),
+                ),
+            ),
+            Some(
+                switch_margin_styles.merge(
+                    self.base_styles(
+                        Some(self.leanterm_theme.disabled_ui_text_color()),
+                        Fill::white(),
+                        self.leanterm_theme
+                            .main_text_color(self.leanterm_theme.surface_2()),
+                    ),
+                ),
+            ),
         )
         .with_thumb_hover_border(10.)
     }
@@ -684,16 +715,16 @@ impl UiBuilder {
             mouse_state,
             self.base_styles(
                 None,
-                self.warp_theme.outline(),
-                self.warp_theme.nonactive_ui_text_color(),
+                self.leanterm_theme.outline(),
+                self.leanterm_theme.nonactive_ui_text_color(),
             )
             .merge(default_checkbox_override_styles),
             None,
             Some(
                 self.base_styles(
-                    Some(self.warp_theme.accent()),
-                    self.warp_theme.outline(),
-                    self.warp_theme.font_color(self.warp_theme.accent()),
+                    Some(self.leanterm_theme.accent()),
+                    self.leanterm_theme.outline(),
+                    self.leanterm_theme.font_color(self.leanterm_theme.accent()),
                 )
                 .merge(checked_checkbox_override_styles),
             ),
@@ -717,20 +748,20 @@ impl UiBuilder {
             default_option,
             self.base_styles(
                 None,
-                self.warp_theme.nonactive_ui_text_color(),
-                self.warp_theme.active_ui_text_color(),
+                self.leanterm_theme.nonactive_ui_text_color(),
+                self.leanterm_theme.active_ui_text_color(),
             )
             .set_font_size(font_size),
             self.base_styles(
-                Some(self.warp_theme.accent()),
-                self.warp_theme.accent(),
-                self.warp_theme.active_ui_text_color(),
+                Some(self.leanterm_theme.accent()),
+                self.leanterm_theme.accent(),
+                self.leanterm_theme.active_ui_text_color(),
             )
             .set_font_size(font_size),
             self.base_styles(
                 None,
-                self.warp_theme.disabled_ui_text_color(),
-                self.warp_theme.disabled_ui_text_color(),
+                self.leanterm_theme.disabled_ui_text_color(),
+                self.leanterm_theme.disabled_ui_text_color(),
             )
             .set_font_size(font_size),
             layout,
@@ -766,17 +797,17 @@ impl UiBuilder {
             toggle_menu_state_handle,
             default_option,
             self.toggle_menu_styles(
-                default_background.unwrap_or(self.warp_theme.surface_1()),
-                self.warp_theme.active_ui_text_color(),
+                default_background.unwrap_or(self.leanterm_theme.surface_1()),
+                self.leanterm_theme.active_ui_text_color(),
             )
             .set_font_size(font_size),
             self.toggle_menu_styles(
-                selected_background.unwrap_or(self.warp_theme.surface_3()),
-                self.warp_theme.active_ui_text_color(),
+                selected_background.unwrap_or(self.leanterm_theme.surface_3()),
+                self.leanterm_theme.active_ui_text_color(),
             ),
             self.toggle_menu_styles(
-                hover_background.unwrap_or(self.warp_theme.surface_2()),
-                self.warp_theme.active_ui_text_color(),
+                hover_background.unwrap_or(self.leanterm_theme.surface_2()),
+                self.leanterm_theme.active_ui_text_color(),
             ),
             on_toggle_change,
         )
@@ -786,9 +817,10 @@ impl UiBuilder {
         Span::new(
             text,
             self.base_styles(
-                Some(self.warp_theme.surface_2()),
-                self.warp_theme.outline(),
-                self.warp_theme.main_text_color(self.warp_theme.surface_2()),
+                Some(self.leanterm_theme.surface_2()),
+                self.leanterm_theme.outline(),
+                self.leanterm_theme
+                    .main_text_color(self.leanterm_theme.surface_2()),
             ),
         )
     }
@@ -797,9 +829,10 @@ impl UiBuilder {
         List::new(
             list_style,
             self.base_styles(
-                Some(self.warp_theme.surface_2()),
-                self.warp_theme.outline(),
-                self.warp_theme.main_text_color(self.warp_theme.surface_2()),
+                Some(self.leanterm_theme.surface_2()),
+                self.leanterm_theme.outline(),
+                self.leanterm_theme
+                    .main_text_color(self.leanterm_theme.surface_2()),
             ),
             items,
         )
@@ -809,9 +842,10 @@ impl UiBuilder {
         Paragraph::new(
             text,
             self.base_styles(
-                Some(self.warp_theme.surface_2()),
-                self.warp_theme.outline(),
-                self.warp_theme.main_text_color(self.warp_theme.surface_2()),
+                Some(self.leanterm_theme.surface_2()),
+                self.leanterm_theme.outline(),
+                self.leanterm_theme
+                    .main_text_color(self.leanterm_theme.surface_2()),
             ),
         )
     }
@@ -825,9 +859,10 @@ impl UiBuilder {
             text.into(),
             soft_wrap,
             self.base_styles(
-                Some(self.warp_theme.surface_2()),
-                self.warp_theme.outline(),
-                self.warp_theme.main_text_color(self.warp_theme.surface_2()),
+                Some(self.leanterm_theme.surface_2()),
+                self.leanterm_theme.outline(),
+                self.leanterm_theme
+                    .main_text_color(self.leanterm_theme.surface_2()),
             ),
         )
     }
@@ -850,15 +885,16 @@ impl UiBuilder {
         options: AnimatedButtonOptions,
     ) -> Button {
         let color = options.color.unwrap_or_else(|| {
-            self.warp_theme
-                .foreground()
-                .on_background(self.warp_theme.surface_2(), MinimumAllowedContrast::NonText)
+            self.leanterm_theme.foreground().on_background(
+                self.leanterm_theme.surface_2(),
+                MinimumAllowedContrast::NonText,
+            )
         });
 
         let border_color = if options.with_accent_animations {
-            self.warp_theme.accent()
+            self.leanterm_theme.accent()
         } else {
-            self.warp_theme.outline()
+            self.leanterm_theme.outline()
         };
 
         let border_radius = if options.circular {
@@ -876,7 +912,7 @@ impl UiBuilder {
         };
 
         let hovered_styles = base_styles.merge(UiComponentStyles {
-            background: Some(internal_colors::fg_overlay_2(&self.warp_theme).into()),
+            background: Some(internal_colors::fg_overlay_2(&self.leanterm_theme).into()),
             ..Default::default()
         });
 
@@ -888,8 +924,8 @@ impl UiBuilder {
 
         let disabled_button_styles = base_styles.merge(UiComponentStyles {
             font_color: Some(
-                self.warp_theme()
-                    .disabled_text_color(internal_colors::neutral_3(&self.warp_theme).into())
+                self.leanterm_theme()
+                    .disabled_text_color(internal_colors::neutral_3(&self.leanterm_theme).into())
                     .into(),
             ),
             ..Default::default()
@@ -978,7 +1014,9 @@ impl UiBuilder {
     }
 
     pub fn copy_button(&self, size: f32, mouse_state: MouseStateHandle) -> Button {
-        let color = self.warp_theme.main_text_color(self.warp_theme.surface_2());
+        let color = self
+            .leanterm_theme
+            .main_text_color(self.leanterm_theme.surface_2());
         let icon = Icon::new(COPY_SVG_PATH, color);
         let base_styles = UiComponentStyles {
             height: Some(size),
@@ -1045,7 +1083,7 @@ impl UiBuilder {
     ) -> Hoverable {
         let icon = Container::new(
             ConstrainedBox::new(
-                Icon::new(icon_path, self.warp_theme.active_ui_text_color()).finish(),
+                Icon::new(icon_path, self.leanterm_theme.active_ui_text_color()).finish(),
             )
             .with_width(icon_size)
             .with_height(icon_size)
@@ -1113,7 +1151,7 @@ impl UiBuilder {
     ) -> Button {
         let default_styles = UiComponentStyles {
             border_radius: Some(CornerRadius::with_all(Radius::Pixels(4.))),
-            border_color: Some(self.warp_theme.surface_3().into()),
+            border_color: Some(self.leanterm_theme.surface_3().into()),
             border_width: Some(1.),
             padding: Some(Coords {
                 top: 8.,
@@ -1124,13 +1162,16 @@ impl UiBuilder {
             ..Default::default()
         };
         let hovered_styles = UiComponentStyles {
-            background: Some(self.warp_theme().surface_3().into()),
-            border_color: Some(self.warp_theme().accent().into()),
+            background: Some(self.leanterm_theme().surface_3().into()),
+            border_color: Some(self.leanterm_theme().accent().into()),
             ..default_styles
         };
 
         let text = Text::new_inline(text, self.ui_font_family(), self.ui_font_size() + 2.)
-            .with_color(text_main(&self.warp_theme, self.warp_theme.background()))
+            .with_color(text_main(
+                &self.leanterm_theme,
+                self.leanterm_theme.background(),
+            ))
             .with_style(Properties {
                 weight: Weight::Bold,
                 ..Default::default()
@@ -1138,7 +1179,10 @@ impl UiBuilder {
 
         let keystroke_styles = self
             .default_keyboard_shortcut_styles()
-            .set_font_color(text_main(&self.warp_theme, self.warp_theme.background()));
+            .set_font_color(text_main(
+                &self.leanterm_theme,
+                self.leanterm_theme.background(),
+            ));
         let keystrokes = KeyboardShortcut::new(keystroke, keystroke_styles);
 
         self.button_with_custom_styles(
@@ -1174,8 +1218,8 @@ impl UiBuilder {
         self.command_palette_font_size
     }
 
-    pub fn warp_theme(&self) -> &WarpTheme {
-        &self.warp_theme
+    pub fn leanterm_theme(&self) -> &LeantermTheme {
+        &self.leanterm_theme
     }
 
     pub fn line_height_ratio(&self) -> f32 {

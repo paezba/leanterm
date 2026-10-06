@@ -2,9 +2,6 @@ use core::fmt::{self, Display};
 use std::borrow::Cow;
 
 use itertools::Itertools as _;
-use pathfinder_color::ColorU;
-use pathfinder_geometry::vector::vec2f;
-use settings::Setting;
 use leanterm_core::ui::theme::color::internal_colors;
 use leanterm_ui::elements::new_scrollable::{
     ClippedAxisConfiguration, DualAxisConfig, SingleAxisConfig,
@@ -22,6 +19,9 @@ use leanterm_ui::ui_components::button::{Button, ButtonVariant};
 use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
 use leanterm_ui::units::Pixels;
 use leanterm_ui::{Action, AppContext, SingletonEntity, ViewContext, ViewHandle};
+use pathfinder_color::ColorU;
+use pathfinder_geometry::vector::vec2f;
+use settings::Setting;
 
 use super::SettingsSection;
 use super::about_page::AboutPageView;
@@ -29,9 +29,9 @@ use super::appearance_page::AppearanceSettingsPageView;
 use super::code_editor_review_page::EditorAndCodeReviewPageView;
 use super::features_page::FeaturesPageView;
 use super::keybindings::KeybindingsView;
+use super::leantermify_page::LeantermifyPageView;
 use super::privacy_page::PrivacyPageView;
 use super::scripting_page::ScriptingSettingsPageView;
-use super::warpify_page::WarpifyPageView;
 use crate::appearance::Appearance;
 use crate::themes::theme::Fill;
 use crate::ui_components::blended_colors;
@@ -92,7 +92,7 @@ pub enum SettingsPageViewHandle {
     About(ViewHandle<AboutPageView>),
     EditorAndCodeReview(ViewHandle<EditorAndCodeReviewPageView>),
     Privacy(ViewHandle<PrivacyPageView>),
-    Warpify(ViewHandle<WarpifyPageView>),
+    Leantermify(ViewHandle<LeantermifyPageView>),
     Scripting(ViewHandle<ScriptingSettingsPageView>),
 }
 
@@ -106,7 +106,7 @@ impl SettingsPageViewHandle {
             About(view_handle) => ChildView::new(view_handle).finish(),
             EditorAndCodeReview(view_handle) => ChildView::new(view_handle).finish(),
             Privacy(view_handle) => ChildView::new(view_handle).finish(),
-            Warpify(view_handle) => ChildView::new(view_handle).finish(),
+            Leantermify(view_handle) => ChildView::new(view_handle).finish(),
             Scripting(view_handle) => ChildView::new(view_handle).finish(),
         }
     }
@@ -289,7 +289,7 @@ pub fn render_info_icon<T: Clone + Action>(
     let icon = Container::new(
         ConstrainedBox::new(
             Icon::Info
-                .to_warpui_icon(appearance.theme().active_ui_text_color())
+                .to_leanterm_ui_icon(appearance.theme().active_ui_text_color())
                 .finish(),
         )
         .with_width(13.)
@@ -372,7 +372,7 @@ pub fn render_body_item_label_internal<T: Clone + Action>(
     if let Some(icon) = label_icon {
         label.add_child(
             Container::new(
-                ConstrainedBox::new(icon.to_warpui_icon(label_color).finish())
+                ConstrainedBox::new(icon.to_leanterm_ui_icon(label_color).finish())
                     .with_width(16.)
                     .with_height(16.)
                     .finish(),
@@ -389,15 +389,15 @@ pub fn render_body_item_label_internal<T: Clone + Action>(
         // `additional_info` gets moved into `render_info_icon()`.
         let secondary_text_child =
             if let Some(secondary_text) = additional_info.secondary_text.clone() {
-                let warp_theme = appearance.theme();
+                let leanterm_theme = appearance.theme();
                 Some(
                     appearance
                         .ui_builder()
                         .span(secondary_text)
                         .with_style(UiComponentStyles {
                             font_color: Some(
-                                warp_theme
-                                    .sub_text_color(warp_theme.surface_2())
+                                leanterm_theme
+                                    .sub_text_color(leanterm_theme.surface_2())
                                     .into_solid(),
                             ),
                             margin: Some(Coords {
@@ -533,14 +533,14 @@ pub fn render_dropdown_item_label(
         )
         .finish();
     let label = if let Some(secondary_text) = secondary_text {
-        let warp_theme = appearance.theme();
+        let leanterm_theme = appearance.theme();
         let secondary_text_child = appearance
             .ui_builder()
             .span(secondary_text)
             .with_style(UiComponentStyles {
                 font_color: Some(
                     color_override
-                        .unwrap_or(warp_theme.sub_text_color(warp_theme.surface_2()))
+                        .unwrap_or(leanterm_theme.sub_text_color(leanterm_theme.surface_2()))
                         .into_solid(),
                 ),
                 margin: Some(Coords {
@@ -1477,7 +1477,7 @@ pub(super) enum FilteredPageType<'a, V: leanterm_ui::View> {
 }
 
 /// A category header: title text with an optional subtitle and trailing accessory. Absent when
-/// the category draws no header row at all (e.g. Warpify's single-widget category, whose widget
+/// the category draws no header row at all (e.g. Leantermify's single-widget category, whose widget
 /// draws its own heading).
 pub(super) struct CategoryHeader<V: leanterm_ui::View> {
     title: &'static str,

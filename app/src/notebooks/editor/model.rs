@@ -8,13 +8,6 @@ use base64::Engine as _;
 use base64::prelude::BASE64_STANDARD;
 use itertools::Itertools;
 use lazy_static::lazy_static;
-use markdown_parser::FormattedText;
-use mermaid_to_svg::MermaidTheme;
-use num_traits::SaturatingSub;
-use regex::Regex;
-use string_offset::CharOffset;
-use url::Url;
-use vec1::{Vec1, vec1};
 use leanterm_core::r#async::debounce;
 use leanterm_core::features::FeatureFlag;
 use leanterm_core::semantic_selection::SemanticSelection;
@@ -34,12 +27,21 @@ use leanterm_editor::render::model::{
 use leanterm_editor::search::Searcher;
 use leanterm_editor::selection::{SelectionMode, SelectionModel, TextDirection, TextUnit};
 use leanterm_errors::report_error;
-use leanterm_ui::accessibility::{AccessibilityContent, ActionAccessibilityContent, WarpA11yRole};
+use leanterm_ui::accessibility::{
+    AccessibilityContent, ActionAccessibilityContent, LeantermA11yRole,
+};
 use leanterm_ui::clipboard::ClipboardContent;
 use leanterm_ui::elements::ListIndentLevel;
 use leanterm_ui::{
     AppContext, Entity, ModelAsRef, ModelContext, ModelHandle, SingletonEntity, WindowId,
 };
+use markdown_parser::FormattedText;
+use mermaid_to_svg::MermaidTheme;
+use num_traits::SaturatingSub;
+use regex::Regex;
+use string_offset::CharOffset;
+use url::Url;
+use vec1::{Vec1, vec1};
 
 use super::super::telemetry::SelectionMode as TelemetrySelectionMode;
 use super::NotebookWorkflow;
@@ -1385,7 +1387,7 @@ impl NotebooksEditorModel {
         if let Some(command) = child_model.executable_command(ctx) {
             ctx.emit_a11y_content(AccessibilityContent::new_without_help(
                 format!("Selected workflow: {command}"),
-                WarpA11yRole::TextareaRole,
+                LeantermA11yRole::TextareaRole,
             ));
         }
 
@@ -1749,7 +1751,7 @@ impl NotebooksEditorModel {
         let text = format!("{style:?} {action}");
         ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
             text,
-            WarpA11yRole::UserAction,
+            LeantermA11yRole::UserAction,
         ))
     }
 

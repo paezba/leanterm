@@ -1,7 +1,7 @@
 use std::future::Future;
 
-use leanterm_util::sync::Condition;
 use leanterm_ui::{Entity, ModelContext, SingletonEntity};
+use leanterm_util::sync::Condition;
 
 /// Represents whether the client is connected to the network.
 #[derive(Clone, Copy, Default, PartialEq, Eq, Debug)]

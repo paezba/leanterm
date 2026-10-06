@@ -11,23 +11,6 @@ use std::{cmp, mem};
 use code_diff::diff_validation::DiffDelta;
 use itertools::Itertools;
 use languages::{Language, language_by_filename, language_by_local_filename, language_by_name};
-use line_ending::LineEnding;
-use num_traits::SaturatingSub;
-use rangemap::{RangeMap, RangeSet};
-use string_offset::CharOffset;
-use syntax_tree::{ColorMap, DecorationStateEvent, SyntaxTreeState};
-use vec1::{Vec1, vec1};
-use vim::vim::{
-    BracketChar, CharacterMotion, Direction, FindCharMotion, FirstNonWhitespaceMotion,
-    InsertPosition, LineMotion, MotionType, TextObjectInclusion, TextObjectType, VimOperator,
-    VimTextObject, WordBound, WordMotion, WordType,
-};
-use vim::{
-    find_next_paragraph_end, find_previous_paragraph_start, vim_a_block, vim_a_paragraph,
-    vim_a_quote, vim_a_word, vim_all_lines, vim_find_char_on_line, vim_find_matching_bracket,
-    vim_inner_block, vim_inner_line, vim_inner_paragraph, vim_inner_quote, vim_inner_word,
-    vim_word_iterator_from_offset,
-};
 use leanterm_core::platform::SessionPlatform;
 use leanterm_core::semantic_selection::SemanticSelection;
 use leanterm_core::ui::theme::Fill;
@@ -54,7 +37,6 @@ use leanterm_editor::render::model::{
     UpdateDecorationAfterLayout, WidthSetting,
 };
 use leanterm_editor::selection::{SelectionMode, SelectionModel, TextDirection, TextUnit};
-use leanterm_util::standardized_path::StandardizedPath;
 use leanterm_ui::elements::{
     AnchorPair, OffsetPositioning, OffsetType, PositionedElementOffsetBounds, PositioningAxis,
     XAxisAnchor, YAxisAnchor,
@@ -63,6 +45,24 @@ use leanterm_ui::text::TextBuffer;
 use leanterm_ui::text::point::Point;
 use leanterm_ui::units::{IntoPixels, Pixels};
 use leanterm_ui::{AppContext, Entity, ModelAsRef, ModelContext, ModelHandle, SingletonEntity};
+use leanterm_util::standardized_path::StandardizedPath;
+use line_ending::LineEnding;
+use num_traits::SaturatingSub;
+use rangemap::{RangeMap, RangeSet};
+use string_offset::CharOffset;
+use syntax_tree::{ColorMap, DecorationStateEvent, SyntaxTreeState};
+use vec1::{Vec1, vec1};
+use vim::vim::{
+    BracketChar, CharacterMotion, Direction, FindCharMotion, FirstNonWhitespaceMotion,
+    InsertPosition, LineMotion, MotionType, TextObjectInclusion, TextObjectType, VimOperator,
+    VimTextObject, WordBound, WordMotion, WordType,
+};
+use vim::{
+    find_next_paragraph_end, find_previous_paragraph_start, vim_a_block, vim_a_paragraph,
+    vim_a_quote, vim_a_word, vim_all_lines, vim_find_char_on_line, vim_find_matching_bracket,
+    vim_inner_block, vim_inner_line, vim_inner_paragraph, vim_inner_quote, vim_inner_word,
+    vim_word_iterator_from_offset,
+};
 
 use super::super::DiffResult;
 use super::comments::{EditorCommentsModel, PendingComment, PendingCommentEvent};
@@ -357,7 +357,7 @@ impl CodeEditorModel {
     /// Identical to `new` but creates the `RenderState` with
     /// [`LayoutMode::CharCell`] so all soft-wrap positions use monospace
     /// character-count arithmetic rather than font-aware pixel layout.
-    /// `TuiEditorModel` (in `warp_tui`) is a type alias for this type;
+    /// `TuiEditorModel` (in `leanterm_tui`) is a type alias for this type;
     /// constructing via this method is what gives the TUI editor all of
     /// `CodeEditorModel`'s features (vim, syntax, diff, hidden lines) for free
     /// while sharing no GUI-rendering infrastructure.

@@ -1,4 +1,3 @@
-use pathfinder_geometry::vector::vec2f;
 use leanterm_core::ui::external_product_icon::ExternalProductIcon;
 use leanterm_core::ui::icons::Icon;
 use leanterm_ui::elements::{
@@ -6,6 +5,7 @@ use leanterm_ui::elements::{
     OffsetPositioning, ParentAnchor, ParentElement, ParentOffsetBounds, Stack, Text,
 };
 use leanterm_ui::ui_components::components::{UiComponent, UiComponentStyles};
+use pathfinder_geometry::vector::vec2f;
 
 use super::red_notification_dot::RedNotificationDot;
 

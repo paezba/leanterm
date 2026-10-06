@@ -21,7 +21,7 @@ pub fn init(_config: LogConfig) -> Result<()> {
     let _ = js_sys::eval("Error.stackTraceLimit = 100");
 
     // Configure log entries to be written to the JS console.
-    init_logger(Config::new(log::Level::Info).module_prefix("warp"));
+    init_logger(Config::new(log::Level::Info).module_prefix("leanterm"));
 
     Ok(())
 }
@@ -172,7 +172,7 @@ impl Log for WasmLogger {
                                 .map_or_else(|| "[Unknown]".to_string(), |line| line.to_string()),
                         );
                         leanterm_web_event_bus::emit_event(
-                            leanterm_web_event_bus::WarpEvent::ErrorLogged { error },
+                            leanterm_web_event_bus::LeantermEvent::ErrorLogged { error },
                         );
                     }
 

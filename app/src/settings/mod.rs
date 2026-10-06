@@ -14,6 +14,7 @@ mod init;
 pub mod initializer;
 mod input;
 mod input_mode;
+mod legacy_keys;
 #[cfg(any(target_os = "linux", target_os = "freebsd"))]
 mod linux;
 mod local_control;
@@ -47,6 +48,7 @@ pub use gpu::*;
 pub use init::*;
 pub use input::*;
 pub use input_mode::*;
+pub use legacy_keys::migrate_legacy_setting_keys;
 #[cfg(any(target_os = "linux", target_os = "freebsd"))]
 pub use linux::*;
 pub use local_control::*;
@@ -116,25 +118,25 @@ use std::ops::Mul;
 use std::path::PathBuf;
 
 use lazy_static::lazy_static;
+use leanterm_ui::elements::DEFAULT_UI_LINE_HEIGHT_RATIO;
+use leanterm_ui::keymap::Keystroke;
+use leanterm_ui::{AppContext, DisplayIdx, SingletonEntity};
 use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::Vector2F;
 use serde::{Deserialize, Serialize};
 use settings::Setting as _;
-use leanterm_ui::elements::DEFAULT_UI_LINE_HEIGHT_RATIO;
-use leanterm_ui::keymap::Keystroke;
-use leanterm_ui::{AppContext, DisplayIdx, SingletonEntity};
 
 use crate::root_view::QuakeModePinPosition;
 use crate::terminal::{BlockListSettings, BlockPadding};
-use crate::themes::theme::{ThemeKind, WarpTheme};
-use crate::user_config::WarpConfig;
+use crate::themes::theme::{LeantermTheme, ThemeKind};
+use crate::user_config::LeantermConfig;
 
 // The following are user preferences keys.
 pub const RESTORE_SESSION: &str = "RestoreSession";
 pub const INPUT_MODE: &str = "InputMode";
 pub const ACTIVATION_HOTKEY_ENABLED: &str = "ActivationHotkeyEnabled";
 pub const ACTIVATION_HOTKEY_KEYBINDING: &str = "ActivationHotkeyKeybinding";
-pub const DISMISSED_AI_ASSISTANT_WELCOME_KEY: &str = "DismissedWarpAIWarmWelcome";
+pub const DISMISSED_AI_ASSISTANT_WELCOME_KEY: &str = "DismissedLeantermAIWarmWelcome";
 
 pub const TIMES_TO_SHOW_AUTOSUGGESTION_HINT: i8 = 2;
 pub const QUAKE_WINDOW_AUTOHIDE_SUPPORTED: bool = cfg!(any(target_os = "macos", windows));
@@ -334,7 +336,7 @@ pub struct QuakeModeSettings {
     #[schemars(description = "Display to pin the hotkey window to.")]
     pub pin_screen: Option<DisplayIdx>,
     /// Whether we should hide quake mode window when it loses focus, this could happen either when
-    /// user focuses on another warp window or another app.
+    /// user focuses on another leanterm window or another app.
     #[schemars(description = "Whether to hide the hotkey window when it loses focus.")]
     pub hide_window_when_unfocused: bool,
 }
@@ -475,10 +477,10 @@ pub enum EnforceMinimumContrast {
 }
 
 impl Settings {
-    pub fn theme_for_theme_kind(theme_kind: &ThemeKind, ctx: &mut AppContext) -> WarpTheme {
+    pub fn theme_for_theme_kind(theme_kind: &ThemeKind, ctx: &mut AppContext) -> LeantermTheme {
         match theme_kind {
             ThemeKind::InMemory(in_memory_theme) => in_memory_theme.theme(),
-            _ => WarpConfig::as_ref(ctx).theme_config().theme(theme_kind),
+            _ => LeantermConfig::as_ref(ctx).theme_config().theme(theme_kind),
         }
     }
 }

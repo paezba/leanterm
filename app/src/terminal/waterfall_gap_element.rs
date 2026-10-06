@@ -1,8 +1,8 @@
-use pathfinder_geometry::vector::{Vector2F, vec2f};
 use leanterm_ui::elements::{ScrollData, ScrollableElement, ZIndex};
 use leanterm_ui::event::ModifiersState;
 use leanterm_ui::units::{IntoLines, IntoPixels, Pixels};
 use leanterm_ui::{AppContext, Element, EventContext, SizeConstraint};
+use pathfinder_geometry::vector::{Vector2F, vec2f};
 
 use super::block_list_element::BlockListMenuSource;
 use super::view::TerminalAction;

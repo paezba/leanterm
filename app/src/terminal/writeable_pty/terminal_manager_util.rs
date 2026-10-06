@@ -2,8 +2,8 @@ use std::sync::Arc;
 use std::sync::mpsc::SyncSender;
 
 use async_channel::Receiver;
-use parking_lot::FairMutex;
 use leanterm_ui::{AppContext, Entity, ModelHandle, ViewHandle};
+use parking_lot::FairMutex;
 
 use crate::persistence::ModelEvent;
 use crate::terminal::line_editor_status::LineEditorStatus;

@@ -7,10 +7,10 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 #[cfg(feature = "local_tty")]
-use settings::Setting as _;
-#[cfg(feature = "local_tty")]
 use leanterm_ui::{AppContext, ModelContext};
 use leanterm_ui::{Entity, SingletonEntity};
+#[cfg(feature = "local_tty")]
+use settings::Setting as _;
 
 use super::ShellLaunchData;
 use super::session_settings::{NewSessionShell, StartupShell};
@@ -891,7 +891,7 @@ impl AvailableShells {
     /// already discovered. Because that discovery supplements the process
     /// `PATH` with well-known install locations (such as `/opt/homebrew/bin`
     /// on macOS), this lookup can find shells that a plain `PATH` search via
-    /// [`AvailableShell::try_from`] would miss when Warp is launched outside
+    /// [`AvailableShell::try_from`] would miss when Leanterm is launched outside
     /// an interactive shell.
     ///
     /// Comparison is case-sensitive on Unix. On Windows, where file names are

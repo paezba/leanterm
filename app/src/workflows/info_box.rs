@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::ops::Range;
 
-use string_offset::CharOffset;
 use leanterm_core::settings::Setting;
 use leanterm_errors::report_error;
 use leanterm_ui::color::ColorU;
@@ -19,6 +18,7 @@ use leanterm_ui::ui_components::components::{UiComponent, UiComponentStyles};
 use leanterm_ui::{
     AppContext, Element, Entity, EventContext, SingletonEntity, TypedActionView, View, ViewContext,
 };
+use string_offset::CharOffset;
 
 use super::command_parser::{
     WorkflowArgumentIndex, WorkflowDisplayData, compute_workflow_display_data,
@@ -327,7 +327,7 @@ impl WorkflowsMoreInfoView {
                 Container::new(
                     ConstrainedBox::new(
                         icons::Icon::AlertCircle
-                            .to_warpui_icon(
+                            .to_leanterm_ui_icon(
                                 appearance
                                     .theme()
                                     .sub_text_color(appearance.theme().surface_2()),

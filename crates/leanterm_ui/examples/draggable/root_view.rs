@@ -1,13 +1,13 @@
 use std::any::Any;
 
-use pathfinder_color::ColorU;
-use pathfinder_geometry::rect::RectF;
-use pathfinder_geometry::vector::{Vector2F, vec2f};
 use leanterm_ui::elements::{
     AcceptedByDropTarget, Align, ConstrainedBox, Container, DragAxis, Draggable, DraggableState,
     DropTarget, DropTargetData, ParentElement, Rect, Stack,
 };
 use leanterm_ui::{AppContext, Element, Entity, TypedActionView, View};
+use pathfinder_color::ColorU;
+use pathfinder_geometry::rect::RectF;
+use pathfinder_geometry::vector::{Vector2F, vec2f};
 
 #[derive(Default)]
 pub struct RootView {

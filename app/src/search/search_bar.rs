@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use itertools::{Either, Itertools};
 use leanterm_editor::editor::NavigationKey;
-use leanterm_ui::accessibility::{AccessibilityContent, WarpA11yRole};
+use leanterm_ui::accessibility::{AccessibilityContent, LeantermA11yRole};
 use leanterm_ui::elements::{
     Clipped, ConstrainedBox, Container, CrossAxisAlignment, Flex, ParentElement, Shrinkable, Text,
 };
@@ -691,7 +691,7 @@ impl<T: Action + Clone> SearchBar<T> {
             for loading_filter in loading_filters.into_iter() {
                 ctx.emit_a11y_content(AccessibilityContent::new_without_help(
                     format!("Loading {} suggestions", loading_filter.display_name()),
-                    WarpA11yRole::MenuItemRole,
+                    LeantermA11yRole::MenuItemRole,
                 ));
             }
 
@@ -702,7 +702,7 @@ impl<T: Action + Clone> SearchBar<T> {
             ctx.emit_a11y_content(AccessibilityContent::new(
                 "Error finding results",
                 data_source_err.user_facing_error(),
-                WarpA11yRole::MenuItemRole,
+                LeantermA11yRole::MenuItemRole,
             ));
             return;
         }
@@ -712,12 +712,12 @@ impl<T: Action + Clone> SearchBar<T> {
             let a11y_content = match selected_result.accessibility_help_message() {
                 None => AccessibilityContent::new_without_help(
                     a11y_content_text,
-                    WarpA11yRole::MenuItemRole,
+                    LeantermA11yRole::MenuItemRole,
                 ),
                 Some(help_message) => AccessibilityContent::new(
                     a11y_content_text,
                     help_message,
-                    WarpA11yRole::MenuItemRole,
+                    LeantermA11yRole::MenuItemRole,
                 ),
             };
             ctx.emit_a11y_content(a11y_content);
@@ -909,7 +909,9 @@ impl<T: Action + Clone> View for SearchBar<T> {
             let magnifying_glass = Container::new(
                 ConstrainedBox::new(
                     Icon::Search
-                        .to_warpui_icon(blended_colors::text_sub(theme, theme.surface_2()).into())
+                        .to_leanterm_ui_icon(
+                            blended_colors::text_sub(theme, theme.surface_2()).into(),
+                        )
                         .finish(),
                 )
                 .with_height(size)

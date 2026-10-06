@@ -1,18 +1,18 @@
 ---
-name: "Run Warp locally with shell"
-command: "WARP_SHELL_PATH={{shell}} cargo run"
-description: "Runs warp with the particular shell so devs don't need to change their login shell to test a different shell locally"
+name: "Run Leanterm locally with shell"
+command: "LEANTERM_SHELL_PATH={{shell}} cargo run"
+description: "Runs leanterm with the particular shell so devs don't need to change their login shell to test a different shell locally"
 arguments:
   - name: shell
     description: path of shell to use
-author: Warp Team
+author: Leanterm Team
 shells: []
 ---
-name: "Run Warp locally with shell 2: Electric Boogaloo"
-command: "WARP_SHELL_PATH={{shell}} cargo run"
-description: "Runs warp with the particular shell so devs don't need to change their login shell to test a different shell locally"
+name: "Run Leanterm locally with shell 2: Electric Boogaloo"
+command: "LEANTERM_SHELL_PATH={{shell}} cargo run"
+description: "Runs leanterm with the particular shell so devs don't need to change their login shell to test a different shell locally"
 arguments:
   - name: shell
     description: path of shell to use
-author: Warp Team
+author: Leanterm Team
 shells: []

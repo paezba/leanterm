@@ -3,11 +3,10 @@ use std::sync::Arc;
 use std::{fmt, vec};
 
 use chrono::{DateTime, Local};
-use pathfinder_color::ColorU;
-use pathfinder_geometry::rect::RectF;
-use pathfinder_geometry::vector::{Vector2F, vec2f};
 use leanterm_core::ui::color::blend::Blend;
-use leanterm_ui::accessibility::{AccessibilityContent, ActionAccessibilityContent, WarpA11yRole};
+use leanterm_ui::accessibility::{
+    AccessibilityContent, ActionAccessibilityContent, LeantermA11yRole,
+};
 use leanterm_ui::assets::asset_cache::AssetSource;
 use leanterm_ui::elements::{
     Align, Border, CacheOption, ChildAnchor, ClippedScrollStateHandle, ClippedScrollable,
@@ -26,6 +25,9 @@ use leanterm_ui::ui_components::components::UiComponent;
 use leanterm_ui::{
     Action, AppContext, Entity, SingletonEntity, TypedActionView, View, ViewContext, WindowId,
 };
+use pathfinder_color::ColorU;
+use pathfinder_geometry::rect::RectF;
+use pathfinder_geometry::vector::{Vector2F, vec2f};
 
 use crate::appearance::Appearance;
 use crate::safe_triangle::SafeTriangle;
@@ -981,7 +983,7 @@ impl<A: Action + Clone> MenuItemFields<A> {
                 Shrinkable::new(
                     1.,
                     Container::new(
-                        ConstrainedBox::new(icon.to_warpui_icon(icon_color).finish())
+                        ConstrainedBox::new(icon.to_leanterm_ui_icon(icon_color).finish())
                             .with_width(icon_size)
                             .with_height(icon_size)
                             .finish(),
@@ -1097,10 +1099,11 @@ impl<A: Action + Clone> MenuItemFields<A> {
                 .finish();
             return Some(Shrinkable::new(1., Align::new(element).right().finish()).finish());
         }
-        let icon_element = ConstrainedBox::new(config.icon.to_warpui_icon(icon_color).finish())
-            .with_width(icon_size)
-            .with_height(icon_size)
-            .finish();
+        let icon_element =
+            ConstrainedBox::new(config.icon.to_leanterm_ui_icon(icon_color).finish())
+                .with_width(icon_size)
+                .with_height(icon_size)
+                .finish();
         let container = Container::new(icon_element)
             .with_margin_left(icon_size / 2.)
             .finish();
@@ -2577,28 +2580,28 @@ impl<A: Action + Clone> SubMenu<A> {
                 Custom(AccessibilityContent::new(
                     menu_item,
                     instructions,
-                    WarpA11yRole::TextRole,
+                    LeantermA11yRole::TextRole,
                 ))
             }
             OpenSubmenu => Custom(AccessibilityContent::new(
                 String::from("Submenu Expanded"),
                 "Press the right key to open the selected submenu",
-                WarpA11yRole::TextRole,
+                LeantermA11yRole::TextRole,
             )),
             CloseSubmenu(_) => Custom(AccessibilityContent::new(
                 String::from("Submenu Closed"),
                 "Removing focus from a submenu will close the submenu",
-                WarpA11yRole::TextRole,
+                LeantermA11yRole::TextRole,
             )),
             Close(_) => Custom(AccessibilityContent::new(
                 String::from("Menu Closed"),
                 "Press the escape key to close the menu",
-                WarpA11yRole::TextRole,
+                LeantermA11yRole::TextRole,
             )),
             Enter => Custom(AccessibilityContent::new(
                 String::from("Action Selected"),
                 "Press the enter key to execute the selected menu item action",
-                WarpA11yRole::TextRole,
+                LeantermA11yRole::TextRole,
             )),
             HoverSubmenuLeafNode { .. }
             | UnhoverSubmenuParent(_)

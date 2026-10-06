@@ -1,7 +1,7 @@
-use serde::Serialize;
 use leanterm_ui::Element;
 use leanterm_ui::elements::MouseStateHandle;
 use leanterm_ui::notification::NotificationSendError;
+use serde::Serialize;
 
 use super::{
     InlineBannerButtonState, InlineBannerCloseButton, InlineBannerContent, InlineBannerStyle,

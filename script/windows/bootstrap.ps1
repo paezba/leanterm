@@ -9,14 +9,14 @@ $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 function Show-Usage {
     Write-Output 'Usage: .\script\windows\bootstrap.ps1 [-Help]'
     Write-Output ''
-    Write-Output 'Prepare this checkout for Warp development on Windows.'
+    Write-Output 'Prepare this checkout for Leanterm development on Windows.'
     Write-Output ''
     Write-Output 'Options:'
     Write-Output '  -Help                 Show this help message.'
 }
 
 function Show-BootstrapPreview {
-    Write-Output 'Warp bootstrap is starting for Windows.'
+    Write-Output 'Leanterm bootstrap is starting for Windows.'
     Write-Output 'It will:'
     Write-Output '  - Check for Git for Windows.'
     Write-Output '  - Install Rust if cargo is unavailable.'
@@ -160,7 +160,7 @@ winget install jqlang.jq
 # CMake is needed to build some dependencies, e.g.: sentry-contrib-native.
 winget install -e --id Kitware.CMake
 
-# Protoc is required by prost-build for warp-proto-apis generated crates.
+# Protoc is required by prost-build for leanterm-proto-apis generated crates.
 winget install -e --id Google.Protobuf
 Add-WinGetPackageCommandToPath -CommandName 'protoc' -PackageId 'Google.Protobuf'
 
@@ -182,7 +182,7 @@ if (-not (Get-Command -Name gcloud -Type Application -ErrorAction SilentlyContin
     Start-Process "$env:Temp\GoogleCloudSDKInstaller.exe" -Wait
 }
 
-if ($env:WARP_SKIP_GCLOUD_AUTH -ne '1') {
+if ($env:LEANTERM_SKIP_GCLOUD_AUTH -ne '1') {
     [string]$identityToken = gcloud auth print-identity-token
     if ($identityToken.Trim().Length -eq 0) {
         Write-Output 'gcloud CLI authentication missing.  Press enter to continue...'

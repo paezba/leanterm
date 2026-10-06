@@ -7,14 +7,6 @@ use std::time::Duration;
 
 use indexmap::IndexMap;
 use itertools::Itertools;
-#[cfg(feature = "local_fs")]
-use num_traits::SaturatingSub;
-use pathfinder_geometry::rect::RectF;
-use pathfinder_geometry::vector::{Vector2F, vec2f};
-use rand::Rng;
-use rand::distributions::Alphanumeric;
-use string_offset::CharOffset;
-use vec1::Vec1;
 use leanterm_core::channel::{Channel, ChannelState};
 use leanterm_core::features::FeatureFlag;
 use leanterm_core::ui::theme::color::internal_colors;
@@ -25,9 +17,6 @@ use leanterm_editor::render::element::VerticalExpansionBehavior;
 #[cfg(not(target_family = "wasm"))]
 use leanterm_editor::render::model::AutoScrollMode;
 use leanterm_editor::render::model::LineCount;
-use leanterm_util::content_version::ContentVersion;
-use leanterm_util::path::LineAndColumnArg;
-use leanterm_util::standardized_path::StandardizedPath;
 use leanterm_ui::clipboard::ClipboardContent;
 use leanterm_ui::elements::new_scrollable::{
     NewScrollable, NewScrollableElement, ScrollableAppearance, SingleAxisConfig,
@@ -52,6 +41,17 @@ use leanterm_ui::{
     AppContext, Entity, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle, WeakViewHandle, WindowId,
 };
+use leanterm_util::content_version::ContentVersion;
+use leanterm_util::path::LineAndColumnArg;
+use leanterm_util::standardized_path::StandardizedPath;
+#[cfg(feature = "local_fs")]
+use num_traits::SaturatingSub;
+use pathfinder_geometry::rect::RectF;
+use pathfinder_geometry::vector::{Vector2F, vec2f};
+use rand::Rng;
+use rand::distributions::Alphanumeric;
+use string_offset::CharOffset;
+use vec1::Vec1;
 
 use super::code_review_header::CodeReviewHeader;
 use super::comment_list_view::{CommentListEvent, CommentListView};
@@ -102,7 +102,7 @@ use crate::settings::CodeSettings;
 use crate::settings_view::SettingsSection;
 use crate::terminal::input::MenuPositioning;
 use crate::terminal::view::{TerminalAction, TerminalView};
-use crate::themes::theme::WarpTheme;
+use crate::themes::theme::LeantermTheme;
 use crate::ui_components::blended_colors::{neutral_2, neutral_3};
 use crate::ui_components::dialog::{Dialog, dialog_styles};
 use crate::ui_components::icons::Icon;
@@ -3354,7 +3354,7 @@ impl CodeReviewView {
 
         let header_text = "Loading open changes...";
         let loading_icon = Icon::Loading
-            .to_warpui_icon(leanterm_core::ui::theme::Fill::Solid(
+            .to_leanterm_ui_icon(leanterm_core::ui::theme::Fill::Solid(
                 internal_colors::neutral_6(theme),
             ))
             .finish();
@@ -3492,7 +3492,7 @@ impl CodeReviewView {
                 Container::new(
                     ConstrainedBox::new(
                         Icon::AlertTriangle
-                            .to_warpui_icon(leanterm_core::ui::theme::Fill::Solid(
+                            .to_leanterm_ui_icon(leanterm_core::ui::theme::Fill::Solid(
                                 internal_colors::neutral_6(theme),
                             ))
                             .finish(),
@@ -3550,9 +3550,11 @@ impl CodeReviewView {
                         .with_text_and_icon_label(TextAndIcon::new(
                             TextAndIconAlignment::IconFirst,
                             " Retry".to_string(),
-                            Icon::Refresh.to_warpui_icon(leanterm_core::ui::theme::Fill::Solid(
-                                theme.main_text_color(theme.background()).into(),
-                            )),
+                            Icon::Refresh.to_leanterm_ui_icon(
+                                leanterm_core::ui::theme::Fill::Solid(
+                                    theme.main_text_color(theme.background()).into(),
+                                ),
+                            ),
                             MainAxisSize::Min,
                             MainAxisAlignment::SpaceBetween,
                             vec2f(16., 16.),
@@ -3600,7 +3602,7 @@ impl CodeReviewView {
                 Container::new(
                     ConstrainedBox::new(
                         Icon::FolderClosed
-                            .to_warpui_icon(leanterm_core::ui::theme::Fill::Solid(
+                            .to_leanterm_ui_icon(leanterm_core::ui::theme::Fill::Solid(
                                 internal_colors::neutral_6(theme),
                             ))
                             .finish(),
@@ -3742,7 +3744,7 @@ impl CodeReviewView {
                 Container::new(
                     ConstrainedBox::new(
                         Icon::Diff
-                            .to_warpui_icon(leanterm_core::ui::theme::Fill::Solid(
+                            .to_leanterm_ui_icon(leanterm_core::ui::theme::Fill::Solid(
                                 internal_colors::neutral_6(theme),
                             ))
                             .finish(),
@@ -3881,7 +3883,7 @@ impl CodeReviewView {
 
         // Add file icon
         let file_icon = Icon::File
-            .to_warpui_icon(leanterm_core::ui::theme::Fill::Solid(
+            .to_leanterm_ui_icon(leanterm_core::ui::theme::Fill::Solid(
                 internal_colors::neutral_6(theme),
             ))
             .finish();
@@ -4021,9 +4023,10 @@ impl CodeReviewView {
                         .with_corner_radius(CornerRadius::with_all(Radius::Pixels(4.)));
 
                     if mouse_state.is_hovered() {
-                        container = container.with_background(leanterm_core::ui::theme::Fill::Solid(
-                            internal_colors::neutral_3(appearance.theme()),
-                        ))
+                        container =
+                            container.with_background(leanterm_core::ui::theme::Fill::Solid(
+                                internal_colors::neutral_3(appearance.theme()),
+                            ))
                     }
                     container.finish()
                 })
@@ -4610,7 +4613,7 @@ impl CodeReviewView {
 
     fn styled_file_content_container(
         content: Box<dyn Element>,
-        theme: &WarpTheme,
+        theme: &LeantermTheme,
     ) -> Box<dyn Element> {
         Container::new(
             Flex::row()
@@ -6394,7 +6397,7 @@ impl BackingView for CodeReviewView {
                     target_os = "windows"
                 )
             )) {
-                // Find the workspace to show the Warp-native modal
+                // Find the workspace to show the Leanterm-native modal
                 if let Some(workspace) = ctx
                     .views_of_type::<Workspace>(ctx.window_id())
                     .and_then(|workspaces| workspaces.first().cloned())

@@ -9,11 +9,11 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use anyhow::{Result, anyhow};
 use itertools::Itertools;
 use lazy_static::lazy_static;
+use leanterm_errors::report_error;
+use leanterm_ui_core::rendering::{GPUBackend, GPUDeviceInfo, GPUDeviceType};
 use pathfinder_geometry::vector::Vector2F;
 use thiserror::Error;
 use version_compare::Version;
-use leanterm_errors::report_error;
-use leanterm_ui_core::rendering::{GPUBackend, GPUDeviceInfo, GPUDeviceType};
 use wgpu::{
     Adapter, Backend, CompositeAlphaMode, CurrentSurfaceTexture, Device, DeviceType, PresentMode,
     Queue, Surface, SurfaceConfiguration,
@@ -37,7 +37,7 @@ lazy_static! {
     /// of Mesa's llvmpipe software renderer.
     ///
     /// While lavapipe is theoretically Vulkan 1.3 compatible starting in version
-    /// 22.1.2, in practice, Warp windows don't render properly until 24.0.2.
+    /// 22.1.2, in practice, Leanterm windows don't render properly until 24.0.2.
     static ref MIN_SUPPORTED_LAVAPIPE_VERSION: Version<'static> = Version::from("24.0.2")
         .expect("should not fail to parse version");
 
@@ -836,7 +836,7 @@ enum AdapterSupport {
     Supported = 0,
     /// The adapter is somewhat usable, but there have been some problems.
     SupportedWithIssues = 1,
-    /// The adapter is basically not viable. Warpui will either crash or not render.
+    /// The adapter is basically not viable. Leantermui will either crash or not render.
     Unsupported = 2,
 }
 

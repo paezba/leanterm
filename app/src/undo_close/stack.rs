@@ -1,10 +1,10 @@
-use uuid::Uuid;
 use leanterm_errors::report_error;
 use leanterm_ui::r#async::SpawnedFutureHandle;
 use leanterm_ui::{
     AppContext, ClosedWindowData, Entity, ModelContext, SingletonEntity, ViewHandle,
     WeakViewHandle, WindowId,
 };
+use uuid::Uuid;
 
 use super::UndoCloseSettings;
 use super::settings::UndoCloseSettingsChangedEvent;

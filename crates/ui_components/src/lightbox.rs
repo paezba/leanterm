@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use pathfinder_geometry::vector::{Vector2F, vec2f};
 use leanterm_core::ui::Icon;
 use leanterm_core::ui::appearance::Appearance;
 use leanterm_ui_core::assets::asset_cache::AssetSource;
@@ -10,6 +9,7 @@ use leanterm_ui_core::elements::{
 use leanterm_ui_core::keymap::Keystroke;
 use leanterm_ui_core::prelude::stack::*;
 use leanterm_ui_core::prelude::*;
+use pathfinder_geometry::vector::{Vector2F, vec2f};
 
 use crate::{Component, Options as _, button};
 
@@ -334,8 +334,12 @@ impl button::Theme for ButtonTheme {
     ) -> Option<leanterm_core::ui::theme::Fill> {
         match button_state {
             button::State::Default => None,
-            button::State::Hovered => Some(leanterm_core::ui::theme::Fill::white().with_opacity(10)),
-            button::State::Pressed => Some(leanterm_core::ui::theme::Fill::white().with_opacity(15)),
+            button::State::Hovered => {
+                Some(leanterm_core::ui::theme::Fill::white().with_opacity(10))
+            }
+            button::State::Pressed => {
+                Some(leanterm_core::ui::theme::Fill::white().with_opacity(15))
+            }
         }
     }
 

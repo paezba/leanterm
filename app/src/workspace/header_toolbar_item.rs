@@ -1,6 +1,6 @@
+use leanterm_ui::{AppContext, SingletonEntity};
 use serde::{Deserialize, Serialize};
 use settings::Setting as _;
-use leanterm_ui::{AppContext, SingletonEntity};
 
 use crate::ui_components::icons::Icon;
 use crate::workspace::tab_settings::TabSettings;

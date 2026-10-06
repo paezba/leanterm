@@ -1,4 +1,3 @@
-use regex::Regex;
 use leanterm_editor::editor::NavigationKey;
 use leanterm_ui::elements::{
     ChildView, Container, CrossAxisAlignment, Empty, Expanded, Flex, MainAxisSize,
@@ -9,6 +8,7 @@ use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentSty
 use leanterm_ui::{
     AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
 };
+use regex::Regex;
 
 use crate::appearance::Appearance;
 use crate::editor::{

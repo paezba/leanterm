@@ -185,7 +185,7 @@ fn subscribe_to_link_model(
     ctx.subscribe_to_model(handle, move |pane_group, _, event, ctx| match event {
         LinkEvent::OpenFileNotebook { path, session } => {
             // Opening local files is delegated to the parent workspace.
-            ctx.emit(crate::pane_group::Event::OpenFileInWarp {
+            ctx.emit(crate::pane_group::Event::OpenFileInLeanterm {
                 path: path.clone(),
                 session: session.clone(),
             })
@@ -205,7 +205,7 @@ fn subscribe_to_link_model(
             target,
             line_col,
         } => {
-            // Emit event to workspace to handle opening in Warp
+            // Emit event to workspace to handle opening in Leanterm
             ctx.emit(crate::pane_group::Event::OpenFileWithTarget {
                 path: path.clone(),
                 target: target.clone(),

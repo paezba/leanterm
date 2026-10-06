@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use itertools::Itertools;
+use leanterm_command_signatures::{Argument, DynamicCompletionData, IsArgumentOptional, Signature};
 use memo_map::MemoMap;
-use warp_command_signatures::{Argument, DynamicCompletionData, IsArgumentOptional, Signature};
 
 use super::miss_cache::MissCache;
 use crate::completer::{CommandExitStatus, CompletionContext, TopLevelCommandCaseSensitivity};
@@ -555,9 +555,9 @@ fn is_completed_options_terminator(
 
 /// Finds an option by exact name match against the token.
 fn find_option_by_name<'a>(
-    options: &'a [warp_command_signatures::Opt],
+    options: &'a [leanterm_command_signatures::Opt],
     token: &str,
-) -> Option<&'a warp_command_signatures::Opt> {
+) -> Option<&'a leanterm_command_signatures::Opt> {
     options
         .iter()
         .find(|option| option.exact_string.iter().any(|s| s == token))

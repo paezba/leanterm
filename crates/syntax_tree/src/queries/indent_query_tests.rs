@@ -5,8 +5,8 @@ use languages::{Language, language_by_filename};
 use leanterm_editor::content::buffer::{Buffer, BufferSnapshot};
 use leanterm_editor::content::selection_model::BufferSelectionModel;
 use leanterm_editor::content::text::IndentBehavior;
-use leanterm_util::standardized_path::StandardizedPath;
 use leanterm_ui_core::App;
+use leanterm_util::standardized_path::StandardizedPath;
 
 use super::*;
 use crate::SyntaxTreeState;

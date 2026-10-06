@@ -4,7 +4,7 @@ pub(crate) mod legacy;
 pub use legacy::*;
 
 pub fn create_test_command_registry(
-    signatures: impl IntoIterator<Item = warp_command_signatures::Signature>,
+    signatures: impl IntoIterator<Item = leanterm_command_signatures::Signature>,
 ) -> CommandRegistry {
     use std::collections::HashMap;
 

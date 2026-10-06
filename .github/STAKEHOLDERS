@@ -13,7 +13,7 @@
 # Team: App
 ###########################################################################
 
-# Conversation and session restoration / cloud-synced conversations / planning / Warp Drive
+# Conversation and session restoration / cloud-synced conversations / planning / Leanterm Drive
 /app/src/ai/agent_conversations_model.rs @seemeroland
 /app/src/ai/persisted_workspace.rs @seemeroland
 /app/src/ai/restored_conversations.rs @seemeroland
@@ -93,12 +93,12 @@
 /app/src/ai/agent_management/notifications/ @harryalbert
 /app/src/terminal/view/inline_banner/ @harryalbert
 
-# Blocklist UX / modality and cloud mode UI / shell compatibility / completions and bootstrap / warpifying
+# Blocklist UX / modality and cloud mode UI / shell compatibility / completions and bootstrap / leantermifying
 /app/src/ai/blocklist/ @zachbai @MaggieShan
 /app/src/root_view.rs @zachbai @MaggieShan
 /app/src/terminal/bootstrap.rs @zachbai
-/app/src/terminal/warpify/ @zachbai @MaggieShan
-/app/src/settings_view/warpify_page.rs @zachbai @MaggieShan
+/app/src/terminal/leantermify/ @zachbai @MaggieShan
+/app/src/settings_view/leantermify_page.rs @zachbai @MaggieShan
 /app/assets/bundled/bootstrap/ @zachbai
 /crates/leanterm_completer/ @zachbai @szgupta @alokedesai @acarl005
 
@@ -119,7 +119,7 @@
 
 # Rich input
 /app/src/terminal/view/use_agent_footer/ @Advait-M
-/app/src/terminal/view/use_agent_footer/warpify_footer.rs @MaggieShan
+/app/src/terminal/view/use_agent_footer/leantermify_footer.rs @MaggieShan
 /app/src/terminal/input/cli_agent.rs @Advait-M
 
 # UI framework
@@ -175,7 +175,7 @@
 /crates/graphql/ @ianhodge
 /crates/http_client/ @ianhodge
 /crates/http_server/ @ianhodge
-/crates/warp_server_client/ @ianhodge
+/crates/leanterm_server_client/ @ianhodge
 
 # Session sharing
 /app/src/terminal/shared_session/ @szgupta @bnavetta
@@ -212,7 +212,7 @@
 /app/src/ai/document/orchestration_config_block.rs @Advait-M @cephalonaut
 /crates/code_diff/src/agent/orchestration_config.rs @Advait-M @cephalonaut
 
-# Scheduled agents / Warp CLI / cloud and ambient agents
+# Scheduled agents / Leanterm CLI / cloud and ambient agents
 /app/src/ai/ambient_agents/ @bnavetta
 /app/src/terminal/view/ambient_agent/ @bnavetta
 /app/src/workspace/view/launch_modal/oz_launch.rs @bnavetta
@@ -230,5 +230,5 @@
 /script/macos/bootstrap @acarl005
 /script/windows/bootstrap.ps1 @acarl005
 
-# Shell completions in the Warp CLI
+# Shell completions in the Leanterm CLI
 /crates/leanterm_cli/src/completions.rs @zachbai @szgupta @alokedesai

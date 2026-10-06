@@ -3,13 +3,13 @@ use std::ops::Range;
 use std::path::PathBuf;
 
 use command_corrections::Correction;
-use pathfinder_geometry::vector::Vector2F;
-use leanterm_util::user_input::UserInput;
 use leanterm_ui::elements::HyperlinkUrl;
 use leanterm_ui::event::ModifiersState;
 use leanterm_ui::units::Lines;
+use leanterm_util::user_input::UserInput;
+use pathfinder_geometry::vector::Vector2F;
 
-use super::inline_banner::{OpenInWarpBannerAction, VimModeBannerAction};
+use super::inline_banner::{OpenInLeantermBannerAction, VimModeBannerAction};
 use super::{
     AliasExpansionBannerAction, ContextMenuAction, GridHighlightedLink, InputContextMenuAction,
     NotificationsDiscoveryBannerAction, NotificationsErrorBannerAction, RichContentLink,
@@ -32,7 +32,7 @@ use crate::terminal::model::terminal_model::{BlockIndex, WithinModel};
 /// This represents whether entering a subshell for a particular command should become automatic in
 /// the future, or to ask again.
 #[derive(Clone, Debug)]
-pub enum RememberForWarpification {
+pub enum RememberForLeantermification {
     /// If yes, need to transmit the command itself so it can be persisted to user-defaults
     RememberSubshellCommand(String),
     RememberSSHHost(String),
@@ -40,22 +40,22 @@ pub enum RememberForWarpification {
     DoNotRememberSSHHost,
 }
 
-impl RememberForWarpification {
+impl RememberForLeantermification {
     pub fn as_bool(&self) -> bool {
         match self {
-            RememberForWarpification::RememberSubshellCommand(_) => true,
-            RememberForWarpification::RememberSSHHost(_) => true,
-            RememberForWarpification::DoNotRememberSubshellCommand => false,
-            RememberForWarpification::DoNotRememberSSHHost => false,
+            RememberForLeantermification::RememberSubshellCommand(_) => true,
+            RememberForLeantermification::RememberSSHHost(_) => true,
+            RememberForLeantermification::DoNotRememberSubshellCommand => false,
+            RememberForLeantermification::DoNotRememberSSHHost => false,
         }
     }
 
     pub fn is_ssh(&self) -> bool {
         match self {
-            RememberForWarpification::RememberSSHHost(_) => true,
-            RememberForWarpification::DoNotRememberSSHHost => true,
-            RememberForWarpification::RememberSubshellCommand(_) => false,
-            RememberForWarpification::DoNotRememberSubshellCommand => false,
+            RememberForLeantermification::RememberSSHHost(_) => true,
+            RememberForLeantermification::DoNotRememberSSHHost => true,
+            RememberForLeantermification::RememberSubshellCommand(_) => false,
+            RememberForLeantermification::DoNotRememberSubshellCommand => false,
         }
     }
 }
@@ -189,23 +189,23 @@ pub enum TerminalAction {
     },
     CopyGridSecret(WithinModel<SecretHandle>),
     ShowInFileExplorer(PathBuf),
-    OpenFileInWarp(PathBuf),
+    OpenFileInLeanterm(PathBuf),
     #[cfg(feature = "local_fs")]
-    OpenCodeInWarp {
+    OpenCodeInLeanterm {
         path: PathBuf,
         layout: crate::util::file::external_editor::settings::EditorLayout,
         line_col: Option<leanterm_util::path::LineAndColumnArg>,
     },
     /// Starts a subshell in the active session.
     TriggerSubshellBootstrap,
-    /// If the user says "no" to Warpification, possibly requesting not to be asked again
-    DismissWarpifyBanner(RememberForWarpification),
+    /// If the user says "no" to Leantermification, possibly requesting not to be asked again
+    DismissLeantermifyBanner(RememberForLeantermification),
     /// Triggers the banner asking to turn the running block into a subshell. The String is the
     /// command that the user entered.
     ShowSubshellBanner(String),
     InsertMostRecentCommandCorrection,
     AliasExpansionBanner(AliasExpansionBannerAction),
-    OpenInWarpBanner(OpenInWarpBannerAction),
+    OpenInLeantermBanner(OpenInLeantermBannerAction),
     OpenBlockFilterEditor(BlockIndex),
     ImportSettings,
     ToggleBlockFilterOnSelectedOrLastBlock(ToggleBlockFilterSource),
@@ -222,7 +222,7 @@ pub enum TerminalAction {
     },
     ClearMarkedText,
     ShowInitializationBlock,
-    ShowWarpifySettings,
+    ShowLeantermifySettings,
     ToggleCodeReviewPane {
         entrypoint: CodeReviewPaneEntrypoint,
     },
@@ -363,16 +363,18 @@ impl fmt::Debug for TerminalAction {
             ToggleGridSecret { show_secret, .. } => write!(f, "ToggleGridSecret {show_secret:?}"),
             CopyGridSecret(_) => f.write_str("CopyGridSecret"),
             ShowInFileExplorer(_) => f.write_str("ShowInFileExplorer"),
-            OpenFileInWarp(_) => f.write_str("OpenFileInWarp"),
+            OpenFileInLeanterm(_) => f.write_str("OpenFileInLeanterm"),
             #[cfg(feature = "local_fs")]
-            OpenCodeInWarp { .. } => f.write_str("OpenCodeInWarp"),
+            OpenCodeInLeanterm { .. } => f.write_str("OpenCodeInLeanterm"),
             OpenBlockListContextMenu => f.write_str("OpenBlockListContextMenu"),
             TriggerSubshellBootstrap => f.write_str("TriggerSubshellBootstrap"),
-            DismissWarpifyBanner(remember) => write!(f, "DismissWarpifyBanner({remember:?})"),
+            DismissLeantermifyBanner(remember) => {
+                write!(f, "DismissLeantermifyBanner({remember:?})")
+            }
             ShowSubshellBanner(_) => f.write_str("ShowSubshellBanner"),
             InsertMostRecentCommandCorrection => f.write_str("InsertMostRecentCommandCorrection"),
             AliasExpansionBanner(action) => write!(f, "AliasExpansionBanner({action:?}"),
-            OpenInWarpBanner(action) => write!(f, "OpenInWarpBanner({action:?})"),
+            OpenInLeantermBanner(action) => write!(f, "OpenInLeantermBanner({action:?})"),
             OpenBlockFilterEditor(block_index) => {
                 write!(f, "OpenBlockFilterEditor({block_index:?})")
             }
@@ -399,7 +401,7 @@ impl fmt::Debug for TerminalAction {
             } => write!(f, "SetMarkedText {{{marked_text:?}, {selected_range:?}}}"),
             ClearMarkedText => write!(f, "ClearMarkedText"),
             ShowInitializationBlock => write!(f, "ShowInitializationBlock"),
-            ShowWarpifySettings => write!(f, "ShowWarpifySettings"),
+            ShowLeantermifySettings => write!(f, "ShowLeantermifySettings"),
             ToggleCodeReviewPane { .. } => write!(f, "ToggleCodeReviewPane"),
             PickRepoToOpen => write!(f, "PickRepoToOpen"),
             OpenFilesPalette { .. } => write!(f, "OpenFilesPalette"),

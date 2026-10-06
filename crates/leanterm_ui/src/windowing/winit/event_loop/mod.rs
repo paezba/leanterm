@@ -9,9 +9,9 @@ use std::mem::ManuallyDrop;
 use futures_util::future::LocalBoxFuture;
 use futures_util::stream::AbortHandle;
 use instant::{Duration, Instant};
+use leanterm_errors::report_error;
 use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::{Vector2F, vec2f};
-use leanterm_errors::report_error;
 #[cfg(target_family = "wasm")]
 use wasm_bindgen::JsCast;
 use winit::dpi::{LogicalPosition, LogicalSize, PhysicalPosition};
@@ -417,7 +417,7 @@ fn convert_touch_moved(
 /// Handles the `TouchPhase::Ended` phase of a touch event.
 ///
 /// Note: This function intentionally does NOT clear `last_touch_purpose` for normal taps.
-/// The purpose is cleared later in `handle_converted_warpui_event` after soft keyboard
+/// The purpose is cleared later in `handle_converted_leanterm_ui_event` after soft keyboard
 /// logic runs, which needs to check if the touch was still a Tap (vs Scroll/Select/WindowDrag).
 fn convert_touch_ended(
     touch: Touch,
@@ -425,7 +425,7 @@ fn convert_touch_ended(
     scale_factor: f32,
 ) -> Option<ConvertedEvent> {
     // Check the purpose but don't clear it yet - we'll clear it later
-    // in handle_converted_warpui_event after checking if we need to
+    // in handle_converted_leanterm_ui_event after checking if we need to
     // update the soft keyboard.
     let is_long_press =
         if let Some(TouchPurpose::Tap(_, _, start_time)) = &window_state.last_touch_purpose {
@@ -462,7 +462,7 @@ fn convert_touch_ended(
     }
 
     // Don't clear last_touch_purpose yet - it will be cleared in
-    // handle_converted_warpui_event after soft keyboard logic runs.
+    // handle_converted_leanterm_ui_event after soft keyboard logic runs.
     Some(ConvertedEvent::Event(crate::event::Event::LeftMouseUp {
         position: window_state.last_cursor_position.to_vec2f(),
         modifiers: from_winit_modifiers_state(window_state.modifiers),
@@ -496,7 +496,7 @@ pub(super) struct EventLoop {
     ime_enabled: bool,
     /// Last IME cursor area sent to winit, keyed by the target window. On Wayland, used to skip
     /// redundant `set_ime_cursor_area` calls (which can re-trigger IME events on some compositors,
-    /// notably KDE Plasma). The window id is part of the key so focusing another Warp window with
+    /// notably KDE Plasma). The window id is part of the key so focusing another Leanterm window with
     /// the same logical rect still updates the newly focused surface. On X11 this is still recorded
     /// but identical areas are not skipped so the position nudge can run.
     last_ime_cursor_area: Option<(WindowId, LogicalPosition<f32>, LogicalSize<f32>)>,
@@ -829,7 +829,7 @@ impl EventLoop {
                 // Convert velocity (px/sec) to scroll delta using elapsed time.
                 let delta = velocity.velocity * elapsed;
                 let position = window_state.last_cursor_position.to_vec2f();
-                self.handle_converted_warpui_event(
+                self.handle_converted_leanterm_ui_event(
                     window_id,
                     crate::event::Event::ScrollWheel {
                         position,
@@ -901,7 +901,7 @@ impl EventLoop {
                 };
 
                 // There is a winit bug such that events which cause a window to switch displays to
-                // one with a different scale factor resize the Warp window to an absurdly small
+                // one with a different scale factor resize the Leanterm window to an absurdly small
                 // size, <157, 25> on my system when I repro it. Events include unplugging a
                 // display, changing a display from extended to mirrored, and the like. We work
                 // around that by listening for [`WindowEvent::ScaleFactorChanged`] and changing
@@ -1059,7 +1059,7 @@ impl EventLoop {
 
         match event {
             ConvertedEvent::Event(event) => {
-                self.handle_converted_warpui_event(window_id, event);
+                self.handle_converted_leanterm_ui_event(window_id, event);
             }
             ConvertedEvent::Resize => {
                 let window = downcast_window(window.as_ref());
@@ -1285,7 +1285,7 @@ impl EventLoop {
                 }
 
                 // If the event is a modifier key, just by itself, we handle it specially, issuing
-                // the appropriate Warp-side event (ModifierKeyChanged).
+                // the appropriate Leanterm-side event (ModifierKeyChanged).
                 if let (None, keyboard::PhysicalKey::Code(keycode)) =
                     (&event.text, &event.physical_key)
                     && let Ok(mapped_keycode) = try_from_winit_keycode(keycode)
@@ -1301,9 +1301,9 @@ impl EventLoop {
                 let is_unidentified_key =
                     matches!(event.logical_key, keyboard::Key::Unidentified(_));
                 match convert_keyboard_input_event(event, window_state, is_synthetic) {
-                    Some(warp_ui_event) => Some(ConvertedEvent::KeyDownWithTypedCharacters {
+                    Some(leanterm_ui_event) => Some(ConvertedEvent::KeyDownWithTypedCharacters {
                         chars: event_text,
-                        event: warp_ui_event,
+                        event: leanterm_ui_event,
                     }),
                     None if is_unidentified_key
                         && !is_synthetic
@@ -1457,7 +1457,7 @@ impl EventLoop {
         // Create and dispatch the batched drag-and-drop event
         let drag_drop_event = crate::Event::DragAndDropFiles { paths, location };
 
-        self.handle_converted_warpui_event(window_id, drag_drop_event);
+        self.handle_converted_leanterm_ui_event(window_id, drag_drop_event);
     }
 
     /// Handles a request to close the window with the given leanterm_ui and winit
@@ -1595,7 +1595,7 @@ impl EventLoop {
 
     /// Handle events that may be handled by leanterm_ui, or maybe not in some cases, e.g. window
     /// drag-to-resize or drag-to-move.
-    fn handle_converted_warpui_event(
+    fn handle_converted_leanterm_ui_event(
         &mut self,
         window_id: winit::window::WindowId,
         event: crate::Event,

@@ -8,9 +8,9 @@ use std::collections::HashMap;
 use std::io::sink;
 use std::sync::Arc;
 
-use pathfinder_geometry::vector::Vector2F;
 use leanterm_core::command::ExitCode;
 use leanterm_ui::r#async::executor::Background;
+use pathfinder_geometry::vector::Vector2F;
 
 use super::ansi::{
     CommandFinishedValue, CompletionMetadata, Handler, PrecmdValue, PreexecValue, Processor,
@@ -37,7 +37,7 @@ pub fn block_size() -> BlockSize {
         size: SizeInfo::new_without_font_metrics(10, 7),
         block_padding: block_padding(),
         max_block_scroll_limit: 1000,
-        warp_prompt_height_lines: 0.6,
+        leanterm_prompt_height_lines: 0.6,
     }
 }
 
@@ -192,8 +192,8 @@ impl<'a> TestBlockListBuilder<'a> {
             self.block_sizes,
             self.channel_event_proxy,
             Arc::new(Background::default()),
-            false, /* show_warp_bootstrap_input */
-            false, /* show_warp_bootstrap_input */
+            false, /* show_leanterm_bootstrap_input */
+            false, /* show_leanterm_bootstrap_input */
             false, /* show_memory_stats */
             self.honor_ps1,
             false, /* is_inverted */
@@ -276,7 +276,7 @@ impl TestBlockBuilder {
             self.event_proxy,
             Arc::new(Background::default()),
             self.bootstrap_stage,
-            false, /* show_warp_bootstrap_input */
+            false, /* show_leanterm_bootstrap_input */
             false, /* show_in_band_command_blocks */
             false, /* show_memory_stats */
             self.block_index,

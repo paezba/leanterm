@@ -1,13 +1,13 @@
 use std::path::PathBuf;
 
-use repo_metadata::repositories::DetectedRepositories;
-use string_offset::CharOffset;
 use leanterm_core::ui::appearance::Appearance;
 use leanterm_editor::content::buffer::InitialBufferState;
 use leanterm_editor::render::element::VerticalExpansionBehavior;
 use leanterm_ui::elements::Empty;
 use leanterm_ui::platform::WindowStyle;
 use leanterm_ui::{App, Element as _, ModelHandle, ViewHandle};
+use repo_metadata::repositories::DetectedRepositories;
+use string_offset::CharOffset;
 
 use super::*;
 use crate::NotebookKeybindings;

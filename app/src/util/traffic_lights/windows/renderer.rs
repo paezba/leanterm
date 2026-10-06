@@ -2,8 +2,7 @@
 
 use std::sync::Arc;
 
-use pathfinder_color::ColorU;
-use leanterm_core::ui::theme::{Fill, WarpTheme};
+use leanterm_core::ui::theme::{Fill, LeantermTheme};
 use leanterm_ui::elements::{
     Align, ConstrainedBox, Container, CrossAxisAlignment, Flex, Hoverable, MainAxisAlignment,
     MainAxisSize, MouseStateHandle, ParentElement, Text,
@@ -11,6 +10,7 @@ use leanterm_ui::elements::{
 use leanterm_ui::fonts::FamilyId;
 use leanterm_ui::platform::FullscreenState;
 use leanterm_ui::{AppContext, Element, SingletonEntity};
+use pathfinder_color::ColorU;
 
 use crate::util::traffic_lights::windows::RendererState;
 use crate::util::traffic_lights::windows_only::WINDOWS_BRIGHT_RED;
@@ -50,28 +50,28 @@ impl WindowsTrafficLightIcon {
         }
     }
 
-    fn background_hover_color(&self, theme: &WarpTheme) -> Fill {
+    fn background_hover_color(&self, theme: &LeantermTheme) -> Fill {
         match self {
             Self::Close => WINDOWS_BRIGHT_RED.into(),
             Self::Minimize | Self::Maximize | Self::Restore => theme.surface_3(),
         }
     }
 
-    fn icon_hover_color(&self, theme: &WarpTheme) -> ColorU {
+    fn icon_hover_color(&self, theme: &LeantermTheme) -> ColorU {
         match self {
             Self::Close => ColorU::white(),
             Self::Minimize | Self::Maximize | Self::Restore => self.icon_color(theme),
         }
     }
 
-    fn icon_color(&self, theme: &WarpTheme) -> ColorU {
+    fn icon_color(&self, theme: &LeantermTheme) -> ColorU {
         theme.foreground().into_solid()
     }
 
     fn render(
         &self,
         mouse_state_handle: MouseStateHandle,
-        theme: &WarpTheme,
+        theme: &LeantermTheme,
         icon_font_family: FamilyId,
         action_name: &'static str,
     ) -> Box<dyn Element> {
@@ -109,7 +109,7 @@ impl WindowsTrafficLightIcon {
 fn render_tab_row_with_glyph_icons(
     fullscreen_state: FullscreenState,
     mouse_states: &TrafficLightMouseStates,
-    theme: &WarpTheme,
+    theme: &LeantermTheme,
     icon_font_family: FamilyId,
 ) -> Box<dyn Element> {
     let flex = Flex::row()
@@ -160,7 +160,7 @@ impl TrafficLightData {
         &self,
         fullscreen_state: FullscreenState,
         mouse_states: &TrafficLightMouseStates,
-        theme: &WarpTheme,
+        theme: &LeantermTheme,
         app: &AppContext,
     ) -> Box<dyn Element> {
         match RendererState::handle(app).as_ref(app).icon_font_family() {
@@ -187,7 +187,7 @@ impl TrafficLightData {
         &self,
         fullscreen_state: FullscreenState,
         mouse_states: &TrafficLightMouseStates,
-        theme: &WarpTheme,
+        theme: &LeantermTheme,
     ) -> Box<dyn Element> {
         let fg_color = theme.foreground().into_solid();
         ConstrainedBox::new(

@@ -8,11 +8,11 @@ use std::os::unix::fs::{OpenOptionsExt as _, PermissionsExt as _};
 use std::path::PathBuf;
 
 use anyhow::{Context, anyhow};
+use leanterm_errors::report_error;
 use rand::RngCore;
 use ring::aead;
 use secret_service::EncryptionType;
 use secret_service::blocking::{Item, SecretService};
-use leanterm_errors::report_error;
 
 use super::Error;
 

@@ -1,7 +1,7 @@
 //! Tab group data model.
 
-use uuid::Uuid;
 use leanterm_ui::elements::DraggableState;
+use uuid::Uuid;
 
 use crate::tab::SelectedTabColor;
 

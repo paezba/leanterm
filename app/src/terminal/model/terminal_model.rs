@@ -6,8 +6,6 @@ use std::sync::Arc;
 
 use base64::Engine;
 use itertools::Either;
-use serde::Serialize;
-use string_offset::CharOffset;
 use leanterm_completer::meta::Span;
 use leanterm_core::command::ExitCode;
 use leanterm_core::semantic_selection::SemanticSelection;
@@ -20,6 +18,8 @@ use leanterm_ui::AppContext;
 use leanterm_ui::assets::asset_cache::Asset;
 use leanterm_ui::r#async::executor::Background;
 use leanterm_ui::image_cache::ImageType;
+use serde::Serialize;
+use string_offset::CharOffset;
 
 use super::super::{AltScreen, BlockList};
 use super::ansi::{BootstrappedValue, FinishUpdateValue, InputBufferValue, Mode, PendingHook};
@@ -59,7 +59,7 @@ use crate::terminal::model::ansi::{
     ClearValue, CommandFinishedValue, CompletionMetadata, ExitShellValue,
     ExternalShellWidgetSelectionValue, Handler, InitShellValue, InitSubshellValue,
     PreInteractiveSSHSessionValue, PrecmdValue, PreexecValue, PromptMetadata, SSHValue,
-    SourcedRcFileForWarpValue,
+    SourcedRcFileForLeantermValue,
 };
 use crate::terminal::model::block::SerializedBlockListItem;
 use crate::terminal::model::bootstrap::BootstrapStage;
@@ -333,7 +333,7 @@ enum IsReceivingHook {
     No,
 }
 
-/// Information needed to render a warpify "success" block upon successful subshell bootstrap.
+/// Information needed to render a leantermify "success" block upon successful subshell bootstrap.
 #[derive(Debug, Clone)]
 pub struct SubshellSuccessBlockInfo {
     /// The ID of the newly bootstrapped subshell session.
@@ -519,7 +519,7 @@ pub struct SubshellInitializationInfo {
     pub spawning_command: String,
 
     /// `true` if the subshell bootstrap was triggered by an RC file snippet that emits the
-    /// `SourcedRcFileForWarp` DCS.
+    /// `SourcedRcFileForLeanterm` DCS.
     pub was_triggered_by_rc_file_snippet: bool,
 
     /// The subshell was triggered from an EVC invocation
@@ -895,7 +895,7 @@ impl SelectedBlocks {
 pub enum TerminalInputState {
     /// Alt-screen on which programs like vim run is visible.
     AltScreen,
-    /// Warp Input View is visible.
+    /// Leanterm Input View is visible.
     InputEditor,
     /// Block-list is visible but input will go to the running command.
     LongRunningCommand,
@@ -1764,7 +1764,7 @@ impl TerminalModel {
     pub fn set_custom_title(&mut self, custom_title: Option<String>) {
         self.custom_title.clone_from(&custom_title);
         // If the custom title set by the user is None, we "reset" to whatever the title was set by
-        // the shell / Warp itself.
+        // the shell / Leanterm itself.
         self.send_title_event(match custom_title {
             Some(_) => custom_title,
             None => self.title.clone(),
@@ -1887,7 +1887,7 @@ impl TerminalModel {
     /// a line of output that is not a known SSH output, we consider that to be some mild evidence that
     /// login is complete. Though, because that output line might be a false alarm (i.e., it could be
     /// an SSH banner OR a line like "Permission denied."), we wait some amount of time and check again
-    /// before indicating we're ready for warpification.
+    /// before indicating we're ready for leantermification.
     pub fn check_for_end_of_ssh_login(&mut self, confirmation_check: bool) {
         let Some(mut ssh_login_state) = self.notify_on_end_of_ssh_login.clone() else {
             return;
@@ -1909,7 +1909,9 @@ impl TerminalModel {
         match ssh::util::check_ssh_login_state(&block_output) {
             SshLoginState::LastLogin | SshLoginState::PromptDetected => {
                 self.event_proxy
-                    .send_app_event(Event::DetectedEndOfSshLogin(SshLoginStatus::ReadyToWarpify));
+                    .send_app_event(Event::DetectedEndOfSshLogin(
+                        SshLoginStatus::ReadyToLeantermify,
+                    ));
 
                 ssh_login_state.notification_state = SshLoginNotificationState::Completed;
             }
@@ -1919,7 +1921,7 @@ impl TerminalModel {
                     if ssh_login_state.notification_state == SshLoginNotificationState::Monitoring {
                         self.event_proxy
                             .send_app_event(Event::DetectedEndOfSshLogin(
-                                SshLoginStatus::RecheckBeforeWarpifying,
+                                SshLoginStatus::RecheckBeforeLeantermifying,
                             ));
 
                         // We want to avoid emitting redundant events for the initial check.
@@ -1929,7 +1931,7 @@ impl TerminalModel {
                 } else {
                     self.event_proxy
                         .send_app_event(Event::DetectedEndOfSshLogin(
-                            SshLoginStatus::ReadyToWarpify,
+                            SshLoginStatus::ReadyToLeantermify,
                         ));
 
                     ssh_login_state.notification_state = SshLoginNotificationState::Completed;
@@ -2541,7 +2543,7 @@ impl ansi::Handler for TerminalModel {
             if value.external_control_master {
                 log::info!(
                     "SSH wrapper attached to an external ControlMaster at {}; \
-                     Warp will not tear it down on session exit",
+                     Leanterm will not tear it down on session exit",
                     value.socket_path.display()
                 );
             }
@@ -2645,7 +2647,7 @@ impl ansi::Handler for TerminalModel {
         }
     }
 
-    fn sourced_rc_file(&mut self, data: SourcedRcFileForWarpValue) {
+    fn sourced_rc_file(&mut self, data: SourcedRcFileForLeantermValue) {
         // If the blocklist is already bootstrapped, the user's RC file must be sourced in a
         // subshell.
         if self.block_list.is_bootstrapped() {
@@ -2663,7 +2665,7 @@ impl ansi::Handler for TerminalModel {
                 }
                 None => {
                     report_error!(
-                        "Received invalid shell name in SourcedRCFileForWarpValue",
+                        "Received invalid shell name in SourcedRCFileForLeantermValue",
                         extra: { "shell" => %data.shell }
                     );
                 }

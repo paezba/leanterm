@@ -1,6 +1,5 @@
 use std::path::PathBuf;
 
-use pathfinder_geometry::vector::vec2f;
 use leanterm_core::ui::theme::Fill;
 use leanterm_errors::report_error;
 use leanterm_ui::elements::{
@@ -12,6 +11,7 @@ use leanterm_ui::ui_components::components::{UiComponent, UiComponentStyles};
 use leanterm_ui::{
     AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
 };
+use pathfinder_geometry::vector::vec2f;
 
 use crate::appearance::Appearance;
 use crate::ui_components::dialog::{Dialog, dialog_styles};

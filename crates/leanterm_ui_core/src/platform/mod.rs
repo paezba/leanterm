@@ -23,10 +23,10 @@ pub use file_picker::{
     SaveFilePickerConfiguration,
 };
 use lazy_static::lazy_static;
+use leanterm_util::path::ShellFamily;
 use pathfinder_geometry::rect::{RectF, RectI};
 use pathfinder_geometry::vector::{Vector2F, Vector2I};
 use serde::{Deserialize, Serialize};
-use leanterm_util::path::ShellFamily;
 
 use crate::accessibility::AccessibilityContent;
 use crate::fonts::canvas::RasterFormat;

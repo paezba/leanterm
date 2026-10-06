@@ -1,10 +1,10 @@
 use std::fmt::{Display, Formatter};
 
 use enum_iterator::{Sequence, all};
+use leanterm_ui::ModelContext;
 use serde::{Deserialize, Serialize};
 use settings::macros::define_settings_group;
 use settings::{Setting as _, SupportedPlatforms};
-use leanterm_ui::ModelContext;
 
 #[derive(
     Clone,
@@ -128,8 +128,8 @@ impl TabBehavior {
     }
 }
 
-/// This enum is used to enforce options in the dropdown for selecting a separator with the Warp prompt.
-/// Note that these separators are added at the END of the Warp prompt (used in the case of same line prompt).
+/// This enum is used to enforce options in the dropdown for selecting a separator with the Leanterm prompt.
+/// Note that these separators are added at the END of the Leanterm prompt (used in the case of same line prompt).
 #[derive(
     Clone,
     Copy,
@@ -146,7 +146,7 @@ impl TabBehavior {
     description = "Trailing separator character displayed at the end of the prompt.",
     rename_all = "snake_case"
 )]
-pub enum WarpPromptSeparator {
+pub enum LeantermPromptSeparator {
     /// No separator for the prompt.
     #[default]
     None,
@@ -158,7 +158,7 @@ pub enum WarpPromptSeparator {
     ChevronSymbol,
 }
 
-impl WarpPromptSeparator {
+impl LeantermPromptSeparator {
     pub fn dropdown_item_label(&self) -> &'static str {
         match self {
             Self::None => "None",

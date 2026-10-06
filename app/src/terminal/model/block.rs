@@ -13,19 +13,19 @@ use chrono::{DateTime, Duration, FixedOffset, Local};
 use enum_iterator::all;
 use hex;
 use instant::Instant;
-use pathfinder_color::ColorU;
-use pathfinder_geometry::vector::Vector2F;
-use secret_redaction::redact_secrets;
-pub use serialized_block::*;
 use leanterm_core::command::ExitCode;
 use leanterm_errors::report_error;
 use leanterm_terminal::model::grid::Dimensions as _;
 use leanterm_terminal::model::{KeyboardModes, KeyboardModesApplyBehavior};
-use leanterm_util::lazy::Lazy;
-use leanterm_util::path::user_friendly_path;
 use leanterm_ui::r#async::executor::Background;
 use leanterm_ui::record_trace_event;
 use leanterm_ui::units::{IntoLines, Lines};
+use leanterm_util::lazy::Lazy;
+use leanterm_util::path::user_friendly_path;
+use pathfinder_color::ColorU;
+use pathfinder_geometry::vector::Vector2F;
+use secret_redaction::redact_secrets;
+pub use serialized_block::*;
 
 pub use super::BlockId;
 use super::bootstrap::BootstrapStage;
@@ -372,7 +372,9 @@ impl From<&Block> for BlockType {
 
         match block.bootstrap_stage() {
             BootstrapStage::RestoreBlocks => BlockType::Restored,
-            BootstrapStage::WarpInput | BootstrapStage::Bootstrapped => BlockType::BootstrapHidden,
+            BootstrapStage::LeantermInput | BootstrapStage::Bootstrapped => {
+                BlockType::BootstrapHidden
+            }
             BootstrapStage::ScriptExecution => {
                 if block.is_empty(&TranscriptScope::Terminal) {
                     BlockType::BootstrapHidden
@@ -422,7 +424,7 @@ pub struct BlockSize {
     pub block_padding: BlockPadding,
     pub size: SizeInfo,
     pub max_block_scroll_limit: usize,
-    pub warp_prompt_height_lines: f32,
+    pub leanterm_prompt_height_lines: f32,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -447,7 +449,7 @@ pub enum BlockState {
     /// any particular execution or command.
     Background,
 
-    /// This block holds static content and is programmatically added to the blocklist by Warp. An
+    /// This block holds static content and is programmatically added to the blocklist by Leanterm. An
     /// example is the information subshell bootstrap "success" block.
     Static,
 }
@@ -736,7 +738,7 @@ impl Block {
         event_proxy: ChannelEventListener,
         background_executor: Arc<Background>,
         bootstrap_stage: BootstrapStage,
-        show_warp_bootstrap_input: bool,
+        show_leanterm_bootstrap_input: bool,
         show_in_band_command_blocks: bool,
         show_memory_stats: bool,
         block_index: BlockIndex,
@@ -795,7 +797,7 @@ impl Block {
             background_executor,
             event_proxy,
             bootstrap_stage,
-            show_bootstrap_block: show_warp_bootstrap_input,
+            show_bootstrap_block: show_leanterm_bootstrap_input,
             show_in_band_command_blocks,
             show_memory_stats,
             creation_ts: Local::now(),
@@ -1110,7 +1112,7 @@ impl Block {
             return true;
         }
 
-        let is_bootstrap_block = self.bootstrap_stage == BootstrapStage::WarpInput;
+        let is_bootstrap_block = self.bootstrap_stage == BootstrapStage::LeantermInput;
         let is_empty_bootstrap_script_execution_block = self.bootstrap_stage
             == BootstrapStage::ScriptExecution
             && self.command_should_show_as_empty_when_finished()
@@ -1206,7 +1208,7 @@ impl Block {
     }
 
     /// Whether we render the prompt on the same line, in the context of a finished block. Post-same
-    /// line prompt, we render on the same line for PS1, but not for Warp prompt!
+    /// line prompt, we render on the same line for PS1, but not for Leanterm prompt!
     pub fn render_prompt_on_same_line(&self) -> bool {
         self.honor_ps1()
     }
@@ -1325,7 +1327,7 @@ impl Block {
 
     /// A command-grid is active in the period after we have received the precmd
     /// hook but before the command has started executing. This includes the time
-    /// when the shell echoes the command bytes that Warp wrote to the PTY.
+    /// when the shell echoes the command bytes that Leanterm wrote to the PTY.
     pub fn is_command_grid_active(&self) -> bool {
         self.state == BlockState::BeforeExecution
     }
@@ -1566,7 +1568,7 @@ impl Block {
         if self.header_grid.honor_ps1() {
             self.block_banner_height() + self.padding_top()
         } else {
-            // Grid is drawn below custom Warp prompt in finished blocks.
+            // Grid is drawn below custom Leanterm prompt in finished blocks.
             self.block_banner_height()
                 + self.padding_top()
                 + self.prompt_height()
@@ -1604,7 +1606,7 @@ impl Block {
     }
 
     /// Returns the ENTIRE HEIGHT of the prompt and command (no padding top or middle included).
-    /// In the case of combined grid: for Warp prompt, this includes the height of both the Warp prompt
+    /// In the case of combined grid: for Leanterm prompt, this includes the height of both the Leanterm prompt
     /// AND combined grid; for PS1, this is just the combined grid (PS1 is included there).
     pub fn prompt_and_command_height(&self) -> Lines {
         if !self.ready_to_render() || self.should_hide_command_grid {
@@ -1613,7 +1615,7 @@ impl Block {
             // No padding between prompt and command in the case of PS1 (combined grid).
             self.header_grid.prompt_and_command_height()
         } else {
-            // Handle the case of Warp built-in prompt with combined grid.
+            // Handle the case of Leanterm built-in prompt with combined grid.
             // Note that we have non-zero `command_padding_top` in this case, unlike above!
             if self.header_grid.is_command_empty() {
                 Lines::zero()
@@ -2200,7 +2202,8 @@ impl Block {
 
         self.background_executor
             .spawn(async move {
-                leanterm_ui::r#async::Timer::after(std::time::Duration::from_millis(delay_ms)).await;
+                leanterm_ui::r#async::Timer::after(std::time::Duration::from_millis(delay_ms))
+                    .await;
                 ready_to_render.store(true, Ordering::Relaxed);
                 event_proxy.send_wakeup_event();
             })
@@ -2702,7 +2705,7 @@ macro_rules! delegate_image_completion {
                     Default::default()
                 }
             },
-            _ if $self.bootstrap_stage == BootstrapStage::WarpInput => Default::default(),
+            _ if $self.bootstrap_stage == BootstrapStage::LeantermInput => Default::default(),
             _ => {
                 let had_visible_content = $self.output_grid.has_visible_content();
                 let retval = $self.output_grid.$method($( $arg ),*);
@@ -2813,7 +2816,7 @@ impl ansi::Handler for Block {
         // If we're processing a prompt and we receive an initial blank line,
         // ignore it.  This is sometimes used in prompts (e.g.: oh-my-zsh's
         // "re5et" theme) to separate the previous command's output from the
-        // prompt, but this is not needed in Warp due to us visually separating
+        // prompt, but this is not needed in Leanterm due to us visually separating
         // blocks.
         match self.header_grid.receiving_chars_for_prompt {
             Some(ansi::PromptKind::Initial) if !self.header_grid.prompt_has_received_content() => {

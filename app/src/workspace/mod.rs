@@ -22,17 +22,17 @@ pub use action::{
     TabContextMenuAnchor, VerticalTabsPaneContextMenuTarget, WorkspaceAction,
 };
 pub use active_session::ActiveSession;
+use leanterm_core::context_flag::ContextFlag;
+use leanterm_ui::AppContext;
+use leanterm_ui::accessibility::AccessibilityVerbosity;
+use leanterm_ui::elements::DropTargetData;
+use leanterm_ui::keymap::{BindingDescription, EditableBinding, FixedBinding};
 use serde::{Deserialize, Serialize};
 pub use util::{PaneViewLocator, TabMovement, active_terminal_in_window};
 pub use view::{
     NEW_SESSION_MENU_BUTTON_POSITION_ID, NEW_TAB_BUTTON_POSITION_ID, PANEL_HEADER_HEIGHT,
     TAB_BAR_HEIGHT, TOTAL_TAB_BAR_HEIGHT, WORKSPACE_PADDING, Workspace,
 };
-use leanterm_core::context_flag::ContextFlag;
-use leanterm_ui::AppContext;
-use leanterm_ui::accessibility::AccessibilityVerbosity;
-use leanterm_ui::elements::DropTargetData;
-use leanterm_ui::keymap::{BindingDescription, EditableBinding, FixedBinding};
 
 use crate::channel::{Channel, ChannelState};
 use crate::event_sources::PaletteSource;
@@ -442,7 +442,7 @@ pub fn init(app: &mut AppContext) {
             WorkspaceAction::ToggleLeftPanel,
         )
         .with_context_predicate(id!("Workspace"))
-        .with_custom_action(CustomAction::ToggleWarpDrive),
+        .with_custom_action(CustomAction::ToggleLeantermDrive),
         EditableBinding::new(
             TOGGLE_RIGHT_PANEL_BINDING_NAME,
             BindingDescription::new("Toggle code review")
@@ -715,7 +715,7 @@ pub fn init(app: &mut AppContext) {
     app.register_editable_bindings([
         EditableBinding::new(
             "workspace:terminate_app",
-            "Quit Warp",
+            "Quit Leanterm",
             WorkspaceAction::TerminateApp,
         )
         .with_context_predicate(id!("Workspace"))
@@ -819,23 +819,23 @@ pub fn init(app: &mut AppContext) {
         .with_enabled(|| ContextFlag::LaunchConfigurations.is_enabled()),
     ]);
 
-    // Oz and Warp Control CLI install/uninstall actions (macOS only)
+    // Oz and Leanterm Control CLI install/uninstall actions (macOS only)
     #[cfg(target_os = "macos")]
     {
         app.register_editable_bindings([]);
-        if FeatureFlag::WarpControlCli.is_enabled() {
+        if FeatureFlag::LeantermControlCli.is_enabled() {
             app.register_editable_bindings([
                 EditableBinding::new(
-                    "workspace:install_warpctrl",
-                    "Install Warp Control CLI globally for use outside of Warp",
-                    WorkspaceAction::InstallWarpctrl,
+                    "workspace:install_leantermctl",
+                    "Install Leanterm Control CLI globally for use outside of Leanterm",
+                    WorkspaceAction::InstallLeantermctl,
                 )
                 .with_group(bindings::BindingGroup::Settings.as_str())
                 .with_context_predicate(id!("Workspace")),
                 EditableBinding::new(
-                    "workspace:uninstall_warpctrl",
-                    "Undo global Warp Control CLI installation (warpctrl will still work within Warp)",
-                    WorkspaceAction::UninstallWarpctrl,
+                    "workspace:uninstall_leantermctl",
+                    "Undo global Leanterm Control CLI installation (leantermctl will still work within Leanterm)",
+                    WorkspaceAction::UninstallLeantermctl,
                 )
                 .with_group(bindings::BindingGroup::Settings.as_str())
                 .with_context_predicate(id!("Workspace")),
@@ -934,7 +934,7 @@ fn add_open_setting_pages_as_editable_binding(app: &mut AppContext) {
         )
         .with_group(bindings::BindingGroup::Settings.as_str())
         .with_context_predicate(id!("Workspace"))
-        .with_custom_action(CustomAction::ShowAboutWarp),
+        .with_custom_action(CustomAction::ShowAboutLeanterm),
         EditableBinding::new(
             "workspace:show_settings_privacy_page",
             BindingDescription::new("Open Settings: Privacy"),
@@ -943,10 +943,10 @@ fn add_open_setting_pages_as_editable_binding(app: &mut AppContext) {
         .with_group(bindings::BindingGroup::Settings.as_str())
         .with_context_predicate(id!("Workspace")),
         EditableBinding::new(
-            "workspace:show_settings_warpify_page",
-            BindingDescription::new("Open Settings: Warpify")
-                .with_custom_description(bindings::MAC_MENUS_CONTEXT, "Configure Warpify..."),
-            WorkspaceAction::ShowSettingsPage(SettingsSection::Warpify),
+            "workspace:show_settings_leantermify_page",
+            BindingDescription::new("Open Settings: Leantermify")
+                .with_custom_description(bindings::MAC_MENUS_CONTEXT, "Configure Leantermify..."),
+            WorkspaceAction::ShowSettingsPage(SettingsSection::Leantermify),
         )
         .with_group(bindings::BindingGroup::Settings.as_str())
         .with_context_predicate(id!("Workspace")),
@@ -987,7 +987,7 @@ fn add_overflow_menu_items_as_editable_binding(app: &mut AppContext) {
         #[cfg(not(target_family = "wasm"))]
         EditableBinding::new(
             "workspace:view_logs",
-            "View Warp logs",
+            "View Leanterm logs",
             WorkspaceAction::ViewLogs,
         )
         .with_context_predicate(id!("Workspace")),

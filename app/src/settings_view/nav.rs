@@ -1,7 +1,7 @@
-use pathfinder_geometry::vector::vec2f;
 use leanterm_ui::elements::{Hoverable, MainAxisAlignment, MainAxisSize, MouseStateHandle};
 use leanterm_ui::ui_components::button::{ButtonVariant, TextAndIcon, TextAndIconAlignment};
 use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
+use pathfinder_geometry::vector::vec2f;
 
 use super::SettingsSection;
 use super::settings_page::{MatchData, NAV_ITEM_LEFT_MARGIN};
@@ -60,7 +60,7 @@ impl SettingsUmbrella {
             .with_text_and_icon_label(TextAndIcon::new(
                 TextAndIconAlignment::TextFirst,
                 self.label.to_string(),
-                chevron_icon.to_warpui_icon(text_color),
+                chevron_icon.to_leanterm_ui_icon(text_color),
                 MainAxisSize::Max,
                 MainAxisAlignment::SpaceBetween,
                 vec2f(16., 16.),

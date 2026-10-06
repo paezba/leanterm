@@ -75,7 +75,10 @@ fn from_local_absolute_unchecked_accepts_absolute() {
     // encoding-aware `typed_path` path, so a genuinely-absolute path must be
     // accepted (and not panic) on every target.
     #[cfg(unix)]
-    let (input, expected) = (Path::new("/Users/david/src/warp"), "/Users/david/src/warp");
+    let (input, expected) = (
+        Path::new("/Users/david/src/leanterm"),
+        "/Users/david/src/leanterm",
+    );
     #[cfg(windows)]
     let (input, expected) = (Path::new("C:\\Users\\david\\src"), "C:\\Users\\david\\src");
 

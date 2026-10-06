@@ -56,9 +56,9 @@ fn omits_trace_link_header_when_no_span() {
 }
 
 #[test]
-fn request_carries_trace_link_header_on_warp_header_path() {
-    // The header rides the same `include_warp_http_headers` gate as every other
-    // X-Warp-* header (added only inside `add_warp_http_headers`), so building a
+fn request_carries_trace_link_header_on_leanterm_header_path() {
+    // The header rides the same `include_leanterm_http_headers` gate as every other
+    // X-Leanterm-* header (added only inside `add_leanterm_http_headers`), so building a
     // request through the client while a span is active carries it.
     let value = with_active_span(|| {
         let client = Client::new();
@@ -73,6 +73,6 @@ fn request_carries_trace_link_header_on_warp_header_path() {
             .map(|value| value.to_str().unwrap().to_string())
     });
 
-    let value = value.expect("trace-link header should be added on the warp-header path");
+    let value = value.expect("trace-link header should be added on the leanterm-header path");
     assert!(value.starts_with("00-"), "unexpected header value: {value}");
 }

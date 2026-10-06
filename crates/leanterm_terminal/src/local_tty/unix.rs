@@ -14,6 +14,11 @@ use std::{io, ptr};
 use anyhow::{Context as _, Error, Result};
 use command::blocking::Command;
 use itertools::Itertools;
+use leanterm_core::channel::ChannelState;
+use leanterm_core::cli_agent_protocol::LEANTERM_CLIENT_VERSION_ENV;
+use leanterm_core::safe_error;
+use leanterm_errors::report_if_error;
+use leanterm_ui_core::{AppContext, SingletonEntity};
 use libc::{self, TIOCSCTTY, c_int, winsize};
 use mio::Interest;
 use mio::unix::SourceFd;
@@ -21,11 +26,6 @@ use nix::pty::openpty;
 use nix::sys::termios::{self, InputFlags, SetArg};
 use serde::{Deserialize, Serialize};
 use signal_hook_mio::v1_0::Signals;
-use leanterm_core::channel::ChannelState;
-use leanterm_core::cli_agent_protocol::WARP_CLIENT_VERSION_ENV;
-use leanterm_core::safe_error;
-use leanterm_errors::report_if_error;
-use leanterm_ui_core::{AppContext, SingletonEntity};
 
 use super::event_loop::{PTY_TOKEN, SIGNALS_TOKEN};
 use super::spawner::{PtyHandle, PtySpawnInfo, PtySpawner};
@@ -149,7 +149,7 @@ fn current_user_via_getpwuid(uid: nix::unistd::Uid) -> Option<CurrentUser> {
 
 /// `getent` is the host's own (typically glibc-dynamic) binary, so it consults
 /// the host's full NSS configuration — including SSSD/LDAP/AD — which a
-/// static/musl Warp binary cannot do in-process.
+/// static/musl Leanterm binary cannot do in-process.
 fn current_user_via_getent(uid: u32) -> Option<CurrentUser> {
     let output = Command::new("getent")
         .arg("passwd")
@@ -321,7 +321,7 @@ fn build_host_shell_command(
 
     // Specify terminal name and capabilities.
     builder.env("TERM", "xterm-256color");
-    builder.env("TERM_PROGRAM", "WarpTerminal");
+    builder.env("TERM_PROGRAM", "Leanterm");
     // Advertise 24-bit color support.
     builder.env("COLORTERM", "truecolor");
 
@@ -332,15 +332,15 @@ fn build_host_shell_command(
     if let Some(version) = ChannelState::app_version() {
         builder.env("TERM_PROGRAM_VERSION", version);
 
-        // We also insert this warp-specific version so that
-        // plugins can do warp-specific version checks without worrying
+        // We also insert this leanterm-specific version so that
+        // plugins can do leanterm-specific version checks without worrying
         // that the version env var might be coming from a different terminal
         // (for ex., in the ssh case).
-        builder.env(WARP_CLIENT_VERSION_ENV, version);
+        builder.env(LEANTERM_CLIENT_VERSION_ENV, version);
     } else {
         // Local builds don't have GIT_RELEASE_TAG, so app_version() is None.
         // Use "local" so plugins can still distinguish this from a missing value.
-        builder.env(WARP_CLIENT_VERSION_ENV, "local");
+        builder.env(LEANTERM_CLIENT_VERSION_ENV, "local");
     }
 
     // Set the `SHELL` environment variable to match the path of the shell we are using.
@@ -355,15 +355,15 @@ fn build_host_shell_command(
 
     // Set whether or not we should utilize the SSH wrapper in this shell.
     if enable_ssh_wrapper {
-        builder.env("WARP_USE_SSH_WRAPPER", "1");
+        builder.env("LEANTERM_USE_SSH_WRAPPER", "1");
     } else {
-        builder.env("WARP_USE_SSH_WRAPPER", "0");
+        builder.env("LEANTERM_USE_SSH_WRAPPER", "0");
     }
 
     // Whether the SSH wrapper should attach to an existing ControlMaster
     // for the destination host instead of always creating its own.
     builder.env(
-        "WARP_SSH_REUSE_CONTROL_MASTER",
+        "LEANTERM_SSH_REUSE_CONTROL_MASTER",
         if reuse_ssh_control_master { "1" } else { "0" },
     );
 
@@ -375,22 +375,22 @@ fn build_host_shell_command(
 
     // We currently don't support bootstrapping recursive SSH sessions so we will only run the SSH
     // logic if this flag is set.
-    builder.env("WARP_IS_LOCAL_SHELL_SESSION", "1");
+    builder.env("LEANTERM_IS_LOCAL_SHELL_SESSION", "1");
 
     if shell_debug_mode {
-        builder.env("WARP_SHELL_DEBUG_MODE", "1");
+        builder.env("LEANTERM_SHELL_DEBUG_MODE", "1");
     }
     if honor_ps1 {
-        builder.env("WARP_HONOR_PS1", "1");
+        builder.env("LEANTERM_HONOR_PS1", "1");
     } else {
-        builder.env("WARP_HONOR_PS1", "0");
+        builder.env("LEANTERM_HONOR_PS1", "0");
     }
 
     // Gate the shell's per-prompt `node --version` detection on whether the
     // Node.js Version chip is enabled. The bootstrap treats any value other than
     // "0" as enabled, so we only ever set "0" to disable it.
     builder.env(
-        "WARP_PROMPT_NODE_VERSION_ENABLED",
+        "LEANTERM_PROMPT_NODE_VERSION_ENABLED",
         if node_version_chip_enabled { "1" } else { "0" },
     );
 
@@ -398,7 +398,7 @@ fn build_host_shell_command(
     let path_append = extra_path_entries()
         .map(|p| p.to_string_lossy().into_owned())
         .join(":");
-    builder.env("WARP_PATH_APPEND", path_append);
+    builder.env("LEANTERM_PATH_APPEND", path_append);
 
     if matches!(shell_starter.shell_type(), ShellType::Bash) {
         // Set initial very large values so bash imports the user's existing
@@ -407,8 +407,8 @@ fn build_host_shell_command(
         builder.env("HISTSIZE", BASH_HISTORY_SIZE_SENTINEL);
         // Set second environment variables that we can use to know whether
         // the user rcfiles set these variables or not.
-        builder.env("WARP_INITIAL_HISTFILESIZE", BASH_HISTORY_SIZE_SENTINEL);
-        builder.env("WARP_INITIAL_HISTSIZE", BASH_HISTORY_SIZE_SENTINEL);
+        builder.env("LEANTERM_INITIAL_HISTFILESIZE", BASH_HISTORY_SIZE_SENTINEL);
+        builder.env("LEANTERM_INITIAL_HISTSIZE", BASH_HISTORY_SIZE_SENTINEL);
     }
 
     // Pass the desired initial working directory as an environment variable
@@ -421,7 +421,7 @@ fn build_host_shell_command(
     // directory could be on a network filesystem; deferring the `cd` to
     // shell bootstrap avoids that.
     if let Some(start_dir) = start_dir {
-        builder.env("WARP_INITIAL_WORKING_DIR", start_dir);
+        builder.env("LEANTERM_INITIAL_WORKING_DIR", start_dir);
     }
 
     // Apply any caller-provided environment overrides last, so they win.
@@ -537,7 +537,7 @@ fn spawn_command_in_pty(
             if is_isolated {
                 // If running in a sandbox on Linux, adjust the OOM score
                 // to make the child process more likely to be killed than the parent process
-                // in case of OOM. If the Warp process is killed while hosting an ambient
+                // in case of OOM. If the Leanterm process is killed while hosting an ambient
                 // agent, its shared session will abruptly end with no user-visible error.
                 // Instead, we want to kill whatever process the agent spawned that's using
                 // lots of memory. This gives the agent a chance to gracefully fail.
@@ -829,8 +829,8 @@ fn build_docker_sandbox_command(
     // TODO(advait): audit this list. It currently mirrors what the
     // pre-refactor host-shell `spawn` set when the starter happened to
     // be a Docker sandbox, so behaviour is unchanged from before the
-    // split. Many of these (e.g. `WARP_USE_SSH_WRAPPER`,
-    // `SSH_SOCKET_DIR`, `HISTFILESIZE`, `WARP_IS_LOCAL_SHELL_SESSION`)
+    // split. Many of these (e.g. `LEANTERM_USE_SSH_WRAPPER`,
+    // `SSH_SOCKET_DIR`, `HISTFILESIZE`, `LEANTERM_IS_LOCAL_SHELL_SESSION`)
     // are set on the *host* `sbx` process and may or may not propagate
     // into the container depending on `sbx`'s env passthrough rules.
     // Once we've validated what the container bootstrap actually needs,
@@ -847,48 +847,48 @@ fn build_docker_sandbox_command(
     }
     builder.env("HOME", &home_dir);
     builder.env("TERM", "xterm-256color");
-    builder.env("TERM_PROGRAM", "WarpTerminal");
+    builder.env("TERM_PROGRAM", "Leanterm");
     builder.env("COLORTERM", "truecolor");
     builder.env_remove("DESKTOP_STARTUP_ID");
     if let Some(version) = ChannelState::app_version() {
         builder.env("TERM_PROGRAM_VERSION", version);
-        builder.env(WARP_CLIENT_VERSION_ENV, version);
+        builder.env(LEANTERM_CLIENT_VERSION_ENV, version);
     } else {
-        builder.env(WARP_CLIENT_VERSION_ENV, "local");
+        builder.env(LEANTERM_CLIENT_VERSION_ENV, "local");
     }
     builder.env("SHELL", docker_starter.logical_shell_path());
     if let Some(window_id) = window_id {
         builder.env("WINDOWID", format!("{window_id}"));
     }
     builder.env(
-        "WARP_USE_SSH_WRAPPER",
+        "LEANTERM_USE_SSH_WRAPPER",
         if enable_ssh_wrapper { "1" } else { "0" },
     );
     builder.env(
-        "WARP_SSH_REUSE_CONTROL_MASTER",
+        "LEANTERM_SSH_REUSE_CONTROL_MASTER",
         if reuse_ssh_control_master { "1" } else { "0" },
     );
     builder.env("SSH_SOCKET_DIR", ssh_socket_dir());
-    builder.env("WARP_IS_LOCAL_SHELL_SESSION", "1");
+    builder.env("LEANTERM_IS_LOCAL_SHELL_SESSION", "1");
     if shell_debug_mode {
-        builder.env("WARP_SHELL_DEBUG_MODE", "1");
+        builder.env("LEANTERM_SHELL_DEBUG_MODE", "1");
     }
-    builder.env("WARP_HONOR_PS1", if honor_ps1 { "1" } else { "0" });
+    builder.env("LEANTERM_HONOR_PS1", if honor_ps1 { "1" } else { "0" });
     builder.env(
-        "WARP_PROMPT_NODE_VERSION_ENABLED",
+        "LEANTERM_PROMPT_NODE_VERSION_ENABLED",
         if node_version_chip_enabled { "1" } else { "0" },
     );
     let path_append = extra_path_entries()
         .map(|p| p.to_string_lossy().into_owned())
         .join(":");
-    builder.env("WARP_PATH_APPEND", path_append);
+    builder.env("LEANTERM_PATH_APPEND", path_append);
     // Sandbox shell is always bash (per the container image convention),
     // matching the host-shell path's behavior for bash shells.
     builder.env("HISTFILESIZE", BASH_HISTORY_SIZE_SENTINEL);
     builder.env("HISTSIZE", BASH_HISTORY_SIZE_SENTINEL);
-    builder.env("WARP_INITIAL_HISTFILESIZE", BASH_HISTORY_SIZE_SENTINEL);
-    builder.env("WARP_INITIAL_HISTSIZE", BASH_HISTORY_SIZE_SENTINEL);
-    // Intentionally do NOT set `WARP_INITIAL_WORKING_DIR` for sandboxes:
+    builder.env("LEANTERM_INITIAL_HISTFILESIZE", BASH_HISTORY_SIZE_SENTINEL);
+    builder.env("LEANTERM_INITIAL_HISTSIZE", BASH_HISTORY_SIZE_SENTINEL);
+    // Intentionally do NOT set `LEANTERM_INITIAL_WORKING_DIR` for sandboxes:
     // the container's init script cds into the sandbox home dir, not
     // the host's startup dir.
 
@@ -909,19 +909,19 @@ fn build_docker_sandbox_command(
 ///    the sandbox.
 ///
 /// Both paths are derived from `starter.sandbox_id` so multiple concurrent
-/// Warp panes/sandboxes don't race on or share the same host directories.
+/// Leanterm panes/sandboxes don't race on or share the same host directories.
 ///
 /// The actual sandbox creation + attachment happens via
-/// `sbx run --name warp-sandbox-<id> shell WORKSPACE ... -- -c "cd /home/agent && exec bash --rcfile ..."`
+/// `sbx run --name leanterm-sandbox-<id> shell WORKSPACE ... -- -c "cd /home/agent && exec bash --rcfile ..."`
 /// when the PTY process is spawned.
 ///
 /// TODO(advait): Wire up cleanup on pane close. Today, closing a Docker
 /// sandbox pane leaves behind (1) the per-sandbox host init + workspace dirs
-/// under the Warp cache dir, and (2) the stopped `warp-sandbox-<id>`
+/// under the Leanterm cache dir, and (2) the stopped `leanterm-sandbox-<id>`
 /// container. Both are per-sandbox so they don't clobber each other, but
 /// they accumulate over repeated sessions. The right hook is likely on the
 /// PTY/pane lifecycle (alongside `Pty::kill`) and should:
-///   - `sbx rm --force warp-sandbox-<id>` to drop the container,
+///   - `sbx rm --force leanterm-sandbox-<id>` to drop the container,
 ///   - `fs::remove_dir_all` on `starter.init_dir()` and
 ///     `starter.workspace_dir()` to reclaim host disk.
 ///
@@ -929,9 +929,9 @@ fn build_docker_sandbox_command(
 fn prepare_docker_sandbox(starter: &DockerSandboxShellStarter) -> Result<()> {
     // Build each per-sandbox subdirectory with mode 0700 so other local users
     // cannot traverse into them, which (combined with the parent living under
-    // the per-user Warp cache dir rather than `/tmp`) prevents the init
+    // the per-user Leanterm cache dir rather than `/tmp`) prevents the init
     // script from being read or symlink-attacked by anyone other than the
-    // Warp user. The file itself is left at the default mode so the
+    // Leanterm user. The file itself is left at the default mode so the
     // container's shell (which may run as a different uid than the host
     // user) can still read it via `--rcfile`.
     let mk_owner_only_dir = |path: &Path| -> Result<()> {

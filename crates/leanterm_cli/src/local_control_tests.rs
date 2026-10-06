@@ -9,7 +9,7 @@ use super::*;
 #[test]
 fn parses_typed_create_and_setting_list_params() {
     let args = ControlArgs::try_parse_from([
-        "warpctrl",
+        "leantermctl",
         "tab",
         "create",
         "--type",
@@ -24,12 +24,12 @@ fn parses_typed_create_and_setting_list_params() {
     assert_eq!(args.tab_type, Some(CliTabType::Terminal));
     assert_eq!(args.target.session.as_deref(), Some("session_1"));
 
-    let err = ControlArgs::try_parse_from(["warpctrl", "tab", "create", "--shell", "zsh"])
+    let err = ControlArgs::try_parse_from(["leantermctl", "tab", "create", "--shell", "zsh"])
         .expect_err("shell is not an accepted tab create flag");
     assert_eq!(err.kind(), clap::error::ErrorKind::UnknownArgument);
 
     let args =
-        ControlArgs::try_parse_from(["warpctrl", "setting", "list", "--namespace", "editor"])
+        ControlArgs::try_parse_from(["leantermctl", "setting", "list", "--namespace", "editor"])
             .expect("setting list parses");
     let ControlCommand::Setting(SettingCommand::List(args)) = args.command else {
         panic!("expected setting list command");
@@ -40,7 +40,7 @@ fn parses_typed_create_and_setting_list_params() {
 #[test]
 fn rejects_conflicting_instance_selectors() {
     let err = ControlArgs::try_parse_from([
-        "warpctrl",
+        "leantermctl",
         "tab",
         "create",
         "--instance",
@@ -54,14 +54,15 @@ fn rejects_conflicting_instance_selectors() {
 
 #[test]
 fn parses_instance_and_pid_selectors() {
-    let args = ControlArgs::try_parse_from(["warpctrl", "tab", "create", "--instance", "inst_123"])
-        .expect("instance selector parses");
+    let args =
+        ControlArgs::try_parse_from(["leantermctl", "tab", "create", "--instance", "inst_123"])
+            .expect("instance selector parses");
     let ControlCommand::Tab(TabCommand::Create(create)) = args.command else {
         panic!("expected tab create command");
     };
     assert_eq!(create.target.instance.as_deref(), Some("inst_123"));
 
-    let args = ControlArgs::try_parse_from(["warpctrl", "app", "ping", "--pid", "123"])
+    let args = ControlArgs::try_parse_from(["leantermctl", "app", "ping", "--pid", "123"])
         .expect("pid selector parses");
     let ControlCommand::App(AppCommand::Ping(target)) = args.command else {
         panic!("expected app ping command");
@@ -72,7 +73,7 @@ fn parses_instance_and_pid_selectors() {
 #[test]
 fn surface_list_accepts_instance_selection() {
     let args =
-        ControlArgs::try_parse_from(["warpctrl", "surface", "list", "--instance", "inst_123"])
+        ControlArgs::try_parse_from(["leantermctl", "surface", "list", "--instance", "inst_123"])
             .expect("surface list instance selector parses");
     let ControlCommand::Surface(SurfaceCommand::List(target)) = args.command else {
         panic!("expected surface list command");
@@ -83,17 +84,17 @@ fn surface_list_accepts_instance_selection() {
 #[test]
 fn rejects_excluded_command_routes() {
     for args in [
-        vec!["warpctrl", "history", "list"],
-        vec!["warpctrl", "block", "list"],
-        vec!["warpctrl", "block", "inspect", "block_1"],
-        vec!["warpctrl", "block", "output", "block_1"],
-        vec!["warpctrl", "input", "get"],
-        vec!["warpctrl", "input", "clear"],
-        vec!["warpctrl", "input", "mode", "set", "agent"],
-        vec!["warpctrl", "input", "run", "pwd"],
-        vec!["warpctrl", "file", "list"],
-        vec!["warpctrl", "drive", "list"],
-        vec!["warpctrl", "auth", "status"],
+        vec!["leantermctl", "history", "list"],
+        vec!["leantermctl", "block", "list"],
+        vec!["leantermctl", "block", "inspect", "block_1"],
+        vec!["leantermctl", "block", "output", "block_1"],
+        vec!["leantermctl", "input", "get"],
+        vec!["leantermctl", "input", "clear"],
+        vec!["leantermctl", "input", "mode", "set", "agent"],
+        vec!["leantermctl", "input", "run", "pwd"],
+        vec!["leantermctl", "file", "list"],
+        vec!["leantermctl", "drive", "list"],
+        vec!["leantermctl", "auth", "status"],
     ] {
         assert!(ControlArgs::try_parse_from(args).is_err());
     }
@@ -101,7 +102,7 @@ fn rejects_excluded_command_routes() {
 
 #[test]
 fn parses_first_slice_instance_list() {
-    let args = ControlArgs::try_parse_from(["warpctrl", "instance", "list"])
+    let args = ControlArgs::try_parse_from(["leantermctl", "instance", "list"])
         .expect("instance list parses");
     assert!(matches!(
         args.command,
@@ -111,33 +112,34 @@ fn parses_first_slice_instance_list() {
 
 #[test]
 fn parses_first_slice_app_smoke_metadata_commands() {
-    assert!(ControlArgs::try_parse_from(["warpctrl", "app", "ping"]).is_ok());
-    assert!(ControlArgs::try_parse_from(["warpctrl", "app", "version"]).is_ok());
-    assert!(ControlArgs::try_parse_from(["warpctrl", "app", "active"]).is_ok());
-    assert!(ControlArgs::try_parse_from(["warpctrl", "app", "focus"]).is_ok());
+    assert!(ControlArgs::try_parse_from(["leantermctl", "app", "ping"]).is_ok());
+    assert!(ControlArgs::try_parse_from(["leantermctl", "app", "version"]).is_ok());
+    assert!(ControlArgs::try_parse_from(["leantermctl", "app", "active"]).is_ok());
+    assert!(ControlArgs::try_parse_from(["leantermctl", "app", "focus"]).is_ok());
 }
 
 #[test]
 fn parses_catalog_metadata_commands() {
     let args =
-        ControlArgs::try_parse_from(["warpctrl", "action", "inspect", "surface.settings.open"])
+        ControlArgs::try_parse_from(["leantermctl", "action", "inspect", "surface.settings.open"])
             .expect("action inspect parses");
     let ControlCommand::Action(ActionCatalogCommand::Inspect { action }) = args.command else {
         panic!("expected action inspect command");
     };
     assert_eq!(action, "surface.settings.open");
-    assert!(ControlArgs::try_parse_from(["warpctrl", "action", "list"]).is_ok());
-    assert!(ControlArgs::try_parse_from(["warpctrl", "capability", "list"]).is_ok());
+    assert!(ControlArgs::try_parse_from(["leantermctl", "action", "list"]).is_ok());
+    assert!(ControlArgs::try_parse_from(["leantermctl", "capability", "list"]).is_ok());
     assert!(
-        ControlArgs::try_parse_from(["warpctrl", "capability", "inspect", "tab.create"]).is_ok()
+        ControlArgs::try_parse_from(["leantermctl", "capability", "inspect", "tab.create"]).is_ok()
     );
 }
 
 #[test]
 fn parses_control_mode_args_after_hidden_flag() {
-    let args = ControlArgs::try_parse_control_mode_from(["warp", "--warpctrl", "tab", "create"])
-        .expect("control mode flag is present")
-        .expect("control mode args parse");
+    let args =
+        ControlArgs::try_parse_control_mode_from(["leanterm", "--leantermctl", "tab", "create"])
+            .expect("control mode flag is present")
+            .expect("control mode args parse");
     assert!(matches!(
         args.command,
         ControlCommand::Tab(TabCommand::Create(_))
@@ -146,12 +148,12 @@ fn parses_control_mode_args_after_hidden_flag() {
 
 #[test]
 fn ignores_args_without_control_mode_flag() {
-    assert!(ControlArgs::try_parse_control_mode_from(["warp", "tab", "create"]).is_none());
+    assert!(ControlArgs::try_parse_control_mode_from(["leanterm", "tab", "create"]).is_none());
 }
 
 #[test]
 fn parses_completion_generation_command() {
-    let args = ControlArgs::try_parse_from(["warpctrl", "completions", "bash"])
+    let args = ControlArgs::try_parse_from(["leantermctl", "completions", "bash"])
         .expect("completions parses");
     assert!(matches!(
         args.command,
@@ -164,7 +166,7 @@ fn parses_completion_generation_command() {
 #[test]
 fn parses_exact_window_tab_pane_and_session_selectors() {
     let args = ControlArgs::try_parse_from([
-        "warpctrl",
+        "leantermctl",
         "session",
         "inspect",
         "--window-title",
@@ -195,7 +197,7 @@ fn instance_list_output_serializes_empty_and_populated_lists() {
     let record = local_control::discovery::InstanceRecord::for_current_process(
         None,
         "dev",
-        "dev.warp.Warp",
+        "dev.leanterm.Leanterm",
         Some("v0.1.0".to_owned()),
         Vec::new(),
     );
@@ -204,7 +206,10 @@ fn instance_list_output_serializes_empty_and_populated_lists() {
         .expect("populated list serializes");
     assert_eq!(populated["instances"][0]["instance_id"], json!(instance_id));
     assert_eq!(populated["instances"][0]["channel"], json!("dev"));
-    assert_eq!(populated["instances"][0]["app_id"], json!("dev.warp.Warp"));
+    assert_eq!(
+        populated["instances"][0]["app_id"],
+        json!("dev.leanterm.Leanterm")
+    );
     assert_eq!(populated["instances"][0]["app_version"], json!("v0.1.0"));
 }
 
@@ -267,7 +272,7 @@ fn generated_bash_completions_include_mutating_command_groups() {
 
 #[test]
 fn structured_error_output_uses_stable_error_code() {
-    let error = ControlError::new(ErrorCode::NoInstance, "no local Warp control instances");
+    let error = ControlError::new(ErrorCode::NoInstance, "no local Leanterm control instances");
     let value = serde_json::to_value(ErrorSummary {
         ok: false,
         error: &error,
@@ -277,7 +282,7 @@ fn structured_error_output_uses_stable_error_code() {
     assert_eq!(value["error"]["code"], json!("no_instance"));
     assert_eq!(
         value["error"]["message"],
-        json!("no local Warp control instances")
+        json!("no local Leanterm control instances")
     );
 }
 
@@ -306,75 +311,96 @@ fn retained_action_examples() -> Vec<(ActionKind, Vec<&'static str>)> {
     vec![
         (
             ActionKind::InstanceList,
-            vec!["warpctrl", "instance", "list"],
+            vec!["leantermctl", "instance", "list"],
         ),
         (
             ActionKind::InstanceInspect,
-            vec!["warpctrl", "instance", "inspect"],
+            vec!["leantermctl", "instance", "inspect"],
         ),
-        (ActionKind::AppPing, vec!["warpctrl", "app", "ping"]),
-        (ActionKind::AppVersion, vec!["warpctrl", "app", "version"]),
-        (ActionKind::AppActive, vec!["warpctrl", "app", "active"]),
-        (ActionKind::AppFocus, vec!["warpctrl", "app", "focus"]),
+        (ActionKind::AppPing, vec!["leantermctl", "app", "ping"]),
+        (
+            ActionKind::AppVersion,
+            vec!["leantermctl", "app", "version"],
+        ),
+        (ActionKind::AppActive, vec!["leantermctl", "app", "active"]),
+        (ActionKind::AppFocus, vec!["leantermctl", "app", "focus"]),
         (
             ActionKind::CapabilityList,
-            vec!["warpctrl", "capability", "list"],
+            vec!["leantermctl", "capability", "list"],
         ),
         (
             ActionKind::CapabilityInspect,
-            vec!["warpctrl", "capability", "inspect", "tab.create"],
+            vec!["leantermctl", "capability", "inspect", "tab.create"],
         ),
-        (ActionKind::WindowList, vec!["warpctrl", "window", "list"]),
+        (
+            ActionKind::WindowList,
+            vec!["leantermctl", "window", "list"],
+        ),
         (
             ActionKind::WindowInspect,
-            vec!["warpctrl", "window", "inspect"],
+            vec!["leantermctl", "window", "inspect"],
         ),
         (
             ActionKind::WindowCreate,
-            vec!["warpctrl", "window", "create"],
+            vec!["leantermctl", "window", "create"],
         ),
-        (ActionKind::WindowFocus, vec!["warpctrl", "window", "focus"]),
-        (ActionKind::WindowClose, vec!["warpctrl", "window", "close"]),
-        (ActionKind::TabList, vec!["warpctrl", "tab", "list"]),
-        (ActionKind::TabInspect, vec!["warpctrl", "tab", "inspect"]),
-        (ActionKind::TabCreate, vec!["warpctrl", "tab", "create"]),
-        (ActionKind::TabActivate, vec!["warpctrl", "tab", "activate"]),
+        (
+            ActionKind::WindowFocus,
+            vec!["leantermctl", "window", "focus"],
+        ),
+        (
+            ActionKind::WindowClose,
+            vec!["leantermctl", "window", "close"],
+        ),
+        (ActionKind::TabList, vec!["leantermctl", "tab", "list"]),
+        (
+            ActionKind::TabInspect,
+            vec!["leantermctl", "tab", "inspect"],
+        ),
+        (ActionKind::TabCreate, vec!["leantermctl", "tab", "create"]),
+        (
+            ActionKind::TabActivate,
+            vec!["leantermctl", "tab", "activate"],
+        ),
         (
             ActionKind::TabMove,
-            vec!["warpctrl", "tab", "move", "--direction", "next"],
+            vec!["leantermctl", "tab", "move", "--direction", "next"],
         ),
-        (ActionKind::TabClose, vec!["warpctrl", "tab", "close"]),
+        (ActionKind::TabClose, vec!["leantermctl", "tab", "close"]),
         (
             ActionKind::TabRename,
-            vec!["warpctrl", "tab", "rename", "docs"],
+            vec!["leantermctl", "tab", "rename", "docs"],
         ),
         (
             ActionKind::TabResetName,
-            vec!["warpctrl", "tab", "reset-name"],
+            vec!["leantermctl", "tab", "reset-name"],
         ),
         (
             ActionKind::TabColorSet,
-            vec!["warpctrl", "tab", "color", "set", "red"],
+            vec!["leantermctl", "tab", "color", "set", "red"],
         ),
         (
             ActionKind::TabColorClear,
-            vec!["warpctrl", "tab", "color", "clear"],
+            vec!["leantermctl", "tab", "color", "clear"],
         ),
-        (ActionKind::PaneList, vec!["warpctrl", "pane", "list"]),
-        (ActionKind::PaneInspect, vec!["warpctrl", "pane", "inspect"]),
+        (ActionKind::PaneList, vec!["leantermctl", "pane", "list"]),
+        (
+            ActionKind::PaneInspect,
+            vec!["leantermctl", "pane", "inspect"],
+        ),
         (
             ActionKind::PaneSplit,
-            vec!["warpctrl", "pane", "split", "--direction", "right"],
+            vec!["leantermctl", "pane", "split", "--direction", "right"],
         ),
-        (ActionKind::PaneFocus, vec!["warpctrl", "pane", "focus"]),
+        (ActionKind::PaneFocus, vec!["leantermctl", "pane", "focus"]),
         (
             ActionKind::PaneNavigate,
-            vec!["warpctrl", "pane", "navigate", "--direction", "next"],
+            vec!["leantermctl", "pane", "navigate", "--direction", "next"],
         ),
         (
             ActionKind::PaneResize,
             vec![
-                "warpctrl",
+                "leantermctl",
                 "pane",
                 "resize",
                 "--direction",
@@ -385,175 +411,190 @@ fn retained_action_examples() -> Vec<(ActionKind, Vec<&'static str>)> {
         ),
         (
             ActionKind::PaneMaximize,
-            vec!["warpctrl", "pane", "maximize"],
+            vec!["leantermctl", "pane", "maximize"],
         ),
         (
             ActionKind::PaneUnmaximize,
-            vec!["warpctrl", "pane", "unmaximize"],
+            vec!["leantermctl", "pane", "unmaximize"],
         ),
-        (ActionKind::PaneClose, vec!["warpctrl", "pane", "close"]),
+        (ActionKind::PaneClose, vec!["leantermctl", "pane", "close"]),
         (
             ActionKind::PaneRename,
-            vec!["warpctrl", "pane", "rename", "server"],
+            vec!["leantermctl", "pane", "rename", "server"],
         ),
         (
             ActionKind::PaneResetName,
-            vec!["warpctrl", "pane", "reset-name"],
+            vec!["leantermctl", "pane", "reset-name"],
         ),
-        (ActionKind::SessionList, vec!["warpctrl", "session", "list"]),
+        (
+            ActionKind::SessionList,
+            vec!["leantermctl", "session", "list"],
+        ),
         (
             ActionKind::SessionInspect,
-            vec!["warpctrl", "session", "inspect"],
+            vec!["leantermctl", "session", "inspect"],
         ),
         (
             ActionKind::SessionActivate,
-            vec!["warpctrl", "session", "activate"],
+            vec!["leantermctl", "session", "activate"],
         ),
         (
             ActionKind::SessionPrevious,
-            vec!["warpctrl", "session", "previous"],
+            vec!["leantermctl", "session", "previous"],
         ),
-        (ActionKind::SessionNext, vec!["warpctrl", "session", "next"]),
+        (
+            ActionKind::SessionNext,
+            vec!["leantermctl", "session", "next"],
+        ),
         (
             ActionKind::SessionReopenClosed,
-            vec!["warpctrl", "session", "reopen-closed"],
+            vec!["leantermctl", "session", "reopen-closed"],
         ),
         (
             ActionKind::InputInsert,
-            vec!["warpctrl", "input", "insert", "hello"],
+            vec!["leantermctl", "input", "insert", "hello"],
         ),
         (
             ActionKind::InputReplace,
-            vec!["warpctrl", "input", "replace", "hello"],
+            vec!["leantermctl", "input", "replace", "hello"],
         ),
-        (ActionKind::ThemeList, vec!["warpctrl", "theme", "list"]),
-        (ActionKind::ThemeGet, vec!["warpctrl", "theme", "get"]),
+        (ActionKind::ThemeList, vec!["leantermctl", "theme", "list"]),
+        (ActionKind::ThemeGet, vec!["leantermctl", "theme", "get"]),
         (
             ActionKind::ThemeSet,
-            vec!["warpctrl", "theme", "set", "Dracula"],
+            vec!["leantermctl", "theme", "set", "Dracula"],
         ),
         (
             ActionKind::ThemeSystemSet,
-            vec!["warpctrl", "theme", "system-set", "true"],
+            vec!["leantermctl", "theme", "system-set", "true"],
         ),
         (
             ActionKind::ThemeLightSet,
-            vec!["warpctrl", "theme", "light-set", "Light"],
+            vec!["leantermctl", "theme", "light-set", "Light"],
         ),
         (
             ActionKind::ThemeDarkSet,
-            vec!["warpctrl", "theme", "dark-set", "Dark"],
+            vec!["leantermctl", "theme", "dark-set", "Dark"],
         ),
         (
             ActionKind::AppearanceGet,
-            vec!["warpctrl", "appearance", "get"],
+            vec!["leantermctl", "appearance", "get"],
         ),
         (
             ActionKind::AppearanceFontSizeIncrease,
-            vec!["warpctrl", "appearance", "font-size-increase"],
+            vec!["leantermctl", "appearance", "font-size-increase"],
         ),
         (
             ActionKind::AppearanceFontSizeDecrease,
-            vec!["warpctrl", "appearance", "font-size-decrease"],
+            vec!["leantermctl", "appearance", "font-size-decrease"],
         ),
         (
             ActionKind::AppearanceFontSizeReset,
-            vec!["warpctrl", "appearance", "font-size-reset"],
+            vec!["leantermctl", "appearance", "font-size-reset"],
         ),
         (
             ActionKind::AppearanceZoomIncrease,
-            vec!["warpctrl", "appearance", "zoom-increase"],
+            vec!["leantermctl", "appearance", "zoom-increase"],
         ),
         (
             ActionKind::AppearanceZoomDecrease,
-            vec!["warpctrl", "appearance", "zoom-decrease"],
+            vec!["leantermctl", "appearance", "zoom-decrease"],
         ),
         (
             ActionKind::AppearanceZoomReset,
-            vec!["warpctrl", "appearance", "zoom-reset"],
+            vec!["leantermctl", "appearance", "zoom-reset"],
         ),
-        (ActionKind::SettingList, vec!["warpctrl", "setting", "list"]),
+        (
+            ActionKind::SettingList,
+            vec!["leantermctl", "setting", "list"],
+        ),
         (
             ActionKind::SettingGet,
-            vec!["warpctrl", "setting", "get", "font_size"],
+            vec!["leantermctl", "setting", "get", "font_size"],
         ),
         (
             ActionKind::SettingSet,
-            vec!["warpctrl", "setting", "set", "font_size", "14"],
+            vec!["leantermctl", "setting", "set", "font_size", "14"],
         ),
         (
             ActionKind::SettingToggle,
-            vec!["warpctrl", "setting", "toggle", "autosuggestions"],
+            vec!["leantermctl", "setting", "toggle", "autosuggestions"],
         ),
         (
             ActionKind::KeybindingList,
-            vec!["warpctrl", "keybinding", "list"],
+            vec!["leantermctl", "keybinding", "list"],
         ),
         (
             ActionKind::KeybindingGet,
-            vec!["warpctrl", "keybinding", "get", "copy"],
+            vec!["leantermctl", "keybinding", "get", "copy"],
         ),
-        (ActionKind::ActionList, vec!["warpctrl", "action", "list"]),
+        (
+            ActionKind::ActionList,
+            vec!["leantermctl", "action", "list"],
+        ),
         (
             ActionKind::ActionInspect,
-            vec!["warpctrl", "action", "inspect", "tab.create"],
+            vec!["leantermctl", "action", "inspect", "tab.create"],
         ),
-        (ActionKind::SurfaceList, vec!["warpctrl", "surface", "list"]),
+        (
+            ActionKind::SurfaceList,
+            vec!["leantermctl", "surface", "list"],
+        ),
         (
             ActionKind::SurfaceSettingsOpen,
-            vec!["warpctrl", "surface", "settings", "open"],
+            vec!["leantermctl", "surface", "settings", "open"],
         ),
         (
             ActionKind::SurfaceCommandPaletteOpen,
-            vec!["warpctrl", "surface", "command-palette", "open"],
+            vec!["leantermctl", "surface", "command-palette", "open"],
         ),
         (
             ActionKind::SurfaceCommandSearchOpen,
-            vec!["warpctrl", "surface", "command-search", "open"],
+            vec!["leantermctl", "surface", "command-search", "open"],
         ),
         (
             ActionKind::SurfaceThemePickerOpen,
-            vec!["warpctrl", "surface", "theme-picker", "open"],
+            vec!["leantermctl", "surface", "theme-picker", "open"],
         ),
         (
             ActionKind::SurfaceKeybindingsOpen,
-            vec!["warpctrl", "surface", "keybindings", "open"],
+            vec!["leantermctl", "surface", "keybindings", "open"],
         ),
         (
             ActionKind::SurfaceCodeReviewOpen,
-            vec!["warpctrl", "surface", "code-review", "open"],
+            vec!["leantermctl", "surface", "code-review", "open"],
         ),
         (
             ActionKind::SurfaceCodeReviewToggle,
-            vec!["warpctrl", "surface", "code-review", "toggle"],
+            vec!["leantermctl", "surface", "code-review", "toggle"],
         ),
         (
             ActionKind::SurfaceProjectExplorerOpen,
-            vec!["warpctrl", "surface", "project-explorer", "open"],
+            vec!["leantermctl", "surface", "project-explorer", "open"],
         ),
         (
             ActionKind::SurfaceGlobalSearchOpen,
-            vec!["warpctrl", "surface", "global-search", "open"],
+            vec!["leantermctl", "surface", "global-search", "open"],
         ),
         (
             ActionKind::SurfaceLeftPanelToggle,
-            vec!["warpctrl", "surface", "left-panel", "toggle"],
+            vec!["leantermctl", "surface", "left-panel", "toggle"],
         ),
         (
             ActionKind::SurfaceRightPanelToggle,
-            vec!["warpctrl", "surface", "right-panel", "toggle"],
+            vec!["leantermctl", "surface", "right-panel", "toggle"],
         ),
         (
             ActionKind::SurfaceVerticalTabsOpen,
-            vec!["warpctrl", "surface", "vertical-tabs", "open"],
+            vec!["leantermctl", "surface", "vertical-tabs", "open"],
         ),
         (
             ActionKind::SurfaceVerticalTabsToggle,
-            vec!["warpctrl", "surface", "vertical-tabs", "toggle"],
+            vec!["leantermctl", "surface", "vertical-tabs", "toggle"],
         ),
         (
             ActionKind::FileOpen,
-            vec!["warpctrl", "file", "open", "/tmp/example.txt"],
+            vec!["leantermctl", "file", "open", "/tmp/example.txt"],
         ),
     ]
 }

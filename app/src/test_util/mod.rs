@@ -2,8 +2,8 @@ pub mod settings;
 pub mod terminal;
 mod virtual_fs;
 
-pub use virtual_fs::{Stub, VirtualFS};
 pub use leanterm_terminal::test_util::mock_blockgrid;
+pub use virtual_fs::{Stub, VirtualFS};
 
 macro_rules! assert_eventually {
     ($cond:expr_2021, $($arg:tt)+) => {

@@ -6,10 +6,7 @@ use code_diff::workspace::WorkspaceMetadata;
 use csv::Writer;
 use enclose::enclose;
 use itertools::Itertools;
-use settings::Setting as _;
-use settings::manager::SettingsManager;
 use leanterm_errors::{report_error, report_if_error};
-use leanterm_util::path::user_friendly_path;
 use leanterm_ui::actions::StandardAction;
 use leanterm_ui::keymap::{Keystroke, Trigger};
 use leanterm_ui::platform::menu::{
@@ -17,6 +14,9 @@ use leanterm_ui::platform::menu::{
 };
 use leanterm_ui::windowing::WindowManager;
 use leanterm_ui::{AppContext, SingletonEntity};
+use leanterm_util::path::user_friendly_path;
+use settings::Setting as _;
+use settings::manager::SettingsManager;
 
 use crate::channel;
 use crate::default_terminal::DefaultTerminal;
@@ -29,7 +29,7 @@ use crate::terminal::alt_screen_reporting::AltScreenReporting;
 use crate::terminal::session_settings::SessionSettings;
 use crate::terminal::settings::{SpacingMode, TerminalSettings};
 use crate::undo_close::UndoCloseStack;
-use crate::user_config::WarpConfig;
+use crate::user_config::LeantermConfig;
 use crate::util::bindings::{self, CustomAction, trigger_to_keystroke};
 use crate::util::links;
 use crate::workspace::sync_inputs::SyncedInputState;
@@ -43,18 +43,18 @@ const DISABLE_SHELL_DEBUG_MODE_MENU_ITEM_NAME: &str =
 const ENABLE_IN_BAND_GENERATORS_MENU_ITEM_NAME: &str = "Enable In-band Generators for New Sessions";
 const DISABLE_IN_BAND_GENERATORS_MENU_ITEM_NAME: &str =
     "Disable in-band generators for new sessions";
-const ENABLE_PTY_RECORDING: &str = "Enable PTY Recording Mode (warp.pty.recording)";
-const DISABLE_PTY_RECORDING: &str = "Disable PTY Recording Mode (warp.pty.recording)";
+const ENABLE_PTY_RECORDING: &str = "Enable PTY Recording Mode (leanterm.pty.recording)";
+const DISABLE_PTY_RECORDING: &str = "Disable PTY Recording Mode (leanterm.pty.recording)";
 const SHOW_BOOTSTRAP_BLOCK_MENU_ITEM_NAME: &str = "Show Initialization Block";
 const HIDE_BOOTSTRAP_BLOCK_MENU_ITEM_NAME: &str = "Hide Initialization Block";
 const SHOW_IN_BAND_COMMAND_BLOCKS_MENU_ITEM_NAME: &str = "Show In-band Command Blocks";
 const HIDE_IN_BAND_COMMAND_BLOCKS_MENU_ITEM_NAME: &str = "Hide In-band Command Blocks";
-const SHOW_SSH_COMMAND_BLOCKS_MENU_ITEM_NAME: &str = "Show Warpified SSH Blocks";
-const HIDE_SSH_COMMAND_BLOCKS_MENU_ITEM_NAME: &str = "Hide Warpified SSH Blocks";
+const SHOW_SSH_COMMAND_BLOCKS_MENU_ITEM_NAME: &str = "Show Leantermified SSH Blocks";
+const HIDE_SSH_COMMAND_BLOCKS_MENU_ITEM_NAME: &str = "Hide Leantermified SSH Blocks";
 const EXPORT_DEFAULT_SETTINGS_CSV_MENU_ITEM_NAME: &str =
     "Export Default Settings as CSV to home dir";
 
-const SETTINGS_CSV_FILE_NAME: &str = "warp_default_settings.csv";
+const SETTINGS_CSV_FILE_NAME: &str = "leanterm_default_settings.csv";
 const MAX_RECENT_REPOS_IN_MENU: usize = 10;
 
 /// Creates the root app menu bar
@@ -134,7 +134,7 @@ fn updateable_custom_item_without_checkmark(action: CustomAction, ctx: &AppConte
 
 fn make_new_app_menu(ctx: &AppContext) -> Menu {
     let mut menu_items = vec![updateable_custom_item_without_checkmark(
-        CustomAction::ShowAboutWarp,
+        CustomAction::ShowAboutLeanterm,
         ctx,
     )];
 
@@ -189,15 +189,15 @@ fn make_new_app_menu(ctx: &AppContext) -> Menu {
         &format!("Set {} as Default Terminal", channel::product_name()),
         move |ctx| {
             DefaultTerminal::handle(ctx).update(ctx, |default_terminal, ctx| {
-                default_terminal.make_warp_default(ctx)
+                default_terminal.make_leanterm_default(ctx)
             });
         },
         move |_props, ctx| {
             let default_terminal = DefaultTerminal::handle(ctx).as_ref(ctx);
             MenuItemPropertyChanges {
                 disabled: Some(
-                    !DefaultTerminal::can_warp_become_default()
-                        || default_terminal.is_warp_default(),
+                    !DefaultTerminal::can_leanterm_become_default()
+                        || default_terminal.is_leanterm_default(),
                 ),
                 ..Default::default()
             }
@@ -780,7 +780,7 @@ fn link_menu_item(title: &'static str, link: Cow<'static, str>) -> MenuItem {
 fn make_launch_config_menu_items(ctx: &mut AppContext) -> Vec<MenuItem> {
     let mut launch_config_menu_items = vec![];
 
-    let launch_configs = WarpConfig::handle(ctx).as_ref(ctx).launch_configs();
+    let launch_configs = LeantermConfig::handle(ctx).as_ref(ctx).launch_configs();
     for config in launch_configs {
         launch_config_menu_items.push(MenuItem::Custom(CustomMenuItem::new(
             &config.name,
@@ -904,7 +904,7 @@ fn open_new_default_tab_or_window(ctx: &mut AppContext) {
     }
 }
 
-/// Dispatch event to open a new Warp window
+/// Dispatch event to open a new Leanterm window
 fn open_new_window(ctx: &mut AppContext) {
     ctx.dispatch_global_action("root_view:open_new", &());
     ctx.dispatch_global_action("workspace:save_app", &());

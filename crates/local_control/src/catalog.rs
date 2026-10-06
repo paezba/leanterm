@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 pub const PROTOCOL_VERSION: u32 = 1;
 
-/// Level of Warp hierarchy or orthogonal product noun an action targets.
+/// Level of Leanterm hierarchy or orthogonal product noun an action targets.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TargetScope {
@@ -111,7 +111,7 @@ macro_rules! define_action_catalog {
             ),+ $(,)?
         }
     )+ $(,)?) => {
-        /// Stable protocol name for every approved `warpctrl` action.
+        /// Stable protocol name for every approved `leantermctl` action.
         #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
         pub enum ActionKind {
             $($(#[serde(rename = $name)] $variant,)+)+

@@ -1,7 +1,7 @@
-use pathfinder_geometry::rect::RectF;
-use pathfinder_geometry::vector::{Vector2F, vec2f};
 use leanterm_ui::fonts::Cache as FontCache;
 use leanterm_ui::units::{IntoLines, Lines, Pixels};
+use pathfinder_geometry::rect::RectF;
+use pathfinder_geometry::vector::{Vector2F, vec2f};
 
 use super::{CachedBackgroundColor, active_or_next_match};
 use crate::terminal::grid_size_util::calculate_grid_baseline_position;

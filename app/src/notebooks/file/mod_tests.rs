@@ -1,12 +1,6 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use pathfinder_geometry::vector::vec2f;
-#[cfg(feature = "local_fs")]
-use repo_metadata::RepoMetadataModel;
-use repo_metadata::repositories::DetectedRepositories;
-use repo_metadata::watcher::DirectoryWatcher;
-use string_offset::CharOffset;
 use leanterm_core::features::FeatureFlag;
 use leanterm_core::ui::appearance::Appearance;
 use leanterm_editor::render::model::BlockItem;
@@ -14,6 +8,12 @@ use leanterm_editor::render::model::BlockItem;
 use leanterm_files::FileModel;
 use leanterm_ui::platform::WindowStyle;
 use leanterm_ui::{App, SingletonEntity, View};
+use pathfinder_geometry::vector::vec2f;
+#[cfg(feature = "local_fs")]
+use repo_metadata::RepoMetadataModel;
+use repo_metadata::repositories::DetectedRepositories;
+use repo_metadata::watcher::DirectoryWatcher;
+use string_offset::CharOffset;
 
 use super::{FileNotebookAction, FileNotebookView, FileState, MarkdownDisplayMode, SourceFile};
 use crate::notebooks::context_menu::MenuSource;

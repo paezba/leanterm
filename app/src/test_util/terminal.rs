@@ -1,15 +1,16 @@
+use leanterm_core::ui::appearance::Appearance;
+use leanterm_ui::App;
 #[cfg(feature = "local_fs")]
 #[cfg(feature = "local_fs")]
 use repo_metadata::RepoMetadataModel;
 use repo_metadata::repositories::DetectedRepositories;
 use repo_metadata::watcher::DirectoryWatcher;
-use leanterm_core::ui::appearance::Appearance;
-use leanterm_ui::App;
 use watcher::HomeDirectoryWatcher;
 
 use super::settings::initialize_history_persistence_for_tests;
 use crate::code_review::git_repo_model::GitRepoModels;
 use crate::context_chips::prompt::Prompt;
+use crate::leanterm_managed_paths_watcher::LeantermManagedPathsWatcher;
 use crate::network::NetworkStatus;
 use crate::persisted_workspace::PersistedWorkspace;
 use crate::search::files::model::FileSearchModel;
@@ -24,7 +25,6 @@ use crate::terminal::alt_screen_reporting::AltScreenReporting;
 use crate::terminal::keys::TerminalKeybindings;
 use crate::terminal::resizable_data::ResizableData;
 use crate::undo_close::UndoCloseStack;
-use crate::warp_managed_paths_watcher::WarpManagedPathsWatcher;
 use crate::workflows::local_workflows::LocalWorkflows;
 use crate::workspace::sync_inputs::SyncedInputState;
 use crate::workspace::{ActiveSession, WorkspaceRegistry};
@@ -63,7 +63,7 @@ pub fn initialize_app_for_terminal_view(app: &mut App) {
     app.add_singleton_model(FileSearchModel::new);
     app.add_singleton_model(|_| GitRepoModels::new());
     app.add_singleton_model(HomeDirectoryWatcher::new_for_test);
-    app.add_singleton_model(WarpManagedPathsWatcher::new_for_testing);
+    app.add_singleton_model(LeantermManagedPathsWatcher::new_for_testing);
 
     #[cfg(not(target_family = "wasm"))]
     app.add_singleton_model(SystemInfo::new);

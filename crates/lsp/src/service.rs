@@ -5,6 +5,8 @@ use std::sync::{Arc, Mutex};
 use anyhow::Result;
 use globset::{Glob, GlobMatcher};
 use jsonrpc::{JsonRpcService, RequestId, ServerNotificationEvent};
+use leanterm_errors::report_error;
+use leanterm_util::on_cancel::OnCancelFutureExt;
 use lsp_types::notification::{self, Notification};
 use lsp_types::request::{self, Request};
 use lsp_types::{
@@ -19,8 +21,6 @@ use lsp_types::{
 use serde_json::Value;
 #[cfg(not(target_arch = "wasm32"))]
 use simple_logger::SimpleLogger;
-use leanterm_errors::report_error;
-use leanterm_util::on_cancel::OnCancelFutureExt;
 
 use crate::LspServerLogLevel;
 use crate::config::{LanguageId, lsp_uri_to_path, path_to_lsp_uri};

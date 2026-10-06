@@ -1,7 +1,9 @@
-use settings::Setting as _;
 use leanterm_errors::report_if_error;
 use leanterm_ui::keymap::FixedBinding;
-use leanterm_ui::{AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext};
+use leanterm_ui::{
+    AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext,
+};
+use settings::Setting as _;
 
 use crate::Appearance;
 use crate::chip_configurator::{

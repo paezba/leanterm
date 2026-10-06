@@ -11,11 +11,13 @@ use leanterm_ui::fonts::Weight;
 use leanterm_ui::platform::Cursor;
 use leanterm_ui::ui_components::button::ButtonVariant;
 use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
-use leanterm_ui::{AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext};
+use leanterm_ui::{
+    AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext,
+};
 
 use crate::appearance::Appearance;
 use crate::settings::{ThemeSettings, active_theme_kind};
-use crate::themes::theme::{ThemeKind, WarpTheme};
+use crate::themes::theme::{LeantermTheme, ThemeKind};
 use crate::user_config;
 use crate::user_config::util::from_yaml;
 
@@ -75,11 +77,11 @@ impl ThemeDeletionBody {
         // Check if the theme directory exists
         if fs::metadata(&dir).is_ok()
             && let Some(ThemeKind::Custom(custom_theme)) = &self.theme_kind
-            && let Ok(theme_from_yaml) = from_yaml::<WarpTheme>(custom_theme.path())
+            && let Ok(theme_from_yaml) = from_yaml::<LeantermTheme>(custom_theme.path())
         {
             // If theme has an image
             if let Some(image) = theme_from_yaml.background_image() {
-                // Only delete the image if it is in the ./warp/themes directory.
+                // Only delete the image if it is in the ./leanterm/themes directory.
                 // We don't want to delete images from other parts of the user's filesystem.
                 match image.source() {
                     AssetSource::LocalFile { path, .. } => {

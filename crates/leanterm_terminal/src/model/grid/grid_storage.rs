@@ -8,9 +8,9 @@ mod resize;
 use std::cmp::min;
 use std::ops::{Index, IndexMut, Range};
 
-use serde::{Deserialize, Serialize};
 use leanterm_core::features::FeatureFlag;
 use leanterm_errors::report_error;
+use serde::{Deserialize, Serialize};
 
 use crate::model::ansi::{CharsetIndex, StandardCharset};
 use crate::model::cell::{Cell, Flags};

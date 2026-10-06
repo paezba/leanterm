@@ -1,27 +1,27 @@
 use std::path::Path;
 
+use leanterm_core::features::FeatureFlag;
 #[cfg(feature = "local_fs")]
 use settings::Setting as _;
-use leanterm_core::features::FeatureFlag;
 
 use super::*;
 
 #[test]
 fn test_binary_files_not_openable() {
-    assert!(is_file_openable_in_warp(Path::new("image.png")).is_none());
-    assert!(is_file_openable_in_warp(Path::new("video.mp4")).is_none());
-    assert!(is_file_openable_in_warp(Path::new("binary.exe")).is_none());
-    assert!(is_file_openable_in_warp(Path::new("archive.zip")).is_none());
+    assert!(is_file_openable_in_leanterm(Path::new("image.png")).is_none());
+    assert!(is_file_openable_in_leanterm(Path::new("video.mp4")).is_none());
+    assert!(is_file_openable_in_leanterm(Path::new("binary.exe")).is_none());
+    assert!(is_file_openable_in_leanterm(Path::new("archive.zip")).is_none());
 }
 
 #[test]
 #[cfg(feature = "local_fs")]
-fn test_open_code_panels_file_editor_default_is_warp() {
+fn test_open_code_panels_file_editor_default_is_leanterm() {
     use crate::util::file::external_editor::settings::OpenCodePanelsFileEditor;
 
     assert_eq!(
         OpenCodePanelsFileEditor::default_value(),
-        EditorChoice::Warp
+        EditorChoice::Leanterm
     );
 }
 
@@ -41,10 +41,10 @@ fn test_resolve_file_target_markdown_viewer_precedence() {
 
 #[test]
 #[cfg(feature = "local_fs")]
-fn test_resolve_file_target_warp_uses_default_layout() {
+fn test_resolve_file_target_leanterm_uses_default_layout() {
     let target = resolve_file_target_with_editor_choice(
         Path::new("data.txt"),
-        EditorChoice::Warp,
+        EditorChoice::Leanterm,
         true, /* prefer_markdown_viewer */
         EditorLayout::NewTab,
         None,
@@ -57,7 +57,7 @@ fn test_resolve_file_target_warp_uses_default_layout() {
 /// external editor or the system default app, even when user settings prefer one.
 #[test]
 #[cfg(feature = "local_fs")]
-fn test_resolve_file_target_to_open_in_warp_never_leaves_warp() {
+fn test_resolve_file_target_to_open_in_leanterm_never_leaves_leanterm() {
     use crate::util::file::external_editor::settings::{
         OpenCodePanelsFileEditor, OpenFileEditor, OpenFileLayout, PreferMarkdownViewer,
         PreferTabbedEditorView,
@@ -73,13 +73,13 @@ fn test_resolve_file_target_to_open_in_warp_never_leaves_warp() {
         prefer_tabbed_editor_view: PreferTabbedEditorView::new(None),
     };
     for path in ["README.md", "data.txt", "main.rs", "image.png", "script.sh"] {
-        let target = resolve_file_target_to_open_in_warp(Path::new(path), &settings, None);
+        let target = resolve_file_target_to_open_in_leanterm(Path::new(path), &settings, None);
         assert!(
             matches!(
                 target,
                 FileTarget::CodeEditor(_) | FileTarget::MarkdownViewer(_)
             ),
-            "{path} must resolve to an in-Warp surface, got {target:?}"
+            "{path} must resolve to an in-Leanterm surface, got {target:?}"
         );
     }
 }
@@ -89,7 +89,7 @@ fn test_resolve_file_target_to_open_in_warp_never_leaves_warp() {
 fn test_resolve_file_target_binary_is_system_generic() {
     let target = resolve_file_target_with_editor_choice(
         Path::new("image.png"),
-        EditorChoice::Warp,
+        EditorChoice::Leanterm,
         true, /* prefer_markdown_viewer */
         EditorLayout::SplitPane,
         None,
@@ -112,32 +112,34 @@ fn test_resolve_file_target_binary_uses_env_editor() {
 }
 
 #[test]
-fn test_renders_in_warp_notebook_viewer() {
+fn test_renders_in_leanterm_notebook_viewer() {
     // Markdown always renders in the notebook viewer, independent of the flag.
     let off = FeatureFlag::JupyterNotebookRendering.override_enabled(false);
-    assert!(renders_in_warp_notebook_viewer(Path::new("README.md")));
-    assert!(!renders_in_warp_notebook_viewer(Path::new(
+    assert!(renders_in_leanterm_notebook_viewer(Path::new("README.md")));
+    assert!(!renders_in_leanterm_notebook_viewer(Path::new(
         "notebook.ipynb"
     )));
-    assert!(!renders_in_warp_notebook_viewer(Path::new("main.rs")));
+    assert!(!renders_in_leanterm_notebook_viewer(Path::new("main.rs")));
     drop(off);
 
     // With the flag on, Jupyter notebooks also render in the notebook viewer.
     let _on = FeatureFlag::JupyterNotebookRendering.override_enabled(true);
-    assert!(renders_in_warp_notebook_viewer(Path::new("notebook.ipynb")));
-    assert!(renders_in_warp_notebook_viewer(Path::new("README.md")));
-    assert!(!renders_in_warp_notebook_viewer(Path::new("main.rs")));
+    assert!(renders_in_leanterm_notebook_viewer(Path::new(
+        "notebook.ipynb"
+    )));
+    assert!(renders_in_leanterm_notebook_viewer(Path::new("README.md")));
+    assert!(!renders_in_leanterm_notebook_viewer(Path::new("main.rs")));
 }
 
 #[test]
 #[cfg(feature = "local_fs")]
 fn test_resolve_file_target_jupyter_notebook_flag_on() {
     let _flag = FeatureFlag::JupyterNotebookRendering.override_enabled(true);
-    // Even with prefer_markdown_viewer off and an explicit Warp editor choice,
+    // Even with prefer_markdown_viewer off and an explicit Leanterm editor choice,
     // a Jupyter notebook routes to the notebook viewer (not the JSON editor).
     let target = resolve_file_target_with_editor_choice(
         Path::new("analysis.ipynb"),
-        EditorChoice::Warp,
+        EditorChoice::Leanterm,
         false, /* prefer_markdown_viewer */
         EditorLayout::SplitPane,
         None,
@@ -153,7 +155,7 @@ fn test_resolve_file_target_jupyter_notebook_flag_off() {
     // exactly as it does today.
     let target = resolve_file_target_with_editor_choice(
         Path::new("analysis.ipynb"),
-        EditorChoice::Warp,
+        EditorChoice::Leanterm,
         true, /* prefer_markdown_viewer */
         EditorLayout::SplitPane,
         None,
@@ -164,19 +166,19 @@ fn test_resolve_file_target_jupyter_notebook_flag_off() {
 #[test]
 fn test_markdown_files() {
     assert_eq!(
-        is_file_openable_in_warp(Path::new("README.md")),
+        is_file_openable_in_leanterm(Path::new("README.md")),
         Some(OpenableFileType::Markdown)
     );
     assert_eq!(
-        is_file_openable_in_warp(Path::new("doc.markdown")),
+        is_file_openable_in_leanterm(Path::new("doc.markdown")),
         Some(OpenableFileType::Markdown)
     );
     assert_eq!(
-        is_file_openable_in_warp(Path::new("README")),
+        is_file_openable_in_leanterm(Path::new("README")),
         Some(OpenableFileType::Markdown)
     );
     assert_eq!(
-        is_file_openable_in_warp(Path::new("CHANGELOG")),
+        is_file_openable_in_leanterm(Path::new("CHANGELOG")),
         Some(OpenableFileType::Markdown)
     );
 }
@@ -185,19 +187,19 @@ fn test_markdown_files() {
 #[cfg(feature = "local_fs")]
 fn test_code_files() {
     assert_eq!(
-        is_file_openable_in_warp(Path::new("main.rs")),
+        is_file_openable_in_leanterm(Path::new("main.rs")),
         Some(OpenableFileType::Code)
     );
     assert_eq!(
-        is_file_openable_in_warp(Path::new("app.js")),
+        is_file_openable_in_leanterm(Path::new("app.js")),
         Some(OpenableFileType::Code)
     );
     assert_eq!(
-        is_file_openable_in_warp(Path::new("script.py")),
+        is_file_openable_in_leanterm(Path::new("script.py")),
         Some(OpenableFileType::Code)
     );
     assert_eq!(
-        is_file_openable_in_warp(Path::new("config.json")),
+        is_file_openable_in_leanterm(Path::new("config.json")),
         Some(OpenableFileType::Code)
     );
 }
@@ -206,19 +208,19 @@ fn test_code_files() {
 #[cfg(not(feature = "local_fs"))]
 fn test_code_files() {
     assert_eq!(
-        is_file_openable_in_warp(Path::new("main.rs")),
+        is_file_openable_in_leanterm(Path::new("main.rs")),
         Some(OpenableFileType::Text)
     );
     assert_eq!(
-        is_file_openable_in_warp(Path::new("app.js")),
+        is_file_openable_in_leanterm(Path::new("app.js")),
         Some(OpenableFileType::Text)
     );
     assert_eq!(
-        is_file_openable_in_warp(Path::new("script.py")),
+        is_file_openable_in_leanterm(Path::new("script.py")),
         Some(OpenableFileType::Text)
     );
     assert_eq!(
-        is_file_openable_in_warp(Path::new("config.json")),
+        is_file_openable_in_leanterm(Path::new("config.json")),
         Some(OpenableFileType::Text)
     );
 }
@@ -227,15 +229,15 @@ fn test_code_files() {
 fn test_text_files() {
     // Files that are text but don't have language support
     assert_eq!(
-        is_file_openable_in_warp(Path::new("data.txt")),
+        is_file_openable_in_leanterm(Path::new("data.txt")),
         Some(OpenableFileType::Text)
     );
     assert_eq!(
-        is_file_openable_in_warp(Path::new("data.csv")),
+        is_file_openable_in_leanterm(Path::new("data.csv")),
         Some(OpenableFileType::Text)
     );
     assert_eq!(
-        is_file_openable_in_warp(Path::new("file.svg")),
+        is_file_openable_in_leanterm(Path::new("file.svg")),
         Some(OpenableFileType::Text)
     );
 }

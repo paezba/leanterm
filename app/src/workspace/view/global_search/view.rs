@@ -7,8 +7,6 @@ use std::time::Duration;
 
 use async_channel::Sender;
 use instant::Instant;
-use pathfinder_geometry::vector::vec2f;
-use string_offset::{ByteOffset, CharCounter};
 use leanterm_core::r#async::debounce;
 use leanterm_core::ui::Icon;
 use leanterm_core::ui::appearance::Appearance;
@@ -34,6 +32,8 @@ use leanterm_ui::{
     AppContext, Element, Entity, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle, WeakViewHandle,
 };
+use pathfinder_geometry::vector::vec2f;
+use string_offset::{ByteOffset, CharCounter};
 
 use crate::code::icon_from_file_path;
 use crate::coding_panel_enablement_state::CodingPanelEnablementState;
@@ -1079,7 +1079,7 @@ impl GlobalSearchView {
         directory_path: &PathBuf,
         matched_path: &MatchedPath,
         appearance: &Appearance,
-        theme: &leanterm_core::ui::theme::WarpTheme,
+        theme: &leanterm_core::ui::theme::LeantermTheme,
         app: &AppContext,
     ) -> Box<dyn Element> {
         let is_selected = self.is_row_at_index_selected(index);
@@ -1110,7 +1110,7 @@ impl GlobalSearchView {
             let icon_size = 16.0;
             let chevron_color = item_highlight_state.text_and_icon_color(appearance);
             let chevron_icon = chevron_icon_enum
-                .to_warpui_icon(ThemeFill::from(chevron_color))
+                .to_leanterm_ui_icon(ThemeFill::from(chevron_color))
                 .finish();
             let chevron_icon = ConstrainedBox::new(chevron_icon)
                 .with_width(icon_size)
@@ -1162,9 +1162,9 @@ impl GlobalSearchView {
 
             let icon_color = list_highlight_state.text_and_icon_color(appearance);
             let file_icon = match icon_from_file_path {
-                ImageOrIcon::Icon(icon) => {
-                    icon.to_warpui_icon(ThemeFill::from(icon_color)).finish()
-                }
+                ImageOrIcon::Icon(icon) => icon
+                    .to_leanterm_ui_icon(ThemeFill::from(icon_color))
+                    .finish(),
                 ImageOrIcon::Image(image) => image,
             };
 
@@ -1255,7 +1255,7 @@ impl GlobalSearchView {
         matched: &Match,
         match_index: usize,
         appearance: &Appearance,
-        theme: &leanterm_core::ui::theme::WarpTheme,
+        theme: &leanterm_core::ui::theme::LeantermTheme,
     ) -> Box<dyn Element> {
         let is_selected = self.is_row_at_index_selected(index);
         let line_number = matched.line_number;
@@ -1851,7 +1851,7 @@ impl GlobalSearchView {
         index: usize,
         dir_entry: &DirectoryEntry,
         appearance: &Appearance,
-        theme: &leanterm_core::ui::theme::WarpTheme,
+        theme: &leanterm_core::ui::theme::LeantermTheme,
         _app: &AppContext,
     ) -> Box<dyn Element> {
         let is_selected = self.is_row_at_index_selected(index);
@@ -1880,7 +1880,7 @@ impl GlobalSearchView {
             let icon_size = 16.0;
             let chevron_color = list_highlight_state.text_and_icon_color(appearance);
             let chevron_icon = chevron_icon_enum
-                .to_warpui_icon(ThemeFill::from(chevron_color))
+                .to_leanterm_ui_icon(ThemeFill::from(chevron_color))
                 .finish();
             let chevron_icon = ConstrainedBox::new(chevron_icon)
                 .with_width(icon_size)
@@ -1891,7 +1891,7 @@ impl GlobalSearchView {
             // Folder icon
             let icon_color = list_highlight_state.text_and_icon_color(appearance);
             let folder_icon = Icon::Folder
-                .to_warpui_icon(ThemeFill::from(icon_color))
+                .to_leanterm_ui_icon(ThemeFill::from(icon_color))
                 .finish();
             let folder_icon_element = Container::new(
                 ConstrainedBox::new(folder_icon)
@@ -2107,7 +2107,7 @@ impl View for GlobalSearchView {
         if self.capped_matches {
             let alert_icon = ConstrainedBox::new(
                 Icon::AlertTriangle
-                    .to_warpui_icon(ThemeFill::Solid(
+                    .to_leanterm_ui_icon(ThemeFill::Solid(
                         theme.terminal_colors().normal.yellow.into(),
                     ))
                     .finish(),
@@ -2183,8 +2183,10 @@ impl GlobalSearchView {
             .with_child(
                 Container::new(
                     ConstrainedBox::new(
-                        icon.to_warpui_icon(ThemeFill::Solid(internal_colors::neutral_6(theme)))
-                            .finish(),
+                        icon.to_leanterm_ui_icon(ThemeFill::Solid(internal_colors::neutral_6(
+                            theme,
+                        )))
+                        .finish(),
                     )
                     .with_width(24.)
                     .with_height(24.)

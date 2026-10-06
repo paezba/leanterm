@@ -24,12 +24,12 @@
         {
             "type": "shell",
             "command": "./script/run --dont-open",
-            "label": "build_warplocal"
+            "label": "build_leantermlocal"
         },
         {
             "type": "shell",
             "command": "./script/run --dont-open --features fast_dev",
-            "label": "build_warplocal_fastdev"
+            "label": "build_leantermlocal_fastdev"
         }
         // TODO: If adding more configs that just add feature flags, consider argument passing from launch.json to tasks.json
     ]

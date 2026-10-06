@@ -9,7 +9,9 @@ fn main() -> Result<()> {
     let app_builder =
         platform::AppBuilder::new(platform::AppCallbacks::default(), Box::new(()), None);
     let _ = app_builder.run(move |ctx| {
-        ctx.add_window(leanterm_ui::AddWindowOptions::default(), |_| RootView::new());
+        ctx.add_window(leanterm_ui::AddWindowOptions::default(), |_| {
+            RootView::new()
+        });
     });
 
     Ok(())

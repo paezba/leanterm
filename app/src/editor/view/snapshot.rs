@@ -8,10 +8,6 @@ use std::time::Duration;
 
 use anyhow::Result;
 use instant::Instant;
-use parking_lot::Mutex;
-use pathfinder_geometry::vector::{Vector2F, vec2f};
-use rayon::prelude::*;
-use string_offset::ByteOffset;
 use leanterm_completer::completer::Description;
 use leanterm_errors::report_error;
 use leanterm_ui::fonts::{Cache as FontCache, FamilyId, Properties};
@@ -22,6 +18,10 @@ use leanterm_ui::text_layout::{
     StyleAndFont, TextAlignment, TextStyle, default_compute_baseline_position_fn,
 };
 use leanterm_ui::{AppContext, EntityId, ModelHandle};
+use parking_lot::Mutex;
+use pathfinder_geometry::vector::{Vector2F, vec2f};
+use rayon::prelude::*;
+use string_offset::ByteOffset;
 
 use super::model::EditorModel;
 use super::{

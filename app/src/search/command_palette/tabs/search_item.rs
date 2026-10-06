@@ -1,7 +1,7 @@
-use ordered_float::OrderedFloat;
 use leanterm_ui::elements::{ConstrainedBox, Container, Flex, ParentElement, Text};
 use leanterm_ui::fonts::{Properties, Weight};
 use leanterm_ui::{AppContext, Element, SingletonEntity};
+use ordered_float::OrderedFloat;
 
 use crate::appearance::Appearance;
 use crate::search::command_palette::mixer::CommandPaletteItemAction;

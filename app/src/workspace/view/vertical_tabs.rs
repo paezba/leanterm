@@ -6,15 +6,11 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 use languages::language_by_local_filename;
-use pathfinder_color::ColorU;
-use pathfinder_geometry::rect::RectF;
-use pathfinder_geometry::vector::{Vector2F, vec2f};
-use settings::Setting as _;
 use leanterm_core::context_flag::ContextFlag;
-use leanterm_core::ui::Icon as WarpIcon;
+use leanterm_core::ui::Icon as LeantermIcon;
 use leanterm_core::ui::color::blend::Blend;
 use leanterm_core::ui::theme::color::internal_colors;
-use leanterm_core::ui::theme::{AnsiColorIdentifier, Fill as WarpThemeFill, WarpTheme};
+use leanterm_core::ui::theme::{AnsiColorIdentifier, Fill as LeantermThemeFill, LeantermTheme};
 use leanterm_ui::elements::{
     Border, ChildAnchor, Clipped, ClippedScrollStateHandle, ClippedScrollable, ConstrainedBox,
     Container, CornerRadius, CrossAxisAlignment, DispatchEventResult, DragAxis, DragBarSide,
@@ -32,6 +28,10 @@ use leanterm_ui::text_layout::ClipConfig;
 use leanterm_ui::ui_components::components::{UiComponent, UiComponentStyles};
 use leanterm_ui::ui_components::text_input::TextInput;
 use leanterm_ui::{AppContext, EntityId, SingletonEntity, ViewHandle, WindowId};
+use pathfinder_color::ColorU;
+use pathfinder_geometry::rect::RectF;
+use pathfinder_geometry::vector::{Vector2F, vec2f};
+use settings::Setting as _;
 
 use super::{render_group_member_icon_collage, select_unique_pane_kinds};
 use crate::FeatureFlag;
@@ -246,7 +246,7 @@ enum TerminalPrimaryLineFont {
 
 fn render_pane_icon_with_status(
     variant: IconWithStatusVariant,
-    theme: &WarpTheme,
+    theme: &LeantermTheme,
 ) -> Box<dyn Element> {
     render_icon_with_status(variant, VERTICAL_TABS_ICON_SIZE, theme)
 }
@@ -309,7 +309,7 @@ fn pane_row_background(
     is_in_multi_selection: bool,
     is_hovered: bool,
     is_being_dragged: bool,
-    theme: &WarpTheme,
+    theme: &LeantermTheme,
 ) -> Option<ThemeFill> {
     if let Some(color) = pane_color {
         let opacity = if is_selected || is_hovered {
@@ -338,7 +338,7 @@ fn render_pane_row_element(
     padding: Padding,
     defer_events_to_children: bool,
     content: Box<dyn Element>,
-    theme: &WarpTheme,
+    theme: &LeantermTheme,
 ) -> Box<dyn Element> {
     let detail_target = supports_vertical_tabs_detail_sidecar(&props.typed).then(|| {
         detail_target_for_hovered_row(
@@ -415,8 +415,8 @@ fn render_pane_row_element(
         // is visible when the container is not hovered.
         if show_pin {
             let pin_icon = ConstrainedBox::new(
-                WarpIcon::PinFilledDiagonal
-                    .to_warpui_icon(theme.sub_text_color(theme.background()))
+                LeantermIcon::PinFilledDiagonal
+                    .to_leanterm_ui_icon(theme.sub_text_color(theme.background()))
                     .finish(),
             )
             .with_width(PIN_INDICATOR_ICON_SIZE)
@@ -1227,7 +1227,7 @@ fn vertical_tabs_tab_bar_location(insert_index: usize, tab_count: usize) -> TabB
     }
 }
 
-fn render_vertical_tab_hover_indicator(theme: &WarpTheme) -> Box<dyn Element> {
+fn render_vertical_tab_hover_indicator(theme: &LeantermTheme) -> Box<dyn Element> {
     ConstrainedBox::new(
         Container::new(Empty::new().finish())
             .with_background(ThemeFill::Solid(theme.accent().into()))
@@ -1264,7 +1264,7 @@ pub(super) fn show_before_indicator(
 /// `DropTarget`s, with the insertion point resolved from cursor geometry.
 fn render_vertical_tab_insertion_target(
     group: Option<TabGroupId>,
-    theme: &WarpTheme,
+    theme: &LeantermTheme,
 ) -> Box<dyn Element> {
     let left_padding = if group.is_some() {
         GROUP_HORIZONTAL_PADDING + TAB_GROUP_MEMBER_INDENT
@@ -1289,7 +1289,7 @@ fn add_vertical_tab_insertion_target_overlay(
     group: Option<TabGroupId>,
     parent_anchor: ParentAnchor,
     child_anchor: ChildAnchor,
-    theme: &WarpTheme,
+    theme: &LeantermTheme,
 ) {
     stack.add_positioned_overlay_child(
         render_vertical_tab_insertion_target(group, theme),
@@ -1312,10 +1312,11 @@ fn render_control_bar(
     let theme = appearance.theme();
     let sub_text = theme.sub_text_color(theme.background());
 
-    let search_icon = ConstrainedBox::new(WarpIcon::Search.to_warpui_icon(sub_text).finish())
-        .with_width(SEARCH_ICON_SIZE)
-        .with_height(SEARCH_ICON_SIZE)
-        .finish();
+    let search_icon =
+        ConstrainedBox::new(LeantermIcon::Search.to_leanterm_ui_icon(sub_text).finish())
+            .with_width(SEARCH_ICON_SIZE)
+            .with_height(SEARCH_ICON_SIZE)
+            .finish();
 
     let text_input = TextInput::new(
         search_editor.clone(),
@@ -1365,10 +1366,12 @@ fn render_detail_kind_badge_icon(
     let sub_text = theme.sub_text_color(theme.background());
     let disabled_text = detail_sidecar_text_colors(theme).disabled;
     match &props.typed {
-        TypedPane::Terminal(_) => WarpIcon::Terminal.to_warpui_icon(disabled_text).finish(),
+        TypedPane::Terminal(_) => LeantermIcon::Terminal
+            .to_leanterm_ui_icon(disabled_text)
+            .finish(),
         TypedPane::Code(_) => icon_from_file_path(&props.title, appearance)
-            .unwrap_or_else(|| WarpIcon::Code2.to_warpui_icon(sub_text).finish()),
-        typed => typed.icon().to_warpui_icon(sub_text).finish(),
+            .unwrap_or_else(|| LeantermIcon::Code2.to_leanterm_ui_icon(sub_text).finish()),
+        typed => typed.icon().to_leanterm_ui_icon(sub_text).finish(),
     }
 }
 
@@ -1386,8 +1389,8 @@ fn render_settings_button(
         state.settings_button_mouse_state.clone(),
         move |hover_state| {
             let icon = ConstrainedBox::new(
-                WarpIcon::Settings
-                    .to_warpui_icon(if is_popup_open { main_text } else { sub_text })
+                LeantermIcon::Settings
+                    .to_leanterm_ui_icon(if is_popup_open { main_text } else { sub_text })
                     .finish(),
             )
             .with_width(16.)
@@ -2479,16 +2482,20 @@ fn render_group_action_buttons(
     action_buttons_mouse_state: MouseStateHandle,
     kebab_mouse_state: MouseStateHandle,
     close_mouse_state: MouseStateHandle,
-    theme: &WarpTheme,
+    theme: &LeantermTheme,
 ) -> Box<dyn Element> {
     let meta_color = theme.sub_text_color(theme.background());
 
     let kebab_button = Hoverable::new(kebab_mouse_state, move |button_state| {
         let mut container = Container::new(
-            ConstrainedBox::new(WarpIcon::DotsVertical.to_warpui_icon(meta_color).finish())
-                .with_width(GROUP_ACTION_BUTTON_ICON_SIZE)
-                .with_height(GROUP_ACTION_BUTTON_ICON_SIZE)
-                .finish(),
+            ConstrainedBox::new(
+                LeantermIcon::DotsVertical
+                    .to_leanterm_ui_icon(meta_color)
+                    .finish(),
+            )
+            .with_width(GROUP_ACTION_BUTTON_ICON_SIZE)
+            .with_height(GROUP_ACTION_BUTTON_ICON_SIZE)
+            .finish(),
         )
         .with_padding(Padding::uniform(GROUP_ACTION_BUTTON_PADDING))
         .with_corner_radius(CornerRadius::with_all(Radius::Pixels(4.)));
@@ -2508,7 +2515,7 @@ fn render_group_action_buttons(
 
     let close_button = Hoverable::new(close_mouse_state, move |button_state| {
         let mut container = Container::new(
-            ConstrainedBox::new(WarpIcon::X.to_warpui_icon(meta_color).finish())
+            ConstrainedBox::new(LeantermIcon::X.to_leanterm_ui_icon(meta_color).finish())
                 .with_width(GROUP_ACTION_BUTTON_ICON_SIZE)
                 .with_height(GROUP_ACTION_BUTTON_ICON_SIZE)
                 .finish(),
@@ -2582,16 +2589,16 @@ pub(crate) fn render_tab_group_for_drag_ghost(
 
 /// Small icon button for the tab-group header; consumes clicks so they don't bubble.
 fn render_tab_group_header_icon_button(
-    icon: WarpIcon,
+    icon: LeantermIcon,
     icon_size: f32,
-    icon_color: WarpThemeFill,
-    hover_background: WarpThemeFill,
+    icon_color: LeantermThemeFill,
+    hover_background: LeantermThemeFill,
     mouse_state: MouseStateHandle,
     on_click_action: Option<WorkspaceAction>,
 ) -> Box<dyn Element> {
     Hoverable::new(mouse_state, move |button_state| {
         let mut container = Container::new(
-            ConstrainedBox::new(icon.to_warpui_icon(icon_color).finish())
+            ConstrainedBox::new(icon.to_leanterm_ui_icon(icon_color).finish())
                 .with_width(icon_size)
                 .with_height(icon_size)
                 .finish(),
@@ -2649,7 +2656,7 @@ fn render_grouped_tabs_header(
         render_group_member_icon_collage(kinds, VERTICAL_TABS_ICON_SIZE, appearance)
     } else {
         let chevron_button = render_tab_group_header_icon_button(
-            WarpIcon::ChevronDown,
+            LeantermIcon::ChevronDown,
             TAB_GROUP_ICON_SIZE,
             main_text_color,
             internal_colors::fg_overlay_2(theme),
@@ -2705,7 +2712,7 @@ fn render_grouped_tabs_header(
     let action_buttons = if show_action_buttons {
         let kebab_button = SavePosition::new(
             render_tab_group_header_icon_button(
-                WarpIcon::DotsVertical,
+                LeantermIcon::DotsVertical,
                 TAB_GROUP_HEADER_ACTION_ICON_SIZE,
                 sub_text_color,
                 internal_colors::fg_overlay_2(theme),
@@ -2719,7 +2726,7 @@ fn render_grouped_tabs_header(
         )
         .finish();
         let close_button = render_tab_group_header_icon_button(
-            WarpIcon::X,
+            LeantermIcon::X,
             TAB_GROUP_HEADER_ACTION_ICON_SIZE,
             sub_text_color,
             internal_colors::fg_overlay_3(theme),
@@ -2768,7 +2775,7 @@ fn render_grouped_tabs_header(
         let border_fill = if is_header_selected {
             internal_colors::fg_overlay_3(theme)
         } else {
-            WarpThemeFill::Solid(ColorU::transparent_black())
+            LeantermThemeFill::Solid(ColorU::transparent_black())
         };
         let mut container = Container::new(row)
             .with_padding(Padding::uniform(GROUP_HORIZONTAL_PADDING))
@@ -2792,8 +2799,8 @@ fn render_grouped_tabs_header(
         // are visible so the two never overlap.
         if group_pinned && !show_action_buttons {
             let pin_icon = ConstrainedBox::new(
-                WarpIcon::PinFilledDiagonal
-                    .to_warpui_icon(sub_text_color)
+                LeantermIcon::PinFilledDiagonal
+                    .to_leanterm_ui_icon(sub_text_color)
                     .finish(),
             )
             .with_width(PIN_INDICATOR_ICON_SIZE)
@@ -3191,13 +3198,13 @@ fn resolve_icon_with_status_variant(
     match typed {
         // Plain terminal: use foreground color per design spec
         TypedPane::Terminal(_) => IconWithStatusVariant::Neutral {
-            icon: WarpIcon::Terminal,
+            icon: LeantermIcon::Terminal,
             icon_color: main_text,
         },
         TypedPane::Code(_) => match icon_from_file_path(title, appearance) {
             Some(icon_element) => IconWithStatusVariant::NeutralElement { icon_element },
             _ => IconWithStatusVariant::Neutral {
-                icon: WarpIcon::Code2,
+                icon: LeantermIcon::Code2,
                 icon_color: sub_text,
             },
         },
@@ -3206,7 +3213,7 @@ fn resolve_icon_with_status_variant(
             icon: typed.icon(),
             icon_color: main_text,
         },
-        // Warp Drive object types use their established index colors
+        // Leanterm Drive object types use their established index colors
         // Other pane types use sub-text color
         other => IconWithStatusVariant::Neutral {
             icon: other.icon(),
@@ -3217,10 +3224,10 @@ fn resolve_icon_with_status_variant(
 
 const INDICATOR_DOT_SIZE: f32 = 8.;
 
-fn render_title_indicator(theme: &WarpTheme) -> Box<dyn Element> {
+fn render_title_indicator(theme: &LeantermTheme) -> Box<dyn Element> {
     ConstrainedBox::new(
-        WarpIcon::CircleFilled
-            .to_warpui_icon(theme.accent())
+        LeantermIcon::CircleFilled
+            .to_leanterm_ui_icon(theme.accent())
             .finish(),
     )
     .with_width(INDICATOR_DOT_SIZE)
@@ -3254,7 +3261,7 @@ fn row_shows_synced_inputs_indicator(props: &PaneProps<'_>, app: &AppContext) ->
 fn render_synced_inputs_indicator() -> Box<dyn Element> {
     ConstrainedBox::new(
         UiIcon::LinkHorizontal
-            .to_warpui_icon(ColorU::from_u32(TAB_INDICATOR_SYNCED_COLOR).into())
+            .to_leanterm_ui_icon(ColorU::from_u32(TAB_INDICATOR_SYNCED_COLOR).into())
             .finish(),
     )
     .with_width(BADGE_ICON_SIZE)
@@ -3287,7 +3294,7 @@ fn render_row_title_line(
     title: Box<dyn Element>,
     shows_synced_inputs: bool,
     shortcut_hint: Option<Box<dyn Element>>,
-    _theme: &WarpTheme,
+    _theme: &LeantermTheme,
 ) -> Box<dyn Element> {
     if !shows_synced_inputs && shortcut_hint.is_none() {
         return title;
@@ -3471,14 +3478,14 @@ impl TypedPane<'_> {
         }
     }
 
-    fn icon(&self) -> WarpIcon {
+    fn icon(&self) -> LeantermIcon {
         match self {
-            TypedPane::Terminal(_) => WarpIcon::Terminal,
-            TypedPane::Code(_) => WarpIcon::Code2,
-            TypedPane::CodeDiff => WarpIcon::Diff,
-            TypedPane::File => WarpIcon::File,
-            TypedPane::Settings => WarpIcon::Gear,
-            TypedPane::Other => WarpIcon::File,
+            TypedPane::Terminal(_) => LeantermIcon::Terminal,
+            TypedPane::Code(_) => LeantermIcon::Code2,
+            TypedPane::CodeDiff => LeantermIcon::Diff,
+            TypedPane::File => LeantermIcon::File,
+            TypedPane::Settings => LeantermIcon::Gear,
+            TypedPane::Other => LeantermIcon::File,
         }
     }
 }
@@ -4239,7 +4246,7 @@ fn compact_branch_subtitle_display(
 
 fn render_git_branch_text(
     branch: &str,
-    text_color: WarpThemeFill,
+    text_color: LeantermThemeFill,
     font_size: f32,
     appearance: &Appearance,
 ) -> Box<dyn Element> {
@@ -4247,7 +4254,7 @@ fn render_git_branch_text(
         .with_cross_axis_alignment(CrossAxisAlignment::Center)
         .with_spacing(2.)
         .with_child(
-            ConstrainedBox::new(UiIcon::GitBranch.to_warpui_icon(text_color).finish())
+            ConstrainedBox::new(UiIcon::GitBranch.to_leanterm_ui_icon(text_color).finish())
                 .with_width(font_size - 2.)
                 .with_height(font_size - 2.)
                 .finish(),
@@ -4272,7 +4279,7 @@ enum MetadataLeftContent {
 
 fn render_text_line(
     text: &str,
-    text_color: WarpThemeFill,
+    text_color: LeantermThemeFill,
     clip: ClipConfig,
     appearance: &Appearance,
 ) -> Box<dyn Element> {
@@ -4305,7 +4312,7 @@ pub(crate) fn render_inline_tab_rename_editor(
 fn render_title_override(
     props: &PaneProps<'_>,
     font_size: f32,
-    text_color: WarpThemeFill,
+    text_color: LeantermThemeFill,
     clip: ClipConfig,
     appearance: &Appearance,
     app: &AppContext,
@@ -4339,7 +4346,7 @@ fn render_pane_title_slot(
     props: &PaneProps<'_>,
     generated_title: impl FnOnce() -> Box<dyn Element>,
     font_size: f32,
-    text_color: WarpThemeFill,
+    text_color: LeantermThemeFill,
     clip: ClipConfig,
     appearance: &Appearance,
     app: &AppContext,
@@ -4568,7 +4575,7 @@ fn render_summary_tab_item(
 
 fn render_summary_overflow_line(
     hidden_count: usize,
-    text_color: WarpThemeFill,
+    text_color: LeantermThemeFill,
     appearance: &Appearance,
 ) -> Box<dyn Element> {
     Text::new_inline(
@@ -4655,8 +4662,8 @@ pub(super) fn render_summary_pane_kind_icon_circle(
     let (icon_element, background): (Box<dyn Element>, ElementFill) = match kind {
         SummaryPaneKind::Code { title } => (
             icon_from_file_path(&title, appearance).unwrap_or_else(|| {
-                WarpIcon::Code2
-                    .to_warpui_icon(theme.sub_text_color(theme.background()))
+                LeantermIcon::Code2
+                    .to_leanterm_ui_icon(theme.sub_text_color(theme.background()))
                     .finish()
             }),
             internal_colors::fg_overlay_2(theme).into(),
@@ -4668,7 +4675,7 @@ pub(super) fn render_summary_pane_kind_icon_circle(
         | SummaryPaneKind::Other => {
             let (icon, icon_color) = summary_pane_kind_icon(kind, appearance);
             (
-                icon.to_warpui_icon(icon_color).finish(),
+                icon.to_leanterm_ui_icon(icon_color).finish(),
                 internal_colors::fg_overlay_2(theme).into(),
             )
         }
@@ -4690,17 +4697,17 @@ pub(super) fn render_summary_pane_kind_icon_circle(
 fn summary_pane_kind_icon(
     kind: SummaryPaneKind,
     appearance: &Appearance,
-) -> (WarpIcon, WarpThemeFill) {
+) -> (LeantermIcon, LeantermThemeFill) {
     let theme = appearance.theme();
     let main_text = theme.main_text_color(theme.background());
     let sub_text = theme.sub_text_color(theme.background());
     match kind {
-        SummaryPaneKind::Terminal => (WarpIcon::Terminal, main_text),
-        SummaryPaneKind::Code { .. } => (WarpIcon::Code2, sub_text),
-        SummaryPaneKind::CodeDiff => (WarpIcon::Diff, sub_text),
-        SummaryPaneKind::File => (WarpIcon::File, sub_text),
-        SummaryPaneKind::Settings => (WarpIcon::Gear, main_text),
-        SummaryPaneKind::Other => (WarpIcon::File, sub_text),
+        SummaryPaneKind::Terminal => (LeantermIcon::Terminal, main_text),
+        SummaryPaneKind::Code { .. } => (LeantermIcon::Code2, sub_text),
+        SummaryPaneKind::CodeDiff => (LeantermIcon::Diff, sub_text),
+        SummaryPaneKind::File => (LeantermIcon::File, sub_text),
+        SummaryPaneKind::Settings => (LeantermIcon::Gear, main_text),
+        SummaryPaneKind::Other => (LeantermIcon::File, sub_text),
     }
 }
 
@@ -4778,7 +4785,7 @@ fn render_summary_branch_line(
 fn render_terminal_primary_line_for_view(
     terminal_view: &TerminalView,
     appearance: &Appearance,
-    text_color: WarpThemeFill,
+    text_color: LeantermThemeFill,
     app: &AppContext,
 ) -> Box<dyn Element> {
     let title_text = terminal_view.terminal_title_from_shell();
@@ -4803,7 +4810,7 @@ fn render_terminal_primary_line(
     primary_line: TerminalPrimaryLineData,
     terminal_view: &TerminalView,
     appearance: &Appearance,
-    text_color: WarpThemeFill,
+    text_color: LeantermThemeFill,
 ) -> Box<dyn Element> {
     let theme = appearance.theme();
 
@@ -4821,7 +4828,7 @@ fn render_terminal_primary_line(
             .with_child(
                 ConstrainedBox::new(
                     UiIcon::AlertTriangle
-                        .to_warpui_icon(error_color.into())
+                        .to_leanterm_ui_icon(error_color.into())
                         .finish(),
                 )
                 .with_width(BADGE_ICON_SIZE)
@@ -5087,7 +5094,7 @@ fn render_pull_request_badge_content(label: &str, appearance: &Appearance) -> Bo
         .with_cross_axis_alignment(CrossAxisAlignment::Center)
         .with_spacing(4.)
         .with_child(
-            ConstrainedBox::new(UiIcon::Github.to_warpui_icon(main_text_color).finish())
+            ConstrainedBox::new(UiIcon::Github.to_leanterm_ui_icon(main_text_color).finish())
                 .with_width(BADGE_ICON_SIZE)
                 .with_height(BADGE_ICON_SIZE)
                 .finish(),
@@ -5109,7 +5116,7 @@ fn compute_tab_group_color_mode(
     tab: &TabData,
     pane_group: &PaneGroup,
     visible_pane_ids: &[PaneId],
-    theme: &WarpTheme,
+    theme: &LeantermTheme,
     app: &AppContext,
 ) -> TabGroupColorMode {
     // A manual color override applies to the whole tab.
@@ -5144,8 +5151,8 @@ fn compute_tab_group_color_mode(
                     match pane_group.code_view_from_pane_id(pane_id, app) {
                         Some(code_view) => {
                             // Code pane: determine color from the open file path using longest-prefix
-                            // matching against configured directories, so e.g. warp-internal/code.rs
-                            // inherits the color assigned to warp-internal.
+                            // matching against configured directories, so e.g. leanterm-internal/code.rs
+                            // inherits the color assigned to leanterm-internal.
                             code_view
                                 .as_ref(app)
                                 .local_path(app)
@@ -5413,7 +5420,7 @@ pub(super) fn render_settings_popup(
                 Expanded::new(
                     1.,
                     render_popup_segment(
-                        WarpIcon::Menu01,
+                        LeantermIcon::Menu01,
                         matches!(current_mode, VerticalTabsViewMode::Compact),
                         state.compact_segment_mouse_state.clone(),
                         VerticalTabsViewMode::Compact,
@@ -5427,7 +5434,7 @@ pub(super) fn render_settings_popup(
                 Expanded::new(
                     1.,
                     render_popup_segment(
-                        WarpIcon::Grid,
+                        LeantermIcon::Grid,
                         matches!(current_mode, VerticalTabsViewMode::Expanded),
                         state.expanded_segment_mouse_state.clone(),
                         VerticalTabsViewMode::Expanded,
@@ -5452,7 +5459,7 @@ pub(super) fn render_settings_popup(
         .finish();
 
     // Divider between toggle and "Pane title as" section
-    let make_divider = |theme: &WarpTheme| {
+    let make_divider = |theme: &LeantermTheme| {
         Container::new(
             ConstrainedBox::new(
                 Container::new(Empty::new().finish())
@@ -5653,7 +5660,7 @@ fn render_compact_subtitle_option(
     mouse_state: MouseStateHandle,
     value: VerticalTabsCompactSubtitle,
     appearance: &Appearance,
-    theme: &WarpTheme,
+    theme: &LeantermTheme,
 ) -> Box<dyn Element> {
     const ICON_SIZE: f32 = 16.;
     const FONT_SIZE: f32 = 12.;
@@ -5663,7 +5670,7 @@ fn render_compact_subtitle_option(
     let main_text = theme.main_text_color(theme.background());
     Hoverable::new(mouse_state, move |hover_state| {
         let check_icon: Box<dyn Element> = if is_selected {
-            ConstrainedBox::new(WarpIcon::Check.to_warpui_icon(main_text).finish())
+            ConstrainedBox::new(LeantermIcon::Check.to_leanterm_ui_icon(main_text).finish())
                 .with_width(ICON_SIZE)
                 .with_height(ICON_SIZE)
                 .finish()
@@ -5706,7 +5713,7 @@ fn render_tab_item_mode_option(
     mouse_state: MouseStateHandle,
     value: VerticalTabsTabItemMode,
     appearance: &Appearance,
-    theme: &WarpTheme,
+    theme: &LeantermTheme,
 ) -> Box<dyn Element> {
     const ICON_SIZE: f32 = 16.;
     const FONT_SIZE: f32 = 12.;
@@ -5716,7 +5723,7 @@ fn render_tab_item_mode_option(
     let main_text = theme.main_text_color(theme.background());
     Hoverable::new(mouse_state, move |hover_state| {
         let check_icon: Box<dyn Element> = if is_selected {
-            ConstrainedBox::new(WarpIcon::Check.to_warpui_icon(main_text).finish())
+            ConstrainedBox::new(LeantermIcon::Check.to_leanterm_ui_icon(main_text).finish())
                 .with_width(ICON_SIZE)
                 .with_height(ICON_SIZE)
                 .finish()
@@ -5759,7 +5766,7 @@ fn render_primary_info_option(
     mouse_state: MouseStateHandle,
     value: VerticalTabsPrimaryInfo,
     appearance: &Appearance,
-    theme: &WarpTheme,
+    theme: &LeantermTheme,
 ) -> Box<dyn Element> {
     const ICON_SIZE: f32 = 16.;
     const FONT_SIZE: f32 = 12.;
@@ -5769,7 +5776,7 @@ fn render_primary_info_option(
     let main_text = theme.main_text_color(theme.background());
     Hoverable::new(mouse_state, move |hover_state| {
         let check_icon: Box<dyn Element> = if is_selected {
-            ConstrainedBox::new(WarpIcon::Check.to_warpui_icon(main_text).finish())
+            ConstrainedBox::new(LeantermIcon::Check.to_leanterm_ui_icon(main_text).finish())
                 .with_width(ICON_SIZE)
                 .with_height(ICON_SIZE)
                 .finish()
@@ -5818,7 +5825,7 @@ fn render_show_toggle_option(
     action: WorkspaceAction,
     info_tooltip: Option<ShowToggleInfoTooltip>,
     appearance: &Appearance,
-    theme: &WarpTheme,
+    theme: &LeantermTheme,
 ) -> Box<dyn Element> {
     const ICON_SIZE: f32 = 16.;
     const FONT_SIZE: f32 = 12.;
@@ -5836,7 +5843,7 @@ fn render_show_toggle_option(
 
     Hoverable::new(mouse_state, move |hover_state| {
         let check_icon: Box<dyn Element> = if is_enabled {
-            ConstrainedBox::new(WarpIcon::Check.to_warpui_icon(main_text).finish())
+            ConstrainedBox::new(LeantermIcon::Check.to_leanterm_ui_icon(main_text).finish())
                 .with_width(ICON_SIZE)
                 .with_height(ICON_SIZE)
                 .finish()
@@ -5859,10 +5866,11 @@ fn render_show_toggle_option(
         {
             let builder = ui_builder.clone();
             let info_icon = Hoverable::new(info_ms, move |info_hover| {
-                let icon = ConstrainedBox::new(UiIcon::Info.to_warpui_icon(info_color).finish())
-                    .with_width(INFO_ICON_SIZE)
-                    .with_height(INFO_ICON_SIZE)
-                    .finish();
+                let icon =
+                    ConstrainedBox::new(UiIcon::Info.to_leanterm_ui_icon(info_color).finish())
+                        .with_width(INFO_ICON_SIZE)
+                        .with_height(INFO_ICON_SIZE)
+                        .finish();
 
                 if info_hover.is_hovered() {
                     let tooltip = builder.tool_tip(info_text.clone()).build().finish();
@@ -5906,12 +5914,12 @@ fn render_show_toggle_option(
 }
 
 fn render_popup_segment(
-    icon: WarpIcon,
+    icon: LeantermIcon,
     is_selected: bool,
     mouse_state: MouseStateHandle,
     mode: VerticalTabsViewMode,
-    theme: &WarpTheme,
-    icon_color: WarpThemeFill,
+    theme: &LeantermTheme,
+    icon_color: LeantermThemeFill,
 ) -> Box<dyn Element> {
     Hoverable::new(mouse_state, move |hover_state| {
         let background = if is_selected {
@@ -5924,7 +5932,7 @@ fn render_popup_segment(
 
         Container::new(
             Align::new(
-                ConstrainedBox::new(icon.to_warpui_icon(icon_color).finish())
+                ConstrainedBox::new(icon.to_leanterm_ui_icon(icon_color).finish())
                     .with_width(COMPACT_ICON_SIZE)
                     .with_height(COMPACT_ICON_SIZE)
                     .finish(),
@@ -5949,7 +5957,7 @@ fn render_popup_text_segment(
     mouse_state: MouseStateHandle,
     granularity: VerticalTabsDisplayGranularity,
     appearance: &Appearance,
-    theme: &WarpTheme,
+    theme: &LeantermTheme,
 ) -> Box<dyn Element> {
     let label = label.to_string();
     let main_text = theme.main_text_color(theme.background());
@@ -6117,25 +6125,25 @@ fn detail_sidecar_width_and_bounds(available_width: f32) -> (f32, PositionedElem
 }
 
 struct DetailSidecarTextColors {
-    main: WarpThemeFill,
-    sub: WarpThemeFill,
-    disabled: WarpThemeFill,
+    main: LeantermThemeFill,
+    sub: LeantermThemeFill,
+    disabled: LeantermThemeFill,
 }
 
-fn detail_sidecar_background(theme: &WarpTheme) -> ColorU {
+fn detail_sidecar_background(theme: &LeantermTheme) -> ColorU {
     theme
         .background()
         .blend(&internal_colors::fg_overlay_2(theme))
         .into_solid()
 }
 
-fn detail_sidecar_border_fill(theme: &WarpTheme) -> ThemeFill {
+fn detail_sidecar_border_fill(theme: &LeantermTheme) -> ThemeFill {
     theme
         .background()
         .blend(&internal_colors::fg_overlay_4(theme))
 }
 
-fn detail_sidecar_text_colors(theme: &WarpTheme) -> DetailSidecarTextColors {
+fn detail_sidecar_text_colors(theme: &LeantermTheme) -> DetailSidecarTextColors {
     let bg = ThemeFill::Solid(detail_sidecar_background(theme));
     DetailSidecarTextColors {
         main: theme.main_text_color(bg),
@@ -6148,7 +6156,7 @@ fn render_detail_badge(
     label: impl Into<String>,
     icon: Option<Box<dyn Element>>,
     background: Option<ThemeFill>,
-    text_color: WarpThemeFill,
+    text_color: LeantermThemeFill,
     appearance: &Appearance,
 ) -> Box<dyn Element> {
     let mut content = Flex::row()
@@ -6182,7 +6190,7 @@ fn render_detail_badge(
 fn render_detail_wrapping_text(
     text: impl Into<String>,
     font_size: f32,
-    color: WarpThemeFill,
+    color: LeantermThemeFill,
     style: Option<Properties>,
     appearance: &Appearance,
 ) -> Box<dyn Element> {
@@ -6197,7 +6205,7 @@ fn render_detail_wrapping_text(
 
 fn render_terminal_detail_primary_line(
     primary_line: &TerminalPrimaryLineData,
-    color: WarpThemeFill,
+    color: LeantermThemeFill,
     appearance: &Appearance,
 ) -> Box<dyn Element> {
     let font_family = match primary_line {

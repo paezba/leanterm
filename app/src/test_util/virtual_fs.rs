@@ -2,18 +2,18 @@ use std::path::PathBuf;
 
 pub use virtual_fs::{Dirs, Stub, VirtualFS};
 
-pub trait WarpDirs {
+pub trait LeantermDirs {
     #[allow(dead_code)]
     fn git_repository_fixture(&self) -> PathBuf {
-        Warp::fixtures().join("git_repository")
+        Leanterm::fixtures().join("git_repository")
     }
 }
 
-impl WarpDirs for Dirs {}
+impl LeantermDirs for Dirs {}
 
-pub struct Warp;
+pub struct Leanterm;
 
-impl Warp {
+impl Leanterm {
     #[allow(dead_code)]
     pub fn executable() -> PathBuf {
         let mut path = {
@@ -29,7 +29,7 @@ impl Warp {
                 .unwrap_or_else(|| Self::root().join(format!("target/{}", &build)))
         };
 
-        path.push("warp");
+        path.push("leanterm");
         path
     }
 

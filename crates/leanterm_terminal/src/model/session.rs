@@ -1,6 +1,6 @@
 use anyhow::Result;
 pub use leanterm_core::SessionId;
-/// Returns the hostname for the local machine where Warp is running.
+/// Returns the hostname for the local machine where Leanterm is running.
 pub fn get_local_hostname() -> Result<String> {
     cfg_if::cfg_if! {
         if #[cfg(not(target_family = "wasm"))] {

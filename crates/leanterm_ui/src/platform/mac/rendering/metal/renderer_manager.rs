@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
+use leanterm_ui_core::rendering;
 use objc2::runtime::ProtocolObject;
 use objc2_metal::{MTLDevice, MTLPixelFormat};
-use leanterm_ui_core::rendering;
 
 use crate::platform::mac::rendering::metal::renderer::Renderer;
 

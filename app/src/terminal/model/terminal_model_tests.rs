@@ -157,7 +157,7 @@ pub fn test_restored_empty_command_block() {
         !restored_block.is_command_empty(),
         "The empty block should have nonzero length"
     );
-    // The mocked terminal model comes with a WarpInput block and the active block.
+    // The mocked terminal model comes with a LeantermInput block and the active block.
     assert_eq!(model.block_list().blocks().len(), 3);
 }
 

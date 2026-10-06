@@ -1,10 +1,10 @@
 use std::cmp::Ordering;
 
 use leanterm_completer::completer::{EngineDirEntry, EngineFileType};
-use leanterm_util::file_type::is_binary_file;
-use leanterm_util::path::expand_session_home;
 use leanterm_ui::r#async::SpawnedFutureHandle;
 use leanterm_ui::{AppContext, Entity, ModelContext};
+use leanterm_util::file_type::is_binary_file;
+use leanterm_util::path::expand_session_home;
 
 use super::display_menu::GenericMenuItem;
 use crate::completer::SessionContext;

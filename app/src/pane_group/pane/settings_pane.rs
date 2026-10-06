@@ -1,4 +1,6 @@
-use leanterm_ui::{AppContext, ModelHandle, SingletonEntity, View, ViewContext, ViewHandle, WindowId};
+use leanterm_ui::{
+    AppContext, ModelHandle, SingletonEntity, View, ViewContext, ViewHandle, WindowId,
+};
 
 use super::view::PaneView;
 use super::{

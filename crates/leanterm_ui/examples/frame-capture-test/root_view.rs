@@ -2,7 +2,6 @@ use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use image::ImageEncoder;
-use pathfinder_color::ColorU;
 use leanterm_ui::elements::{
     Align, ConstrainedBox, Container, DispatchEventResult, EventHandler, Padding, ParentElement,
     Rect, Stack, Text,
@@ -12,6 +11,7 @@ use leanterm_ui::platform::CapturedFrame;
 use leanterm_ui::{
     AppContext, Element, Entity, SingletonEntity as _, TypedActionView, View, ViewContext,
 };
+use pathfinder_color::ColorU;
 
 #[derive(Clone, Debug)]
 pub enum RootViewAction {
@@ -145,7 +145,7 @@ impl View for RootView {
                             .with_child(
                                 Container::new(
                                     Text::new_inline(
-                                        "WarpUI rendering sample with clickable capture button"
+                                        "LeantermUi rendering sample with clickable capture button"
                                             .to_string(),
                                         self.font_family,
                                         16.0,

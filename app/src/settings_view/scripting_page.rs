@@ -1,6 +1,5 @@
-//! Settings UI for local scripting and Warp control permissions.
+//! Settings UI for local scripting and Leanterm control permissions.
 
-use settings::Setting as _;
 #[cfg(target_os = "macos")]
 use leanterm_core::channel::ChannelState;
 use leanterm_errors::report_if_error;
@@ -9,7 +8,10 @@ use leanterm_ui::elements::{ChildView, Element, MouseStateHandle};
 use leanterm_ui::ui_components::button::ButtonVariant;
 #[cfg(target_os = "macos")]
 use leanterm_ui::ui_components::components::UiComponent;
-use leanterm_ui::{AppContext, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle};
+use leanterm_ui::{
+    AppContext, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
+};
+use settings::Setting as _;
 
 use super::settings_page::{
     MatchData, PageTitle, PageType, SettingsPageMeta, SettingsPageViewHandle, SettingsWidget,
@@ -29,14 +31,14 @@ use crate::workspace::{ToastStack, cli_install};
 pub enum ScriptingSettingsPageAction {
     SetLocalControlMode(LocalControlMode),
     #[cfg(target_os = "macos")]
-    InstallWarpControlCli,
+    InstallLeantermControlCli,
 }
 
 pub struct ScriptingSettingsPageView {
     page: PageType<Self>,
     local_control_mode_dropdown: ViewHandle<Dropdown<ScriptingSettingsPageAction>>,
     #[cfg(target_os = "macos")]
-    warpctrl_installing: bool,
+    leantermctl_installing: bool,
 }
 
 impl ScriptingSettingsPageView {
@@ -48,7 +50,7 @@ impl ScriptingSettingsPageView {
         });
         Self::update_local_control_mode_dropdown(local_control_mode_dropdown.clone(), ctx);
 
-        if FeatureFlag::WarpControlCli.is_enabled() {
+        if FeatureFlag::LeantermControlCli.is_enabled() {
             ctx.subscribe_to_model(&LocalControlSettings::handle(ctx), |view, _, _, ctx| {
                 Self::update_local_control_mode_dropdown(
                     view.local_control_mode_dropdown.clone(),
@@ -60,7 +62,7 @@ impl ScriptingSettingsPageView {
 
         #[cfg(target_os = "macos")]
         let widgets: Vec<Box<dyn SettingsWidget<View = Self>>> = vec![
-            Box::new(WarpControlCliInstallWidget::default()),
+            Box::new(LeantermControlCliInstallWidget::default()),
             Box::new(LocalControlModeWidget),
         ];
         #[cfg(not(target_os = "macos"))]
@@ -71,7 +73,7 @@ impl ScriptingSettingsPageView {
             page: PageType::new_uncategorized(widgets, Some(PageTitle::new("Scripting"))),
             local_control_mode_dropdown,
             #[cfg(target_os = "macos")]
-            warpctrl_installing: false,
+            leantermctl_installing: false,
         }
     }
 
@@ -101,23 +103,23 @@ impl ScriptingSettingsPageView {
     }
 
     #[cfg(target_os = "macos")]
-    fn install_warpctrl(&mut self, ctx: &mut ViewContext<Self>) {
-        if self.warpctrl_installing || cli_install::is_warpctrl_installed() {
+    fn install_leantermctl(&mut self, ctx: &mut ViewContext<Self>) {
+        if self.leantermctl_installing || cli_install::is_leantermctl_installed() {
             return;
         }
 
-        self.warpctrl_installing = true;
+        self.leantermctl_installing = true;
         ctx.notify();
         let window_id = ctx.window_id();
         ctx.spawn(
-            async { cli_install::install_warpctrl() },
+            async { cli_install::install_leantermctl() },
             move |view, result, ctx| {
-                view.warpctrl_installing = false;
+                view.leantermctl_installing = false;
                 match result {
                     Ok(()) => {
-                        let command_name = ChannelState::channel().warpctrl_command_name();
+                        let command_name = ChannelState::channel().leantermctl_command_name();
                         let message = format!(
-                            "Successfully installed the Warp Control CLI! You can now run '{command_name}' from the command line."
+                            "Successfully installed the Leanterm Control CLI! You can now run '{command_name}' from the command line."
                         );
                         ToastStack::handle(ctx).update(ctx, |toast_stack, ctx| {
                             toast_stack.add_ephemeral_toast(
@@ -128,7 +130,7 @@ impl ScriptingSettingsPageView {
                         });
                     }
                     Err(error) => {
-                        let message = format!("Failed to install Warp Control command: {error}");
+                        let message = format!("Failed to install Leanterm Control command: {error}");
                         log::warn!("{message}");
                         ToastStack::handle(ctx).update(ctx, |toast_stack, ctx| {
                             toast_stack.add_persistent_toast(
@@ -161,7 +163,7 @@ impl TypedActionView for ScriptingSettingsPageView {
                 ctx.notify();
             }
             #[cfg(target_os = "macos")]
-            ScriptingSettingsPageAction::InstallWarpControlCli => self.install_warpctrl(ctx),
+            ScriptingSettingsPageAction::InstallLeantermControlCli => self.install_leantermctl(ctx),
         }
     }
 }
@@ -182,7 +184,7 @@ impl SettingsPageMeta for ScriptingSettingsPageView {
     }
 
     fn should_render(&self, _ctx: &AppContext) -> bool {
-        cfg!(not(target_family = "wasm")) && FeatureFlag::WarpControlCli.is_enabled()
+        cfg!(not(target_family = "wasm")) && FeatureFlag::LeantermControlCli.is_enabled()
     }
 
     fn update_filter(&mut self, query: &str, ctx: &mut ViewContext<Self>) -> MatchData {
@@ -206,16 +208,16 @@ impl From<ViewHandle<ScriptingSettingsPageView>> for SettingsPageViewHandle {
 
 #[cfg(target_os = "macos")]
 #[derive(Default)]
-struct WarpControlCliInstallWidget {
+struct LeantermControlCliInstallWidget {
     install_button_mouse_state: MouseStateHandle,
 }
 
 #[cfg(target_os = "macos")]
-impl SettingsWidget for WarpControlCliInstallWidget {
+impl SettingsWidget for LeantermControlCliInstallWidget {
     type View = ScriptingSettingsPageView;
 
     fn search_terms(&self) -> &str {
-        "warp control cli command warpctrl install scripting"
+        "leanterm control cli command leantermctl install scripting"
     }
 
     fn render(
@@ -224,9 +226,9 @@ impl SettingsWidget for WarpControlCliInstallWidget {
         appearance: &Appearance,
         _app: &AppContext,
     ) -> Box<dyn Element> {
-        let installed = cli_install::is_warpctrl_installed();
-        let disabled = view.warpctrl_installing || installed;
-        let label = if view.warpctrl_installing {
+        let installed = cli_install::is_leantermctl_installed();
+        let disabled = view.leantermctl_installing || installed;
+        let label = if view.leantermctl_installing {
             "Installing…"
         } else if installed {
             "Installed"
@@ -249,18 +251,23 @@ impl SettingsWidget for WarpControlCliInstallWidget {
             button
                 .build()
                 .on_click(|ctx, _, _| {
-                    ctx.dispatch_typed_action(ScriptingSettingsPageAction::InstallWarpControlCli);
+                    ctx.dispatch_typed_action(
+                        ScriptingSettingsPageAction::InstallLeantermControlCli,
+                    );
                 })
                 .finish()
         };
 
         render_body_item::<ScriptingSettingsPageAction>(
-            "Warp Control CLI command".into(),
+            "Leanterm Control CLI command".into(),
             None,
             ToggleState::Enabled,
             appearance,
             button,
-            Some("Install the warpctrl command for scripting Warp from your terminal.".to_owned()),
+            Some(
+                "Install the leantermctl command for scripting Leanterm from your terminal."
+                    .to_owned(),
+            ),
         )
     }
 }
@@ -270,7 +277,7 @@ impl SettingsWidget for LocalControlModeWidget {
     type View = ScriptingSettingsPageView;
 
     fn search_terms(&self) -> &str {
-        "scripting warp control automation warpctrl local cli scripts disabled enabled"
+        "scripting leanterm control automation leantermctl local cli scripts disabled enabled"
     }
 
     fn render(
@@ -280,12 +287,12 @@ impl SettingsWidget for LocalControlModeWidget {
         _app: &AppContext,
     ) -> Box<dyn Element> {
         render_body_item::<ScriptingSettingsPageAction>(
-            "warpctrl CLI".into(),
+            "leantermctl CLI".into(),
             None,
             ToggleState::Enabled,
             appearance,
             ChildView::new(&view.local_control_mode_dropdown).finish(),
-            Some("warpctrl allows for scripting Warp's UI. Use with care.".to_owned()),
+            Some("leantermctl allows for scripting Leanterm's UI. Use with care.".to_owned()),
         )
     }
 }

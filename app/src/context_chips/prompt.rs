@@ -1,12 +1,12 @@
 use itertools::Itertools;
-use serde::{Deserialize, Serialize};
-use settings::Setting as _;
 use leanterm_ui::{
     Entity, GetSingletonModelHandle, ModelContext, ModelHandle, SingletonEntity, UpdateModel,
 };
+use serde::{Deserialize, Serialize};
+use settings::Setting as _;
 
 pub use super::ContextChipKind;
-use crate::settings::{InputSettings, InputSettingsChangedEvent, WarpPromptSeparator};
+use crate::settings::{InputSettings, InputSettingsChangedEvent, LeantermPromptSeparator};
 use crate::terminal::session_settings::{SessionSettings, SessionSettingsChangedEvent};
 
 #[cfg(test)]
@@ -94,9 +94,9 @@ pub struct PromptConfiguration {
 
     #[schemars(description = "Whether the prompt is displayed on the same line as the input.")]
     same_line_prompt_enabled: bool,
-    /// The separator to use as a trailing character at the end of Warp prompt, if any.
+    /// The separator to use as a trailing character at the end of Leanterm prompt, if any.
     #[schemars(description = "Trailing separator character for the prompt.")]
-    separator: WarpPromptSeparator,
+    separator: LeantermPromptSeparator,
 }
 
 #[derive(
@@ -136,9 +136,9 @@ impl PromptSelection {
         }
     }
 
-    pub fn separator(&self) -> WarpPromptSeparator {
+    pub fn separator(&self) -> LeantermPromptSeparator {
         match self {
-            PromptSelection::Default => WarpPromptSeparator::None,
+            PromptSelection::Default => LeantermPromptSeparator::None,
             PromptSelection::CustomChipSelection(config) => config.separator(),
         }
     }
@@ -173,7 +173,7 @@ impl Prompt {
         &mut self,
         chips: I,
         same_line_prompt_enabled: bool,
-        separator: WarpPromptSeparator,
+        separator: LeantermPromptSeparator,
         ctx: &mut ModelContext<Self>,
     ) -> anyhow::Result<()>
     where
@@ -191,7 +191,7 @@ impl Prompt {
         })
     }
 
-    /// Reset to the default Warp prompt.
+    /// Reset to the default Leanterm prompt.
     pub fn reset<C: UpdateModel + GetSingletonModelHandle>(
         &mut self,
         ctx: &mut C,
@@ -234,20 +234,20 @@ impl Prompt {
     pub fn mock_with(
         chips: impl IntoIterator<Item = ContextChipKind>,
         same_line_prompt_enabled: bool,
-        separator: WarpPromptSeparator,
+        separator: LeantermPromptSeparator,
     ) -> Self {
         Self {
             config: PromptConfiguration::from_chips(chips, same_line_prompt_enabled, separator),
         }
     }
 
-    /// Whether same line prompt is enabled for Warp prompt.
+    /// Whether same line prompt is enabled for Leanterm prompt.
     pub fn same_line_prompt_enabled(&self) -> bool {
         self.config.same_line_prompt_enabled
     }
 
-    /// The separator to be used for the Warp prompt.
-    pub fn separator(&self) -> WarpPromptSeparator {
+    /// The separator to be used for the Leanterm prompt.
+    pub fn separator(&self) -> LeantermPromptSeparator {
         self.config.separator
     }
 
@@ -301,7 +301,7 @@ impl Entity for Prompt {
 impl SingletonEntity for Prompt {}
 
 impl PromptConfiguration {
-    /// The default Warp prompt, synthesized from legacy prompt settings.
+    /// The default Leanterm prompt, synthesized from legacy prompt settings.
     /// The order of chips is important and would affect a lot of users if rearranged.
     pub fn default_prompt() -> Self {
         Self::default_prompt_with_pr_chip_suppressed(false)
@@ -320,13 +320,13 @@ impl PromptConfiguration {
             ContextChipKind::KubernetesContext,
         ];
 
-        Self::from_chips(chips, false, WarpPromptSeparator::None)
+        Self::from_chips(chips, false, LeantermPromptSeparator::None)
     }
 
     pub fn from_chips(
         chips: impl IntoIterator<Item = ContextChipKind>,
         same_line_prompt_enabled: bool,
-        separator: WarpPromptSeparator,
+        separator: LeantermPromptSeparator,
     ) -> Self {
         Self {
             chips: chips
@@ -380,7 +380,7 @@ impl PromptConfiguration {
         self.same_line_prompt_enabled
     }
 
-    pub fn separator(&self) -> WarpPromptSeparator {
+    pub fn separator(&self) -> LeantermPromptSeparator {
         self.separator
     }
 

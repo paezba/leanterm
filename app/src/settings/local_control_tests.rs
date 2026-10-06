@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
 
-use settings::{PrivatePreferences, PublicPreferences, Setting as _, SettingsManager};
 use leanterm_core::channel::{Channel, ChannelState};
 use leanterm_ui::SingletonEntity as _;
 use leanterm_ui_extras::secure_storage::{self, AppContextExt as _};
 use leanterm_ui_extras::user_preferences;
+use settings::{PrivatePreferences, PublicPreferences, Setting as _, SettingsManager};
 
 use super::{
     LocalControlMode, LocalControlModeSetting, LocalControlSettings, default_mode_for_channel,

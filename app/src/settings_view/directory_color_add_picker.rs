@@ -1,8 +1,6 @@
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
-use settings::Setting;
-use leanterm_util::path::user_friendly_path;
 use leanterm_ui::elements::{
     Border, ChildView, ConstrainedBox, Container, CrossAxisAlignment, Flex, Hoverable,
     MainAxisSize, MouseStateHandle, ParentElement, Text,
@@ -11,6 +9,8 @@ use leanterm_ui::platform::Cursor;
 use leanterm_ui::{
     AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
 };
+use leanterm_util::path::user_friendly_path;
+use settings::Setting;
 
 use crate::appearance::Appearance;
 use crate::persisted_workspace::{PersistedWorkspace, PersistedWorkspaceEvent};

@@ -3,7 +3,9 @@ use leanterm_errors::report_if_error;
 use leanterm_ui::elements::{Container, CrossAxisAlignment, Flex, ParentElement, Shrinkable};
 use leanterm_ui::presenter::ChildView;
 use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
-use leanterm_ui::{Element, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle};
+use leanterm_ui::{
+    Element, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
+};
 
 use crate::appearance::Appearance;
 use crate::editor::{EditorView, Event as EditorEvent, SingleLineEditorOptions, TextOptions};

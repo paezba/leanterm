@@ -3,11 +3,11 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use async_trait::async_trait;
+use leanterm_core::command::ExitCode;
+use leanterm_ui_core::platform::OperatingSystem;
+use leanterm_util::path::{EscapeChar, ShellFamily};
 use smol_str::SmolStr;
 use typed_path::{TypedPath, TypedPathBuf};
-use leanterm_core::command::ExitCode;
-use leanterm_util::path::{EscapeChar, ShellFamily};
-use leanterm_ui_core::platform::OperatingSystem;
 
 use super::engine::EngineDirEntry;
 use crate::completer::TopLevelCommandCaseSensitivity;

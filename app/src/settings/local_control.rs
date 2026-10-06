@@ -1,15 +1,15 @@
 //! Secure local setting that gates local control.
 //!
 //! This setting is local-only, kept out of the user-visible settings file, and
-//! persisted through Warp's secure storage provider. It is the authoritative
+//! persisted through Leanterm's secure storage provider. It is the authoritative
 //! enablement bit for local control.
 use anyhow::Result;
-use serde::{Deserialize, Serialize};
-use settings::macros::define_settings_group;
-use settings::{SecureSetting, Setting, SupportedPlatforms};
 use leanterm_core::channel::{Channel, ChannelState};
 use leanterm_ui::{AppContext, ModelContext};
 use leanterm_ui_extras::secure_storage;
+use serde::{Deserialize, Serialize};
+use settings::macros::define_settings_group;
+use settings::{SecureSetting, Setting, SupportedPlatforms};
 
 const LOCAL_CONTROL_MODE_STORAGE_KEY: &str = "LocalControlMode";
 

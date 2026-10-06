@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Builds a Warp binary and bundles it up for distribution.
+# Builds a Leanterm binary and bundles it up for distribution.
 
 set -e
 
@@ -136,20 +136,20 @@ mkdir -p "$EXTRAS_DIR"
 
 # Update parameters based on the target release channel.
 #
-# WARP_BIN is the name of the binary produced by cargo.
-# N.B. The bundled outputs will always be warp.js and warp_bg.wasm.
+# LEANTERM_BIN is the name of the binary produced by cargo.
+# N.B. The bundled outputs will always be leanterm.js and leanterm_bg.wasm.
 if [[ $RELEASE_CHANNEL = "local" ]]; then
-  WARP_BIN="warp"
+  LEANTERM_BIN="leanterm"
   FEATURES="$FEATURES"
 elif [[ $RELEASE_CHANNEL = "dev" ]]; then
-  WARP_BIN="dev"
+  LEANTERM_BIN="dev"
 elif [[ $RELEASE_CHANNEL = "preview" ]]; then
-  WARP_BIN="preview"
+  LEANTERM_BIN="preview"
   FEATURES="$FEATURES,preview_channel"
 elif [[ $RELEASE_CHANNEL = "stable" ]]; then
-  WARP_BIN="stable"
+  LEANTERM_BIN="stable"
 elif [[ $RELEASE_CHANNEL = "oss" ]]; then
-  WARP_BIN="leanterm"
+  LEANTERM_BIN="leanterm"
 fi
 
 if [ -n "${FEATURES_OVERRIDE+x}" ]; then
@@ -161,7 +161,7 @@ else
 fi
 
 # These cargo features were removed and replaced by environment variables read
-# by warp-channel-config. Intercept them after merging --features additions so
+# by leanterm-channel-config. Intercept them after merging --features additions so
 # that existing invocations keep working without dropping bundle defaults.
 for mapping in \
     "with_local_server:WITH_LOCAL_SERVER" \
@@ -180,20 +180,20 @@ done
 # then exit.  We use this script to invoke `cargo check` to ensure that we are
 # using the same feature flags and profile that we would be using in production.
 if [[ "$CHECK_ONLY" == "true" ]]; then
-  ASSET_TARGET_DIR="$ASSET_TARGET_DIR" cargo check --target wasm32-unknown-unknown --profile "$CARGO_PROFILE" --bin "$WARP_BIN" --features "$FEATURES"
+  ASSET_TARGET_DIR="$ASSET_TARGET_DIR" cargo check --target wasm32-unknown-unknown --profile "$CARGO_PROFILE" --bin "$LEANTERM_BIN" --features "$FEATURES"
   exit 0
 fi
 
 # Build the wasm binary.
-echo "Building and bundling Warp for channel $RELEASE_CHANNEL"
-ASSET_TARGET_DIR="$ASSET_TARGET_DIR" cargo build --target wasm32-unknown-unknown --profile "$CARGO_PROFILE" --bin "$WARP_BIN" --features "$FEATURES"
+echo "Building and bundling Leanterm for channel $RELEASE_CHANNEL"
+ASSET_TARGET_DIR="$ASSET_TARGET_DIR" cargo build --target wasm32-unknown-unknown --profile "$CARGO_PROFILE" --bin "$LEANTERM_BIN" --features "$FEATURES"
 
 # Generate linked JS and wasm files that can be run in the browser.
-echo "Running wasm-bindgen on $CARGO_TARGET_OUTPUT_DIR/$WARP_BIN.wasm"
-wasm-bindgen --target web --out-dir "$OUT_DIR" --out-name "warp" --keep-debug --no-typescript "$CARGO_TARGET_OUTPUT_DIR/$WARP_BIN.wasm"
+echo "Running wasm-bindgen on $CARGO_TARGET_OUTPUT_DIR/$LEANTERM_BIN.wasm"
+wasm-bindgen --target web --out-dir "$OUT_DIR" --out-name "leanterm" --keep-debug --no-typescript "$CARGO_TARGET_OUTPUT_DIR/$LEANTERM_BIN.wasm"
 
-WASM_BINARY_OUT="${OUT_DIR}/warp_bg.wasm"
-WASM_BINARY_DEBUG="${EXTRAS_DIR}/warp_bg.debug.wasm"
+WASM_BINARY_OUT="${OUT_DIR}/leanterm_bg.wasm"
+WASM_BINARY_DEBUG="${EXTRAS_DIR}/leanterm_bg.debug.wasm"
 
 if [[ "$NO_SPLIT" != "true" ]]; then
   # Run Sentry's wasm-split binary to separate out debug information from the

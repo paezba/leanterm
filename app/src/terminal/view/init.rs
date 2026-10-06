@@ -65,8 +65,8 @@ pub fn init(app: &mut AppContext) {
     app.register_binding_validator::<TerminalView>(is_binding_pty_compliant);
 
     init_overlapping_keybindings(app);
-    // Register input mode bindings before warpify bindings so ctrl-i warpifies
-    // instead of opening inline agent when a warpify banner is visible.
+    // Register input mode bindings before leantermify bindings so ctrl-i leantermifies
+    // instead of opening inline agent when a leantermify banner is visible.
 
     app.register_fixed_bindings([
         FixedBinding::new("up", TerminalAction::Up, id!("Terminal") & !id!("IMEOpen")),
@@ -229,8 +229,8 @@ pub fn init(app: &mut AppContext) {
 
     app.register_editable_bindings([
         EditableBinding::new(
-            "terminal:warpify_subshell",
-            "Warpify subshell",
+            "terminal:leantermify_subshell",
+            "Leantermify subshell",
             TerminalAction::TriggerSubshellBootstrap,
         )
         .with_key_binding("ctrl-i")

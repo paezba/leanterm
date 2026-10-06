@@ -90,7 +90,7 @@ SIGNINGKEY
 #
 # Behavior:
 #   - If neither `.sources` nor `.list` exists, write `.sources` (the modern
-#     format the reporter recommended; supported by every apt version Warp's
+#     format the reporter recommended; supported by every apt version Leanterm's
 #     packages target).
 #   - If either format already exists, leave it alone. We don't migrate a
 #     legacy `.list` to `.sources` here — that's the user's tooling's job

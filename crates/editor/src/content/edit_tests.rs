@@ -5,13 +5,13 @@ use std::sync::Arc;
 #[cfg(not(target_arch = "wasm32"))]
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use rangemap::RangeSet;
-use string_offset::CharOffset;
 use leanterm_ui_core::assets::asset_cache::{AssetCache, AssetSource, AssetState};
 use leanterm_ui_core::fonts::{Properties, Style, Weight};
 use leanterm_ui_core::image_cache::ImageType;
 use leanterm_ui_core::text_layout::{StyleAndFont, TextStyle};
 use leanterm_ui_core::{App, SingletonEntity};
+use rangemap::RangeSet;
+use string_offset::CharOffset;
 
 use super::{
     BlockLocation, LayOutArgs, LayoutTask, MAX_LAYOUT_CONTENT_CHARS_PER_PARALLEL_CHUNK,
@@ -68,7 +68,7 @@ fn test_highlight_urls() {
             block_style: BufferBlockStyle::PlainText,
         },
         StyledBufferRun {
-            run: "https://warp.dev".to_string(),
+            run: "https://lean.dev".to_string(),
             text_styles: TextStylesWithMetadata::default(),
             block_style: BufferBlockStyle::PlainText,
         },
@@ -83,7 +83,7 @@ fn test_highlight_urls() {
             },
             ParsedUrl {
                 url_range: 23..39,
-                link: "https://warp.dev".to_string()
+                link: "https://lean.dev".to_string()
             }
         ]
     );
@@ -92,7 +92,7 @@ fn test_highlight_urls() {
 #[test]
 fn test_highlight_urls_unicode() {
     let test_runs = vec![StyledBufferRun {
-        run: "This (not https://example.com) is a 🔥 link about a 🇨🇦 🏡:\u{a0}https://warp.dev"
+        run: "This (not https://example.com) is a 🔥 link about a 🇨🇦 🏡:\u{a0}https://lean.dev"
             .to_string(),
         text_styles: Default::default(),
         block_style: BufferBlockStyle::PlainText,
@@ -106,7 +106,7 @@ fn test_highlight_urls_unicode() {
             },
             ParsedUrl {
                 url_range: 57..73,
-                link: "https://warp.dev".to_string()
+                link: "https://lean.dev".to_string()
             }
         ]
     )
@@ -136,13 +136,13 @@ fn test_links_not_auto_highlighted() {
     // prevent auto-linking other URLs.
     let runs = &[
         StyledBufferRun {
-            run: "first link is https://warp.dev ".to_string(),
+            run: "first link is https://lean.dev ".to_string(),
             text_styles: Default::default(),
             block_style: BufferBlockStyle::PlainText,
         },
         StyledBufferRun {
             run: "http://example.com".to_string(),
-            text_styles: TextStylesWithMetadata::default().link("https://warp.dev".to_string()),
+            text_styles: TextStylesWithMetadata::default().link("https://lean.dev".to_string()),
             block_style: BufferBlockStyle::PlainText,
         },
         StyledBufferRun {
@@ -157,7 +157,7 @@ fn test_links_not_auto_highlighted() {
         &[
             ParsedUrl {
                 url_range: 14..30,
-                link: "https://warp.dev".to_string()
+                link: "https://lean.dev".to_string()
             },
             ParsedUrl {
                 url_range: 60..78,
@@ -182,7 +182,7 @@ fn test_highlight_url_before_link() {
             block_style: BufferBlockStyle::PlainText,
         },
         StyledBufferRun {
-            run: "https://warp.dev".to_string(),
+            run: "https://lean.dev".to_string(),
             text_styles: Default::default(),
             block_style: BufferBlockStyle::PlainText,
         },
@@ -197,7 +197,7 @@ fn test_highlight_url_before_link() {
             },
             ParsedUrl {
                 url_range: 28..44,
-                link: "https://warp.dev".to_string()
+                link: "https://lean.dev".to_string()
             }
         ]
     )
@@ -214,7 +214,7 @@ fn test_text_around_link_not_auto_highlighted() {
         },
         StyledBufferRun {
             run: "alink".to_string(),
-            text_styles: TextStylesWithMetadata::default().link("https://warp.dev".to_string()),
+            text_styles: TextStylesWithMetadata::default().link("https://lean.dev".to_string()),
             block_style: BufferBlockStyle::PlainText,
         },
         StyledBufferRun {
@@ -713,7 +713,7 @@ fn unique_markdown_image_path() -> PathBuf {
         .expect("system time should be after the Unix epoch")
         .as_nanos();
     std::env::temp_dir().join(format!(
-        "warp_editor_markdown_image_{}_{nonce}.png",
+        "leanterm_editor_markdown_image_{}_{nonce}.png",
         std::process::id()
     ))
 }
@@ -948,7 +948,7 @@ fn test_table_inline_style_runs_preserve_markdown_cell_styles() {
             );
             let body_style = text_layout.paragraph_styles(&BufferBlockStyle::table(Vec::new()));
             let table = crate::content::text::table_from_internal_format_with_inline_markdown(
-                "Header\tValue\nText\t**Bold** *Italic* [Link](https://warp.dev) `code`\n",
+                "Header\tValue\nText\t**Bold** *Italic* [Link](https://lean.dev) `code`\n",
                 Vec::new(),
             );
 

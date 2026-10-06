@@ -1,10 +1,10 @@
-use pathfinder_geometry::vector::vec2f;
 use leanterm_ui::color::ColorU;
 use leanterm_ui::elements::{
     Align, ConstrainedBox, Container, CornerRadius, DropShadow, Flex, ParentElement, Radius, Rect,
     Shrinkable,
 };
 use leanterm_ui::{AppContext, Element, Entity, TypedActionView, View};
+use pathfinder_geometry::vector::vec2f;
 
 pub struct RootView;
 

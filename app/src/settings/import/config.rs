@@ -2,15 +2,15 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use leanterm_core::ui::color::hex_color::HexColorError as UiHexColorError;
+use leanterm_core::ui::theme::{AnsiColors, LeantermTheme};
+use leanterm_ui::DisplayIdx;
+use leanterm_ui::fonts::FontInfo;
+use leanterm_ui::keymap::Keystroke;
 use pathfinder_color::ColorU;
 use serde::Serialize;
 use strum_macros::EnumIter;
 use thiserror::Error;
-use leanterm_core::ui::color::hex_color::HexColorError as UiHexColorError;
-use leanterm_core::ui::theme::{AnsiColors, WarpTheme};
-use leanterm_ui::DisplayIdx;
-use leanterm_ui::fonts::FontInfo;
-use leanterm_ui::keymap::Keystroke;
 
 use super::alacritty_parser::AlacrittyConfig;
 #[cfg(target_os = "macos")]
@@ -26,8 +26,11 @@ use crate::{themes::theme_creator_body::ThemeCreatorBody, user_config};
 
 #[derive(Debug)]
 pub enum ThemeType {
-    LightAndDark { light: WarpTheme, dark: WarpTheme },
-    Single(WarpTheme),
+    LightAndDark {
+        light: LeantermTheme,
+        dark: LeantermTheme,
+    },
+    Single(LeantermTheme),
 }
 
 #[derive(Clone, Debug)]
@@ -40,7 +43,7 @@ pub enum ThemeError {
 
 #[derive(Clone, Error, Debug)]
 pub enum HotkeyError {
-    #[error("A hotkey window opens in a way Warp does not support")]
+    #[error("A hotkey window opens in a way Leanterm does not support")]
     UnsupportedWindowType,
     #[error("There are multiple hotkeys configured")]
     MultipleHotkeys,
@@ -389,7 +392,7 @@ pub trait ParseableConfig: PartialEq + Sized + Send {
     /// Reads the file at the given path into the struct implementing ParseableConfig.
     async fn from_file(path: PathBuf) -> Result<Vec<Self>, ConfigError>;
 
-    /// Creates a Warp-readable `Config`. Sets corresponding errors if values have
+    /// Creates a Leanterm-readable `Config`. Sets corresponding errors if values have
     /// not been configured from the default.
     fn parse(self, fonts: &[FontInfo]) -> Config;
 

@@ -1,6 +1,5 @@
 //! A UI sample demonstrating how the SelectableArea element can be used.
 
-use markdown_parser::{FormattedTextFragment, FormattedTextLine, parse_markdown};
 use leanterm_ui::color::ColorU;
 use leanterm_ui::elements::{
     Align, ChildView, ConstrainedBox, Flex, FormattedTextElement, HeadingFontSizeMultipliers,
@@ -12,6 +11,7 @@ use leanterm_ui::{
     AppContext, Element, Entity, SingletonEntity as _, TypedActionView, View, ViewContext,
     ViewHandle,
 };
+use markdown_parser::{FormattedTextFragment, FormattedTextLine, parse_markdown};
 
 pub struct RootView {
     sub_view: ViewHandle<FormattedTextView>,

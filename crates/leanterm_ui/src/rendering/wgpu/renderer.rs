@@ -7,9 +7,9 @@ mod util;
 use std::sync::atomic::Ordering;
 
 use frame::Frame;
+use leanterm_ui_core::platform::CapturedFrame;
 use pathfinder_geometry::vector::Vector2F;
 use util::with_error_scope;
-use leanterm_ui_core::platform::CapturedFrame;
 use wgpu::wgc::device::DeviceError;
 use wgpu::wgc::present::SurfaceError;
 

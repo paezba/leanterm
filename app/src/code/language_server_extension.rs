@@ -1,9 +1,5 @@
-use lsp::{HoverContents, LspServerLogLevel, MarkupKind};
-use markdown_parser::{FormattedText, FormattedTextFragment, FormattedTextLine};
-use num_traits::SaturatingSub;
-use string_offset::CharOffset;
 use leanterm_core::ui::appearance::Appearance;
-use leanterm_core::ui::theme::WarpTheme;
+use leanterm_core::ui::theme::LeantermTheme;
 use leanterm_core::ui::theme::color::internal_colors;
 use leanterm_editor::content::buffer::InitialBufferState;
 use leanterm_editor::render::element::VerticalExpansionBehavior;
@@ -14,6 +10,10 @@ use leanterm_ui::elements::{
     MouseStateHandle, ParentElement, Radius, Rect, ScrollbarWidth,
 };
 use leanterm_ui::{AppContext, Element, SingletonEntity, ViewContext};
+use lsp::{HoverContents, LspServerLogLevel, MarkupKind};
+use markdown_parser::{FormattedText, FormattedTextFragment, FormattedTextLine};
+use num_traits::SaturatingSub;
+use string_offset::CharOffset;
 
 use super::editor::view::{CodeEditorRenderOptions, CodeEditorView};
 use crate::code::local_code_editor::{
@@ -557,7 +557,7 @@ impl LocalCodeEditorView {
     }
 
     /// Render a separator line between hover card sections.
-    fn render_separator(theme: &WarpTheme) -> Box<dyn Element> {
+    fn render_separator(theme: &LeantermTheme) -> Box<dyn Element> {
         Container::new(
             ConstrainedBox::new(
                 Rect::new()

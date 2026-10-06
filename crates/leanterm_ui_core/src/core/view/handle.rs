@@ -3,9 +3,9 @@ use std::fmt::{self, Debug};
 use std::marker::PhantomData;
 use std::sync::{Arc, Weak};
 
+use leanterm_errors::{ErrorExt, register_error};
 use parking_lot::Mutex;
 use thiserror::Error;
-use leanterm_errors::{ErrorExt, register_error};
 
 use super::context::ViewContext;
 use crate::core::RefCounts;

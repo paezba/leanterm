@@ -1,8 +1,6 @@
 use std::collections::HashSet;
 use std::{fmt, iter, mem};
 
-use pathfinder_geometry::rect::RectF;
-use pathfinder_geometry::vector::Vector2F;
 use leanterm_errors::report_error;
 use leanterm_ui::elements::{
     ChildAnchor, ConstrainedBox, Container, DispatchEventResult, Element, Empty, EventHandler,
@@ -12,11 +10,13 @@ use leanterm_ui::elements::{
 };
 use leanterm_ui::platform::Cursor;
 use leanterm_ui::{AppContext, EntityId, ViewContext};
+use pathfinder_geometry::rect::RectF;
+use pathfinder_geometry::vector::Vector2F;
 
 use super::{ActivationReason, PaneGroup, PaneId};
 use crate::app_state;
 use crate::pane_group::{DraggedBorder, PaneGroupAction, get_minimum_pane_size};
-use crate::themes::theme::WarpTheme;
+use crate::themes::theme::LeantermTheme;
 
 #[cfg(test)]
 #[path = "tree_tests.rs"]
@@ -475,7 +475,7 @@ impl PaneData {
         self.len == 0
     }
 
-    pub fn render(&self, theme: &WarpTheme, app: &AppContext) -> Box<dyn Element> {
+    pub fn render(&self, theme: &LeantermTheme, app: &AppContext) -> Box<dyn Element> {
         match &self.root {
             PaneNode::Leaf(pane) => pane.render(app),
             PaneNode::Branch(node) => node.render(theme, &self.hidden_panes, app),
@@ -680,7 +680,7 @@ impl PaneNode {
 
     fn render(
         &self,
-        theme: &WarpTheme,
+        theme: &LeantermTheme,
         hidden_panes: &Vec<HiddenPane>,
         app: &AppContext,
     ) -> Box<dyn Element> {
@@ -1003,7 +1003,7 @@ impl PaneBranch {
 
     fn render(
         &self,
-        theme: &WarpTheme,
+        theme: &LeantermTheme,
         hidden_panes: &Vec<HiddenPane>,
         app: &AppContext,
     ) -> Box<dyn Element> {
@@ -1359,7 +1359,7 @@ fn divider_mouse_down_action(
 fn create_minimalist_divider(
     direction: SplitDirection,
     item: &Divider,
-    theme: &WarpTheme,
+    theme: &LeantermTheme,
 ) -> Box<dyn Element> {
     let divider = ConstrainedBox::new(
         Rect::new()

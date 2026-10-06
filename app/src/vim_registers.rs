@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use settings::Setting as _;
-use vim::vim::MotionType;
 use leanterm_ui::clipboard::ClipboardContent;
 use leanterm_ui::{AppContext, Entity, ModelContext, SingletonEntity};
+use settings::Setting as _;
+use vim::vim::MotionType;
 
 use crate::settings::AppEditorSettings;
 

@@ -6,6 +6,14 @@ use anyhow::Context;
 use chrono::Utc;
 use code_diff::workspace::WorkspaceMetadata;
 use itertools::Itertools;
+#[cfg(feature = "local_fs")]
+use leanterm_core::channel::ChannelState;
+use leanterm_errors::report_if_error;
+#[cfg(feature = "local_fs")]
+use leanterm_ui::windowing::WindowManager;
+use leanterm_ui::{Entity, ModelContext, SingletonEntity};
+#[cfg(feature = "local_fs")]
+use leanterm_util::standardized_path::StandardizedPath;
 use lsp::LanguageId;
 #[cfg(feature = "local_fs")]
 use lsp::LspEvent;
@@ -15,14 +23,6 @@ use lsp::{LspManagerModel, LspServerConfig};
 #[cfg(feature = "local_fs")]
 use repo_metadata::RepoMetadataModel;
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "local_fs")]
-use leanterm_core::channel::ChannelState;
-use leanterm_errors::report_if_error;
-#[cfg(feature = "local_fs")]
-use leanterm_util::standardized_path::StandardizedPath;
-#[cfg(feature = "local_fs")]
-use leanterm_ui::windowing::WindowManager;
-use leanterm_ui::{Entity, ModelContext, SingletonEntity};
 
 #[cfg(feature = "local_fs")]
 use crate::code::language_server_shutdown_manager::LanguageServerShutdownManager;

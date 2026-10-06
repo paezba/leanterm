@@ -25,9 +25,8 @@ pub struct Window {
     pub origin_y: Option<f32>,
     pub quake_mode: bool,
     pub universal_search_width: Option<f32>,
-    pub warp_ai_width: Option<f32>,
     pub voltron_width: Option<f32>,
-    pub warp_drive_index_width: Option<f32>,
+    pub leanterm_drive_index_width: Option<f32>,
     pub fullscreen_state: i32,
     pub agent_management_filters: Option<String>,
     pub left_panel_open: Option<bool>,
@@ -81,9 +80,8 @@ pub struct NewWindow {
     pub origin_y: Option<f32>,
     pub quake_mode: bool,
     pub universal_search_width: Option<f32>,
-    pub warp_ai_width: Option<f32>,
     pub voltron_width: Option<f32>,
-    pub warp_drive_index_width: Option<f32>,
+    pub leanterm_drive_index_width: Option<f32>,
     pub fullscreen_state: i32,
     pub agent_management_filters: Option<String>,
     pub left_panel_open: Option<bool>,
@@ -398,7 +396,7 @@ pub struct Block {
     pub host: Option<String>,
     pub is_background: bool,
     pub rprompt: Option<String>,
-    /// JSON-serialized representation of the Warp prompt snapshot (Context Chips). Note that this
+    /// JSON-serialized representation of the Leanterm prompt snapshot (Context Chips). Note that this
     /// is different from PS1 and RPROMPT1
     pub prompt_snapshot: Option<String>,
     pub block_id: String,

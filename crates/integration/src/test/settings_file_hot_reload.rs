@@ -2,16 +2,16 @@
 //!
 //! Verifies that changes to `settings.toml` on disk are picked up by the
 //! filesystem watcher and pushed into the in-memory setting models, on every
-//! platform where Warp watches `config_local_dir()`.
+//! platform where Leanterm watches `config_local_dir()`.
 
 use std::time::Duration;
 
-use settings::Setting as _;
 use leanterm::integration_testing::step::new_step_with_default_assertions;
 use leanterm::integration_testing::terminal::wait_until_bootstrapped_single_pane_for_tab;
 use leanterm::settings::FontSettings;
 use leanterm_ui_core::integration::TestStep;
 use leanterm_ui_core::{SingletonEntity, async_assert_eq};
+use settings::Setting as _;
 
 use super::{Builder, new_builder};
 
@@ -28,7 +28,7 @@ pub fn test_settings_file_hot_reload_applies_new_values() -> Builder {
     new_builder()
         .with_setup(move |utils| {
             // Use a short watcher delay so each reload fires quickly.
-            utils.set_env("WARP_CONFIG_WATCHER_DELAY_MS", Some("10".to_string()));
+            utils.set_env("LEANTERM_CONFIG_WATCHER_DELAY_MS", Some("10".to_string()));
 
             // Write an initial valid settings file so the watcher is already
             // tracking it and the app reads a known value at startup.

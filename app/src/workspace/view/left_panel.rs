@@ -4,7 +4,6 @@ use std::path::PathBuf;
 use leanterm_core::ui::Icon;
 use leanterm_core::ui::theme::color::internal_colors;
 use leanterm_errors::report_error;
-use leanterm_util::path::LineAndColumnArg;
 use leanterm_ui::elements::{
     Align, ChildView, ConstrainedBox, Container, CrossAxisAlignment, DragBarSide, Element, Empty,
     Flex, MainAxisAlignment, MainAxisSize, MouseStateHandle, ParentElement, Resizable,
@@ -17,6 +16,7 @@ use leanterm_ui::{
     AppContext, Entity, FocusContext, ModelHandle, SingletonEntity, TypedActionView, View,
     ViewContext, ViewHandle, WeakViewHandle,
 };
+use leanterm_util::path::LineAndColumnArg;
 
 use crate::appearance::Appearance;
 #[cfg(feature = "local_fs")]

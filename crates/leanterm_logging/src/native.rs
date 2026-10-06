@@ -6,9 +6,9 @@ use std::sync::OnceLock;
 
 use anyhow::Result;
 use chrono::Local;
-use log::LevelFilter;
 use leanterm_core::channel::ChannelState;
 use leanterm_errors::report_error;
+use log::LevelFilter;
 use zip::write::SimpleFileOptions;
 use zip::{CompressionMethod, ZipWriter};
 
@@ -145,10 +145,10 @@ pub fn on_crash_recovery_process_killed() {
 }
 
 /// Handles the crash recovery process "recovering" from a parent crash by:
-/// 1) Renaming the log file from the main process (which just panicked) to `warp.log.old.temp`.
-/// 2) Moving the crash recovery process log (which is located at `warp.log.recovery`) to the usual
-///    path warp logs are located (log_directory/warp.log).
-///    The temp log file (`warp.log.old.temp`) will ultimately be rotated to `warp.log.old.0` the next
+/// 1) Renaming the log file from the main process (which just panicked) to `leanterm.log.old.temp`.
+/// 2) Moving the crash recovery process log (which is located at `leanterm.log.recovery`) to the usual
+///    path leanterm logs are located (log_directory/leanterm.log).
+///    The temp log file (`leanterm.log.old.temp`) will ultimately be rotated to `leanterm.log.old.0` the next
 ///    time [`rotate_log_files`] is called (which will get called when the event loop starts and we
 ///    have access to the `AppContext`)
 pub fn on_parent_process_crash() {
@@ -221,7 +221,7 @@ pub async fn rotate_files(channel_file_name: &str, max_rotation: usize) -> Resul
     // co-locates each old session's final state with its mid-session chunks.
     migrate_previous_session_in_session_chunks(&log_directory, channel_file_name);
 
-    // Rename `warp.log.old.temp` (the temporary file) to `warp.log.old.0`.
+    // Rename `leanterm.log.old.temp` (the temporary file) to `leanterm.log.old.0`.
     let temp_file_path = temp_log_file_path(&log_directory, channel_file_name);
 
     let _ = fs::rename(
@@ -333,7 +333,7 @@ pub fn init(config: LogConfig) -> Result<()> {
 /// Return the path to the log file that is used within the crash recovery process.
 /// We use a separate log file for the crash recovery process. If the crash
 /// recovery process handles a crash, we'll move the crash recovery process log file to its usual
-/// location at `log_directory/warp.log`.
+/// location at `log_directory/leanterm.log`.
 fn crash_recovery_process_log_file_path(
     log_directory: impl AsRef<Path>,
     logfile_name: &str,
@@ -359,7 +359,7 @@ pub fn log_file_path() -> Result<PathBuf> {
     Ok(state.log_file_path())
 }
 
-/// Collects paths to the current warp instance's log file and any older
+/// Collects paths to the current leanterm instance's log file and any older
 /// log files (up to 6 retained, all potentially useful for debugging).
 ///
 /// Returned ordering is newest-first, grouped by session:
@@ -452,7 +452,7 @@ fn collect_log_paths_in(log_directory: &Path, logfile_name: &str) -> Result<Vec<
 
     if files.is_empty() {
         return Err(anyhow::anyhow!(
-            "No warp logs were found for {logfile_name}"
+            "No leanterm logs were found for {logfile_name}"
         ));
     }
 
@@ -521,7 +521,7 @@ fn init_internal(
     log_destination: Option<LogDestination>,
     max_file_size_bytes: Option<u64>,
 ) -> Result<()> {
-    /// Returns an empty file named `warp.log` to log the current execution, and
+    /// Returns an empty file named `leanterm.log` to log the current execution, and
     /// renames the previous execution's log to a temporary name.
     fn setup_log_files_for_current_execution(
         log_directory: &Path,
@@ -532,13 +532,13 @@ fn init_internal(
 
         let main_log_path = if is_from_crash_recovery_process {
             // Use a temporary file for logs within the crash recovery process. We intentionally do
-            // not rename the old main log file to `warp.log.temp` like we do below because this
+            // not rename the old main log file to `leanterm.log.temp` like we do below because this
             // would result in us moving the log file of the parent process.
             crash_recovery_process_log_file_path(log_directory, logfile_name)
         } else {
             let main_log_path = main_process_log_file_path(log_directory, logfile_name);
 
-            // Rename the old main log file to `warp.log.temp`.
+            // Rename the old main log file to `leanterm.log.temp`.
             // We rotate the log files later in the background to make fewer blocking calls.
             let _ = fs::rename(
                 main_log_path.clone(),
@@ -581,7 +581,7 @@ fn init_internal(
 
     let stdout_is_a_tty = std::io::stdout().is_terminal();
     let in_ci = env::var("CI").is_ok();
-    let integration_test = env::var("WARP_INTEGRATION").is_ok();
+    let integration_test = env::var("LEANTERM_INTEGRATION").is_ok();
     let use_logfile = match log_destination {
         Some(LogDestination::File) => true,
         Some(LogDestination::Stderr) => false,
@@ -603,7 +603,7 @@ fn init_internal(
         // Crash-recovery logs are short-lived (the file is renamed into place
         // by the parent on crash, and otherwise deleted on clean exit), so
         // skip in-session rotation for them — `max_file_size_bytes` only
-        // applies to the main process's `warp.log`.
+        // applies to the main process's `leanterm.log`.
         let target: Box<dyn std::io::Write + Send + 'static> = if is_from_crash_recovery_process {
             Box::new(file)
         } else {
@@ -659,7 +659,7 @@ fn init_log_directory() -> Result<std::path::PathBuf> {
         } else if #[cfg(any(target_os = "linux", target_os = "freebsd"))] {
             Ok(leanterm_core::paths::state_dir())
         } else if #[cfg(windows)] {
-            Ok(leanterm_core::paths::state_dir().join(leanterm_core::paths::WARP_LOGS_DIR))
+            Ok(leanterm_core::paths::state_dir().join(leanterm_core::paths::LEANTERM_LOGS_DIR))
         } else {
             Err(anyhow::anyhow!("Have not configured file-based logging for the current platform!"))
         }

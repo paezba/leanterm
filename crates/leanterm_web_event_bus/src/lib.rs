@@ -4,12 +4,12 @@ use js_sys::ReferenceError;
 use serde::Serialize;
 use wasm_bindgen::JsCast;
 
-/// Events emitted from Warp on Web to the host JavaScript app.
+/// Events emitted from Leanterm on Web to the host JavaScript app.
 ///
-/// These must stay in sync with the [`WarpEvent` TypeScript type](https://github.com/warpdotdev/warp-server/blob/develop/client/src/warp-client/index.ts).
+/// These must stay in sync with the [`LeantermEvent` TypeScript type](https://github.com/warpdotdev/warp-server/blob/develop/client/src/warp-client/index.ts).
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "kind", rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum WarpEvent {
+pub enum LeantermEvent {
     LoggedOut,
     SessionJoined,
     ErrorLogged { error: String },
@@ -36,13 +36,13 @@ mod ffi {
         ///   rustwasm/wasm-bindgen#3659), but may be in the future. We could also provide a
         ///   WASM-specific entrypoint (instead of `main`) that takes context before starting the
         ///   app.
-        #[wasm_bindgen(js_name = "warpEmitEvent", catch)]
+        #[wasm_bindgen(js_name = "leantermEmitEvent", catch)]
         pub fn emit_event(event: JsValue) -> Result<(), JsValue>;
     }
 }
 
 /// Emit an event to the host JavaScript app.
-pub fn emit_event(event: WarpEvent) {
+pub fn emit_event(event: LeantermEvent) {
     let serialized =
         serde_wasm_bindgen::to_value(&event).expect("Event must convert to JavaScript");
     match ffi::emit_event(serialized) {

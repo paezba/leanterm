@@ -2,10 +2,10 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use async_channel::Sender;
-use repo_metadata::repository::{RepositorySubscriber, SubscriberId};
-use repo_metadata::{Repository, RepositoryUpdate, RepositoryWatchMode};
 use leanterm_ui::r#async::SpawnedFutureHandle;
 use leanterm_ui::{Entity, ModelContext, ModelHandle};
+use repo_metadata::repository::{RepositorySubscriber, SubscriberId};
+use repo_metadata::{Repository, RepositoryUpdate, RepositoryWatchMode};
 
 use super::{GitRepoStatusEvent, GitStatusMetadata};
 use crate::code_review::diff_state::diff_metadata_against_head;

@@ -20,9 +20,9 @@ fn strips_only_sentence_periods() {
         Some(".gitignore")
     );
     assert_eq!(
-        path_without_trailing_sentence_punctuation("C:/Users/c/warp-md-test.md.")
+        path_without_trailing_sentence_punctuation("C:/Users/c/leanterm-md-test.md.")
             .map(|trimmed| trimmed.path),
-        Some("C:/Users/c/warp-md-test.md")
+        Some("C:/Users/c/leanterm-md-test.md")
     );
 
     // No trailing period -> nothing to trim.
@@ -74,7 +74,7 @@ fn strips_trailing_fullwidth_sentence_punctuation() {
 #[test]
 fn compute_valid_paths_excludes_trailing_sentence_period() {
     let dir = tempfile::tempdir().unwrap();
-    let file = dir.path().join("warp-md-test.md");
+    let file = dir.path().join("leanterm-md-test.md");
     std::fs::write(&file, "# Hello\n").unwrap();
 
     // The captured token as it would appear in `Drafted at <abs path>.`
@@ -107,7 +107,7 @@ fn compute_valid_paths_excludes_trailing_sentence_period() {
     // The resolved file excludes the trailing period (so it classifies as `.md`)...
     assert_eq!(
         file_link.absolute_path.file_name().unwrap(),
-        "warp-md-test.md"
+        "leanterm-md-test.md"
     );
     // ...and the highlighted range stops before the trailing period.
     assert_eq!(
@@ -122,7 +122,7 @@ fn compute_valid_paths_excludes_trailing_sentence_period() {
 #[test]
 fn compute_valid_paths_excludes_trailing_fullwidth_sentence_punctuation() {
     let dir = tempfile::tempdir().unwrap();
-    let file = dir.path().join("warp-md-test.md");
+    let file = dir.path().join("leanterm-md-test.md");
     std::fs::write(&file, "# Hello\n").unwrap();
 
     let token = format!("{}，", file.to_string_lossy());
@@ -154,7 +154,7 @@ fn compute_valid_paths_excludes_trailing_fullwidth_sentence_punctuation() {
 
     assert_eq!(
         file_link.absolute_path.file_name().unwrap(),
-        "warp-md-test.md"
+        "leanterm-md-test.md"
     );
     assert_eq!(
         *file_link.link.range().end(),
@@ -168,7 +168,7 @@ fn compute_valid_paths_excludes_trailing_fullwidth_sentence_punctuation() {
 #[test]
 fn compute_valid_paths_keeps_trailing_fullwidth_punctuation_when_it_is_the_filename() {
     let dir = tempfile::tempdir().unwrap();
-    let file = dir.path().join("warp-md-test.md，");
+    let file = dir.path().join("leanterm-md-test.md，");
     std::fs::write(&file, "# Hello\n").unwrap();
 
     let token = file.to_string_lossy().to_string();
@@ -199,7 +199,7 @@ fn compute_valid_paths_keeps_trailing_fullwidth_punctuation_when_it_is_the_filen
 
     assert_eq!(
         file_link.absolute_path.file_name().unwrap(),
-        "warp-md-test.md，"
+        "leanterm-md-test.md，"
     );
     assert_eq!(
         *file_link.link.range().end(),

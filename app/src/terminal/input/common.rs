@@ -1,7 +1,5 @@
 use std::sync::Arc;
 
-use pathfinder_geometry::vector::vec2f;
-use vim::vim::{VimMode, VimState};
 use leanterm_completer::completer::Description;
 use leanterm_ui::elements::{
     AnchorPair, Border, ChildAnchor, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment,
@@ -13,6 +11,8 @@ use leanterm_ui::fonts::Weight;
 use leanterm_ui::presenter::ChildView;
 use leanterm_ui::ui_components::components::{UiComponent, UiComponentStyles};
 use leanterm_ui::{AppContext, ViewHandle};
+use pathfinder_geometry::vector::vec2f;
+use vim::vim::{VimMode, VimState};
 
 use crate::appearance::Appearance;
 use crate::terminal::input::{Input, InputAction, InputSuggestionsMode, MenuPositioning};
@@ -25,17 +25,17 @@ pub(super) fn render_vim_status(vim_state: &VimState, appearance: &Appearance) -
     let theme = appearance.theme();
     let ansi_colors = theme.terminal_colors().bright;
     let icon = match vim_state.mode {
-        VimMode::Normal => Icon::VimNormalMode.to_warpui_icon(ansi_colors.green.into()),
+        VimMode::Normal => Icon::VimNormalMode.to_leanterm_ui_icon(ansi_colors.green.into()),
         VimMode::Insert => {
             use crate::themes::theme::Blend;
-            Icon::VimInsertMode.to_warpui_icon(
+            Icon::VimInsertMode.to_leanterm_ui_icon(
                 theme
                     .background()
                     .blend(&theme.foreground().with_opacity(50)),
             )
         }
-        VimMode::Visual(_) => Icon::VimVisualMode.to_warpui_icon(ansi_colors.blue.into()),
-        VimMode::Replace => Icon::VimReplaceMode.to_warpui_icon(ansi_colors.red.into()),
+        VimMode::Visual(_) => Icon::VimVisualMode.to_leanterm_ui_icon(ansi_colors.blue.into()),
+        VimMode::Replace => Icon::VimReplaceMode.to_leanterm_ui_icon(ansi_colors.red.into()),
     };
     Container::new(
         Flex::row()

@@ -5,12 +5,6 @@
 //! and the agent input footer editor.
 pub(crate) mod modal_shell;
 
-pub(crate) use modal_shell::{
-    ChipEditorModalConfig, ChipEditorMouseHandles, ChipEditorSectionsConfig,
-    render_chip_editor_modal, render_chip_editor_sections,
-};
-use pathfinder_geometry::rect::RectF;
-use pathfinder_geometry::vector::vec2f;
 use leanterm_core::ui::theme::Fill;
 use leanterm_ui::elements::{
     Border, ConstrainedBox, Container, CrossAxisAlignment, Dash, DispatchEventResult, Draggable,
@@ -21,6 +15,12 @@ use leanterm_ui::fonts::Properties;
 use leanterm_ui::platform::Cursor;
 use leanterm_ui::ui_components::components::UiComponent;
 use leanterm_ui::{Action, View, ViewContext};
+pub(crate) use modal_shell::{
+    ChipEditorModalConfig, ChipEditorMouseHandles, ChipEditorSectionsConfig,
+    render_chip_editor_modal, render_chip_editor_sections,
+};
+use pathfinder_geometry::rect::RectF;
+use pathfinder_geometry::vector::vec2f;
 
 use crate::appearance::Appearance;
 use crate::context_chips::display_chip::{chip_container, udi_font_size};
@@ -144,7 +144,7 @@ impl ControlItemRenderer {
         let button = Hoverable::new(self.remove_button_state_handle.clone(), |_| {
             ConstrainedBox::new(
                 icons::Icon::X
-                    .to_warpui_icon(appearance.theme().ui_error_color().into())
+                    .to_leanterm_ui_icon(appearance.theme().ui_error_color().into())
                     .finish(),
             )
             .with_height(icon_size)
@@ -190,7 +190,7 @@ impl ControlItemRenderer {
             if let Some(icon) = icon {
                 content.add_child(
                     Container::new(
-                        ConstrainedBox::new(icon.to_warpui_icon(Fill::Solid(color)).finish())
+                        ConstrainedBox::new(icon.to_leanterm_ui_icon(Fill::Solid(color)).finish())
                             .with_height(font_size)
                             .with_width(font_size)
                             .finish(),

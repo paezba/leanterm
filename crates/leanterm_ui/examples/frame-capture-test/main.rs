@@ -4,8 +4,8 @@ use anyhow::{Result, anyhow};
 pub mod root_view;
 
 extern crate leanterm_ui;
-use rust_embed::RustEmbed;
 use leanterm_ui::{AssetProvider, platform};
+use rust_embed::RustEmbed;
 
 #[derive(Clone, Copy, RustEmbed)]
 #[folder = "examples/assets"]

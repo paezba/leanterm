@@ -19,14 +19,14 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 use context_chip::PromptGenerator;
-use serde::{Deserialize, Serialize};
-use smol_str::SmolStr;
 use leanterm_core::ui::color::blend::Blend;
 use leanterm_core::ui::color::contrast::{MinimumAllowedContrast, high_enough_contrast};
-use leanterm_core::ui::theme::{Fill, WarpTheme};
+use leanterm_core::ui::theme::{Fill, LeantermTheme};
 use leanterm_ui::color::ColorU;
 use leanterm_ui::elements::Text;
 use leanterm_ui::fonts::{Properties, Weight};
+use serde::{Deserialize, Serialize};
+use smol_str::SmolStr;
 
 #[allow(unused_imports)]
 pub use self::context_chip::{
@@ -619,7 +619,7 @@ pub fn chips_to_string(chips: impl Iterator<Item = ChipResult>) -> String {
 /// making chip labels hard to read. So we keep the muted look wherever it is
 /// still legible (e.g. dark themes) and only fall back to the fully-opaque,
 /// contrast-enforced `font_color` where the muted color would be sub-AA.
-pub(crate) fn readable_chip_label_color(theme: &WarpTheme, background: Fill) -> ColorU {
+pub(crate) fn readable_chip_label_color(theme: &LeantermTheme, background: Fill) -> ColorU {
     let muted = theme.sub_text_color(background).into_solid();
     let solid_background = background.into_solid();
     if high_enough_contrast(

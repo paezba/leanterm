@@ -6,7 +6,6 @@
 //!   `Workspace::render_settings_error_banner`) when the settings file has an
 //!   error *and* the user has dismissed the workspace banner.
 //! * Otherwise, a plain bordered "Open settings file" button.
-use pathfinder_color::ColorU;
 use leanterm_core::ui::color::coloru_with_opacity;
 use leanterm_core::ui::theme::Fill;
 use leanterm_ui::elements::{
@@ -17,6 +16,7 @@ use leanterm_ui::elements::{
 };
 use leanterm_ui::fonts::{FamilyId, Properties, Weight};
 use leanterm_ui::platform::Cursor;
+use pathfinder_color::ColorU;
 
 use crate::WorkspaceAction;
 use crate::appearance::Appearance;
@@ -34,10 +34,10 @@ const OPEN_BUTTON_HEIGHT: f32 = 32.;
 const ALERT_ACTION_BUTTON_HEIGHT: f32 = 24.;
 /// Size of the leading icons (search-sm, code-02, alert-circle, oz).
 const FOOTER_ICON_SIZE: f32 = 16.;
-/// Size of the Warp Agent brand mark inside the "Fix with Warp Agent" button. Matches the
+/// Size of the Leanterm Agent brand mark inside the "Fix with Leanterm Agent" button. Matches the
 /// Figma spec and the workspace banner's secondary-button icon sizing.
 const ALERT_OZ_ICON_SIZE: f32 = 14.;
-/// Horizontal padding inside the "Open file" / "Fix with Warp Agent" action buttons.
+/// Horizontal padding inside the "Open file" / "Fix with Leanterm Agent" action buttons.
 /// Matches the workspace banner's secondary button pad.
 const ALERT_BUTTON_HORIZONTAL_PADDING: f32 = 8.;
 /// Spacing between the two action buttons when they fit on one row.
@@ -75,7 +75,7 @@ impl SettingsFooterKind {
 
 /// Per-render-persistent handles for the footer. The `MouseStateHandle`s
 /// back the three clickable surfaces and must be created once and reused
-/// across renders per `WARP.md`; the scroll state handle serves the same
+/// across renders per `LEANTERM.md`; the scroll state handle serves the same
 /// purpose for the error alert's scrollable text region.
 #[derive(Clone, Default)]
 pub struct SettingsFooterMouseStates {
@@ -101,7 +101,7 @@ pub fn render_open_settings_file_button(
     let ui_font_family = appearance.ui_font_family();
 
     Hoverable::new(mouse_state, move |state| {
-        let icon = ConstrainedBox::new(Icon::Code2.to_warpui_icon(text_fill).finish())
+        let icon = ConstrainedBox::new(Icon::Code2.to_leanterm_ui_icon(text_fill).finish())
             .with_width(FOOTER_ICON_SIZE)
             .with_height(FOOTER_ICON_SIZE)
             .finish();
@@ -179,7 +179,7 @@ pub fn render_settings_error_alert(
 
     let alert_icon = ConstrainedBox::new(
         Icon::AlertCircle
-            .to_warpui_icon(Fill::Solid(text_color))
+            .to_leanterm_ui_icon(Fill::Solid(text_color))
             .finish(),
     )
     .with_width(FOOTER_ICON_SIZE)
@@ -309,7 +309,7 @@ fn render_alert_action_button(
         if let Some(icon) = icon {
             row.add_child(
                 Container::new(
-                    ConstrainedBox::new(icon.to_warpui_icon(Fill::Solid(text_color)).finish())
+                    ConstrainedBox::new(icon.to_leanterm_ui_icon(Fill::Solid(text_color)).finish())
                         .with_width(ALERT_OZ_ICON_SIZE)
                         .with_height(ALERT_OZ_ICON_SIZE)
                         .finish(),

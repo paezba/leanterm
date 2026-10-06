@@ -9,10 +9,10 @@ use std::path::PathBuf;
 #[cfg(feature = "local_fs")]
 use indexmap::IndexSet;
 #[cfg(feature = "local_fs")]
-use repo_metadata::repositories::DetectedRepositories;
-#[cfg(feature = "local_fs")]
 use leanterm_ui::{AppContext, SingletonEntity as _};
 use leanterm_ui::{Entity, EntityId, ModelContext, ModelHandle, ViewHandle};
+#[cfg(feature = "local_fs")]
+use repo_metadata::repositories::DetectedRepositories;
 
 #[cfg(feature = "local_fs")]
 use crate::code::file_tree::FileTreeView;

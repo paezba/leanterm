@@ -18,6 +18,13 @@ pub use display_map::{Bias, DisplayMap, DisplayPoint, MovementResult, ToDisplayP
 use itertools::FoldWhile::{Continue, Done};
 use itertools::Itertools;
 use lazy_static::lazy_static;
+use leanterm_errors::report_error;
+use leanterm_ui::accessibility::{AccessibilityContent, LeantermA11yRole};
+use leanterm_ui::text::TextBuffer;
+use leanterm_ui::text::point::Point;
+use leanterm_ui::text::word_boundaries::WordBoundariesPolicy;
+use leanterm_ui::text_layout::TextStyle;
+use leanterm_ui::{AppContext, Entity, ModelAsRef, ModelContext, ModelHandle, SingletonEntity};
 use num_traits::SaturatingSub;
 pub use selections::{
     DrawableSelection, LocalDrawableSelectionData, LocalPendingSelection, LocalSelection,
@@ -36,13 +43,6 @@ use vim::{
     vim_inner_block, vim_inner_line, vim_inner_paragraph, vim_inner_quote, vim_inner_word,
     vim_word_iterator_from_offset,
 };
-use leanterm_errors::report_error;
-use leanterm_ui::accessibility::{AccessibilityContent, WarpA11yRole};
-use leanterm_ui::text::TextBuffer;
-use leanterm_ui::text::point::Point;
-use leanterm_ui::text::word_boundaries::WordBoundariesPolicy;
-use leanterm_ui::text_layout::TextStyle;
-use leanterm_ui::{AppContext, Entity, ModelAsRef, ModelContext, ModelHandle, SingletonEntity};
 
 use self::buffer::Peer;
 use super::{PlainTextEditorViewAction, SelectionInsertion, ValidInputType, movement};
@@ -508,7 +508,7 @@ impl EditorModel {
         let delta = &text[start.as_usize()..end.as_usize()];
         match (was_selecting, is_selecting) {
             (false, false) => {
-                AccessibilityContent::new_without_help(delta, WarpA11yRole::UserAction)
+                AccessibilityContent::new_without_help(delta, LeantermA11yRole::UserAction)
             }
             (_, true) => {
                 // Note that Range is start <= x < end, and in our case, when deciding what was the action
@@ -532,10 +532,14 @@ impl EditorModel {
                 } else {
                     "unselected"
                 };
-                AccessibilityContent::new(delta, format!(", {action}"), WarpA11yRole::UserAction)
+                AccessibilityContent::new(
+                    delta,
+                    format!(", {action}"),
+                    LeantermA11yRole::UserAction,
+                )
             }
             (true, false) => {
-                AccessibilityContent::new_without_help("Unselected", WarpA11yRole::UserAction)
+                AccessibilityContent::new_without_help("Unselected", LeantermA11yRole::UserAction)
             }
         }
     }
@@ -2295,7 +2299,7 @@ impl EditorModel {
         ctx.emit_a11y_content(AccessibilityContent::new(
             self.selected_text(ctx),
             ", deleted",
-            WarpA11yRole::UserAction,
+            LeantermA11yRole::UserAction,
         ));
         self.change_selections(new_selections, ctx);
         self.insert("", None, ctx);
@@ -2319,7 +2323,7 @@ impl EditorModel {
         ctx.emit_a11y_content(AccessibilityContent::new(
             self.selected_text(ctx),
             ", deleted",
-            WarpA11yRole::UserAction,
+            LeantermA11yRole::UserAction,
         ));
         self.change_selections(new_selections, ctx);
         self.insert("", None, ctx);

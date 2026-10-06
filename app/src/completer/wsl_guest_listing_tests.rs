@@ -4,11 +4,11 @@ use std::collections::HashSet;
 use std::iter::FromIterator;
 use std::sync::Arc;
 
-use typed_path::{TypedPath, TypedPathBuf};
 #[cfg(unix)]
 use leanterm_completer::completer::EngineDirEntry;
 use leanterm_completer::signatures::CommandRegistry;
 use leanterm_ui::App;
+use typed_path::{TypedPath, TypedPathBuf};
 
 use crate::completer::SessionContext;
 use crate::terminal::model::session::command_executor::testing::TestCommandExecutor;
@@ -43,8 +43,9 @@ fn test_list_entries_follows_symlinks_and_succeeds() {
                 let cwd = TypedPathBuf::from(dirs.tests().to_string_lossy().as_bytes());
                 let ctx = test_session_context(test_wsl_like_session(), cwd.clone(), &app);
 
-                let entries = leanterm_ui::r#async::block_on(super::list_entries(&ctx, &cwd.to_path()))
-                    .expect("guest listing should succeed against a real local shell");
+                let entries =
+                    leanterm_ui::r#async::block_on(super::list_entries(&ctx, &cwd.to_path()))
+                        .expect("guest listing should succeed against a real local shell");
 
                 let mut entries = HashSet::<EngineDirEntry>::from_iter(entries);
                 // TODO(CORE-2000): The ls script we use to list entries adds a spurious "."

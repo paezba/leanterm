@@ -61,12 +61,12 @@ pub const fn toml_path_hierarchy(path: &str) -> Option<&str> {
 }
 
 use anyhow::{Context, Result};
-use serde::Serialize;
-use serde::de::DeserializeOwned;
 use leanterm_errors::report_error;
 use leanterm_ui_core::{AppContext, Entity, ModelContext};
 use leanterm_ui_extras::secure_storage::{self, AppContextExt as _};
 use leanterm_ui_extras::user_preferences::UserPreferences;
+use serde::Serialize;
+use serde::de::DeserializeOwned;
 
 /// A newtype wrapper for the public preferences backend.
 ///
@@ -208,7 +208,7 @@ pub struct SettingSurfaces(u8);
 impl SettingSurfaces {
     /// The desktop GUI application only.
     pub const GUI: Self = Self(1 << 0);
-    /// The headless terminal-UI front-end (the `warp_tui` crate) only.
+    /// The headless terminal-UI front-end (the `leanterm_tui` crate) only.
     pub const TUI: Self = Self(1 << 1);
     /// Every surface (currently GUI and TUI).
     pub const ALL: Self = Self(Self::GUI.0 | Self::TUI.0);

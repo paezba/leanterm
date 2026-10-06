@@ -2,12 +2,12 @@ use std::cmp::Ordering;
 use std::mem;
 use std::ops::Range;
 
+use leanterm_ui::AppContext;
+use leanterm_ui::text::point::Point;
 use pathfinder_geometry::vector::Vector2F;
 use serde::{Deserialize, Serialize};
 use string_offset::{ByteOffset, CharOffset};
 use vec1::Vec1;
-use leanterm_ui::AppContext;
-use leanterm_ui::text::point::Point;
 
 use super::buffer::{Anchor, Buffer, LamportValue, ToBufferOffset, ToCharOffset, ToPoint};
 use super::display_map::{DisplayMap, ToDisplayPoint};

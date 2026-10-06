@@ -3,15 +3,15 @@
 use std::mem;
 use std::sync::Arc;
 
-use ordered_float::OrderedFloat;
-use parking_lot::Once;
-use vec1::{Vec1, vec1};
 use leanterm_ui_core::color::ColorU;
 use leanterm_ui_core::elements::{Border, Fill, ListIndentLevel};
 use leanterm_ui_core::fonts::{FamilyId, Weight};
 use leanterm_ui_core::geometry::vector::vec2f;
 use leanterm_ui_core::text_layout::{CaretPosition, Glyph, Line, Run, TextFrame};
 use leanterm_ui_core::units::{IntoPixels, Pixels};
+use ordered_float::OrderedFloat;
+use parking_lot::Once;
+use vec1::{Vec1, vec1};
 
 use super::{
     BlockItem, BrokenLinkStyle, CheckBoxStyle, DEFAULT_BLOCK_SPACINGS, HorizontalRuleStyle,

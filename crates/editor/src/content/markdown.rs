@@ -7,6 +7,9 @@ use anyhow::{Context, Result};
 use html5ever::serialize::{Serialize, Serializer, TraversalScope};
 use html5ever::{QualName, serialize};
 use itertools::Itertools;
+use leanterm_ui_core::elements::{ListIndentLevel, ListNumbering};
+use leanterm_ui_core::text::point::Point;
+use leanterm_ui_core::{AppContext, ModelContext, ModelHandle};
 use markdown_parser::{
     CodeBlockText, FormattedIndentTextInline, FormattedTableAlignment, FormattedTaskList,
     FormattedText, FormattedTextFragment, FormattedTextHeader, FormattedTextInline,
@@ -14,9 +17,6 @@ use markdown_parser::{
 };
 use markup5ever::ns;
 use string_offset::CharOffset;
-use leanterm_ui_core::elements::{ListIndentLevel, ListNumbering};
-use leanterm_ui_core::text::point::Point;
-use leanterm_ui_core::{AppContext, ModelContext, ModelHandle};
 
 use super::buffer::{
     ActionWithSelectionDelta, Buffer, EditOrigin, EditResult, StyledBufferBlock,
@@ -34,7 +34,7 @@ use crate::content::version::BufferVersion;
 /// A Markdown format to serialize a [`Buffer`] into.
 #[derive(Clone, Copy)]
 pub enum MarkdownStyle<'a> {
-    /// The internal Markdown format used in Warp Drive. References are normalized, so the Markdown
+    /// The internal Markdown format used in Leanterm Drive. References are normalized, so the Markdown
     /// only refers to other objects by their IDs, with no other data.
     Internal,
     /// A Markdown format suitable for external use. If an [`AppContext`] is set, it may be used to

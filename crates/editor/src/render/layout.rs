@@ -3,8 +3,6 @@
 use std::ops::Range;
 use std::sync::Arc;
 
-#[cfg(test)]
-use markdown_parser::FormattedTextInline;
 use leanterm_ui_core::AppContext;
 use leanterm_ui_core::color::ColorU;
 use leanterm_ui_core::fonts::TextLayoutSystem;
@@ -14,6 +12,8 @@ use leanterm_ui_core::text_layout::{
     ClipConfig, LayoutCache, Line, StyleAndFont, TextAlignment, TextBorder, TextFrame, TextStyle,
 };
 use leanterm_ui_core::units::{IntoPixels, Pixels};
+#[cfg(test)]
+use markdown_parser::FormattedTextInline;
 
 use super::model::{BlockSpacing, ParagraphStyles, RenderState, RichTextStyles};
 use crate::content::text::{BufferBlockStyle, TextStylesWithMetadata};

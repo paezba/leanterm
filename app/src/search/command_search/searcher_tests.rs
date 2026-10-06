@@ -4,11 +4,11 @@ use std::time::Duration;
 
 use chrono::Local;
 use itertools::Itertools;
-use ordered_float::OrderedFloat;
 use leanterm_core::command::ExitCode;
 use leanterm_ui::r#async::Timer;
 use leanterm_ui::elements::Empty;
 use leanterm_ui::{App, AppContext, Element, SingletonEntity};
+use ordered_float::OrderedFloat;
 
 use super::*;
 use crate::appearance::Appearance;

@@ -220,7 +220,8 @@ fn execute_command_step(
     tab_idx: usize,
     pane_idx: usize,
     command: String,
-    validate_output_fn: impl FnMut(&mut leanterm_ui::App, leanterm_ui::WindowId) -> AssertionOutcome + 'static,
+    validate_output_fn: impl FnMut(&mut leanterm_ui::App, leanterm_ui::WindowId) -> AssertionOutcome
+    + 'static,
 ) -> TestStep {
     new_step_with_default_assertions_for_pane(
         &format!("Run '{command}' and verify block exists"),

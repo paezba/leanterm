@@ -7,7 +7,7 @@ use url::{Origin, Url};
 
 use super::Channel;
 use crate::AppId;
-use crate::channel::config::{ChannelConfig, WarpServerConfig};
+use crate::channel::config::{ChannelConfig, LeantermServerConfig};
 use crate::features::FeatureFlag;
 
 lazy_static! {
@@ -41,7 +41,7 @@ impl ChannelState {
             config: ChannelConfig {
                 app_id,
                 logfile_name: "".into(),
-                server_config: WarpServerConfig::production(),
+                server_config: LeantermServerConfig::production(),
             },
         }
     }
@@ -92,11 +92,11 @@ impl ChannelState {
     /// Returns a profile name for isolating user data. This should be used to
     /// sandbox how user data is stored.
     ///
-    /// This is a debugging tool for isolating development instances of Warp, and is not
+    /// This is a debugging tool for isolating development instances of Leanterm, and is not
     /// supported in release builds.
     pub fn data_profile() -> Option<String> {
         if cfg!(debug_assertions) {
-            std::env::var("WARP_DATA_PROFILE").ok()
+            std::env::var("LEANTERM_DATA_PROFILE").ok()
         } else {
             None
         }
@@ -105,7 +105,7 @@ impl ChannelState {
     /// Returns a value that should be used for namespacing persisted data.
     ///
     /// In release builds, this is identical to the app ID; in debug builds,
-    /// it optionally includes a suffix derived from the `WARP_DATA_PROFILE`
+    /// it optionally includes a suffix derived from the `LEANTERM_DATA_PROFILE`
     /// environment variable.
     pub fn data_domain() -> String {
         match Self::data_profile() {
@@ -176,12 +176,12 @@ impl ChannelState {
 
     pub fn url_scheme() -> &'static str {
         match Self::channel() {
-            Channel::Stable => "warp",
-            Channel::Preview => "warppreview",
-            Channel::Dev => "warpdev",
+            Channel::Stable => "leanterm",
+            Channel::Preview => "leantermpreview",
+            Channel::Dev => "leantermdev",
             // Dummy value--integration tests shouldn't support URL schemes.
-            Channel::Integration => "warpintegration",
-            Channel::Local => "warplocal",
+            Channel::Integration => "leantermintegration",
+            Channel::Local => "leantermlocal",
             Channel::Oss => "leanterm",
         }
     }

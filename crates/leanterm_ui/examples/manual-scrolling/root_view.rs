@@ -1,5 +1,3 @@
-use pathfinder_geometry::rect::RectF;
-use pathfinder_geometry::vector::{Vector2F, vec2f};
 use leanterm_ui::color::ColorU;
 use leanterm_ui::elements::new_scrollable::{
     AxisConfiguration, ClippedAxisConfiguration, DualAxisConfig, NewScrollableElement,
@@ -12,6 +10,8 @@ use leanterm_ui::elements::{
 use leanterm_ui::keymap::FixedBinding;
 use leanterm_ui::units::Pixels;
 use leanterm_ui::{AppContext, Element, Entity, TypedActionView, View, ViewContext, ViewHandle};
+use pathfinder_geometry::rect::RectF;
+use pathfinder_geometry::vector::{Vector2F, vec2f};
 
 pub fn init(ctx: &mut AppContext) {
     use leanterm_ui::keymap::macros::*;
@@ -216,7 +216,12 @@ impl NewScrollableElement for ScrollableElement {
         }
     }
 
-    fn scroll(&mut self, delta: leanterm_ui::units::Pixels, axis: Axis, ctx: &mut leanterm_ui::EventContext) {
+    fn scroll(
+        &mut self,
+        delta: leanterm_ui::units::Pixels,
+        axis: Axis,
+        ctx: &mut leanterm_ui::EventContext,
+    ) {
         match axis {
             Axis::Horizontal => (),
             Axis::Vertical => {

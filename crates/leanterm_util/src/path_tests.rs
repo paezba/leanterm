@@ -48,12 +48,12 @@ fn test_user_friendly_path_with_home() {
         "~".to_string(),
     );
     assert_eq!(
-        user_friendly_path("/Users/blue/warp", Some(home)),
-        "~/warp".to_string(),
+        user_friendly_path("/Users/blue/leanterm", Some(home)),
+        "~/leanterm".to_string(),
     );
     assert_eq!(
-        user_friendly_path("/Users/admin/warp", Some(home)),
-        "/Users/admin/warp".to_string(),
+        user_friendly_path("/Users/admin/leanterm", Some(home)),
+        "/Users/admin/leanterm".to_string(),
     );
 }
 
@@ -1095,7 +1095,7 @@ fn test_resolve_command() {
         &resolve_executable("env").unwrap(),
         Path::new("/usr/bin/env")
     );
-    // This path exists in the Warp repo, so it should resolve. The `../../`
+    // This path exists in the Leanterm repo, so it should resolve. The `../../`
     // is because Rust unit tests run from the root of the crate (`leanterm_util` in
     // this case).
     assert_eq!(

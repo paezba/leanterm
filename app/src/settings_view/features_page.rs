@@ -192,12 +192,12 @@ pub fn init_actions_from_parent_view<T: Action + Clone>(
                 .is_supported_on_current_platform(),
         ),
         ToggleSettingActionPair::new(
-            "warp completions",
+            "leanterm completions",
             builder(SettingsAction::FeaturesPageToggle(
-                FeaturesPageAction::ToggleWarpCompletions,
+                FeaturesPageAction::ToggleLeantermCompletions,
             )),
             context,
-            flags::WARP_COMPLETIONS_CONTEXT_FLAG,
+            flags::LEANTERM_COMPLETIONS_CONTEXT_FLAG,
         ),
         ToggleSettingActionPair::new(
             "native shell completions",
@@ -286,7 +286,7 @@ pub fn init_actions_from_parent_view<T: Action + Clone>(
     ];
 
     toggle_binding_pairs.push(ToggleSettingActionPair::new(
-        "reuse existing SSH ControlMaster in the Warp SSH wrapper",
+        "reuse existing SSH ControlMaster in the Leanterm SSH wrapper",
         builder(SettingsAction::FeaturesPageToggle(
             FeaturesPageAction::ToggleSshReuseControlMaster,
         )),
@@ -591,13 +591,13 @@ pub fn init_actions_from_parent_view<T: Action + Clone>(
         id!("Workspace"),
     )]);
 
-    if DefaultTerminal::can_warp_become_default() {
+    if DefaultTerminal::can_leanterm_become_default() {
         app.register_fixed_bindings([FixedBinding::empty(
-            "Make Warp the default terminal",
+            "Make Leanterm the default terminal",
             builder(SettingsAction::FeaturesPageToggle(
-                FeaturesPageAction::MakeWarpDefaultTerminal,
+                FeaturesPageAction::MakeLeantermDefaultTerminal,
             )),
-            context.to_owned() & !id!(flags::WARP_IS_DEFAULT_TERMINAL),
+            context.to_owned() & !id!(flags::LEANTERM_IS_DEFAULT_TERMINAL),
         )]);
     }
 }
@@ -614,7 +614,7 @@ pub enum FeaturesPageAction {
     ToggleSnackbar,
     ToggleLinkTooltip,
     ToggleCompletionsOpenWhileTyping,
-    ToggleWarpCompletions,
+    ToggleLeantermCompletions,
     ToggleNativeShellCompletions,
     ToggleCommandCorrections,
     ToggleErrorUnderlining,
@@ -677,7 +677,7 @@ pub enum FeaturesPageAction {
     ToggleAutosuggestionKeybindingHint,
     ToggleShowAutosuggestionIgnoreButton,
     TogglePreserveInputFocusOnBlockSelection,
-    MakeWarpDefaultTerminal,
+    MakeLeantermDefaultTerminal,
 }
 
 lazy_static! {
@@ -1204,11 +1204,11 @@ impl TypedActionView for FeaturesPageView {
                     );
                 });
             }
-            ToggleWarpCompletions => {
+            ToggleLeantermCompletions => {
                 InputSettings::handle(ctx).update(ctx, |input_settings, ctx| {
                     report_if_error!(
                         input_settings
-                            .warp_completions_enabled
+                            .leanterm_completions_enabled
                             .toggle_and_save_value(ctx)
                     );
                 });
@@ -1472,9 +1472,9 @@ impl TypedActionView for FeaturesPageView {
                     });
                 }
             }
-            MakeWarpDefaultTerminal => {
+            MakeLeantermDefaultTerminal => {
                 DefaultTerminal::handle(ctx).update(ctx, |default_terminal, ctx| {
-                    default_terminal.make_warp_default(ctx);
+                    default_terminal.make_leanterm_default(ctx);
                 });
             }
         }
@@ -2033,7 +2033,7 @@ impl FeaturesPageView {
             general_widgets.push(Box::new(MouseScrollMultiplierWidget::default()));
         }
 
-        if DefaultTerminal::can_warp_become_default() {
+        if DefaultTerminal::can_leanterm_become_default() {
             general_widgets.push(Box::new(DefaultTerminalWidget::default()));
         }
 
@@ -2119,7 +2119,7 @@ impl FeaturesPageView {
         {
             editor_widgets.push(Box::new(SyntaxHighlightingWidget::default()))
         }
-        editor_widgets.push(Box::new(WarpCompletionsWidget::default()));
+        editor_widgets.push(Box::new(LeantermCompletionsWidget::default()));
         editor_widgets.push(Box::new(NativeShellCompletionsWidget::default()));
         if input_settings
             .command_corrections
@@ -3912,9 +3912,9 @@ impl SettingsWidget for LoginItemWidget {
         let general_settings = GeneralSettings::as_ref(app);
         let ui_builder = appearance.ui_builder();
         #[cfg(target_os = "macos")]
-        let label = "Start Warp at login (requires macOS 13+)";
+        let label = "Start Leanterm at login (requires macOS 13+)";
         #[cfg(not(target_os = "macos"))]
-        let label = "Start Warp at login";
+        let label = "Start Leanterm at login";
         render_body_item::<FeaturesPageAction>(
             label.into(),
             None,
@@ -4057,7 +4057,7 @@ impl SettingsWidget for DefaultTerminalWidget {
     type View = FeaturesPageView;
 
     fn search_terms(&self) -> &str {
-        "warp default terminal application"
+        "leanterm default terminal application"
     }
 
     fn render(
@@ -4068,9 +4068,9 @@ impl SettingsWidget for DefaultTerminalWidget {
     ) -> Box<dyn Element> {
         let ui_builder = appearance.ui_builder();
         let default_terminal = DefaultTerminal::as_ref(app);
-        if default_terminal.is_warp_default() {
+        if default_terminal.is_leanterm_default() {
             ui_builder
-                .wrappable_text("Warp is the default terminal", true)
+                .wrappable_text("Leanterm is the default terminal", true)
                 .with_style(UiComponentStyles {
                     font_color: Some(appearance.theme().disabled_ui_text_color().into()),
                     margin: Some(Coords::default().bottom(16.)),
@@ -4081,10 +4081,10 @@ impl SettingsWidget for DefaultTerminalWidget {
         } else {
             ui_builder
                 .link(
-                    "Make Warp the default terminal".to_string(),
+                    "Make Leanterm the default terminal".to_string(),
                     None,
                     Some(Box::new(|ctx| {
-                        ctx.dispatch_typed_action(FeaturesPageAction::MakeWarpDefaultTerminal);
+                        ctx.dispatch_typed_action(FeaturesPageAction::MakeLeantermDefaultTerminal);
                     })),
                     self.link_state.clone(),
                 )
@@ -4167,7 +4167,7 @@ impl SettingsWidget for DesktopNotificationsWidget {
         let ui_builder = appearance.ui_builder();
         let mut column = Flex::column();
         column.add_child(render_body_item::<FeaturesPageAction>(
-            "Receive desktop notifications from Warp".into(),
+            "Receive desktop notifications from Leanterm".into(),
             Some(AdditionalInfo {
                 mouse_state: self.additional_info_link.clone(),
                 on_click_action: Some(FeaturesPageAction::OpenUrl(NOTIFICATIONS_DOCS_URL.into())),
@@ -4359,7 +4359,7 @@ impl SettingsWidget for ExtraMetaKeysWidget {
 }
 
 /// Stable `&'static str` id for the global-hotkey settings widget, exposed for
-/// the `warp://settings?widget=global_hotkey` deeplink (see
+/// the `leanterm://settings?widget=global_hotkey` deeplink (see
 /// `settings_widget_deeplink_target`).
 pub(crate) fn global_hotkey_widget_id() -> &'static str {
     GlobalHotkeyWidget::static_widget_id()
@@ -4609,16 +4609,16 @@ impl SettingsWidget for SyntaxHighlightingWidget {
 }
 
 #[derive(Default)]
-struct WarpCompletionsWidget {
+struct LeantermCompletionsWidget {
     switch_state: SwitchStateHandle,
     as_you_type_switch_state: SwitchStateHandle,
 }
 
-impl SettingsWidget for WarpCompletionsWidget {
+impl SettingsWidget for LeantermCompletionsWidget {
     type View = FeaturesPageView;
 
     fn search_terms(&self) -> &str {
-        "warp completions built-in shell command suggestions open completions menu as you type typing"
+        "leanterm completions built-in shell command suggestions open completions menu as you type typing"
     }
 
     fn render(
@@ -4628,26 +4628,28 @@ impl SettingsWidget for WarpCompletionsWidget {
         app: &AppContext,
     ) -> Box<dyn Element> {
         let ui_builder = appearance.ui_builder();
-        let warp_completions_enabled = *InputSettings::as_ref(app).warp_completions_enabled.value();
+        let leanterm_completions_enabled = *InputSettings::as_ref(app)
+            .leanterm_completions_enabled
+            .value();
 
         let mut column = Flex::column();
         column.add_child(render_body_item::<FeaturesPageAction>(
-            "Warp completions".into(),
+            "Leanterm completions".into(),
             None,
             ToggleState::Enabled,
             appearance,
             ui_builder
                 .switch(self.switch_state.clone())
-                .check(warp_completions_enabled)
+                .check(leanterm_completions_enabled)
                 .build()
                 .on_click(move |ctx, _, _| {
-                    ctx.dispatch_typed_action(FeaturesPageAction::ToggleWarpCompletions);
+                    ctx.dispatch_typed_action(FeaturesPageAction::ToggleLeantermCompletions);
                 })
                 .finish(),
             None,
         ));
 
-        if warp_completions_enabled {
+        if leanterm_completions_enabled {
             let as_you_type_switch = ui_builder
                 .switch(self.as_you_type_switch_state.clone())
                 .check(
@@ -4692,10 +4694,10 @@ impl SettingsWidget for NativeShellCompletionsWidget {
     ) -> Box<dyn Element> {
         let input_settings = InputSettings::as_ref(app);
         let native_on = *input_settings.native_shell_completions_enabled.value();
-        let warp_on = *input_settings.warp_completions_enabled.value();
+        let leanterm_on = *input_settings.leanterm_completions_enabled.value();
         let as_you_type_on = *input_settings.completions_open_while_typing.value();
 
-        let description = if warp_on && as_you_type_on && native_on {
+        let description = if leanterm_on && as_you_type_on && native_on {
             let keystroke = &*view.completions_keystroke;
             keystroke.is_empty().not().then_some(format!(
                 "Native shell completions aren't generated as you type; press {keystroke} to fetch them."
@@ -5832,17 +5834,17 @@ impl SettingsWidget for WindowSystemWidget {
                     may be blurry if your Wayland compositor is using fraction scaling (ex: 125%)."
                 .to_string();
         if view.force_x11_changed {
-            secondary_text.push_str("\n\nRestart Warp for changes to take effect.");
+            secondary_text.push_str("\n\nRestart Leanterm for changes to take effect.");
         }
-        let warp_theme = appearance.theme();
+        let leanterm_theme = appearance.theme();
         children.add_child(
             appearance
                 .ui_builder()
                 .wrappable_text(secondary_text, true)
                 .with_style(UiComponentStyles {
                     font_color: Some(
-                        warp_theme
-                            .sub_text_color(warp_theme.background())
+                        leanterm_theme
+                            .sub_text_color(leanterm_theme.background())
                             .into_solid(),
                     ),
                     ..Default::default()

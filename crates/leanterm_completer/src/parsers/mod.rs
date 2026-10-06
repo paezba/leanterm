@@ -11,8 +11,8 @@ use derive_new::new;
 use hir::{ArgType, Command, Expression, ExternalCommand};
 use itertools::Itertools;
 use lazy_static::lazy_static;
+use leanterm_command_signatures::Argument;
 use regex::Regex;
-use warp_command_signatures::Argument;
 
 use crate::completer::TopLevelCommandCaseSensitivity;
 use crate::meta::{HasSpan, Span, Spanned, SpannedItem};

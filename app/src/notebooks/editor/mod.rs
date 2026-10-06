@@ -2,8 +2,6 @@
 
 use std::sync::Arc;
 
-use markdown_parser::markdown_parser::CODE_BLOCK_DEFAULT_MARKDOWN_LANG;
-use pathfinder_color::ColorU;
 use leanterm_core::ui::builder::CHECK_SVG_PATH;
 use leanterm_core::ui::theme::color::internal_colors;
 use leanterm_editor::content::text::{
@@ -13,10 +11,12 @@ use leanterm_editor::render::model::{
     BrokenLinkStyle, CheckBoxStyle, HorizontalRuleStyle, InlineCodeStyle, ParagraphStyles,
     RichTextStyles, TableStyle,
 };
-use leanterm_util::user_input::UserInput;
 use leanterm_ui::elements::{Border, ListIndentLevel};
 use leanterm_ui::fonts::FamilyId;
 use leanterm_ui::ui_components::checkbox::HOVER_BACKGROUND_COLOR;
+use leanterm_util::user_input::UserInput;
+use markdown_parser::markdown_parser::CODE_BLOCK_DEFAULT_MARKDOWN_LANG;
+use pathfinder_color::ColorU;
 
 use crate::appearance::Appearance;
 use crate::settings::{FontSettings, derived_notebook_font_size};
@@ -317,7 +317,7 @@ impl<'a> From<&'a BufferBlockStyle> for BlockType {
 /// Wrapper around the shared [`Workflow`] type with additional context for workflows contained
 /// within a notebook.
 ///
-/// This may be a command block that's part of the notebook text, or an embedded Warp Drive workflow.
+/// This may be a command block that's part of the notebook text, or an embedded Leanterm Drive workflow.
 #[derive(Debug, Clone, PartialEq)]
 pub struct NotebookWorkflow {
     /// Definition of the workflow itself.

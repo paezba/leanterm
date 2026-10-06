@@ -1,8 +1,8 @@
-use repo_metadata::RepoMetadataModel;
-use repo_metadata::repositories::DetectedRepositories;
 use leanterm_ui::platform::WindowStyle;
 use leanterm_ui::presenter::ChildView;
 use leanterm_ui::{App, Element, Entity, TypedActionView, View, ViewHandle, WindowId};
+use repo_metadata::RepoMetadataModel;
+use repo_metadata::repositories::DetectedRepositories;
 
 use super::{create_editable_comment_markdown_editor, create_readonly_comment_markdown_editor};
 use crate::appearance::Appearance;

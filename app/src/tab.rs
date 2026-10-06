@@ -2,10 +2,6 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::Duration;
 
-use pathfinder_color::ColorU;
-use pathfinder_geometry::vector::vec2f;
-use serde::{Deserialize, Serialize};
-use settings::Setting as _;
 use leanterm_core::context_flag::ContextFlag;
 use leanterm_core::ui::builder::UiBuilder;
 use leanterm_core::ui::theme::AnsiColors;
@@ -26,6 +22,10 @@ use leanterm_ui::text_layout::ClipConfig;
 use leanterm_ui::ui_components::components::{Coords, UiComponent, UiComponentStyles};
 use leanterm_ui::ui_components::text_input::TextInput;
 use leanterm_ui::{AppContext, Entity, ModelContext, SingletonEntity, ViewHandle};
+use pathfinder_color::ColorU;
+use pathfinder_geometry::vector::vec2f;
+use serde::{Deserialize, Serialize};
+use settings::Setting as _;
 
 use crate::appearance::Appearance;
 /// Tab module contains structures related to Tabs (such as TabData or TabComponent) that simplify
@@ -1301,7 +1301,7 @@ impl<'a> TabComponent<'a> {
                 Align::new(
                     ConstrainedBox::new(
                         Icon::PinFilledDiagonal
-                            .to_warpui_icon(theme.main_text_color(theme.background()))
+                            .to_leanterm_ui_icon(theme.main_text_color(theme.background()))
                             .finish(),
                     )
                     .with_width(TAB_PIN_INDICATOR_ICON_SIZE)
@@ -1353,17 +1353,17 @@ impl<'a> TabComponent<'a> {
             Indicator::None => None,
             Indicator::Synced => Some(
                 Icon::LinkHorizontal
-                    .to_warpui_icon(self.styles.synced_input_indicator_color.into())
+                    .to_leanterm_ui_icon(self.styles.synced_input_indicator_color.into())
                     .finish(),
             ),
             Indicator::Error => Some(
                 Icon::AlertTriangle
-                    .to_warpui_icon(self.styles.error_color.into())
+                    .to_leanterm_ui_icon(self.styles.error_color.into())
                     .finish(),
             ),
             Indicator::Maximized => Some(
                 Icon::Maximize
-                    .to_warpui_icon(
+                    .to_leanterm_ui_icon(
                         self.styles
                             .default
                             .font_color
@@ -1375,7 +1375,7 @@ impl<'a> TabComponent<'a> {
             Indicator::Shell(shell_indicator_type) => Some(
                 shell_indicator_type
                     .to_icon()
-                    .to_warpui_icon(internal_colors::neutral_5(self.appearance.theme()).into())
+                    .to_leanterm_ui_icon(internal_colors::neutral_5(self.appearance.theme()).into())
                     .finish(),
             ),
         };
@@ -1521,7 +1521,7 @@ impl<'a> TabComponent<'a> {
                 _ => {
                     // Fallback to terminal icon if no indicator is present
                     Icon::Terminal
-                        .to_warpui_icon(
+                        .to_leanterm_ui_icon(
                             self.styles
                                 .default
                                 .font_color
@@ -1700,7 +1700,7 @@ impl<'a> TabComponent<'a> {
             Container::new(tab.finish())
                 .with_background_color(
                     self.ui_builder
-                        .warp_theme()
+                        .leanterm_theme()
                         .background()
                         .into_solid_bias_top_color(),
                 )

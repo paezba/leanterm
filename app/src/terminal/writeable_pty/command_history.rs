@@ -1,8 +1,8 @@
 use std::sync::Arc;
 use std::sync::mpsc::SyncSender;
 
-use parking_lot::FairMutex;
 use leanterm_ui::{AppContext, ModelHandle, SingletonEntity};
+use parking_lot::FairMutex;
 
 use crate::persistence::{ModelEvent, StartedCommandMetadata};
 use crate::terminal::model::session::Sessions;

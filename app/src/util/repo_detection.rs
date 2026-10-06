@@ -3,12 +3,12 @@
 use std::future::Future;
 use std::path::PathBuf;
 
-#[cfg(not(target_family = "wasm"))]
-use repo_metadata::repositories::DetectedRepositories;
-use repo_metadata::repositories::RepoDetectionSource;
 use leanterm_ui::AppContext;
 #[cfg(not(target_family = "wasm"))]
 use leanterm_ui::SingletonEntity;
+#[cfg(not(target_family = "wasm"))]
+use repo_metadata::repositories::DetectedRepositories;
+use repo_metadata::repositories::RepoDetectionSource;
 
 /// Detects the git repository root for the given working directory.
 ///

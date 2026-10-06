@@ -265,7 +265,7 @@ enum ValidationTestAction {
     ReopenClosedSession,
 }
 
-/// Mirrors `warp_tui::keybindings::is_tui_owned_binding`: a keystroke binding
+/// Mirrors `leanterm_tui::keybindings::is_tui_owned_binding`: a keystroke binding
 /// that matches a TUI view context must be TUI-owned (a `tui:`-prefixed name or
 /// the `tui` group). Non-keystroke triggers are exempt.
 #[cfg(debug_assertions)]

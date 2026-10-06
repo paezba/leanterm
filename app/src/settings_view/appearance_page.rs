@@ -7,7 +7,6 @@ use ::settings::{Setting, SettingSection, ToggleableSetting};
 use enum_iterator::all;
 use leanterm_core::ui::theme::color::internal_colors;
 use leanterm_errors::{report_error, report_if_error};
-use leanterm_util::path::user_friendly_path;
 use leanterm_ui::elements::{
     Align, Border, ChildView, Clipped, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment,
     DEFAULT_UI_LINE_HEIGHT_RATIO, Dismiss, Element, Empty, Fill, Flex, FormattedTextElement,
@@ -32,6 +31,7 @@ use leanterm_ui::{
     Action, AppContext, Entity, ModelHandle, SingletonEntity, TypedActionView, UpdateModel, View,
     ViewContext, ViewHandle, WindowId,
 };
+use leanterm_util::path::user_friendly_path;
 
 use super::directory_color_add_picker::{DirectoryColorAddPicker, DirectoryColorAddPickerEvent};
 use super::settings_page::{
@@ -67,11 +67,13 @@ use crate::terminal::session_settings::SessionSettings;
 use crate::terminal::settings::{AltScreenPaddingMode, SpacingMode, TerminalSettings};
 use crate::terminal::{BlockListSettings, SizeInfo};
 use crate::themes;
-use crate::themes::theme::{self, RespectSystemTheme, SelectedSystemThemes, ThemeKind, WarpTheme};
+use crate::themes::theme::{
+    self, LeantermTheme, RespectSystemTheme, SelectedSystemThemes, ThemeKind,
+};
 use crate::themes::theme_chooser::ThemeChooserMode;
 use crate::ui_components::color_dot::{TAB_COLOR_OPTIONS, render_color_dot};
 use crate::ui_components::icons::Icon;
-use crate::user_config::WarpConfig;
+use crate::user_config::LeantermConfig;
 use crate::util::bindings;
 use crate::view_components::action_button::{ActionButton, ButtonSize, NakedTheme};
 use crate::view_components::{Dropdown, DropdownItem, FilterableDropdown};
@@ -227,10 +229,10 @@ pub fn init_actions_from_parent_view<T: Action + Clone>(
         context.to_owned(),
     )]);
 
-    // Add command palette entry for toggling between Warp and Classic input modes
+    // Add command palette entry for toggling between Leanterm and Classic input modes
     app.register_fixed_bindings(vec![
         FixedBinding::empty(
-            "Toggle Input Mode (Warp/Classic)".to_string(),
+            "Toggle Input Mode (Leanterm/Classic)".to_string(),
             builder(SettingsAction::AppearancePageToggle(
                 AppearancePageAction::ToggleInputMode,
             )),
@@ -507,7 +509,7 @@ pub struct AppearanceSettingsPageView {
     header_toolbar_inline_editor: ViewHandle<HeaderToolbarInlineEditor>,
 
     /// The context chip renderers based on the most recently
-    /// selected Warp prompt configuration.
+    /// selected Leanterm prompt configuration.
     context_chips: Vec<ContextChipRenderer>,
 
     /// The information we need to render the PS1 as a grid when we're
@@ -1516,7 +1518,7 @@ impl AppearanceSettingsPageView {
 
     fn input_mode_dropdown_item_label(val: InputMode) -> &'static str {
         match val {
-            InputMode::PinnedToBottom => "Pin to the bottom (Warp mode)",
+            InputMode::PinnedToBottom => "Pin to the bottom (Leanterm mode)",
             InputMode::PinnedToTop => "Pin to the top (Reverse mode)",
             InputMode::Waterfall => "Start at the top (Classic mode)",
         }
@@ -1540,7 +1542,7 @@ impl AppearanceSettingsPageView {
             AppIcon::Original => "Original",
             AppIcon::Starburst => "Starburst",
             AppIcon::Sticker => "Sticker",
-            AppIcon::WarpOne => "Warp 1",
+            AppIcon::LeantermOne => "Leanterm 1",
         }
     }
 
@@ -2503,7 +2505,9 @@ impl ThemeSelectWidget {
         is_selected: bool,
         app: &AppContext,
     ) -> Box<dyn Element> {
-        let theme: WarpTheme = WarpConfig::as_ref(app).theme_config().theme(&theme_kind);
+        let theme: LeantermTheme = LeantermConfig::as_ref(app)
+            .theme_config()
+            .theme(&theme_kind);
         let mode_ui_label = match theme_chooser_mode {
             ThemeChooserMode::SystemLight => "Light",
             ThemeChooserMode::SystemDark => "Dark",
@@ -2709,7 +2713,7 @@ impl SettingsWidget for CustomAppIconWidget {
         );
 
         let show_dock_icon_toggle = render_body_item::<AppearancePageAction>(
-            "Show Warp in Dock".into(),
+            "Show Leanterm in Dock".into(),
             None,
             ToggleState::Enabled,
             appearance,
@@ -2743,7 +2747,7 @@ impl SettingsWidget for CustomAppIconWidget {
                     appearance
                         .ui_builder()
                         .wrappable_text(
-                            "You may need to restart Warp for MacOS to apply the preferred icon style.",
+                            "You may need to restart Leanterm for MacOS to apply the preferred icon style.",
                             true,
                         )
                         .with_style(UiComponentStyles {
@@ -3124,7 +3128,7 @@ impl SettingsWidget for ToolsPanelStateScopeWidget {
     type View = AppearanceSettingsPageView;
 
     fn search_terms(&self) -> &str {
-        "left tools panel open closed across tabs file tree project explorer global search warp drive conversation list"
+        "left tools panel open closed across tabs file tree project explorer global search leanterm drive conversation list"
     }
 
     fn render(
@@ -3252,7 +3256,7 @@ impl SettingsWidget for InputTypeWidget {
     type View = AppearanceSettingsPageView;
 
     fn search_terms(&self) -> &str {
-        "input type warp universal classic style prompt terminal ai developer mode interface shell chips ps1"
+        "input type leanterm universal classic style prompt terminal ai developer mode interface shell chips ps1"
     }
 
     fn render(
@@ -3267,7 +3271,7 @@ impl SettingsWidget for InputTypeWidget {
             .radio_buttons(
                 self.radio_buttons_states.clone(),
                 vec![
-                    RadioButtonItem::text("Warp"),
+                    RadioButtonItem::text("Leanterm"),
                     RadioButtonItem::text("Shell (PS1)"),
                 ],
                 view.input_type_radio_state.clone(),
@@ -3334,7 +3338,7 @@ impl SettingsWidget for PromptWidget {
     type View = AppearanceSettingsPageView;
 
     fn search_terms(&self) -> &str {
-        "prompt ps1 terminal warp shell custom"
+        "prompt ps1 terminal leanterm shell custom"
     }
 
     fn render(

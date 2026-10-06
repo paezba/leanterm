@@ -2,12 +2,12 @@ use std::iter;
 use std::ops::Range;
 
 use arborium::tree_sitter::{Node, Query, QueryCursor, TextProvider, Tree};
-use rangemap::RangeMap;
-use streaming_iterator::StreamingIterator;
-use string_offset::{ByteOffset, CharOffset};
 use leanterm_editor::content::buffer::{Buffer, ToBufferByteOffset, ToBufferCharOffset};
 use leanterm_editor::content::text::Bytes;
 use leanterm_ui_core::color::ColorU;
+use rangemap::RangeMap;
+use streaming_iterator::StreamingIterator;
+use string_offset::{ByteOffset, CharOffset};
 
 /// Color mapping from parsed syntax token name to its corresponding highlighting color.
 #[derive(Clone, Copy)]

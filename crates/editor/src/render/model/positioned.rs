@@ -3,11 +3,11 @@
 
 use std::sync::Arc;
 
-use string_offset::CharOffset;
-use sum_tree::{Cursor, Dimension};
 use leanterm_ui_core::geometry::vector::Vector2F;
 use leanterm_ui_core::text_layout::Line;
 use leanterm_ui_core::units::{IntoPixels, Pixels};
+use string_offset::CharOffset;
+use sum_tree::{Cursor, Dimension};
 
 use super::{
     BlockItem, BlockSpacing, HorizontalRuleConfig, ImageBlockConfig, LaidOutEmbeddedItem,

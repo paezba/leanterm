@@ -1,8 +1,3 @@
-use vim::vim::{
-    BracketChar, CharacterMotion, Direction, FindCharMotion, FirstNonWhitespaceMotion,
-    InsertPosition, LineMotion, ModeTransition, MotionType, VimHandler, VimMode, VimMotion,
-    VimOperand, VimOperator, VimTextObject, WordMotion,
-};
 use leanterm_editor::content::buffer::{
     AutoScrollBehavior, BufferEditAction, EditOrigin, SelectionOffsets, VimInsertPoint,
 };
@@ -11,6 +6,11 @@ use leanterm_editor::render::model::AutoScrollMode;
 use leanterm_editor::selection::{TextDirection, TextUnit};
 use leanterm_ui::units::IntoPixels;
 use leanterm_ui::{SingletonEntity, ViewContext};
+use vim::vim::{
+    BracketChar, CharacterMotion, Direction, FindCharMotion, FirstNonWhitespaceMotion,
+    InsertPosition, LineMotion, ModeTransition, MotionType, VimHandler, VimMode, VimMotion,
+    VimOperand, VimOperator, VimTextObject, WordMotion,
+};
 
 use super::{CodeEditorEvent, CodeEditorView};
 use crate::code::editor::find::view::Event as FindViewEvent;

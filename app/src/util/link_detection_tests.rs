@@ -61,10 +61,10 @@ fn test_possible_file_paths_in_word() {
 #[test]
 fn test_detect_file_paths_stops_at_fullwidth_punctuation() {
     let dir = tempfile::tempdir().unwrap();
-    let file = dir.path().join("warp-rich-content.md");
+    let file = dir.path().join("lean-rich-content.md");
     std::fs::write(&file, "# Hello\n").unwrap();
 
-    let text = "see warp-rich-content.md， and warp-rich-content.md。";
+    let text = "see lean-rich-content.md， and lean-rich-content.md。";
     let detected_paths = detect_file_paths(dir.path().to_str().unwrap(), text, None);
 
     let link_ranges = detected_paths.keys().cloned().collect_vec();
@@ -78,10 +78,10 @@ fn test_detect_file_paths_stops_at_fullwidth_punctuation() {
 #[test]
 fn test_detect_file_paths_keeps_fullwidth_punctuation_when_it_is_the_filename() {
     let dir = tempfile::tempdir().unwrap();
-    let file = dir.path().join("warp-rich-content.md，");
+    let file = dir.path().join("lean-rich-content.md，");
     std::fs::write(&file, "# Hello\n").unwrap();
 
-    let text = "see warp-rich-content.md，";
+    let text = "see lean-rich-content.md，";
     let detected_paths = detect_file_paths(dir.path().to_str().unwrap(), text, None);
 
     assert!(detected_paths.contains_key(&(4..25)));

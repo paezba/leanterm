@@ -1,4 +1,4 @@
-use warp_command_signatures::{Priority, Signature};
+use leanterm_command_signatures::{Priority, Signature};
 use leanterm_core::channel::Channel;
 
 use crate::completer::testing::FakeCompletionContext;
@@ -36,7 +36,7 @@ fn track_longest_name(signature: &Signature, longest: &mut (usize, String)) {
 fn test_all_known_signature_names_are_within_the_length_cap() {
     let mut longest = (0, String::new());
 
-    for signature in warp_command_signatures::commands() {
+    for signature in leanterm_command_signatures::commands() {
         track_longest_name(&signature, &mut longest);
     }
 
@@ -62,7 +62,7 @@ fn test_all_known_signature_names_are_within_the_length_cap() {
 
 #[test]
 fn test_find_command_from_a_top_level_signature() {
-    let bundle = warp_command_signatures::signature_by_name("bundle")
+    let bundle = leanterm_command_signatures::signature_by_name("bundle")
         .expect("global command signatures should include 'bundle'");
 
     let registry = create_test_command_registry([bundle.clone(), test_signature()]);
@@ -83,7 +83,7 @@ fn test_find_command_from_a_top_level_signature() {
 
 #[test]
 fn test_find_subcommand_signature_with_flags() {
-    let kubectl = warp_command_signatures::signature_by_name("kubectl")
+    let kubectl = leanterm_command_signatures::signature_by_name("kubectl")
         .expect("global command signatures should include 'kubectl'");
 
     let registry = create_test_command_registry([kubectl.clone(), test_signature()]);
@@ -104,7 +104,7 @@ fn test_find_option_by_name_exact_match_does_not_match_substring() {
     // Regression test: "-n" should match the "-n"/"--namespace" option, NOT
     // "--no-headers" (which contains the substring "-n"). The fix uses exact
     // equality instead of `contains`.
-    let kubectl = warp_command_signatures::signature_by_name("kubectl")
+    let kubectl = leanterm_command_signatures::signature_by_name("kubectl")
         .expect("global command signatures should include 'kubectl'");
 
     let registry = create_test_command_registry([kubectl, test_signature()]);
@@ -257,7 +257,7 @@ fn test_optional_flag_arg_does_not_consume_subcommand() {
 fn test_alias_expansion_path_skips_flag_with_value_before_subcommand() {
     // Exercises signature_with_alias_expansion (not just signature_from_tokens)
     // to ensure the alias-expansion code path also skips flags before subcommands.
-    let kubectl = warp_command_signatures::signature_by_name("kubectl")
+    let kubectl = leanterm_command_signatures::signature_by_name("kubectl")
         .expect("global command signatures should include 'kubectl'");
 
     let registry = create_test_command_registry([kubectl]);
@@ -309,7 +309,7 @@ fn test_misses_are_never_cached_in_the_positive_cache() {
 
 #[test]
 fn test_oversized_later_token_does_not_bypass_the_length_guard() {
-    let sudo = warp_command_signatures::signature_by_name("sudo")
+    let sudo = leanterm_command_signatures::signature_by_name("sudo")
         .expect("global command signatures should include 'sudo'");
     let registry = create_test_command_registry([sudo]);
     let positive_len_before = registry.signatures.signatures.len();
@@ -341,7 +341,7 @@ fn test_oversized_later_token_does_not_bypass_the_length_guard() {
         "looking up an oversized later token should not add an entry to the negative cache"
     );
 
-    let sudo = warp_command_signatures::signature_by_name("sudo")
+    let sudo = leanterm_command_signatures::signature_by_name("sudo")
         .expect("global command signatures should include 'sudo'");
     let ctx =
         FakeCompletionContext::new(create_test_command_registry([sudo])).with_case_sensitivity();
@@ -404,7 +404,7 @@ fn test_registered_commands_unaffected_by_oversized_lookups() {
 fn test_alias_expansion_path_skips_multiple_flags_before_subcommand() {
     // Exercises signature_with_alias_expansion with multiple flags (valued and
     // switch) placed before the subcommand.
-    let kubectl = warp_command_signatures::signature_by_name("kubectl")
+    let kubectl = leanterm_command_signatures::signature_by_name("kubectl")
         .expect("global command signatures should include 'kubectl'");
 
     let registry = create_test_command_registry([kubectl]);

@@ -3,7 +3,9 @@ use std::sync::Arc;
 
 use leanterm_ui::elements::Empty;
 use leanterm_ui::platform::WindowStyle;
-use leanterm_ui::{App, AppContext, Element, Entity, ModelHandle, TypedActionView, View, ViewContext};
+use leanterm_ui::{
+    App, AppContext, Element, Entity, ModelHandle, TypedActionView, View, ViewContext,
+};
 
 use super::command_executor::testing::TestCommandExecutor;
 use super::{BootstrapSessionType, Session, SessionId, SessionInfo, Sessions, SessionsEvent};
@@ -105,20 +107,20 @@ fn test_set_env_var_emits_no_event_when_no_change() {
 #[test]
 fn test_malicious_histfile_path_does_not_execute_injected_commands() {
     App::test((), |_app| async move {
-        // If escaping is missing, `touch /tmp/warp_injection_test` would execute
+        // If escaping is missing, `touch /tmp/leanterm_injection_test` would execute
         // as a side effect of reading history.
-        let marker = "/tmp/warp_injection_test";
+        let marker = "/tmp/leanterm_injection_test";
         // Clean up in case a previous broken run left the marker.
         let _ = std::fs::remove_file(marker);
 
         let malicious_histfile = format!("/tmp/x'; touch {marker}; echo '");
 
         let session_info = SessionInfo::new_for_test()
-            .with_session_type(BootstrapSessionType::WarpifiedRemote)
+            .with_session_type(BootstrapSessionType::LeantermifiedRemote)
             .with_histfile(Some(malicious_histfile));
         let session = Session::new(session_info, Arc::new(TestCommandExecutor::default()));
 
-        // read_history for a WarpifiedRemote session calls read_history_from_file,
+        // read_history for a LeantermifiedRemote session calls read_history_from_file,
         // which builds `cat '{escaped_path}'` and executes it via TestCommandExecutor
         let _ = session.read_history(false).await;
 

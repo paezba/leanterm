@@ -9,6 +9,8 @@ pub mod home_watcher;
 use anyhow::{Context, Result};
 use futures::channel::oneshot;
 pub use home_watcher::{HomeDirectoryWatcher, HomeDirectoryWatcherEvent};
+use leanterm_errors::report_error;
+use leanterm_ui_core::{Entity, ModelContext};
 use notify_debouncer_full::notify::event::{ModifyKind, RenameMode};
 use notify_debouncer_full::notify::{
     self, EventKind, RecommendedWatcher, RecursiveMode, WatchFilter,
@@ -17,8 +19,6 @@ use notify_debouncer_full::{
     DebounceEventHandler, DebounceEventResult, DebouncedEvent, Debouncer, NoCache,
     new_debouncer_opt,
 };
-use leanterm_errors::report_error;
-use leanterm_ui_core::{Entity, ModelContext};
 
 #[derive(Debug)]
 enum BackgroundFileWatcherCommand {

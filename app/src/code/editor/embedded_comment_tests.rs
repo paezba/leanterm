@@ -1,6 +1,6 @@
-use serde_yaml::{Mapping, Value};
 use leanterm_editor::content::markdown::MarkdownStyle;
 use leanterm_ui::{EntityId, WindowId};
+use serde_yaml::{Mapping, Value};
 
 use super::{
     COMMENT_ID_MAPPING_KEY, ENTITY_ID_MAPPING_KEY, EmbeddedCommentSpace, EmbeddedItem as _,

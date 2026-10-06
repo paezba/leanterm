@@ -363,7 +363,9 @@ impl KeybindingRow {
                                 .with_margin_right(CLEAR_CANCEL_BUTTONS_SPACING)
                                 .finish(),
                         )
-                        .with_cross_axis_alignment(leanterm_ui::elements::CrossAxisAlignment::Center)
+                        .with_cross_axis_alignment(
+                            leanterm_ui::elements::CrossAxisAlignment::Center,
+                        )
                         .finish(),
                 )
                 .finish(),
@@ -595,7 +597,7 @@ impl KeybindingsView {
 
             self.conflict_map.update(&row.binding.trigger, None);
 
-            // Persist the keybinding into the `.warp` directory so that it will last beyond
+            // Persist the keybinding into the `.leanterm` directory so that it will last beyond
             // this session
             write_custom_keybinding(row.binding.name.clone(), UserDefinedKeybinding::Removed);
             update_binding_list(&row.binding.name, None, &mut self.bindings);

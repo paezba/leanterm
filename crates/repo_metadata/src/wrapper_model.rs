@@ -7,8 +7,8 @@
 #[cfg(feature = "local_fs")]
 use std::path::Path;
 
-use leanterm_util::standardized_path::StandardizedPath;
 use leanterm_ui_core::{AppContext, ModelContext, ModelHandle, SingletonEntity};
+use leanterm_util::standardized_path::StandardizedPath;
 
 use crate::file_tree_store::FileTreeState;
 use crate::file_tree_update::MetadataUpdateType;

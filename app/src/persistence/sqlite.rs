@@ -15,15 +15,15 @@ use diesel::{
 };
 use diesel_migrations::MigrationHarness;
 use itertools::Itertools;
+use leanterm_errors::report_error;
+use leanterm_ui::platform::FullscreenState;
+use leanterm_ui::windowing::{MIN_WINDOW_HEIGHT, MIN_WINDOW_WIDTH};
+use leanterm_ui::{AppContext, SingletonEntity};
 use libsqlite3_sys as sqlite3;
 use lsp::supported_servers::LSPServerType;
 use num_traits::FromPrimitive;
 use pathfinder_geometry::rect::RectF;
 use pathfinder_geometry::vector::Vector2F;
-use leanterm_errors::report_error;
-use leanterm_ui::platform::FullscreenState;
-use leanterm_ui::windowing::{MIN_WINDOW_HEIGHT, MIN_WINDOW_WIDTH};
-use leanterm_ui::{AppContext, SingletonEntity};
 
 use super::block_list::{delete_blocks, save_block};
 use super::model::{
@@ -63,7 +63,10 @@ diesel::define_sql_function! {
 const CHANNEL_SIZE: usize = 1024;
 const COMMANDS_COUNT_LIMIT: i64 = 10000;
 
-const WARP_SQLITE_FILE_NAME: &str = "warp.sqlite";
+const LEANTERM_SQLITE_FILE_NAME: &str = "leanterm.sqlite";
+
+/// The database file name used before the app was renamed to Leanterm.
+const LEGACY_SQLITE_FILE_NAME: &str = "warp.sqlite";
 
 /// Runs any migrations and creates the Sqlite database if it doesn't exist.
 /// Reads from the sqlite database to get the app state for session restoration.
@@ -163,7 +166,7 @@ unsafe fn init_logging() {
                 // According to the docs, this error means that the database file was moved (or deleted),
                 // so SQLite can't safely modify it and the rollback journal:
                 //     https://www.sqlite.org/rescode.html#readonly_dbmoved
-                // This is mostly outside of Warp's control (e.g. the user or some system program is
+                // This is mostly outside of Leanterm's control (e.g. the user or some system program is
                 // moving around files in the user data directory), so downgrade to a warning.
                 (_, sqlite3::SQLITE_READONLY_DBMOVED) => log::Level::Warn,
                 _ => log::Level::Error,
@@ -230,23 +233,33 @@ pub(super) fn init_db(scope: &PersistenceScope) -> Result<SqliteConnection> {
         );
     }
     if matches!(scope, PersistenceScope::App) {
-        migrate_old_sqlite_into_secure_container_if_needed(&db_path);
+        migrate_old_sqlite_if_needed(&db_path);
     }
 
     let conn = setup_database(&db_path)?;
     Ok(conn)
 }
 
-fn migrate_old_sqlite_into_secure_container_if_needed(db_path: &Path) {
-    let old_db_path = leanterm_core::paths::state_dir().join(WARP_SQLITE_FILE_NAME);
-    if old_db_path == db_path || !old_db_path.exists() || db_path.exists() {
+/// Moves the database to `db_path` from the plain state directory or from its pre-rename file name.
+fn migrate_old_sqlite_if_needed(db_path: &Path) {
+    if db_path.exists() {
         return;
     }
+    let state_dir = leanterm_core::paths::state_dir();
+    let Some(old_db_path) = [
+        db_path.with_file_name(LEGACY_SQLITE_FILE_NAME),
+        state_dir.join(LEGACY_SQLITE_FILE_NAME),
+        state_dir.join(LEANTERM_SQLITE_FILE_NAME),
+    ]
+    .into_iter()
+    .find(|path| path != db_path && path.exists()) else {
+        return;
+    };
 
     match std::fs::rename(&old_db_path, db_path) {
         Ok(_) => {
             safe_info!(
-                safe: ("Migrated SQLite database into application container"),
+                safe: ("Migrated SQLite database"),
                 full: ("Migrated SQLite database from `{}` to `{}`", old_db_path.display(), db_path.display())
             );
 
@@ -258,31 +271,22 @@ fn migrate_old_sqlite_into_secure_container_if_needed(db_path: &Path) {
 
             if let Err(err) = std::fs::rename(&old_wal, &new_wal) {
                 if err.kind() != std::io::ErrorKind::NotFound {
-                    report_error!(
-                        anyhow::Error::new(err)
-                            .context("Failed to migrate SQLite WAL into application container")
-                    );
+                    report_error!(anyhow::Error::new(err).context("Failed to migrate SQLite WAL"));
                 }
             } else {
-                log::info!("Migrated SQLite WAL into application container");
+                log::info!("Migrated SQLite WAL");
             }
 
             if let Err(err) = std::fs::rename(&old_shm, &new_shm) {
                 if err.kind() != std::io::ErrorKind::NotFound {
-                    report_error!(
-                        anyhow::Error::new(err)
-                            .context("Failed to migrate SQLite SHM into application container")
-                    );
+                    report_error!(anyhow::Error::new(err).context("Failed to migrate SQLite SHM"));
                 }
             } else {
-                log::info!("Migrated SQLite shared memory file into application container");
+                log::info!("Migrated SQLite shared memory file");
             }
         }
         Err(err) => {
-            report_error!(
-                anyhow::Error::new(err)
-                    .context("Failed to migrate SQLite database into application container")
-            );
+            report_error!(anyhow::Error::new(err).context("Failed to migrate SQLite database"));
         }
     }
 }
@@ -317,7 +321,7 @@ pub fn database_file_path_for_scope(scope: &PersistenceScope) -> PathBuf {
 fn app_database_file_path() -> PathBuf {
     leanterm_core::paths::secure_state_dir()
         .unwrap_or_else(leanterm_core::paths::state_dir)
-        .join(WARP_SQLITE_FILE_NAME)
+        .join(LEANTERM_SQLITE_FILE_NAME)
 }
 
 fn reconstruct_database(path: &Path) -> Result<SqliteConnection> {
@@ -586,9 +590,8 @@ fn save_app_state(conn: &mut SqliteConnection, app_state: &AppState) -> Result<(
                 origin_y,
                 quake_mode: window.quake_mode,
                 universal_search_width: window.universal_search_width,
-                warp_ai_width: None,
                 voltron_width: window.voltron_width,
-                warp_drive_index_width: window.warp_drive_index_width,
+                leanterm_drive_index_width: window.leanterm_drive_index_width,
                 left_panel_open: Some(window.left_panel_open),
                 vertical_tabs_panel_open: Some(window.vertical_tabs_panel_open),
                 fullscreen_state: window.fullscreen_state as i32,
@@ -1300,7 +1303,7 @@ fn read_node(conn: &mut SqliteConnection, node: model::PaneNode) -> Result<PaneN
 /// and makes it invalid to write the logic recursively. It's ok it's not in a
 /// transaction because we should be the only connection using the database.
 ///
-/// One notable exception is the case where there may be two warp apps running
+/// One notable exception is the case where there may be two leanterm apps running
 /// in the same bundle. In this case, we may read some garbage, but all that will
 /// happen is the user won't have session restoration.
 ///
@@ -1421,7 +1424,7 @@ fn read_sqlite_data(conn: &mut SqliteConnection) -> Result<PersistedData, Error>
 
                     // The origin and size of the bound should be all null or all non-null.
                     // Reject bounds smaller than the platform minimum window size so users
-                    // with an already-corrupted warp.sqlite (see GH#10083) restore to
+                    // with an already-corrupted leanterm.sqlite (see GH#10083) restore to
                     // default geometry instead of a sliver.
                     let bounds = match (
                         window.window_width,
@@ -1483,7 +1486,7 @@ fn read_sqlite_data(conn: &mut SqliteConnection) -> Result<PersistedData, Error>
                         bounds,
                         universal_search_width: window.universal_search_width,
                         voltron_width: window.voltron_width,
-                        warp_drive_index_width: window.warp_drive_index_width,
+                        leanterm_drive_index_width: window.leanterm_drive_index_width,
                         left_panel_open: window_left_panel_open,
                         vertical_tabs_panel_open: window.vertical_tabs_panel_open.unwrap_or(false),
                         fullscreen_state: fullscreen_state_val,

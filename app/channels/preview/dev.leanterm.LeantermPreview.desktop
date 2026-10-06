@@ -1,0 +1,23 @@
+[Desktop Entry]
+# The version of the desktop entry spec this conforms to.
+Version=1.0
+
+Type=Application
+
+Name=LeantermPreview
+GenericName=TerminalEmulator
+
+Exec=leanterm-preview %U
+StartupWMClass=dev.leanterm.LeantermPreview
+
+Keywords=shell;prompt;command;commandline;cmd;
+
+Icon=dev.leanterm.LeantermPreview
+
+Categories=System;TerminalEmulator;
+
+# Don't run this application within a terminal.
+Terminal=false
+
+# Register ourselves as the handler for leantermpreview:// URLs.
+MimeType=x-scheme-handler/leantermpreview;

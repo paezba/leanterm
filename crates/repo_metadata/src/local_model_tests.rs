@@ -11,10 +11,10 @@ use std::time::Duration;
 use futures::channel::oneshot;
 use futures::executor::block_on;
 use ignore::gitignore::Gitignore;
-use virtual_fs::{Stub, VirtualFS};
-use leanterm_util::standardized_path::StandardizedPath;
 use leanterm_ui_core::r#async::FutureExt as _;
 use leanterm_ui_core::{App, ModelHandle};
+use leanterm_util::standardized_path::StandardizedPath;
+use virtual_fs::{Stub, VirtualFS};
 #[cfg(feature = "local_fs")]
 use watcher::BulkFilesystemWatcherEvent;
 
@@ -794,7 +794,7 @@ fn test_lazy_loaded_path_does_not_build_standing_rule_results_below_shallow_tree
     VirtualFS::test("lazy_loaded_path_standing_rules", |dirs, mut vfs| {
         vfs.mkdir("workspace/src/deep")
             .with_files(vec![Stub::FileWithContent(
-                "workspace/src/deep/WARP.md",
+                "workspace/src/deep/LEANTERM.md",
                 "project rules",
             )]);
 
@@ -803,7 +803,7 @@ fn test_lazy_loaded_path_does_not_build_standing_rule_results_below_shallow_tree
             let model_handle = app.add_model(|_| LocalRepoMetadataModel::new_for_test());
             let workspace_path = StandardizedPath::from_local_canonicalized(&workspace).unwrap();
             let rule_path =
-                StandardizedPath::try_from_local(&workspace.join("src/deep/WARP.md")).unwrap();
+                StandardizedPath::try_from_local(&workspace.join("src/deep/LEANTERM.md")).unwrap();
 
             model_handle.update(&mut app, |model, ctx| {
                 model.index_lazy_loaded_path(&workspace_path, ctx).unwrap();
@@ -832,13 +832,13 @@ fn test_lazy_loaded_path_discovers_force_included_skills_and_emits_watcher_delta
             .mkdir("workspace/src/deep")
             .with_files(vec![
                 Stub::FileWithContent("workspace/.agents/skills/review/SKILL.md", "name: review"),
-                Stub::FileWithContent("workspace/src/deep/WARP.md", "project rules"),
+                Stub::FileWithContent("workspace/src/deep/LEANTERM.md", "project rules"),
             ]);
 
         let workspace = dirs.tests().join("workspace");
         let skill_path = workspace.join(".agents/skills/review/SKILL.md");
         let src_path = workspace.join("src");
-        let rule_path = workspace.join("src/deep/WARP.md");
+        let rule_path = workspace.join("src/deep/LEANTERM.md");
         App::test((), |mut app| async move {
             let model_handle = app.add_model(|_| {
                 let mut model = LocalRepoMetadataModel::new_for_test();

@@ -92,7 +92,7 @@ impl fmt::Display for CustomHeaderParsingError {
                 write!(f, "Custom header had {param_name} field missing")
             }
             Self::MissingHeaderIdentifier => {
-                write!(f, "Image did not contain the 'warp-img:' prefix.")
+                write!(f, "Image did not contain the 'leanterm-img:' prefix.")
             }
         }
     }
@@ -116,7 +116,7 @@ pub struct CustomImageHeader {
 impl CustomImageHeader {
     pub fn create_header(&self) -> String {
         format!(
-            "warp-img:{}:{}:{}:",
+            "leanterm-img:{}:{}:{}:",
             self.image_format.create_tag(),
             self.width,
             self.height
@@ -157,7 +157,7 @@ impl CustomImageHeader {
     }
 
     fn try_from_bytes(data: &[u8]) -> Result<(CustomImageHeader, &[u8]), CustomHeaderParsingError> {
-        if !data.starts_with(b"warp-img:") {
+        if !data.starts_with(b"leanterm-img:") {
             return Err(CustomHeaderParsingError::MissingHeaderIdentifier);
         }
 
@@ -283,18 +283,18 @@ impl Asset for ImageType {
             return Ok(ImageType::Svg { svg });
         }
 
-        if data.starts_with(b"warp-img:") {
-            let (custom_warp_header, data) = match CustomImageHeader::try_from_bytes(data) {
-                Ok((custom_warp_header, data)) => (custom_warp_header, data),
+        if data.starts_with(b"leanterm-img:") {
+            let (custom_leanterm_header, data) = match CustomImageHeader::try_from_bytes(data) {
+                Ok((custom_leanterm_header, data)) => (custom_leanterm_header, data),
                 Err(err) => return Err(anyhow!(err.to_string())),
             };
 
             let data = data.into();
-            let Some(img) = (match custom_warp_header.image_format {
+            let Some(img) = (match custom_leanterm_header.image_format {
                 CustomImageFormat::Rgb => {
                     let dynamic_image = ImageBuffer::from_raw(
-                        custom_warp_header.width,
-                        custom_warp_header.height,
+                        custom_leanterm_header.width,
+                        custom_leanterm_header.height,
                         data,
                     )
                     .map(DynamicImage::ImageRgb8);
@@ -302,8 +302,8 @@ impl Asset for ImageType {
                 }
                 CustomImageFormat::Rgba => {
                     let dynamic_image = ImageBuffer::from_raw(
-                        custom_warp_header.width,
-                        custom_warp_header.height,
+                        custom_leanterm_header.width,
+                        custom_leanterm_header.height,
                         data,
                     )
                     .map(DynamicImage::ImageRgba8);
@@ -311,7 +311,7 @@ impl Asset for ImageType {
                 }
             }) else {
                 return Err(anyhow!(
-                    "Could not convert custom warp image into approprate dynamic image."
+                    "Could not convert custom leanterm image into approprate dynamic image."
                 ));
             };
             return Ok(ImageType::StaticBitmap {

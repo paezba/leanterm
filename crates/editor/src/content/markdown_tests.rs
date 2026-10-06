@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
+use leanterm_ui_core::{App, ReadModel};
 use markdown_parser::{compute_formatted_text_delta, parse_markdown};
 use serde_yaml::Value;
 use string_offset::CharOffset;
 use vec1::Vec1;
-use leanterm_ui_core::{App, ReadModel};
 
 use super::MarkdownStyle;
 use crate::content::buffer::tests::TestEmbeddedItem;
@@ -79,10 +79,10 @@ fn test_export_expands_embeds() {
     App::test((), |mut app| async move {
         let (buffer, _selection) = Buffer::mock_from_markdown(
             r#"
-```warp-embedded-object
+```leanterm-embedded-object
 id: embed-123
 ```
-```warp-embedded-object
+```leanterm-embedded-object
 id: embed-456
 ignored: value
 ```"#,
@@ -105,13 +105,13 @@ ignored: value
         assert_eq!(
             exported,
             r#"
-```warp-embedded-object
+```leanterm-embedded-object
 ---
 id: embed-123
 export: true
 
 ```
-```warp-embedded-object
+```leanterm-embedded-object
 ---
 id: embed-456
 export: true

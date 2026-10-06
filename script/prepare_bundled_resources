@@ -2,7 +2,7 @@
 #
 # Prepares bundled resources for distribution.
 #
-# This script copies resources that should be bundled with Warp into a
+# This script copies resources that should be bundled with Leanterm into a
 # destination directory. It is used by macOS and Linux build scripts.
 #
 # Usage:
@@ -18,7 +18,7 @@
 #   SKIP_SETTINGS_SCHEMA: Set to "1" to skip generating the JSON settings
 #                         schema. By default the schema is always generated
 #                         so that production bundles never accidentally omit it.
-#   SETTINGS_SCHEMA_EXECUTABLE: Path to a runnable compiled Warp executable.
+#   SETTINGS_SCHEMA_EXECUTABLE: Path to a runnable compiled Leanterm executable.
 #                               The script invokes its dump-settings-schema
 #                               subcommand to generate the schema.
 #   SETTINGS_SCHEMA_SOURCE: Path to an existing settings schema to copy.
@@ -54,9 +54,9 @@ if [ -n "$GIT_RELEASE_TAG" ]; then
   VERSION_METADATA_DIR="$DEST_DIR/bundled/metadata"
   VERSION_METADATA_PATH="$VERSION_METADATA_DIR/version.json"
 
-  echo "Writing bundled Warp version metadata to $VERSION_METADATA_PATH"
+  echo "Writing bundled Leanterm version metadata to $VERSION_METADATA_PATH"
   mkdir -p "$VERSION_METADATA_DIR"
-  printf '{\n  "warp_version": "%s"\n}\n' "$GIT_RELEASE_TAG" > "$VERSION_METADATA_PATH"
+  printf '{\n  "leanterm_version": "%s"\n}\n' "$GIT_RELEASE_TAG" > "$VERSION_METADATA_PATH"
 fi
 
 # Generate third-party license attribution.

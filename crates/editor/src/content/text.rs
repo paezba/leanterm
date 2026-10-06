@@ -8,6 +8,11 @@ use std::sync::{Arc, OnceLock};
 use arrayvec::ArrayString;
 use enum_iterator::Sequence;
 use lazy_static::lazy_static;
+use leanterm_ui_core::AppContext;
+use leanterm_ui_core::elements::ListIndentLevel;
+use leanterm_ui_core::fonts::{Properties, Style, Weight};
+use leanterm_ui_core::text::BlockHeaderSize as HeaderSize;
+use leanterm_ui_core::text::point::Point;
 pub use markdown_parser::markdown_parser::TABLE_BLOCK_MARKDOWN_LANG;
 use markdown_parser::markdown_parser::{
     CODE_BLOCK_DEFAULT_MARKDOWN_LANG, EMBED_BLOCK_MARKDOWN_LANG, RUNNABLE_BLOCK_MARKDOWN_LANG,
@@ -25,11 +30,6 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 use string_offset::{ByteOffset, CharOffset, impl_offset};
 use sum_tree::{Cursor, SeekBias, SumTree};
-use leanterm_ui_core::AppContext;
-use leanterm_ui_core::elements::ListIndentLevel;
-use leanterm_ui_core::fonts::{Properties, Style, Weight};
-use leanterm_ui_core::text::BlockHeaderSize as HeaderSize;
-use leanterm_ui_core::text::point::Point;
 
 use super::buffer::Buffer;
 use super::core::CursorType;

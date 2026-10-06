@@ -2,6 +2,10 @@ use std::ops::Range;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU8, Ordering};
 
+use leanterm_ui_core::elements::ListIndentLevel;
+use leanterm_ui_core::text::point::Point;
+use leanterm_ui_core::{App, AppContext, ModelContext, ModelHandle, ReadModel};
+use leanterm_util::content_version::ContentVersion;
 use line_ending::LineEnding;
 use markdown_parser::{
     FormattedIndentTextInline, FormattedText, FormattedTextFragment, FormattedTextLine, parse_html,
@@ -13,10 +17,6 @@ use rand::rngs::StdRng;
 use serde_yaml::{Mapping, Value};
 use string_offset::{ByteOffset, CharOffset};
 use vec1::{Vec1, vec1};
-use leanterm_util::content_version::ContentVersion;
-use leanterm_ui_core::elements::ListIndentLevel;
-use leanterm_ui_core::text::point::Point;
-use leanterm_ui_core::{App, AppContext, ModelContext, ModelHandle, ReadModel};
 
 use super::{BufferEvent, EditResult, ToBufferCharOffset};
 use crate::content::buffer::{
@@ -3178,7 +3178,7 @@ fn test_inline_markdown_roundtrips() {
         "*Complicated **text*** with *nest**ing***",
         "This `is not a [link](https://example.com) due to` precedence",
         "A **`bold code span`** too",
-        "[link1](https://warp.dev)[**link2**](https://example.com)",
+        "[link1](https://lean.dev)[**link2**](https://example.com)",
         "Combined *~~italic and strikethrough~~*",
         "Overlapping *~~abc~~def*",
         "This is <u>underlined</u>",
@@ -3196,7 +3196,7 @@ fn test_inline_markdown_roundtrips() {
 #[test]
 fn test_export_markdown_blocks() {
     let markdown =
-        "A `styled`\n***range** of text* and\n```warp-runnable-command\ncode\nblock\n```\n";
+        "A `styled`\n***range** of text* and\n```leanterm-runnable-command\ncode\nblock\n```\n";
     let formatted = parse_markdown(markdown).unwrap();
     assert_eq!(
         Buffer::export_to_markdown(formatted, None, MarkdownStyle::Internal),
@@ -3435,7 +3435,7 @@ fn test_markdown_escapes() {
             // // Punctuation in code blocks should not be escaped.
             assert_eq!(
                 buffer.markdown(),
-                "This is \\*not\\* markdown\n```warp-runnable-command\nThis is $code*!*\n```\n"
+                "This is \\*not\\* markdown\n```leanterm-runnable-command\nThis is $code*!*\n```\n"
             );
         });
 
@@ -3459,8 +3459,7 @@ fn test_markdown_escapes() {
 #[test]
 fn test_import_markdown() {
     App::test((), |mut app| async move {
-        let markdown_string =
-            "test\n```warp-runnable-command\nparagragh\n```\nSome text\nSome ***bold and italic***";
+        let markdown_string = "test\n```leanterm-runnable-command\nparagragh\n```\nSome text\nSome ***bold and italic***";
         let (buffer, _selection) = Buffer::mock_from_markdown(
             markdown_string,
             None,
@@ -3503,7 +3502,7 @@ fn test_import_markdown() {
             assert_eq!(buffer.markdown(), markdown_string);
         });
 
-        let markdown_string = "aaa\n```warp-runnable-command\nafb\n```\n*b**b***\n```warp-runnable-command\nb\nlll\n```\n";
+        let markdown_string = "aaa\n```leanterm-runnable-command\nafb\n```\n*b**b***\n```leanterm-runnable-command\nb\nlll\n```\n";
         let (buffer, _selection) = Buffer::mock_from_markdown(
             markdown_string,
             None,
@@ -3518,7 +3517,7 @@ fn test_import_markdown() {
             assert_eq!(buffer.markdown(), markdown_string);
         });
 
-        let markdown_string = "```warp-runnable-command\ntest\nblock\n```\n";
+        let markdown_string = "```leanterm-runnable-command\ntest\nblock\n```\n";
         let (buffer, _selection) = Buffer::mock_from_markdown(
             markdown_string,
             None,
@@ -3647,8 +3646,8 @@ sh code
 ```rust
 rust code
 ```
-```warp-runnable-command
-warp code
+```leanterm-runnable-command
+leanterm code
 ```"#,
             None,
             Box::new(|_, _| IndentBehavior::Ignore),
@@ -3656,7 +3655,7 @@ warp code
         );
 
         buffer.read(&app, |buffer, _| {
-            assert_eq!(buffer.debug(), "<code:Shell>default code<code:Shell>sh code<code:Rust>rust code<code:Shell>warp code<text>");
+            assert_eq!(buffer.debug(), "<code:Shell>default code<code:Shell>sh code<code:Rust>rust code<code:Shell>leanterm code<text>");
         });
         buffer.read(&app, |buffer, _| {
             selection.read(&app, |selection, _| {
@@ -3673,10 +3672,10 @@ fn test_import_markdown_embedded() {
             r#"```
 default code
 ```
-```warp-embedded-object
+```leanterm-embedded-object
 id: workflow-123
 ```
-```warp-embedded-object
+```leanterm-embedded-object
 id: workflow-123
 type: workflow
 author: kevin
@@ -5290,21 +5289,21 @@ fn test_read_html() {
             assert_eq!(
                 buffer.selected_text_as_html(selection.clone(), ctx),
                 Some(
-                    "<pre><code class=\"language-warp-runnable-command\">Blo</code></pre>".to_string()
+                    "<pre><code class=\"language-leanterm-runnable-command\">Blo</code></pre>".to_string()
                 )
             );
 
             buffer.set_selection(CharOffset::from(4)..CharOffset::from(11), selection.clone(), ctx);
             assert_eq!(
                 buffer.selected_text_as_html(selection.clone(), ctx),
-                Some("<p><strong>ore</strong></p><pre><code class=\"language-warp-runnable-command\">Blo</code></pre>".to_string())
+                Some("<p><strong>ore</strong></p><pre><code class=\"language-leanterm-runnable-command\">Blo</code></pre>".to_string())
             );
 
             buffer.set_selection(CharOffset::from(11)..CharOffset::from(16), selection.clone(), ctx);
             assert_eq!(
                 buffer.selected_text_as_html(selection.clone(), ctx),
                 Some(
-                    "<pre><code class=\"language-warp-runnable-command\">ck</code></pre><p>Af</p>"
+                    "<pre><code class=\"language-leanterm-runnable-command\">ck</code></pre><p>Af</p>"
                         .to_string()
                 )
             );
@@ -5328,7 +5327,7 @@ fn test_read_html() {
             assert_eq!(
                 buffer.selected_text_as_html(selection.clone(), ctx),
                 Some(
-                    "<pre><code class=\"language-warp-runnable-command\">ck</code></pre><h1>After</h1>"
+                    "<pre><code class=\"language-leanterm-runnable-command\">ck</code></pre><h1>After</h1>"
                         .to_string()
                 )
             );
@@ -7811,7 +7810,7 @@ fn test_link_style_exact() {
             let edit_result = buffer.select_and_style_link(
                 CharOffset::from(3)..CharOffset::from(7),
                 "ne\nb".to_string(),
-                "www.warp.dev".to_string(),
+                "www.lean.dev".to_string(),
                 selection.clone(),
                 ctx,
             );
@@ -7824,7 +7823,7 @@ fn test_link_style_exact() {
             );
             assert_eq!(
                 buffer.content.debug(),
-                "<text><a_www.google.com>li<a><a_www.warp.dev>ne\\nb<a>lock"
+                "<text><a_www.google.com>li<a><a_www.lean.dev>ne\\nb<a>lock"
             );
 
             let delta = edit_result.delta.expect("Should exist");
@@ -7843,7 +7842,7 @@ fn test_link_style_exact() {
                             StyledBufferRun {
                                 run: "ne\n".to_string(),
                                 text_styles: TextStylesWithMetadata::default()
-                                    .link("www.warp.dev".to_string()),
+                                    .link("www.lean.dev".to_string()),
                                 block_style: BufferBlockStyle::PlainText
                             }
                         ],
@@ -7855,7 +7854,7 @@ fn test_link_style_exact() {
                             StyledBufferRun {
                                 run: "b".to_string(),
                                 text_styles: TextStylesWithMetadata::default()
-                                    .link("www.warp.dev".to_string()),
+                                    .link("www.lean.dev".to_string()),
                                 block_style: BufferBlockStyle::PlainText
                             },
                             StyledBufferRun {
@@ -7879,7 +7878,7 @@ fn test_link_style_exact() {
             buffer.redo(selection.clone(), ctx);
             assert_eq!(
                 buffer.content.debug(),
-                "<text><a_www.google.com>li<a><a_www.warp.dev>ne\\nb<a>lock"
+                "<text><a_www.google.com>li<a><a_www.lean.dev>ne\\nb<a>lock"
             );
         });
     });
@@ -7957,7 +7956,7 @@ fn test_link_style_different_tag() {
             let edit_result = buffer.select_and_style_link(
                 CharOffset::from(3)..CharOffset::from(7),
                 "normal long text".to_string(),
-                "www.warp.dev".to_string(),
+                "www.lean.dev".to_string(),
                 selection.clone(),
                 ctx,
             );
@@ -7970,7 +7969,7 @@ fn test_link_style_different_tag() {
             );
             assert_eq!(
                 buffer.content.debug(),
-                "<text><a_www.google.com>g<a>n<a_www.warp.dev>normal long text<a>ock"
+                "<text><a_www.google.com>g<a>n<a_www.lean.dev>normal long text<a>ock"
             );
 
             let delta = edit_result.delta.expect("Should exist");
@@ -7993,7 +7992,7 @@ fn test_link_style_different_tag() {
                         StyledBufferRun {
                             run: "normal long text".to_string(),
                             text_styles: TextStylesWithMetadata::default()
-                                .link("www.warp.dev".to_string()),
+                                .link("www.lean.dev".to_string()),
                             block_style: BufferBlockStyle::PlainText
                         },
                         StyledBufferRun {
@@ -8016,7 +8015,7 @@ fn test_link_style_different_tag() {
             buffer.redo(selection.clone(), ctx);
             assert_eq!(
                 buffer.content.debug(),
-                "<text><a_www.google.com>g<a>n<a_www.warp.dev>normal long text<a>ock"
+                "<text><a_www.google.com>g<a>n<a_www.lean.dev>normal long text<a>ock"
             );
         });
     });
@@ -8053,7 +8052,7 @@ fn test_link_style_overlapping() {
             let edit_result = buffer.select_and_style_link(
                 CharOffset::from(3)..CharOffset::from(7),
                 "ne\nb".to_string(),
-                "www.warp.dev".to_string(),
+                "www.lean.dev".to_string(),
                 selection.clone(),
                 ctx,
             );
@@ -8066,7 +8065,7 @@ fn test_link_style_overlapping() {
             );
             assert_eq!(
                 buffer.content.debug(),
-                "<text><a_www.google.com>li<a><a_www.warp.dev>ne\\nb<a>lock"
+                "<text><a_www.google.com>li<a><a_www.lean.dev>ne\\nb<a>lock"
             );
 
             let delta = edit_result.delta.expect("Should exist");
@@ -8085,7 +8084,7 @@ fn test_link_style_overlapping() {
                             StyledBufferRun {
                                 run: "ne\n".to_string(),
                                 text_styles: TextStylesWithMetadata::default()
-                                    .link("www.warp.dev".to_string()),
+                                    .link("www.lean.dev".to_string()),
                                 block_style: BufferBlockStyle::PlainText
                             }
                         ],
@@ -8097,7 +8096,7 @@ fn test_link_style_overlapping() {
                             StyledBufferRun {
                                 run: "b".to_string(),
                                 text_styles: TextStylesWithMetadata::default()
-                                    .link("www.warp.dev".to_string()),
+                                    .link("www.lean.dev".to_string()),
                                 block_style: BufferBlockStyle::PlainText
                             },
                             StyledBufferRun {
@@ -8121,7 +8120,7 @@ fn test_link_style_overlapping() {
             buffer.redo(selection.clone(), ctx);
             assert_eq!(
                 buffer.content.debug(),
-                "<text><a_www.google.com>li<a><a_www.warp.dev>ne\\nb<a>lock"
+                "<text><a_www.google.com>li<a><a_www.lean.dev>ne\\nb<a>lock"
             );
         });
     });
@@ -8158,7 +8157,7 @@ fn test_link_style_surrounded() {
             let edit_result = buffer.select_and_style_link(
                 CharOffset::from(3)..CharOffset::from(5),
                 "ne".to_string(),
-                "www.warp.dev".to_string(),
+                "www.lean.dev".to_string(),
                 selection.clone(),
                 ctx,
             );
@@ -8171,7 +8170,7 @@ fn test_link_style_surrounded() {
             );
             assert_eq!(
                 buffer.content.debug(),
-                "<text><a_www.google.com>li<a><a_www.warp.dev>ne<a>\\nblock"
+                "<text><a_www.google.com>li<a><a_www.lean.dev>ne<a>\\nblock"
             );
 
             let delta = edit_result.delta.expect("Should exist");
@@ -8189,7 +8188,7 @@ fn test_link_style_surrounded() {
                         StyledBufferRun {
                             run: "ne".to_string(),
                             text_styles: TextStylesWithMetadata::default()
-                                .link("www.warp.dev".to_string()),
+                                .link("www.lean.dev".to_string()),
                             block_style: BufferBlockStyle::PlainText
                         },
                         StyledBufferRun {
@@ -8212,7 +8211,7 @@ fn test_link_style_surrounded() {
             buffer.redo(selection.clone(), ctx);
             assert_eq!(
                 buffer.content.debug(),
-                "<text><a_www.google.com>li<a><a_www.warp.dev>ne<a>\\nblock"
+                "<text><a_www.google.com>li<a><a_www.lean.dev>ne<a>\\nblock"
             );
         });
     });
@@ -8470,13 +8469,13 @@ fn test_unstyle_link_overlapping() {
             buffer.select_and_style_link(
                 CharOffset::from(4)..CharOffset::from(7),
                 "e\nb".to_string(),
-                "www.warp.dev".to_string(),
+                "www.lean.dev".to_string(),
                 selection.clone(),
                 ctx,
             );
             assert_eq!(
                 buffer.content.debug(),
-                "<text><a_www.google.com>lin<a><a_www.warp.dev>e\\nb<a>lock"
+                "<text><a_www.google.com>lin<a><a_www.lean.dev>e\\nb<a>lock"
             );
 
             let prev_selection = buffer.to_rendered_selection_set(selection.clone(), ctx);
@@ -8495,7 +8494,7 @@ fn test_unstyle_link_overlapping() {
             );
             assert_eq!(
                 buffer.content.debug(),
-                "<text><a_www.google.com>l<a>ine<a_www.warp.dev>\\nb<a>lock"
+                "<text><a_www.google.com>l<a>ine<a_www.lean.dev>\\nb<a>lock"
             );
 
             let delta = edit_result.delta.expect("Should exist");
@@ -8519,7 +8518,7 @@ fn test_unstyle_link_overlapping() {
                             StyledBufferRun {
                                 run: "\n".to_string(),
                                 text_styles: TextStylesWithMetadata::default()
-                                    .link("www.warp.dev".to_string()),
+                                    .link("www.lean.dev".to_string()),
                                 block_style: BufferBlockStyle::PlainText
                             },
                         ],
@@ -8531,7 +8530,7 @@ fn test_unstyle_link_overlapping() {
                             StyledBufferRun {
                                 run: "b".to_string(),
                                 text_styles: TextStylesWithMetadata::default()
-                                    .link("www.warp.dev".to_string()),
+                                    .link("www.lean.dev".to_string()),
                                 block_style: BufferBlockStyle::PlainText
                             },
                             StyledBufferRun {
@@ -8549,13 +8548,13 @@ fn test_unstyle_link_overlapping() {
             buffer.undo(selection.clone(), ctx);
             assert_eq!(
                 buffer.content.debug(),
-                "<text><a_www.google.com>lin<a><a_www.warp.dev>e\\nb<a>lock"
+                "<text><a_www.google.com>lin<a><a_www.lean.dev>e\\nb<a>lock"
             );
 
             buffer.redo(selection.clone(), ctx);
             assert_eq!(
                 buffer.content.debug(),
-                "<text><a_www.google.com>l<a>ine<a_www.warp.dev>\\nb<a>lock"
+                "<text><a_www.google.com>l<a>ine<a_www.lean.dev>\\nb<a>lock"
             );
         });
     });
@@ -12894,7 +12893,7 @@ fn test_multiselect_copy_blocks() {
                 buffer.selected_text_as_plain_text(selection.clone(), ctx).as_str(),
                 "Hey\nYo\next\nThis"
             );
-            assert_eq!(buffer.selected_text_as_html(selection.clone(), ctx), Some("<ul><li>Hey</li><li>Yo</li></ul><p>ext</p><pre><code class=\"language-warp-runnable-command\">This</code></pre>".to_string()));
+            assert_eq!(buffer.selected_text_as_html(selection.clone(), ctx), Some("<ul><li>Hey</li><li>Yo</li></ul><p>ext</p><pre><code class=\"language-leanterm-runnable-command\">This</code></pre>".to_string()));
         })
     });
 }
@@ -14304,7 +14303,7 @@ fn test_insert_at_offsets() {
     });
 }
 
-/// Regression test for WARP-CLIENT-DEV-NYY: panic "Invalid edit range 4042..3982".
+/// Regression test for LEANTERM-CLIENT-DEV-NYY: panic "Invalid edit range 4042..3982".
 ///
 /// Root cause: `fuzzy_match_v4a_diffs` produces `DiffDelta`s with overlapping
 /// `replacement_line_range` values when multiple V4A hunks target the same

@@ -1,4 +1,4 @@
-//! Wire protocol envelopes and error types for Warp local control.
+//! Wire protocol envelopes and error types for Leanterm local control.
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -87,7 +87,7 @@ pub struct DirectionParams {
     pub direction: Direction,
 }
 
-/// Parameters for opening a file in Warp's app/editor state.
+/// Parameters for opening a file in Leanterm's app/editor state.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct FileOpenParams {
@@ -307,7 +307,7 @@ pub enum ControlResult {
     Content { data: serde_json::Value },
 }
 
-/// Top-level request sent by a local-control client to a Warp instance.
+/// Top-level request sent by a local-control client to a Leanterm instance.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RequestEnvelope {
     pub protocol_version: u32,
@@ -368,7 +368,7 @@ impl Action {
     }
 }
 
-/// Top-level response returned by a Warp instance for a control request.
+/// Top-level response returned by a Leanterm instance for a control request.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ResponseEnvelope {
     pub protocol_version: u32,

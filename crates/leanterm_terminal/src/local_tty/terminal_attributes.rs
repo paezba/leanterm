@@ -1,9 +1,9 @@
 use std::os::fd::RawFd;
 use std::time::Duration;
 
+use leanterm_ui_core::{Entity, ModelContext};
 use nix::Result;
 use nix::sys::termios::{self, Termios};
-use leanterm_ui_core::{Entity, ModelContext};
 
 /// The default amount of time we wait before polling the terminal attributes again.
 const POLL_INTERVAL: Duration = Duration::from_secs(1);

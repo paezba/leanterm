@@ -18,7 +18,7 @@ pub enum Channel {
     /// The internal-only HEAD build.
     Local,
 
-    /// The open-source build of Warp.
+    /// The open-source build of Leanterm.
     Oss,
 
     /// The integration test build.
@@ -46,15 +46,15 @@ impl Channel {
         }
     }
 
-    /// Returns the Warp Control CLI command name corresponding to this channel.
-    pub fn warpctrl_command_name(&self) -> &'static str {
+    /// Returns the Leanterm Control CLI command name corresponding to this channel.
+    pub fn leantermctl_command_name(&self) -> &'static str {
         match self {
-            Channel::Stable => "warpctrl",
-            Channel::Dev => "warpctrl-dev",
-            Channel::Preview => "warpctrl-preview",
-            Channel::Local => "warpctrl-local",
-            Channel::Integration => "warpctrl-integration",
-            Channel::Oss => "warpctrl-oss",
+            Channel::Stable => "leantermctl",
+            Channel::Dev => "leantermctl-dev",
+            Channel::Preview => "leantermctl-preview",
+            Channel::Local => "leantermctl-local",
+            Channel::Integration => "leantermctl-integration",
+            Channel::Oss => "leantermctl-oss",
         }
     }
 }

@@ -28,7 +28,7 @@ use crate::terminal::keys_settings::KeysSettings;
 use crate::terminal::session_settings::SessionSettings;
 use crate::themes::theme::{CustomTheme, SelectedSystemThemes, ThemeKind};
 use crate::ui_components::blended_colors;
-use crate::user_config::{self, WarpConfig};
+use crate::user_config::{self, LeantermConfig};
 use crate::window_settings::WindowSettings;
 
 // UI does not scale, so we set a fixed size for all text.
@@ -287,7 +287,7 @@ impl SettingsImportView {
                 background: Some(appearance.theme().outline().into()),
                 ..Default::default()
             })
-            .with_centered_text_label("Reset to Warp defaults".to_owned())
+            .with_centered_text_label("Reset to Leanterm defaults".to_owned())
             .build()
             .on_click(move |ctx, _, _| {
                 ctx.dispatch_typed_action(SettingsImportAction::ResetButtonClicked);
@@ -788,10 +788,10 @@ impl SettingsImportView {
                     ));
                     report_if_error!(theme_settings.use_system_theme.set_value(true, ctx));
                 });
-                WarpConfig::handle(ctx).update(ctx, |config, ctx| {
+                LeantermConfig::handle(ctx).update(ctx, |config, ctx| {
                     config.add_new_theme_to_config(dark_kind, dark, ctx)
                 });
-                WarpConfig::handle(ctx).update(ctx, |config, ctx| {
+                LeantermConfig::handle(ctx).update(ctx, |config, ctx| {
                     config.add_new_theme_to_config(light_kind, light, ctx)
                 });
             }
@@ -810,7 +810,7 @@ impl SettingsImportView {
                     );
                     report_if_error!(theme_settings.use_system_theme.set_value(false, ctx));
                 });
-                WarpConfig::handle(ctx).update(ctx, |config, ctx| {
+                LeantermConfig::handle(ctx).update(ctx, |config, ctx| {
                     config.add_new_theme_to_config(theme_kind, theme, ctx)
                 });
             }
@@ -1051,7 +1051,7 @@ impl TypedActionView for SettingsImportView {
 
                 // Handle should_import within the model.
 
-                // set_preferences should not fail because it is writing directly to Warp's preferences.
+                // set_preferences should not fail because it is writing directly to Leanterm's preferences.
                 self.set_preferences(ctx, terminal_type_and_profile);
 
                 // write_theme can fail because we write themes in a separate directory.

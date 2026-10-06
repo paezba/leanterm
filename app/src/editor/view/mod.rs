@@ -17,6 +17,33 @@ use std::time::Duration;
 use anyhow::Result;
 use element::CommandXRayMouseStateHandle;
 use itertools::{Either, Itertools};
+use leanterm_completer::completer::Description;
+use leanterm_core::semantic_selection::SemanticSelection;
+use leanterm_editor::editor::NavigationKey;
+use leanterm_ui::accessibility::{
+    AccessibilityContent, ActionAccessibilityContent, LeantermA11yRole,
+};
+use leanterm_ui::actions::StandardAction;
+use leanterm_ui::r#async::Timer;
+use leanterm_ui::clipboard::ClipboardContent;
+use leanterm_ui::elements::{
+    CornerRadius, DEFAULT_UI_LINE_HEIGHT_RATIO, Hoverable, MouseStateHandle, Radius,
+};
+use leanterm_ui::fonts::{Cache as FontCache, FamilyId, Properties, Weight};
+use leanterm_ui::keymap::{EditableBinding, FixedBinding, Keystroke, PerPlatformKeystroke};
+use leanterm_ui::platform::{Cursor, OperatingSystem};
+use leanterm_ui::text::TextBuffer;
+use leanterm_ui::text::word_boundaries::WordBoundariesPolicy;
+use leanterm_ui::text_layout::TextStyle;
+use leanterm_ui::ui_components::components::UiComponentStyles;
+use leanterm_ui::windowing::WindowManager;
+use leanterm_ui::{
+    AppContext, BlurContext, CursorInfo, Element, Entity, EntityId, FocusContext, ModelAsRef,
+    ModelContext, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
+    WindowId, windowing,
+};
+use leanterm_util::path::ShellFamily;
+use leanterm_util::user_input::UserInput;
 use model::{
     Anchor, AnchorBias, Bias, DisplayMap, DrawableSelection, EditorModel, EditorModelEvent, Edits,
     LocalPendingSelection, LocalSelection, MarkedTextState, MovementResult, SelectionMode,
@@ -40,31 +67,6 @@ use vim::{
     vim_a_block, vim_a_paragraph, vim_a_quote, vim_a_word, vim_all_lines, vim_inner_block,
     vim_inner_line, vim_inner_paragraph, vim_inner_quote, vim_inner_word,
     vim_word_iterator_from_offset,
-};
-use leanterm_completer::completer::Description;
-use leanterm_core::semantic_selection::SemanticSelection;
-use leanterm_editor::editor::NavigationKey;
-use leanterm_util::path::ShellFamily;
-use leanterm_util::user_input::UserInput;
-use leanterm_ui::accessibility::{AccessibilityContent, ActionAccessibilityContent, WarpA11yRole};
-use leanterm_ui::actions::StandardAction;
-use leanterm_ui::r#async::Timer;
-use leanterm_ui::clipboard::ClipboardContent;
-use leanterm_ui::elements::{
-    CornerRadius, DEFAULT_UI_LINE_HEIGHT_RATIO, Hoverable, MouseStateHandle, Radius,
-};
-use leanterm_ui::fonts::{Cache as FontCache, FamilyId, Properties, Weight};
-use leanterm_ui::keymap::{EditableBinding, FixedBinding, Keystroke, PerPlatformKeystroke};
-use leanterm_ui::platform::{Cursor, OperatingSystem};
-use leanterm_ui::text::TextBuffer;
-use leanterm_ui::text::word_boundaries::WordBoundariesPolicy;
-use leanterm_ui::text_layout::TextStyle;
-use leanterm_ui::ui_components::components::UiComponentStyles;
-use leanterm_ui::windowing::WindowManager;
-use leanterm_ui::{
-    AppContext, BlurContext, CursorInfo, Element, Entity, EntityId, FocusContext, ModelAsRef,
-    ModelContext, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
-    WindowId, windowing,
 };
 /// The editor interfaces that we publicly expose to consumers.
 /// This should be a very limited set; if you need to add something here,
@@ -355,7 +357,7 @@ pub fn init(ctx: &mut AppContext) {
         // This might seem like a no-op since `ctrl-right` changes desktops on Mac by default.
         // However, many Mac users coming from fish shell have asked for this binding.
         // They've already disabled the desktop change shortcut, and are expecting that this
-        // binding also works in Warp. We should not break their workflow.
+        // binding also works in Leanterm. We should not break their workflow.
         FixedBinding::new(
             "ctrl-right",
             EditorAction::MoveForwardOneWord,
@@ -4837,7 +4839,7 @@ impl EditorView {
     }
 
     pub fn move_to_paragraph_start(&mut self, ctx: &mut ViewContext<Self>) {
-        // warp doesn't wrap the text, so basically each line is a paragraph.
+        // leanterm doesn't wrap the text, so basically each line is a paragraph.
         // this moves to the start of the paragraph (and the previous one if used multiple times).
         self.change_selections(ctx, |editor_model, ctx| {
             editor_model.move_cursor(
@@ -7305,9 +7307,12 @@ impl TypedActionView for EditorView {
         ctx: &mut ViewContext<Self>,
     ) -> ActionAccessibilityContent {
         match action {
-            EditorAction::UserInsert(text) => ActionAccessibilityContent::Custom(
-                AccessibilityContent::new_without_help(text.to_string(), WarpA11yRole::UserAction),
-            ),
+            EditorAction::UserInsert(text) => {
+                ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
+                    text.to_string(),
+                    LeantermA11yRole::UserAction,
+                ))
+            }
             EditorAction::SelectLeft
             | EditorAction::SelectToLineEnd
             | EditorAction::SelectLine(_)
@@ -7341,7 +7346,7 @@ impl TypedActionView for EditorView {
             EditorAction::Paste => {
                 ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
                     format!("Pasting: {}", self.clipboard_content(ctx)),
-                    WarpA11yRole::UserAction,
+                    LeantermA11yRole::UserAction,
                 ))
             }
             _ => ActionAccessibilityContent::from_debug(),
@@ -7433,7 +7438,7 @@ impl TypedActionView for EditorView {
             UnhandledModifierKey(keystroke) => {
                 if self.can_select(ctx) {
                     // This event helps us to keep track of what key bindings users
-                    // try to use in the editor but are currently not available in Warp.
+                    // try to use in the editor but are currently not available in Leanterm.
                     ctx.emit(Event::UnhandledModifierKeyOnEditor(keystroke.clone()))
                 }
             }

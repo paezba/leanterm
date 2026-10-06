@@ -1,11 +1,6 @@
 use std::cell::Cell;
 use std::sync::Arc;
 
-use markdown_parser::{FormattedTextStyles, Hyperlink};
-use rangemap::RangeSet;
-use string_offset::CharOffset;
-use sum_tree::SumTree;
-use vec1::{Vec1, vec1};
 use leanterm_ui_core::assets::asset_cache::AssetSource;
 use leanterm_ui_core::color::ColorU;
 use leanterm_ui_core::elements::ListIndentLevel;
@@ -14,6 +9,11 @@ use leanterm_ui_core::geometry::rect::RectF;
 use leanterm_ui_core::geometry::vector::vec2f;
 use leanterm_ui_core::text_layout::TextFrame;
 use leanterm_ui_core::units::{IntoPixels, Pixels};
+use markdown_parser::{FormattedTextStyles, Hyperlink};
+use rangemap::RangeSet;
+use string_offset::CharOffset;
+use sum_tree::SumTree;
+use vec1::{Vec1, vec1};
 
 use super::debug::Describe;
 use super::test_utils::{layout_paragraph, layout_paragraphs};
@@ -1394,7 +1394,7 @@ fn test_link_at_offset_uses_cached_cell_links() {
                 FormattedTextFragment {
                     text: "bc".into(),
                     styles: FormattedTextStyles {
-                        hyperlink: Some(Hyperlink::Url("https://warp.dev".into())),
+                        hyperlink: Some(Hyperlink::Url("https://lean.dev".into())),
                         ..Default::default()
                     },
                 },
@@ -1409,7 +1409,7 @@ fn test_link_at_offset_uses_cached_cell_links() {
     };
     table.cell_links = vec![
         vec![
-            vec![ParsedUrl::new(1..3, "https://warp.dev".into())],
+            vec![ParsedUrl::new(1..3, "https://lean.dev".into())],
             vec![],
         ],
         vec![vec![], vec![]],
@@ -1417,11 +1417,11 @@ fn test_link_at_offset_uses_cached_cell_links() {
 
     assert_eq!(
         table.link_at_offset(CharOffset::from(1)),
-        Some("https://warp.dev".into())
+        Some("https://lean.dev".into())
     );
     assert_eq!(
         table.link_at_offset(CharOffset::from(2)),
-        Some("https://warp.dev".into())
+        Some("https://lean.dev".into())
     );
     assert_eq!(table.link_at_offset(CharOffset::from(0)), None);
     assert_eq!(table.link_at_offset(CharOffset::from(3)), None);

@@ -20,7 +20,7 @@ impl AssetProvider for Assets {
                 br##"<svg width="20" height="10" viewBox="0 0 20 10" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="10" fill="#ffffff"/></svg>"##,
             )),
             "fit-test.rgba" => Ok(Cow::Borrowed(
-                b"warp-img:rgba:4:2:\xff\x00\x00\xff\xff\x00\x00\xff\x00\x00\xff\xff\x00\x00\xff\xff\x00\xff\x00\xff\x00\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff",
+                b"leanterm-img:rgba:4:2:\xff\x00\x00\xff\xff\x00\x00\xff\x00\x00\xff\xff\x00\x00\xff\xff\x00\xff\x00\xff\x00\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff",
             )),
             "numbers-1000ms.gif" => Ok(Cow::Borrowed(include_bytes!(
                 "../../leanterm_ui/examples/assets/numbers-1000ms.gif"
@@ -443,7 +443,7 @@ fn test_preview_and_full_animation_requests_do_not_collide_in_rendered_image_cac
 fn test_svg_text_rasterizes_with_loaded_system_fonts() {
     let image_type = ImageType::try_from_bytes(
         br##"<svg width="160" height="40" viewBox="0 0 160 40" xmlns="http://www.w3.org/2000/svg">
-  <text x="10" y="24" font-size="20" fill="#000000">Warp</text>
+  <text x="10" y="24" font-size="20" fill="#000000">Leanterm</text>
 </svg>
 "##,
     )
@@ -477,7 +477,7 @@ fn test_svg_text_rasterizes_with_loaded_system_fonts() {
 
     let svg = format!(
         "<svg width=\"160\" height=\"40\" viewBox=\"0 0 160 40\" xmlns=\"http://www.w3.org/2000/svg\">\
-  <text x=\"10\" y=\"24\" font-family=\"{font_family}\" font-size=\"20\" fill=\"#000000\">Warp</text>\
+  <text x=\"10\" y=\"24\" font-family=\"{font_family}\" font-size=\"20\" fill=\"#000000\">Leanterm</text>\
 </svg>"
     );
 
@@ -507,7 +507,7 @@ fn test_svg_text_rasterizes_with_loaded_system_fonts() {
 fn test_svg_text_rasterizes_with_bundled_sans_serif_fallback() {
     let image_type = ImageType::try_from_bytes(
         br##"<svg width="160" height="40" viewBox="0 0 160 40" xmlns="http://www.w3.org/2000/svg">
-  <text x="10" y="24" font-family="sans-serif" font-size="20" fill="#000000">Warp</text>
+  <text x="10" y="24" font-family="sans-serif" font-size="20" fill="#000000">Leanterm</text>
 </svg>
 "##,
     )

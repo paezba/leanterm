@@ -1,16 +1,16 @@
 //! Contains the legacy implementation of argument suggestion generation that depends on the legacy
-//! command signature struct (`warp_command_signatures::Signature`).
+//! command signature struct (`leanterm_command_signatures::Signature`).
 use std::borrow::Cow;
 use std::collections::HashMap;
 
 use itertools::Itertools;
-use smol_str::SmolStr;
-use warp_command_signatures::{
+use leanterm_command_signatures::{
     Argument, ArgumentType, DynamicCompletionData, Generator, GeneratorProcess, Signature,
     Template, TemplateFilter, TemplateType,
 };
 use leanterm_core::features::FeatureFlag;
 use leanterm_util::path::ShellFamily;
+use smol_str::SmolStr;
 
 use super::add_extra_positional;
 use crate::completer::context::CompletionContext;
@@ -662,9 +662,11 @@ async fn generate_suggestions_for_argument_type(
 ) -> impl IntoIterator<Item = MatchedSuggestion> + use<> {
     match argument_type {
         ArgumentType::Suggestion(suggestion) => {
-            let warp_suggestion: Suggestion = suggestion.clone().into();
-            match matcher.get_match_type(parsed_token.as_str(), warp_suggestion.display.as_str()) {
-                Some(match_type) => vec![MatchedSuggestion::new(warp_suggestion, match_type)],
+            let leanterm_suggestion: Suggestion = suggestion.clone().into();
+            match matcher
+                .get_match_type(parsed_token.as_str(), leanterm_suggestion.display.as_str())
+            {
+                Some(match_type) => vec![MatchedSuggestion::new(leanterm_suggestion, match_type)],
                 None => vec![],
             }
         }
@@ -798,11 +800,11 @@ fn shell_command<'a>(
     command_env_vars: &[String],
 ) -> Cow<'a, str> {
     let shell = if cfg!(windows) && FeatureFlag::RunGeneratorsWithCmdExe.is_enabled() {
-        warp_command_signatures::Shell::CmdExe
+        leanterm_command_signatures::Shell::CmdExe
     } else {
         match shell_family {
-            ShellFamily::Posix => warp_command_signatures::Shell::Posix,
-            ShellFamily::PowerShell => warp_command_signatures::Shell::Powershell,
+            ShellFamily::Posix => leanterm_command_signatures::Shell::Posix,
+            ShellFamily::PowerShell => leanterm_command_signatures::Shell::Powershell,
         }
     };
 
@@ -842,10 +844,10 @@ fn filter_path_suggestions<'a>(
         .collect()
 }
 
-impl From<warp_command_signatures::Suggestion> for Suggestion {
-    /// Convert the `warp_command_signatures::Suggestion`s (which are meant to map
+impl From<leanterm_command_signatures::Suggestion> for Suggestion {
+    /// Convert the `leanterm_command_signatures::Suggestion`s (which are meant to map
     /// 1:1 to the `completer::Suggestion`s)
-    fn from(suggestion: warp_command_signatures::Suggestion) -> Self {
+    fn from(suggestion: leanterm_command_signatures::Suggestion) -> Self {
         let exact_string: SmolStr = suggestion.exact_string.into();
         let display = suggestion
             .display_name
@@ -865,9 +867,9 @@ impl From<warp_command_signatures::Suggestion> for Suggestion {
     }
 }
 
-impl From<Suggestion> for warp_command_signatures::Suggestion {
-    fn from(suggestion: Suggestion) -> warp_command_signatures::Suggestion {
-        warp_command_signatures::Suggestion {
+impl From<Suggestion> for leanterm_command_signatures::Suggestion {
+    fn from(suggestion: Suggestion) -> leanterm_command_signatures::Suggestion {
+        leanterm_command_signatures::Suggestion {
             exact_string: suggestion.display.as_ref().into(),
             description: suggestion.description,
             priority: suggestion.priority.into(),

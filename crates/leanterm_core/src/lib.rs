@@ -28,9 +28,9 @@ pub mod user_preferences;
 #[doc(hidden)]
 pub use anyhow as __anyhow;
 pub use app_id::AppId;
-pub use session_id::SessionId;
 #[doc(hidden)]
-pub use leanterm_errors as __warp_errors;
+pub use leanterm_errors as __leanterm_errors;
+pub use session_id::SessionId;
 // Re-export leanterm_ui_core so that it can be referenced safely from the
 // telemetry macros.
 pub use leanterm_ui_core;

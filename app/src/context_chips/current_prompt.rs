@@ -5,7 +5,6 @@ use std::time::Duration;
 
 use futures::{FutureExt as _, pin_mut};
 use itertools::Itertools;
-use parking_lot::FairMutex;
 use leanterm_completer::completer::CommandExitStatus;
 use leanterm_core::r#async::debounce;
 use leanterm_core::user_preferences::GetUserPreferences;
@@ -15,6 +14,7 @@ use leanterm_ui::{
     AppContext, Entity, ModelAsRef, ModelContext, ModelHandle, SingletonEntity, ViewHandle,
     WeakModelHandle,
 };
+use parking_lot::FairMutex;
 
 use super::context_chip::{
     ChipAvailability, ChipFingerprintInput, ChipRuntimeCapabilities, ContextChip, Environment,
@@ -29,7 +29,7 @@ use crate::code_review::github_repo_model::{GitHubRepoEvent, GitHubRepoModel};
 use crate::context_chips::display_chip::GitLineChanges;
 use crate::editor::EditorView;
 use crate::menu::{MenuItem, MenuItemFields};
-use crate::settings::{InputSettings, WarpPromptSeparator};
+use crate::settings::{InputSettings, LeantermPromptSeparator};
 use crate::terminal::event::BlockType;
 use crate::terminal::model::block::{Block, BlockMetadata};
 use crate::terminal::model::session::{ExecuteCommandOptions, Session, Sessions, SessionsEvent};
@@ -148,8 +148,8 @@ pub struct CurrentPrompt {
     renderable_chips: HashSet<ContextChipKind>,
 
     same_line_prompt_enabled: bool,
-    /// The separator to use as a trailing character at the end of Warp prompt, if any.
-    separator: WarpPromptSeparator,
+    /// The separator to use as a trailing character at the end of Leanterm prompt, if any.
+    separator: LeantermPromptSeparator,
 
     latest_context: Option<PromptContext>,
     sessions: ModelHandle<Sessions>,
@@ -332,13 +332,13 @@ impl CurrentPrompt {
             .collect()
     }
 
-    /// Whether same line prompt is enabled for the Warp prompt.
+    /// Whether same line prompt is enabled for the Leanterm prompt.
     pub fn same_line_prompt_enabled(&self) -> bool {
         self.same_line_prompt_enabled
     }
 
-    /// The separator for the current Warp prompt.
-    pub fn separator(&self) -> WarpPromptSeparator {
+    /// The separator for the current Leanterm prompt.
+    pub fn separator(&self) -> LeantermPromptSeparator {
         self.separator
     }
 

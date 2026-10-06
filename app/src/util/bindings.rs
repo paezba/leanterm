@@ -7,7 +7,6 @@ use enum_iterator::{Sequence, all};
 use fuzzy_match::match_indices_case_insensitive;
 use itertools::Itertools;
 use lazy_static::lazy_static;
-use regex::Regex;
 use leanterm_ui::actions::StandardAction;
 use leanterm_ui::keymap::{
     BindingDescription, BindingId, BindingLens, CustomTag, DescriptionContext, EditableBindingLens,
@@ -15,6 +14,7 @@ use leanterm_ui::keymap::{
 };
 use leanterm_ui::platform::OperatingSystem;
 use leanterm_ui::{Action, AppContext, SingletonEntity};
+use regex::Regex;
 
 use crate::keyboard::{UserDefinedKeybinding, remove_custom_keybinding, write_custom_keybinding};
 use crate::settings_view::keybindings::{KeybindingChangedEvent, KeybindingChangedNotifier};
@@ -27,7 +27,7 @@ pub const MAC_MENUS_CONTEXT: DescriptionContext = DescriptionContext::Custom("ma
 pub enum CustomAction {
     NewTab,
     NewFile,
-    ShowAboutWarp,
+    ShowAboutLeanterm,
     ShowSettings,
     ConfigureKeybindings,
     ShowAppearance,
@@ -93,7 +93,7 @@ pub enum CustomAction {
     ToggleSyncTerminalInputsInCurrentTab,
     DisableSyncTerminalInputs,
     ReopenClosedSession,
-    ToggleWarpDrive,
+    ToggleLeantermDrive,
     AddWindow,
     CloseCurrentSession,
     CloseWindow,
@@ -101,9 +101,9 @@ pub enum CustomAction {
     WindowsPaste,
     #[cfg(windows)]
     WindowsCopy,
-    /// Also applies to legacy Warp AI (toggles the panel)
+    /// Also applies to legacy Leanterm AI (toggles the panel)
     NewAgentModePane,
-    /// Also applies to legacy Warp AI (attaches the selection to the panel editor)
+    /// Also applies to legacy Leanterm AI (attaches the selection to the panel editor)
     AttachSelectionAsAgentModeContext,
     ToggleProjectExplorer,
     OpenRepository,
@@ -116,8 +116,8 @@ pub enum CustomAction {
 lazy_static! {
     /// Maps for converting from custom tags back to the action enum
     /// This layer of indirection is necessary because the UI framework can't
-    /// know about particular Warp specific actions, so it deals with all actions
-    /// as plain isizes.  Within Warp though we want to deal with them as the enum type.
+    /// know about particular Leanterm specific actions, so it deals with all actions
+    /// as plain isizes.  Within Leanterm though we want to deal with them as the enum type.
     pub static ref CUSTOM_TAG_TO_ACTION: HashMap<isize, CustomAction> = HashMap::from_iter(all::<CustomAction>().map(|action| {
         (action as isize, action)
     }));
@@ -181,7 +181,7 @@ lazy_static! {
     /// compliant. We weren't always diligent about avoiding bindings that could conflict with
     /// character codes, unfortunately some bindings on Mac currently conflict with the PTY. We have
     /// this allowlist to special case these legacy actions for the purposes of binding validation.
-    pub static ref MAC_PTY_NON_COMPLIANT_ACTIONS: HashSet<&'static str> = HashSet::from_iter(["terminal:warpify_subshell", "terminal:open_block_list_context_menu_via_keybinding"]);
+    pub static ref MAC_PTY_NON_COMPLIANT_ACTIONS: HashSet<&'static str> = HashSet::from_iter(["terminal:leantermify_subshell", "terminal:open_block_list_context_menu_via_keybinding"]);
 
     /// Set of actions on Windows that should be considered valid bindings even though they aren't
     /// PTY compliant. Windows users expect pasting to work using both `ctrl-v` and `ctrl-shift-v`,
@@ -367,7 +367,7 @@ pub fn custom_tag_to_keystroke(custom: CustomTag) -> Option<Keystroke> {
             }
         }
         CustomAction::AddWindow => Keystroke::parse(cmd_or_ctrl_shift("n")).ok(),
-        CustomAction::ToggleWarpDrive => {
+        CustomAction::ToggleLeantermDrive => {
             if OperatingSystem::get().is_mac() {
                 Keystroke::parse("cmd-\\").ok()
             } else {
@@ -411,7 +411,7 @@ pub fn custom_tag_to_keystroke(custom: CustomTag) -> Option<Keystroke> {
         }
         CustomAction::NewTerminalTab
         | CustomAction::NewFile
-        | CustomAction::ShowAboutWarp
+        | CustomAction::ShowAboutLeanterm
         | CustomAction::SplitPaneLeft
         | CustomAction::SelectAllBlocks
         | CustomAction::SplitPaneUp

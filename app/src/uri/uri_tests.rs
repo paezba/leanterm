@@ -286,24 +286,24 @@ fn test_action_open_file_editor_parse_rejects_invalid_line_or_column() {
 
 #[test]
 fn test_parse_tab_path_expands_tilde() {
-    let url = Url::parse("warp://action/new_tab?path=~/Projects").unwrap();
+    let url = Url::parse("leanterm://action/new_tab?path=~/Projects").unwrap();
     let home = dirs::home_dir().expect("HOME must be set for this test");
     assert_eq!(parse_tab_path(&url), Some(home.join("Projects")));
 }
 
 #[test]
 fn test_parse_tab_path_absolute_path_unchanged() {
-    let url = Url::parse("warp://action/new_tab?path=/tmp/foo").unwrap();
+    let url = Url::parse("leanterm://action/new_tab?path=/tmp/foo").unwrap();
     assert_eq!(parse_tab_path(&url), Some(PathBuf::from("/tmp/foo")));
 }
 
 #[test]
 fn test_parse_tab_path_missing_returns_none() {
-    let url = Url::parse("warp://action/new_tab").unwrap();
+    let url = Url::parse("leanterm://action/new_tab").unwrap();
     assert_eq!(parse_tab_path(&url), None);
 }
 
-// -- warp://settings deeplink parsing ----------------------------------------
+// -- leanterm://settings deeplink parsing ----------------------------------------
 
 // -- post-checkout desktop hand-off ------------------------------------------
 
@@ -372,7 +372,7 @@ fn test_open_file_markdown_routes_to_editor_when_viewer_disabled() {
 
 #[test]
 fn test_open_file_ipynb_routes_to_notebook_when_enabled() {
-    // A `.ipynb` opened via `file://` (e.g. "Open with Warp" from Finder) opens
+    // A `.ipynb` opened via `file://` (e.g. "Open with Leanterm" from Finder) opens
     // in the notebook viewer, not the raw-JSON code editor.
     let _flag = crate::features::FeatureFlag::JupyterNotebookRendering.override_enabled(true);
     let dir = tempfile::tempdir().unwrap();

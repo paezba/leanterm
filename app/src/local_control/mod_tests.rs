@@ -11,9 +11,9 @@ use axum::extract::State;
 use axum::http::header::{AUTHORIZATION, HOST, ORIGIN};
 use axum::http::{HeaderMap, HeaderValue};
 use chrono::Duration;
-use settings::Setting as _;
 use leanterm_core::features::FeatureFlag;
 use leanterm_ui::SingletonEntity as _;
+use settings::Setting as _;
 
 #[cfg(unix)]
 use super::ensure_peer_uid;
@@ -223,7 +223,7 @@ fn missing_window_index_returns_missing_target() {
 
 #[test]
 fn feature_flag_disabled_denies_local_control() {
-    let _flag = FeatureFlag::WarpControlCli.override_enabled(false);
+    let _flag = FeatureFlag::LeantermControlCli.override_enabled(false);
     let err = ensure_feature_enabled().expect_err("feature flag disabled");
     assert_eq!(err.code, ErrorCode::LocalControlDisabled);
 }
@@ -379,7 +379,7 @@ fn expired_credential_is_rejected_and_pruned_before_request_decode() {
 
 #[test]
 fn disabling_scripting_invalidates_existing_grant_and_prevents_new_grants() {
-    let _flag = FeatureFlag::WarpControlCli.override_enabled(true);
+    let _flag = FeatureFlag::LeantermControlCli.override_enabled(true);
     leanterm_ui::App::test((), |mut app| async move {
         crate::test_util::settings::initialize_settings_for_tests(&mut app);
         app.update(|ctx| {

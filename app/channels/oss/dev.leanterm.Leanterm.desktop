@@ -7,7 +7,7 @@ Type=Application
 Name=Leanterm
 GenericName=TerminalEmulator
 
-Exec=warp-terminal-oss %U
+Exec=leanterm-oss %U
 StartupWMClass=dev.leanterm.Leanterm
 
 Keywords=shell;prompt;command;commandline;cmd;

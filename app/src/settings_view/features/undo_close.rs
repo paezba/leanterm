@@ -1,6 +1,5 @@
 use std::time::Duration;
 
-use settings::{Setting, ToggleableSetting};
 use leanterm_errors::report_if_error;
 use leanterm_ui::elements::{
     Container, CrossAxisAlignment, Flex, MainAxisAlignment, ParentElement, Text,
@@ -10,6 +9,7 @@ use leanterm_ui::ui_components::switch::SwitchStateHandle;
 use leanterm_ui::{
     AppContext, Element, Entity, SingletonEntity, TypedActionView, View, ViewContext, ViewHandle,
 };
+use settings::{Setting, ToggleableSetting};
 
 use crate::appearance::Appearance;
 use crate::editor::{self, EditorView, SingleLineEditorOptions, TextOptions};

@@ -7,13 +7,6 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use anyhow::{Error, Result};
 use instant::Instant;
 use jsonrpc::ServerNotificationEvent;
-use lsp_types::notification::{self, Notification};
-use lsp_types::{
-    FormattingOptions, NumberOrString, ProgressParams, ProgressParamsValue,
-    PublishDiagnosticsParams, WorkDoneProgress,
-};
-#[cfg(not(target_arch = "wasm32"))]
-use simple_logger::manager::LogManager;
 #[cfg(not(target_arch = "wasm32"))]
 #[cfg(not(target_arch = "wasm32"))]
 use leanterm_errors::report_error;
@@ -21,6 +14,13 @@ use leanterm_errors::report_error;
 use leanterm_ui_core::SingletonEntity;
 use leanterm_ui_core::r#async::executor::Background;
 use leanterm_ui_core::{Entity, ModelContext};
+use lsp_types::notification::{self, Notification};
+use lsp_types::{
+    FormattingOptions, NumberOrString, ProgressParams, ProgressParamsValue,
+    PublishDiagnosticsParams, WorkDoneProgress,
+};
+#[cfg(not(target_arch = "wasm32"))]
+use simple_logger::manager::LogManager;
 
 use crate::config::{LanguageId, lsp_uri_to_path};
 use crate::server_repo_watcher::LspRepoWatcher;

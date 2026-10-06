@@ -3,13 +3,13 @@ use std::collections::{HashMap, VecDeque};
 
 use async_trait::async_trait;
 use itertools::Itertools;
-use parking_lot::Mutex;
-#[cfg(feature = "local_fs")]
-use repo_metadata::DirectoryWatcher;
 use leanterm_completer::completer::{CommandExitStatus, CommandOutput};
 use leanterm_core::command::ExitCode;
 use leanterm_ui::App;
 use leanterm_ui_extras::user_preferences;
+use parking_lot::Mutex;
+#[cfg(feature = "local_fs")]
+use repo_metadata::DirectoryWatcher;
 
 use super::{ChipUpdateStatus, CurrentPrompt, PromptContext};
 #[cfg(feature = "local_fs")]
@@ -22,7 +22,7 @@ use crate::context_chips::context_chip::{Environment, PromptGenerator};
 use crate::context_chips::display_chip::GitBranchTrackingStatus;
 use crate::context_chips::prompt::Prompt;
 use crate::menu::MenuItem;
-use crate::settings::WarpPromptSeparator;
+use crate::settings::LeantermPromptSeparator;
 #[cfg(windows)]
 use crate::system::SystemInfo;
 use crate::terminal::model::block::BlockMetadata;
@@ -53,7 +53,7 @@ fn test_context_menu_items() {
                     ContextChipKind::VirtualEnvironment,
                 ],
                 false,
-                WarpPromptSeparator::None,
+                LeantermPromptSeparator::None,
             )
         });
         app.add_singleton_model(SessionSettings::new_with_defaults);
@@ -111,7 +111,7 @@ fn test_prompt_to_string() {
                     ContextChipKind::ShellGitBranch,
                 ],
                 false,
-                WarpPromptSeparator::None,
+                LeantermPromptSeparator::None,
             )
         });
         app.add_singleton_model(SessionSettings::new_with_defaults);
@@ -167,7 +167,7 @@ fn test_fingerprint_skips_contextual_chip_recompute_when_context_is_unchanged() 
             Prompt::mock_with(
                 [ContextChipKind::WorkingDirectory],
                 false,
-                WarpPromptSeparator::None,
+                LeantermPromptSeparator::None,
             )
         });
         app.add_singleton_model(SessionSettings::new_with_defaults);
@@ -245,7 +245,7 @@ fn test_externally_driven_chip_skips_periodic_timer() {
             Prompt::mock_with(
                 [ContextChipKind::ShellGitBranch],
                 false,
-                WarpPromptSeparator::None,
+                LeantermPromptSeparator::None,
             )
         });
         app.add_singleton_model(SessionSettings::new_with_defaults);
@@ -306,7 +306,7 @@ fn test_git_status_change_updates_branch_status_chip_value() {
             Prompt::mock_with(
                 [ContextChipKind::GitBranchStatus],
                 false,
-                WarpPromptSeparator::None,
+                LeantermPromptSeparator::None,
             )
         });
         app.add_singleton_model(SessionSettings::new_with_defaults);

@@ -101,7 +101,7 @@ pub enum ExitReason {
     /// Shell could not be found/determined
     ShellNotFound,
 }
-/// Validates and decodes in-band command output sent via `warp_send_generator_output_osc_message`.
+/// Validates and decodes in-band command output sent via `leanterm_send_generator_output_osc_message`.
 /// Upon success, returns the string content of the generator output. The OSC payload is expected
 /// to conform to the following format:
 ///

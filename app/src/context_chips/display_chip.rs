@@ -2,8 +2,6 @@ use std::borrow::Cow;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use pathfinder_color::ColorU;
-use pathfinder_geometry::vector::{Vector2F, vec2f};
 use leanterm_core::ui::theme::Fill;
 use leanterm_core::ui::theme::color::internal_colors;
 use leanterm_ui::elements::{
@@ -19,6 +17,8 @@ use leanterm_ui::{
     AppContext, Element, Entity, Gradient, ModelHandle, SingletonEntity, TypedActionView, View,
     ViewContext, ViewHandle,
 };
+use pathfinder_color::ColorU;
+use pathfinder_geometry::vector::{Vector2F, vec2f};
 
 use super::directory_fetcher::{
     DirectoryFetcher, DirectoryFetcherEvent, DirectoryItem, DirectoryType,
@@ -69,12 +69,12 @@ pub fn render_git_diff_stats_content(
     let icon_element = if has_changes {
         // Use file icon when there are changes
         Icon::File
-            .to_warpui_icon(Fill::Solid(internal_colors::neutral_6(theme)))
+            .to_leanterm_ui_icon(Fill::Solid(internal_colors::neutral_6(theme)))
             .finish()
     } else {
         // Use diff icon when there are no changes
         Icon::Diff
-            .to_warpui_icon(Fill::Solid(internal_colors::neutral_6(theme)))
+            .to_leanterm_ui_icon(Fill::Solid(internal_colors::neutral_6(theme)))
             .finish()
     };
 
@@ -157,7 +157,7 @@ pub fn render_git_diff_stats_content(
 
 fn git_branch_status_icon(icon: Icon, color: ColorU, icon_size: f32) -> Box<dyn Element> {
     Container::new(
-        ConstrainedBox::new(icon.to_warpui_icon(Fill::Solid(color)).finish())
+        ConstrainedBox::new(icon.to_leanterm_ui_icon(Fill::Solid(color)).finish())
             .with_height(icon_size)
             .with_width(icon_size)
             .finish(),
@@ -679,7 +679,7 @@ impl GitBranch {
 
         if branch.is_linked_worktree {
             return PromptChipShellCommand::Echo {
-                message: "The branch is already checked out in another worktree, but Warp couldn't find its path.",
+                message: "The branch is already checked out in another worktree, but Leanterm couldn't find its path.",
             };
         }
 
@@ -1498,7 +1498,7 @@ impl DisplayChip {
             .as_ref()
             .map(|ctx| match ctx.session.session_type() {
                 SessionType::Local => true,
-                SessionType::WarpifiedRemote => false,
+                SessionType::LeantermifiedRemote => false,
             })
             .unwrap_or(false);
 
@@ -2057,7 +2057,7 @@ pub(crate) fn render_udi_chip(config: UdiChipConfig, appearance: &Appearance) ->
     if let Some(icon) = config.icon {
         content.add_child(
             Container::new(
-                ConstrainedBox::new(icon.to_warpui_icon(Fill::Solid(config.color)).finish())
+                ConstrainedBox::new(icon.to_leanterm_ui_icon(Fill::Solid(config.color)).finish())
                     .with_height(icon_size)
                     .with_width(icon_size)
                     .finish(),

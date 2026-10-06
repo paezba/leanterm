@@ -3,9 +3,9 @@ use std::ffi::OsStr;
 
 use byte_unit::Byte;
 use chrono::{DateTime, Utc};
-use sysinfo::ProcessesToUpdate;
 use leanterm_core::channel::ChannelState;
 use leanterm_ui::{App, AppContext, Entity, ModelContext, SingletonEntity};
+use sysinfo::ProcessesToUpdate;
 
 use crate::system::memory_footprint;
 

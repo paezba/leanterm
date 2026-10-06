@@ -3,22 +3,21 @@ use std::ops::Range;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use markdown_parser::{FormattedText, parse_html, parse_markdown};
-use pathfinder_geometry::vector::vec2f;
-use string_offset::CharOffset;
 use leanterm_editor::content::anchor::Anchor;
 use leanterm_editor::content::text::{BufferTextStyle, CodeBlockType, TextStyles};
 use leanterm_editor::content::version::BufferVersion;
-use leanterm_editor::editor::{EmbeddedItemModel, NavigationKey, RunnableCommandModel, TextDecoration};
+use leanterm_editor::editor::{
+    EmbeddedItemModel, NavigationKey, RunnableCommandModel, TextDecoration,
+};
 use leanterm_editor::model::{CoreEditorModel, RichTextEditorModel};
 use leanterm_editor::render::element::{
     DisplayOptions, DisplayStateHandle, RichTextAction, RichTextElement, VerticalExpansionBehavior,
 };
 use leanterm_editor::render::model::{BlockItem, HitTestBlockType, Location, RenderState};
 use leanterm_editor::selection::{TextDirection, TextUnit};
-use leanterm_util::path::LineAndColumnArg;
-use leanterm_util::user_input::UserInput;
-use leanterm_ui::accessibility::{AccessibilityContent, ActionAccessibilityContent, WarpA11yRole};
+use leanterm_ui::accessibility::{
+    AccessibilityContent, ActionAccessibilityContent, LeantermA11yRole,
+};
 use leanterm_ui::actions::StandardAction;
 use leanterm_ui::assets::asset_cache::{AssetCache, AssetHandle, AssetState};
 use leanterm_ui::r#async::SpawnedFutureHandle;
@@ -46,6 +45,11 @@ use leanterm_ui::{
     AppContext, BlurContext, CursorInfo, Element, Entity, FocusContext, ModelHandle,
     SingletonEntity, TypedActionView, View, ViewContext, ViewHandle, WeakViewHandle, windowing,
 };
+use leanterm_util::path::LineAndColumnArg;
+use leanterm_util::user_input::UserInput;
+use markdown_parser::{FormattedText, parse_html, parse_markdown};
+use pathfinder_geometry::vector::vec2f;
+use string_offset::CharOffset;
 
 use super::block_insertion_menu::{BlockInsertionMenuState, BlockInsertionSource};
 use super::find_bar::{FindBar, FindBarEvent, FindBarState};
@@ -70,7 +74,7 @@ use crate::ui_components::icons::ICON_DIMENSIONS;
 use crate::util::bindings::CustomAction;
 #[cfg(feature = "local_fs")]
 use crate::util::link_detection::{DetectedLinkType, detect_file_paths, get_word_range_at_offset};
-use crate::util::tooltips::{TooltipLink, render_tooltip, should_show_open_in_warp_link};
+use crate::util::tooltips::{TooltipLink, render_tooltip, should_show_open_in_leanterm_link};
 use crate::view_components::DismissibleToast;
 use crate::workspace::WorkspaceAction;
 
@@ -857,11 +861,11 @@ pub enum EditorViewAction {
     },
     RemoveEmbeddingAt(CharOffset),
     MiddleClickPaste,
-    /// Open a file. If open_in_warp is true, open in Warp's code editor; otherwise use external editor.
+    /// Open a file. If open_in_leanterm is true, open in Leanterm's code editor; otherwise use external editor.
     OpenFile {
         path: PathBuf,
         line_and_column_num: Option<LineAndColumnArg>,
-        force_open_in_warp: bool,
+        force_open_in_leanterm: bool,
     },
     /// Signal from a Mermaid toggle view that the user changed the display mode for a block.
     MermaidDisplayModeSelected {
@@ -936,7 +940,7 @@ pub enum EditorViewEvent {
     OpenFile {
         path: PathBuf,
         line_and_column_num: Option<LineAndColumnArg>,
-        force_open_in_warp: bool,
+        force_open_in_leanterm: bool,
     },
     /// Emitted when the user runs a notebook workflow. The parent `NotebookView` is responsible
     /// for sending it to the active terminal.
@@ -1011,7 +1015,7 @@ struct SelectedFilePath {
 #[derive(Default)]
 struct FilePathMouseStateHandles {
     open_file_handle: MouseStateHandle,
-    open_in_warp_handle: MouseStateHandle,
+    open_in_leanterm_handle: MouseStateHandle,
 }
 
 pub struct RichTextEditorView {
@@ -1927,7 +1931,7 @@ impl RichTextEditorView {
                 ctx.emit(EditorViewEvent::OpenFile {
                     path: hovered_file_path.path.clone(),
                     line_and_column_num: hovered_file_path.line_and_column_num,
-                    force_open_in_warp: false,
+                    force_open_in_leanterm: false,
                 });
             } else {
                 self.open_file_path = Some(hovered_file_path.clone());
@@ -2508,7 +2512,7 @@ impl RichTextEditorView {
             "Open file"
         }
         .to_string();
-        let show_open_in_warp = should_show_open_in_warp_link(&path, ctx);
+        let show_open_in_leanterm = should_show_open_in_leanterm_link(&path, ctx);
         let path_for_primary = path.clone();
         let modifier = directly_open_link_keybinding_string();
 
@@ -2518,26 +2522,26 @@ impl RichTextEditorView {
                 ctx.dispatch_typed_action(EditorViewAction::OpenFile {
                     path: path_for_primary.clone(),
                     line_and_column_num,
-                    force_open_in_warp: false,
+                    force_open_in_leanterm: false,
                 });
             }),
             detail: Some(format!("[{modifier} Click]")),
             mouse_state: self.file_path_mouse_states.open_file_handle.clone(),
         }];
 
-        if show_open_in_warp {
-            let path_for_warp = path.clone();
+        if show_open_in_leanterm {
+            let path_for_leanterm = path.clone();
             links.push(TooltipLink {
-                text: "Open in Warp".to_string(),
+                text: "Open in Leanterm".to_string(),
                 on_click: Box::new(move |ctx: &mut EventContext| {
                     ctx.dispatch_typed_action(EditorViewAction::OpenFile {
-                        path: path_for_warp.clone(),
+                        path: path_for_leanterm.clone(),
                         line_and_column_num,
-                        force_open_in_warp: true,
+                        force_open_in_leanterm: true,
                     });
                 }),
                 detail: None,
-                mouse_state: self.file_path_mouse_states.open_in_warp_handle.clone(),
+                mouse_state: self.file_path_mouse_states.open_in_leanterm_handle.clone(),
             });
         }
 
@@ -3055,12 +3059,12 @@ impl TypedActionView for RichTextEditorView {
             OpenFile {
                 path,
                 line_and_column_num,
-                force_open_in_warp,
+                force_open_in_leanterm,
             } => {
                 ctx.emit(EditorViewEvent::OpenFile {
                     path: path.clone(),
                     line_and_column_num: *line_and_column_num,
-                    force_open_in_warp: *force_open_in_warp,
+                    force_open_in_leanterm: *force_open_in_leanterm,
                 });
             }
         }
@@ -3087,13 +3091,13 @@ impl TypedActionView for RichTextEditorView {
             EditorViewAction::UserTyped(text) => {
                 ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
                     text.clone().into_inner(),
-                    WarpA11yRole::UserAction,
+                    LeantermA11yRole::UserAction,
                 ))
             }
             EditorViewAction::Paste | EditorViewAction::MiddleClickPaste => {
                 ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
                     format!("Pasting: {}", ctx.clipboard().read().plain_text),
-                    WarpA11yRole::UserAction,
+                    LeantermA11yRole::UserAction,
                 ))
             }
             EditorViewAction::Enter
@@ -3106,21 +3110,21 @@ impl TypedActionView for RichTextEditorView {
             | EditorViewAction::Unindent
             | EditorViewAction::Tab => ActionAccessibilityContent::from_debug(),
             EditorViewAction::ShiftTab => ActionAccessibilityContent::Custom(
-                AccessibilityContent::new_without_help("Shift-tab", WarpA11yRole::UserAction),
+                AccessibilityContent::new_without_help("Shift-tab", LeantermA11yRole::UserAction),
             ),
             EditorViewAction::EditLink | EditorViewAction::CreateOrEditLink => {
                 ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
                     "Edit Link",
-                    WarpA11yRole::UserAction,
+                    LeantermA11yRole::UserAction,
                 ))
             }
             EditorViewAction::CopyLink => ActionAccessibilityContent::Custom(
-                AccessibilityContent::new_without_help("Copy Link", WarpA11yRole::UserAction),
+                AccessibilityContent::new_without_help("Copy Link", LeantermA11yRole::UserAction),
             ),
             EditorViewAction::OpenTooltipLink(link) => {
                 ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
                     format!("Open link: {}", **link),
-                    WarpA11yRole::UserAction,
+                    LeantermA11yRole::UserAction,
                 ))
             }
             EditorViewAction::SecondaryLinkAction(link) => {
@@ -3130,66 +3134,81 @@ impl TypedActionView for RichTextEditorView {
                 );
                 ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
                     content,
-                    WarpA11yRole::UserAction,
+                    LeantermA11yRole::UserAction,
                 ))
             }
             EditorViewAction::DeleteLineLeft => {
                 ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
                     "Delete line left",
-                    WarpA11yRole::UserAction,
+                    LeantermA11yRole::UserAction,
                 ))
             }
             EditorViewAction::DeleteLineRight => {
                 ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
                     "Delete line right",
-                    WarpA11yRole::UserAction,
+                    LeantermA11yRole::UserAction,
                 ))
             }
             EditorViewAction::DeleteWordLeft => {
                 ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
                     "Delete word left",
-                    WarpA11yRole::UserAction,
+                    LeantermA11yRole::UserAction,
                 ))
             }
             EditorViewAction::DeleteWordRight => {
                 ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
                     "Delete word right",
-                    WarpA11yRole::UserAction,
+                    LeantermA11yRole::UserAction,
                 ))
             }
 
-            EditorViewAction::CutLineLeft => ActionAccessibilityContent::Custom(
-                AccessibilityContent::new_without_help("Cut line left", WarpA11yRole::UserAction),
-            ),
-            EditorViewAction::CutLineRight => ActionAccessibilityContent::Custom(
-                AccessibilityContent::new_without_help("Cut line right", WarpA11yRole::UserAction),
-            ),
-            EditorViewAction::CutWordLeft => ActionAccessibilityContent::Custom(
-                AccessibilityContent::new_without_help("Cut word left", WarpA11yRole::UserAction),
-            ),
-            EditorViewAction::CutWordRight => ActionAccessibilityContent::Custom(
-                AccessibilityContent::new_without_help("Cut word right", WarpA11yRole::UserAction),
-            ),
+            EditorViewAction::CutLineLeft => {
+                ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
+                    "Cut line left",
+                    LeantermA11yRole::UserAction,
+                ))
+            }
+            EditorViewAction::CutLineRight => {
+                ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
+                    "Cut line right",
+                    LeantermA11yRole::UserAction,
+                ))
+            }
+            EditorViewAction::CutWordLeft => {
+                ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
+                    "Cut word left",
+                    LeantermA11yRole::UserAction,
+                ))
+            }
+            EditorViewAction::CutWordRight => {
+                ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
+                    "Cut word right",
+                    LeantermA11yRole::UserAction,
+                ))
+            }
 
             EditorViewAction::ShowCharacterPalette => {
                 ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
                     "Show character palette",
-                    WarpA11yRole::UserAction,
+                    LeantermA11yRole::UserAction,
                 ))
             }
-            EditorViewAction::ShowFindBar => ActionAccessibilityContent::Custom(
-                AccessibilityContent::new_without_help("Show find bar", WarpA11yRole::UserAction),
-            ),
+            EditorViewAction::ShowFindBar => {
+                ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
+                    "Show find bar",
+                    LeantermA11yRole::UserAction,
+                ))
+            }
             EditorViewAction::OpenBlockInsertionMenu => {
                 ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
                     "Open block-insertion menu",
-                    WarpA11yRole::UserAction,
+                    LeantermA11yRole::UserAction,
                 ))
             }
             EditorViewAction::InsertBlock(block_type) => {
                 ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
                     format!("Insert {} block", BlockType::from(block_type).label()),
-                    WarpA11yRole::UserAction,
+                    LeantermA11yRole::UserAction,
                 ))
             }
             EditorViewAction::Bold => self
@@ -3216,23 +3235,26 @@ impl TypedActionView for RichTextEditorView {
                 ActionAccessibilityContent::Custom(AccessibilityContent::new(
                     "De-select command",
                     "Switch from selecting commands to selecting text",
-                    WarpA11yRole::UserAction,
+                    LeantermA11yRole::UserAction,
                 ))
             }
             EditorViewAction::CodeBlockTypeSelectedAtOffset {
                 code_block_type, ..
             } => ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
                 format!("Change code block language to {code_block_type}"),
-                WarpA11yRole::UserAction,
+                LeantermA11yRole::UserAction,
             )),
-            EditorViewAction::CopyTextToClipboard { .. } => ActionAccessibilityContent::Custom(
-                AccessibilityContent::new_without_help("Copy code block", WarpA11yRole::UserAction),
-            ),
+            EditorViewAction::CopyTextToClipboard { .. } => {
+                ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
+                    "Copy code block",
+                    LeantermA11yRole::UserAction,
+                ))
+            }
             EditorViewAction::ToggleTaskList(_) => {
                 // TODO(ben): Is it useful to include the text and/or on/off state here?
                 ActionAccessibilityContent::Custom(AccessibilityContent::new_without_help(
                     "Toggle task list",
-                    WarpA11yRole::UserAction,
+                    LeantermA11yRole::UserAction,
                 ))
             }
             EditorViewAction::Delete
@@ -3391,7 +3413,7 @@ impl RichTextAction<RichTextEditorView> for EditorViewAction {
         );
         let multiselect = modifiers.alt;
 
-        // The first mouse down to bring focus to a Warp window will not have a corresponding mouse up.
+        // The first mouse down to bring focus to a Leanterm window will not have a corresponding mouse up.
         // We ignore it, and they can click again.
         if is_first_mouse {
             return None;

@@ -1,6 +1,6 @@
-use pathfinder_color::ColorU;
 use leanterm_ui::elements::Rect;
 use leanterm_ui::{AppContext, Element, Entity, TypedActionView, View};
+use pathfinder_color::ColorU;
 
 pub struct BlurredView {}
 

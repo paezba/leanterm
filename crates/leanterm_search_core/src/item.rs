@@ -1,8 +1,8 @@
-use ordered_float::OrderedFloat;
 use leanterm_core::ui::appearance::Appearance;
 use leanterm_core::ui::theme::Fill;
 use leanterm_ui_core::fonts::FamilyId;
 use leanterm_ui_core::{Action, AppContext, Element};
+use ordered_float::OrderedFloat;
 
 use super::result_renderer::ItemHighlightState;
 

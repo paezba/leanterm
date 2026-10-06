@@ -4,11 +4,8 @@ use std::collections::HashSet;
 use std::sync::LazyLock;
 use std::time::Duration;
 
-use pathfinder_geometry::vector::vec2f;
-use regex::Regex;
-use settings::Setting as _;
 use leanterm_core::context_flag::ContextFlag;
-use leanterm_core::ui::theme::WarpTheme;
+use leanterm_core::ui::theme::LeantermTheme;
 use leanterm_core::ui::theme::color::internal_colors;
 use leanterm_errors::{report_error, report_if_error};
 use leanterm_ui::r#async::{SpawnedFutureHandle, Timer};
@@ -26,6 +23,9 @@ use leanterm_ui::{
     Action, AppContext, Element, Entity, ModelHandle, SingletonEntity, TypedActionView,
     UpdateModel, View, ViewContext, ViewHandle,
 };
+use pathfinder_geometry::vector::vec2f;
+use regex::Regex;
+use settings::Setting as _;
 
 use super::privacy::{AddRegexModal, AddRegexModalEvent};
 use super::settings_page::{
@@ -48,8 +48,8 @@ const FONT_SIZE: f32 = 12.;
 
 const SAFE_MODE_TITLE: &str = "Secret redaction";
 static SAFE_MODE_DESCRIPTION: LazyLock<&'static str> = LazyLock::new(|| {
-    "When this setting is enabled, Warp will scan blocks, the contents of \
-        Warp Drive objects, and Oz prompts for potential sensitive \
+    "When this setting is enabled, Leanterm will scan blocks, the contents of \
+        Leanterm Drive objects, and Oz prompts for potential sensitive \
         information and prevent saving or sending this data to any \
         servers. You can customize this list via regexes."
 });
@@ -766,7 +766,7 @@ impl SecretRedactionWidget {
         TextAndIcon::new(
             TextAndIconAlignment::IconFirst,
             text,
-            Icon::Plus.to_warpui_icon(appearance.theme().active_ui_text_color()),
+            Icon::Plus.to_leanterm_ui_icon(appearance.theme().active_ui_text_color()),
             MainAxisSize::Min,
             MainAxisAlignment::SpaceBetween,
             vec2f(16., 16.),
@@ -997,7 +997,7 @@ impl SettingsWidget for NetworkLogWidget {
                 ui_builder
                     .paragraph(
                         "We've built a native console that allows you to view all communications \
-                        from Warp to external servers to ensure you feel comfortable that your \
+                        from Leanterm to external servers to ensure you feel comfortable that your \
                         work is always kept safe."
                             .to_owned(),
                     )
@@ -1072,6 +1072,6 @@ mod styles {
     pub const DESCRIPTION_LINE_MARGIN_BOTTOM: f32 = 6.;
 }
 
-fn description_text_color(theme: &WarpTheme) -> leanterm_core::ui::theme::Fill {
+fn description_text_color(theme: &LeantermTheme) -> leanterm_core::ui::theme::Fill {
     theme.sub_text_color(theme.surface_2())
 }

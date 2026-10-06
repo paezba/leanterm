@@ -6,21 +6,21 @@ use std::fmt::Debug;
 use std::ops::Range;
 
 use lazy_static::lazy_static;
-use rangemap::RangeSet;
-use string_offset::CharOffset;
 use leanterm_editor::content::version::BufferVersion;
 use leanterm_editor::editor::{EmbeddedItemModel, RunnableCommandModel, TextDecoration};
 use leanterm_editor::model::{CoreEditorModel, PlainTextEditorModel};
 use leanterm_editor::render::element::RichTextAction;
 use leanterm_editor::render::model::{ExpansionType, LineCount, Location};
 use leanterm_editor::selection::{TextDirection, TextUnit};
-use leanterm_util::user_input::UserInput;
 use leanterm_ui::actions::StandardAction;
 use leanterm_ui::elements::Axis;
 use leanterm_ui::event::ModifiersState;
 use leanterm_ui::keymap::{EditableBinding, FixedBinding, Keystroke, PerPlatformKeystroke};
 use leanterm_ui::units::Pixels;
 use leanterm_ui::{AppContext, TypedActionView, ViewContext, WeakViewHandle};
+use leanterm_util::user_input::UserInput;
+use rangemap::RangeSet;
+use string_offset::CharOffset;
 
 use crate::cmd_or_ctrl_shift;
 use crate::code::editor::line::EditorLineLocation;
@@ -1197,7 +1197,7 @@ impl RichTextAction<CodeEditorView> for CodeEditorViewAction {
             modifiers.shift
         );
 
-        // The first mouse down to bring focus to a Warp window will not have a corresponding mouse up.
+        // The first mouse down to bring focus to a Leanterm window will not have a corresponding mouse up.
         // We ignore it, and they can click again.
         if is_first_mouse {
             return None;

@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
+use leanterm_core::features::FeatureFlag;
+use leanterm_ui::{Entity, ModelContext, SingletonEntity};
 use serde::Serialize;
 use strum::IntoEnumIterator;
 use strum_macros::{EnumDiscriminants, EnumIter};
-use leanterm_core::features::FeatureFlag;
-use leanterm_ui::{Entity, ModelContext, SingletonEntity};
 
 #[cfg(target_os = "macos")]
 use super::config::HotkeyError;

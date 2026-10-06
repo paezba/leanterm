@@ -1,8 +1,8 @@
+use leanterm_ui::units::Pixels;
+use leanterm_ui::{AppContext, SingletonEntity};
 use serde::{Deserialize, Serialize};
 use settings::SupportedPlatforms;
 use settings::macros::define_settings_group;
-use leanterm_ui::units::Pixels;
-use leanterm_ui::{AppContext, SingletonEntity};
 
 use crate::settings::{InputSettings, TerminalSpacing};
 

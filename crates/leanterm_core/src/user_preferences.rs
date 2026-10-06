@@ -6,9 +6,9 @@
 
 use std::ops::Deref;
 
-use settings::PrivatePreferences;
 use leanterm_ui_core::SingletonEntity;
 use leanterm_ui_extras::user_preferences::UserPreferences;
+use settings::PrivatePreferences;
 
 /// An extension trait on [`leanterm_ui_core::AppContext`] for accessing private user
 /// preferences.

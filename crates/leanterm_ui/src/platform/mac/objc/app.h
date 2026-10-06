@@ -3,11 +3,11 @@
 #import <UserNotifications/UserNotifications.h>
 
 // Our NSApplication subclass.
-@interface WarpApplication : NSApplication
+@interface LeantermApplication : NSApplication
 @end
 
-// WarpDelegate is the delegate of the NSApp and also all menus.
-@interface WarpDelegate
+// LeantermDelegate is the delegate of the NSApp and also all menus.
+@interface LeantermDelegate
     : NSObject <NSApplicationDelegate, NSMenuDelegate, UNUserNotificationCenterDelegate>
 
 @property(strong) NSMenu *dockMenu;
@@ -16,29 +16,29 @@
 @end
 
 // Functions implemented in Rust.
-void warp_app_will_finish_launching(id app);
-void warp_app_did_become_active(id app);
-void warp_app_did_resign_active(id app);
-void warp_app_will_terminate(id app);
-void warp_app_open_files(id app, id filenames);
-void warp_app_send_global_keybinding(id app, NSUInteger modifiers, NSUInteger key_code);
-void warp_app_new_window(id app);
-void warp_app_window_did_resize(id app);
-void warp_app_window_did_move(id app);
-void warp_app_window_will_close(id app, id window);
-void warp_app_screen_did_change(id app);
+void leanterm_app_will_finish_launching(id app);
+void leanterm_app_did_become_active(id app);
+void leanterm_app_did_resign_active(id app);
+void leanterm_app_will_terminate(id app);
+void leanterm_app_open_files(id app, id filenames);
+void leanterm_app_send_global_keybinding(id app, NSUInteger modifiers, NSUInteger key_code);
+void leanterm_app_new_window(id app);
+void leanterm_app_window_did_resize(id app);
+void leanterm_app_window_did_move(id app);
+void leanterm_app_window_will_close(id app, id window);
+void leanterm_app_screen_did_change(id app);
 void cpu_awakened(id app);
 void cpu_will_sleep(id app);
-void warp_app_active_window_changed(id app);
-void warp_app_notification_clicked(id app, double date, id data);
-void warp_app_open_urls(id app, id urls);
-void warp_app_os_appearance_changed(id app);
-BOOL warp_app_should_terminate_app(id app, BOOL systemInitiated);
-BOOL warp_app_should_close_window(id app, id window);
-BOOL warp_app_are_key_bindings_disabled_for_window(id app, id window);
-BOOL warp_app_has_binding_for_keystroke(id app, id event);
-BOOL warp_app_has_custom_action_for_keystroke(id app, id event);
-void warp_app_disable_warning_modal(id app);
-void warp_app_internet_reachability_changed(id app, BOOL can_reach);
-void warp_app_process_modal_response(id app, NSUInteger modal_id, NSModalResponse response,
+void leanterm_app_active_window_changed(id app);
+void leanterm_app_notification_clicked(id app, double date, id data);
+void leanterm_app_open_urls(id app, id urls);
+void leanterm_app_os_appearance_changed(id app);
+BOOL leanterm_app_should_terminate_app(id app, BOOL systemInitiated);
+BOOL leanterm_app_should_close_window(id app, id window);
+BOOL leanterm_app_are_key_bindings_disabled_for_window(id app, id window);
+BOOL leanterm_app_has_binding_for_keystroke(id app, id event);
+BOOL leanterm_app_has_custom_action_for_keystroke(id app, id event);
+void leanterm_app_disable_warning_modal(id app);
+void leanterm_app_internet_reachability_changed(id app, BOOL can_reach);
+void leanterm_app_process_modal_response(id app, NSUInteger modal_id, NSModalResponse response,
                                      BOOL disable_modal);

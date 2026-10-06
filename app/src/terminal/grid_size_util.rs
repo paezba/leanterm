@@ -1,11 +1,11 @@
 //! This module defines helper functions pertaining to the size/position of items in a Grid,
 //! such as the dimensions of a grid cell and the baseline position of text within a cell.
-use num_traits::Zero;
-use pathfinder_geometry::vector::{Vector2F, vec2f};
 use leanterm_errors::report_error;
 use leanterm_ui::elements::DEFAULT_UI_LINE_HEIGHT_RATIO;
 use leanterm_ui::fonts::{Cache as FontCache, FamilyId};
 use leanterm_ui::text_layout::ComputeBaselinePositionFn;
+use num_traits::Zero;
+use pathfinder_geometry::vector::{Vector2F, vec2f};
 
 /// Computes the grid cell size given the font and size at which the grid should
 /// be rendered. We use a similar algorithm to Alacritty to do this, where the

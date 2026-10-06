@@ -5,10 +5,10 @@ use std::time::Duration;
 
 use futures::channel::mpsc;
 use futures::{FutureExt as _, StreamExt as _};
-use virtual_fs::{Stub, VirtualFS};
-use leanterm_util::standardized_path::StandardizedPath;
 use leanterm_ui_core::r#async::Timer;
 use leanterm_ui_core::{App, ModelContext};
+use leanterm_util::standardized_path::StandardizedPath;
+use virtual_fs::{Stub, VirtualFS};
 
 use super::{
     Repository, RepositorySubscriber, RepositorySubscription, RepositoryWatchMode,

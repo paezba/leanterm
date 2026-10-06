@@ -8,11 +8,11 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 use futures_lite::StreamExt;
 use ignore::gitignore::Gitignore;
+use leanterm_errors::{ErrorExt, register_error, report_error};
+use leanterm_util::standardized_path::StandardizedPath;
 #[cfg(feature = "local_fs")]
 use notify_debouncer_full::notify::WatchFilter;
 use thiserror::Error;
-use leanterm_errors::{ErrorExt, register_error, report_error};
-use leanterm_util::standardized_path::StandardizedPath;
 
 use crate::gitignore_cache;
 use crate::standing_queries::{StandingQueryDefinitions, StandingQueryResults};
@@ -588,7 +588,7 @@ fn evaluate_entry(
 ) -> Result<EvaluatedEntry, BuildTreeError> {
     let is_dir = curr_path.is_dir();
 
-    // Only ignore symlinks to directories. Symlinks to files are preserved (e.g. WARP.md).
+    // Only ignore symlinks to directories. Symlinks to files are preserved (e.g. LEANTERM.md).
     if curr_path.is_symlink() && is_dir {
         return Err(BuildTreeError::Symlink);
     }

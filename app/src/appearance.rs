@@ -1,28 +1,30 @@
-use settings::Setting as _;
 use leanterm_ui::fonts::FamilyId;
-use leanterm_ui::{AddSingletonModel, AppContext, AssetProvider, Entity, ModelContext, SingletonEntity};
+use leanterm_ui::{
+    AddSingletonModel, AppContext, AssetProvider, Entity, ModelContext, SingletonEntity,
+};
+use settings::Setting as _;
 
 #[cfg(target_os = "macos")]
 mod macos_app_icon {
+    pub use leanterm_core::channel::{Channel, ChannelState};
     pub use objc2::rc::autoreleasepool;
     pub use objc2::{AnyThread, MainThreadMarker};
     pub use objc2_app_kit::{NSApplication, NSImage, NSWorkspace, NSWorkspaceIconCreationOptions};
     pub use objc2_foundation::{NSBundle, NSString, ns_string};
-    pub use leanterm_core::channel::{Channel, ChannelState};
 
     pub use crate::settings::app_icon::{AppIcon, AppIconSettings, AppIconSettingsChangedEvent};
 }
 use anyhow::anyhow;
+pub use leanterm_core::ui::appearance::{Appearance, AppearanceEvent};
 #[cfg(target_os = "macos")]
 use macos_app_icon::*;
-pub use leanterm_core::ui::appearance::{Appearance, AppearanceEvent};
 
 use crate::ASSETS;
 use crate::settings::{
     FontSettings, FontSettingsChangedEvent, MonospaceFontSize, Settings, ThemeSettings,
     active_theme_kind,
 };
-use crate::themes::theme::{ThemeKind, WarpTheme};
+use crate::themes::theme::{LeantermTheme, ThemeKind};
 
 /// Manages the state of the app-wide Appearance settings, it is responsible
 /// for 1) listening to settings changes and update the underlying Appearance
@@ -31,7 +33,7 @@ use crate::themes::theme::{ThemeKind, WarpTheme};
 pub struct AppearanceManager {
     // The transient theme is a theme that is set by the user but not saved
     // as a setting. It is used when the user is actively choosing a theme.
-    transient_theme: Option<WarpTheme>,
+    transient_theme: Option<LeantermTheme>,
 
     #[cfg(target_os = "macos")]
     app_icon_at_startup: AppIcon,
@@ -205,7 +207,7 @@ impl AppearanceManager {
                 log::warn!("Failed to get dock tile plugin bundle");
                 return;
             };
-            let plugin_name = ns_string!("WarpDockTilePlugin.docktileplugin");
+            let plugin_name = ns_string!("LeantermDockTilePlugin.docktileplugin");
             let plugin_path = plugins_path.stringByAppendingPathComponent(plugin_name);
             let Some(plugin_bundle) = NSBundle::bundleWithPath(&plugin_path) else {
                 log::warn!("Failed to get dock tile plugin bundle");
@@ -340,7 +342,8 @@ fn get_or_load_font_family(font_name: &str, ctx: &mut AppContext) -> Option<Fami
     leanterm_ui::fonts::Cache::handle(ctx).update(ctx, |font_cache, _| {
         match font_cache.get_or_load_system_font(font_name) {
             Ok(family) => {
-                let font_id = font_cache.select_font(family, leanterm_ui::fonts::Properties::default());
+                let font_id =
+                    font_cache.select_font(family, leanterm_ui::fonts::Properties::default());
 
                 // Validate that the font contains the `m` glyph since this is assumed in
                 // various parts of the code. We already do this when surfacing fonts in the font
@@ -405,12 +408,12 @@ fn build_appearance(ctx: &mut AppContext) -> Appearance {
 }
 
 #[cfg(target_family = "wasm")]
-fn emit_theme_background_event(theme: &WarpTheme) {
+fn emit_theme_background_event(theme: &LeantermTheme) {
     let bg = theme.background().into_solid();
     let color = format!("#{:02x}{:02x}{:02x}", bg.r, bg.g, bg.b);
-    crate::platform::wasm::emit_event(crate::platform::wasm::WarpEvent::ThemeBackgroundChanged {
-        color,
-    });
+    crate::platform::wasm::emit_event(
+        crate::platform::wasm::LeantermEvent::ThemeBackgroundChanged { color },
+    );
 }
 
 pub fn register(app: &mut impl AddSingletonModel) {

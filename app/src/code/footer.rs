@@ -1,19 +1,10 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use lsp::supported_servers::LSPServerType;
-use lsp::{
-    LanguageId, LanguageServerId, LspManagerModel, LspManagerModelEvent, LspServerModel,
-    LspState as LspModelState,
-};
-use pathfinder_color::ColorU;
-use pathfinder_geometry::vector::vec2f;
-#[cfg(feature = "local_fs")]
-use repo_metadata::repositories::DetectedRepositories;
 use leanterm_core::ui::Icon;
 use leanterm_core::ui::appearance::Appearance;
 use leanterm_core::ui::theme::color::internal_colors;
-use leanterm_core::ui::theme::{AnsiColorIdentifier, Fill as ThemeFill, WarpTheme};
+use leanterm_core::ui::theme::{AnsiColorIdentifier, Fill as ThemeFill, LeantermTheme};
 #[cfg(feature = "local_fs")]
 use leanterm_ui::elements::{
     Border, ChildAnchor, ChildView, ConstrainedBox, Container, CornerRadius, CrossAxisAlignment,
@@ -27,6 +18,15 @@ use leanterm_ui::{
     AppContext, Element, Entity, ModelHandle, SingletonEntity, TypedActionView, View, ViewContext,
     ViewHandle, WeakModelHandle,
 };
+use lsp::supported_servers::LSPServerType;
+use lsp::{
+    LanguageId, LanguageServerId, LspManagerModel, LspManagerModelEvent, LspServerModel,
+    LspState as LspModelState,
+};
+use pathfinder_color::ColorU;
+use pathfinder_geometry::vector::vec2f;
+#[cfg(feature = "local_fs")]
+use repo_metadata::repositories::DetectedRepositories;
 
 #[cfg(feature = "local_fs")]
 use crate::persisted_workspace::PersistedWorkspaceEvent;
@@ -150,7 +150,7 @@ enum LSPServerRenderStatus {
 }
 
 impl LSPServerRenderStatus {
-    fn to_icon_color(&self, theme: &WarpTheme) -> ColorU {
+    fn to_icon_color(&self, theme: &LeantermTheme) -> ColorU {
         match self {
             LSPServerRenderStatus::Available => AnsiColorIdentifier::Green
                 .to_ansi_color(&theme.terminal_colors().normal)
@@ -1073,7 +1073,7 @@ impl CodeFooterView {
             mouse_states.open_logs.clone(),
             move || {
                 Icon::Code1
-                    .to_warpui_icon(ThemeFill::Solid(text_color))
+                    .to_leanterm_ui_icon(ThemeFill::Solid(text_color))
                     .finish()
             },
             "Open logs",
@@ -1095,7 +1095,7 @@ impl CodeFooterView {
             mouse_states.restart_server.clone(),
             move || {
                 Icon::RefreshCcw
-                    .to_warpui_icon(ThemeFill::Solid(text_color))
+                    .to_leanterm_ui_icon(ThemeFill::Solid(text_color))
                     .finish()
             },
             "Restart server",
@@ -1140,7 +1140,7 @@ impl CodeFooterView {
             mouse_states.start_server.clone(),
             move || {
                 Icon::Play
-                    .to_warpui_icon(ThemeFill::Solid(text_color))
+                    .to_leanterm_ui_icon(ThemeFill::Solid(text_color))
                     .finish()
             },
             "Start server",
@@ -1162,7 +1162,7 @@ impl CodeFooterView {
             mouse_states.remove_server.clone(),
             move || {
                 Icon::Trash
-                    .to_warpui_icon(ThemeFill::Solid(text_color))
+                    .to_leanterm_ui_icon(ThemeFill::Solid(text_color))
                     .finish()
             },
             "Remove server",
@@ -1185,7 +1185,7 @@ impl CodeFooterView {
             mouse_states.restart_all.clone(),
             move || {
                 Icon::RefreshCcw
-                    .to_warpui_icon(ThemeFill::Solid(text_color))
+                    .to_leanterm_ui_icon(ThemeFill::Solid(text_color))
                     .finish()
             },
             if is_plural {
@@ -1241,7 +1241,7 @@ impl CodeFooterView {
             mouse_states.start_all.clone(),
             move || {
                 Icon::Play
-                    .to_warpui_icon(ThemeFill::Solid(text_color))
+                    .to_leanterm_ui_icon(ThemeFill::Solid(text_color))
                     .finish()
             },
             if !is_plural {
@@ -1269,7 +1269,7 @@ impl CodeFooterView {
             mouse_states.manage_servers.clone(),
             move || {
                 Icon::Gear
-                    .to_warpui_icon(ThemeFill::Solid(text_color))
+                    .to_leanterm_ui_icon(ThemeFill::Solid(text_color))
                     .finish()
             },
             "Manage servers",
@@ -1279,7 +1279,7 @@ impl CodeFooterView {
 
     /// Computes the aggregate indicator color across all tracked servers.
     /// Priority: Failed > Busy > Stopped > Available.
-    fn aggregate_indicator_color(&self, theme: &WarpTheme, app: &AppContext) -> ColorU {
+    fn aggregate_indicator_color(&self, theme: &LeantermTheme, app: &AppContext) -> ColorU {
         if self.lsp_servers.is_empty() {
             return LSPServerRenderStatus::Stopped.to_icon_color(theme);
         }
@@ -1348,7 +1348,7 @@ impl CodeFooterView {
     }
 
     fn render_status_text(
-        theme: &WarpTheme,
+        theme: &LeantermTheme,
         appearance: &Appearance,
         message: String,
     ) -> Box<dyn Element> {

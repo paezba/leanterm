@@ -162,7 +162,7 @@ fn classifies_next_block_ids_relative_to_the_active_block() {
 fn advance_to_script_execution(block_list: &mut BlockList) {
     assert!(
         block_list.bootstrap_stage == BootstrapStage::RestoreBlocks
-            || block_list.bootstrap_stage == BootstrapStage::WarpInput,
+            || block_list.bootstrap_stage == BootstrapStage::LeantermInput,
         "Unexpected bootstrap stage: {:?}",
         block_list.bootstrap_stage
     );
@@ -175,7 +175,7 @@ fn advance_to_script_execution(block_list: &mut BlockList) {
 /// stage).
 fn advance_to_bootstrapped(block_list: &mut BlockList, data: BootstrappedValue) {
     if block_list.bootstrap_stage == BootstrapStage::RestoreBlocks
-        || block_list.bootstrap_stage == BootstrapStage::WarpInput
+        || block_list.bootstrap_stage == BootstrapStage::LeantermInput
     {
         advance_to_script_execution(block_list);
     }
@@ -884,7 +884,7 @@ fn test_removed_gap_with_banner() {
 }
 
 #[test]
-pub fn test_block_heights_combined_prompt_command_grid_warp_prompt() {
+pub fn test_block_heights_combined_prompt_command_grid_leanterm_prompt() {
     let mut block_list =
         new_bootstrapped_block_list(None, None, ChannelEventListener::new_for_test());
     let bootstrapped_block_list_len = block_list.blocks().len();
@@ -899,12 +899,12 @@ pub fn test_block_heights_combined_prompt_command_grid_warp_prompt() {
     // We created one block.
     assert_eq!(block_list.blocks.len(), bootstrapped_block_list_len + 1);
 
-    // Note that this test is using the Warp prompt, hence the prompt is not included in the combined grid.
+    // Note that this test is using the Leanterm prompt, hence the prompt is not included in the combined grid.
     assert_eq!(first_block.prompt_and_command_grid().len(), 3);
     assert_eq!(first_block.output_grid().len(), 3);
 
     // In this case, we SHOULD consider command_padding_top since we have a combined prompt/command grid BUT
-    // we have the built-in Warp prompt, so there's padding between that prompt and the combined grid.
+    // we have the built-in Leanterm prompt, so there's padding between that prompt and the combined grid.
     // The combined grid _just_ has the command in this case! The PS1 is unset!
     // Hence, we expect heights of 8.5.
     assert_lines_approx_eq!(
@@ -949,7 +949,7 @@ pub fn test_block_heights_combined_prompt_command_grid_ps1() {
     assert_eq!(first_block.prompt_and_command_grid().len(), 4);
     assert_eq!(first_block.output_grid().len(), 3);
 
-    // We have a 2-line prompt, adding 1 extra line to the combined grid (vs 0.6 default for Warp prompt).
+    // We have a 2-line prompt, adding 1 extra line to the combined grid (vs 0.6 default for Leanterm prompt).
     // Hence, we expect a height of 8.7 rather than 8.3.
     assert_lines_approx_eq!(
         first_block.height(&crate::terminal::model::block::TranscriptScope::Terminal),
