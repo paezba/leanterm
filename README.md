@@ -3,8 +3,8 @@
 A lean, offline terminal.
 
 > [!IMPORTANT]
-> This repository ([paezba/warp-oss](https://github.com/paezba/warp-oss)) is a standalone fork of [warpdotdev/warp](https://github.com/warpdotdev/warp). It is not affiliated with Warp and does not track upstream.
-> Leanterm is not affiliated with, endorsed by or sponsored by Denver Technologies, Inc. (Warp). "Warp" and the Warp logos are their trademarks and are used here only to identify the upstream project. If the trademark owner has any concern about the name or branding, please [open an issue](https://github.com/paezba/warp-oss/issues) and we will rename the project.
+> This repository ([paezba/leanterm](https://github.com/paezba/leanterm)) is a standalone fork of [warpdotdev/warp](https://github.com/warpdotdev/warp). It is not affiliated with Warp and does not track upstream.
+> Leanterm is not affiliated with, endorsed by or sponsored by Denver Technologies, Inc. (Warp). "Warp" and the Warp logos are their trademarks and are used here only to identify the upstream project. If the trademark owner has any concern about the name or branding, please [open an issue](https://github.com/paezba/leanterm/issues) and we will rename the project.
 
 Leanterm keeps Warp's terminal and local editing features and removes everything that needs an account, a server or an AI model. The `leanterm` binary builds `Leanterm.app`, which starts without a login screen and makes no outbound network connections on launch.
 
