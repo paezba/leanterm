@@ -31,7 +31,7 @@ Optimize for fast delivery and let CI catch uncommon failures outside targeted l
 4. Run every applicable mutating formatter once, after all other code changes are complete.
 5. Open or update the PR without rerunning tests or lint after formatting and without adding a full `./script/presubmit` run.
 
-Run the full presubmit only when the user, task, or approved spec explicitly requires it. For agent-driven implementation, this section replaces the broader pre-push presubmit guidance in `CONTRIBUTING.md`; that document still describes the human contributor workflow. A later source, test, manifest, generated-code, or configuration change creates a new candidate: rerun the affected portion of the sequence and finish with the applicable formatter. Local commits are checkpoints rather than validation boundaries and do not each need to pass independently. PR text, comments, labels, and other metadata do not invalidate code validation.
+Run the full presubmit only when the user, task, or approved spec explicitly requires it. For agent-driven implementation, this section replaces the broader pre-push presubmit guidance. A later source, test, manifest, generated-code, or configuration change creates a new candidate: rerun the affected portion of the sequence and finish with the applicable formatter. Local commits are checkpoints rather than validation boundaries and do not each need to pass independently. PR text, comments, labels, and other metadata do not invalidate code validation.
 
 ### Platform Setup
 - `./script/bootstrap` - Platform-specific setup
